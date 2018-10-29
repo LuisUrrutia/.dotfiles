@@ -50,6 +50,7 @@ brew install p7zip
 brew install youtube-dl
 brew install bat
 brew install aria2
+brew install libmagic
 
 # Install casks
 brew cask install google-chrome
@@ -71,6 +72,10 @@ brew cask install caskroom/versions/java8
 
 # Remove outdated versions from the cellar.
 brew cleanup
+
+# Install rvm
+curl -sSL https://rvm.io/mpapis.asc | gpg --import -
+\curl -L https://get.rvm.io | bash -s stable
 
 # Update npm
 npm install --global npm
