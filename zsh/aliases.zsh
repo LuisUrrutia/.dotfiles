@@ -101,8 +101,9 @@ alias k9='kill -9'
 alias brewu='brew update  && brew upgrade && brew cleanup && brew prune && brew doctor'
 
 # Docker
-alias d='docker'
-alias dps='docker ps'
+alias dstop="docker stop"
+alias dps="docker ps"
+alias dpss='docker ps --format "table {{.ID}}\t{{.Names}}\t{{.Image}}\t{{.Status}}"'
 alias dpsa='docker ps -a'
 alias dexec='docker exec -it'
 alias dc='docker-compose'
