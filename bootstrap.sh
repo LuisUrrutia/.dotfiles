@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+
 brew update
 brew upgrade
 
@@ -51,6 +53,7 @@ brew install youtube-dl
 brew install bat
 brew install aria2
 brew install libmagic
+brew install fasd
 
 # Install casks
 brew cask install google-chrome
@@ -68,7 +71,7 @@ brew cask install android-studio
 brew cask install the-unarchiver
 brew cask install karabiner-elements
 brew cask install java
-brew cask install caskroom/versions/java8
+brew cask install iterm2
 
 # Remove outdated versions from the cellar.
 brew cleanup
@@ -97,8 +100,10 @@ cp -f $HOME/.lsuf/fonts/* $HOME/Library/Fonts
 # Install Prezto
 git clone --recursive https://github.com/sorin-ionescu/prezto.git "${ZDOTDIR:-$HOME}/.zprezto"
 
-for rcfile in "${ZDOTDIR:-$HOME}"/.zprezto/runcoms/; do
-  ln -s "$rcfile" "${ZDOTDIR:-$HOME}/.${rcfile:t}"
+for file in ${ZDOTDIR:-$HOME}/.zprezto/runcoms/*[^md]
+do
+  filename=$(basename $file)
+  ln -s "$file" "${ZDOTDIR:-$HOME}/.${filename}"
 done
 
 ln -nfs "$HOME/.lsuf/zsh/.zpreztorc" "${ZDOTDIR:-$HOME}/.zpreztorc"
@@ -112,7 +117,7 @@ echo "for config_file ($HOME/.lsuf/zsh/*.zsh) source \$config_file" >> $HOME/.zs
 echo "for config_file ($HOME/.lsuf/env/*.env) source \$config_file" >> $HOME/.zshenv
 
 # Configure Karabiner
-mdkir -p "$HOME/.config/karabiner/"
+mkdir -p "$HOME/.config/karabiner/"
 ln -nfs "$HOME/.lsuf/others/karabiner.json" "$HOME/.config/karabiner/karabiner.json"
 
 # Configure wget
@@ -121,7 +126,7 @@ ln -nfs "$HOME/.lsuf/others/.wgetrc" "$HOME/.wgetrc"
 # Configure NeoVim
 mkdir -p "$HOME/.config/nvim/bundle"
 mkdir -p "$HOME/.config/nvim/colors"
-/bin/cp -r "$HOME/.lsuf/vim/colors/*" "$HOME/.config/nvim/colors"
+/bin/cp -r $HOME/.lsuf/vim/colors/* $HOME/.config/nvim/colors
 ln -nfs "$HOME/.lsuf/vim/init.vim" "$HOME/.config/nvim/init.vim"
 git clone https://github.com/VundleVim/Vundle.vim.git "$HOME/.config/nvim/bundle/Vundle.vim"
 
