@@ -110,7 +110,3 @@ alias dc='docker-compose'
 alias dcu='docker-compose up'
 alias dcd='docker-compose down'
 alias dcs='docker-compose stop'
-
-# Java
-alias java-latest="export JAVA_HOME=`/usr/libexec/java_home`; java -version"
-alias java8="export JAVA_HOME=`/usr/libexec/java_home -v 1.8`; java -version"
