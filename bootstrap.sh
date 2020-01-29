@@ -21,7 +21,7 @@ brew install gnu-sed --with-default-names
 
 
 # Install `wget` with IRI support.
-brew install wget --with-iri
+brew install wget
 
 # Install GnuPG to enable PGP-signing commits.
 brew install gnupg
@@ -114,7 +114,6 @@ ln -nfs "$HOME/.lsuf/git/.gitignore" "${ZDOTDIR:-$HOME}/.gitignore"
 
 # Add custom loads
 echo "for config_file ($HOME/.lsuf/zsh/*.zsh) source \$config_file" >> $HOME/.zshrc
-echo "for config_file ($HOME/.lsuf/env/*.env) source \$config_file" >> $HOME/.zshenv
 
 # Configure Karabiner
 mkdir -p "$HOME/.config/karabiner/"
