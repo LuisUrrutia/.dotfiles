@@ -6,4 +6,22 @@ function tre() {
 	tree -aC -I '.git|node_modules|bower_components' --dirsfirst "$@" | less -FRNX;
 }
 
+function killshit() {
+  kill $(ps aux | grep '[A]dobe' | awk '{print $2}')
+  kill $(ps aux | grep '[F]orti[C]lient' | awk '{print $2}')
+  kill $(ps aux | grep '[L]ogitech' | awk '{print $2}')
+  kill $(ps aux | grep 'toolbox-helper' | awk '{print $2}')
+}
 
+envup() {
+  local file=$([ -z "$1" ] && echo ".env" || echo ".env.$1")
+
+  if [ -f $file ]; then
+    set -a
+    source $file
+    set +a
+  else
+    echo "No $file file found" 1>&2
+    return 1
+  fi
+}
