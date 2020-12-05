@@ -17,7 +17,7 @@ brew install moreutils
 # Install GNU `find`, `locate`, `updatedb`, and `xargs`, `g`-prefixed.
 brew install findutils
 # Install GNU `sed`, overwriting the built-in `sed`.
-brew install gnu-sed --with-default-names
+brew install gnu-sed
 
 
 # Install `wget` with IRI support.
@@ -50,28 +50,39 @@ brew install node yarn
 brew install python pyenv pyenv-virtualenv 
 brew install p7zip
 brew install youtube-dl
-brew install bat
 brew install aria2
 brew install libmagic
 brew install fasd
+brew install awscli
 
 # Install casks
-brew cask install google-chrome
-brew cask install sublime-text
-brew cask install spotify
-brew cask install skype
-brew cask install vlc
-brew cask install jetbrains-toolbox
-brew cask install tor-browser
-brew cask install franz
-brew cask install postman
-brew cask install docker
-brew cask install soapui
-brew cask install android-studio
-brew cask install the-unarchiver
-brew cask install karabiner-elements
-brew cask install java
-brew cask install iterm2
+brew tap isen-ng/dotnet-sdk-versions
+brew tap homebrew/cask-fonts
+brew cask install font-fira-code
+brew install --cask dotnet-sdk3-1-400
+brew install --cask dotnet-sdk2-2-400
+brew install --cask google-chrome
+brew install --cask sublime-text
+brew install --cask spotify
+brew install --cask vlc
+brew install --cask jetbrains-toolbox
+brew install --cask postman
+brew install --cask docker
+brew install --cask soapui
+brew install --cask the-unarchiver
+brew install --cask karabiner-elements
+brew install --cask java
+brew install --cask iterm2
+brew install --cask microsoft-teams
+brew install --cask remote-desktop-manager
+brew install --cask upwork
+brew install --cask slack
+brew install --cask adobe-creative-cloud
+brew install --cask discord
+brew install --cask teamviewer
+brew install --cask forticlient
+brew install --cask firefox
+brew install --cask visual-studio-code
 
 # Remove outdated versions from the cellar.
 brew cleanup
@@ -114,6 +125,7 @@ ln -nfs "$HOME/.lsuf/git/.gitignore" "${ZDOTDIR:-$HOME}/.gitignore"
 
 # Add custom loads
 echo "for config_file ($HOME/.lsuf/zsh/*.zsh) source \$config_file" >> $HOME/.zshrc
+echo "for config_file ($HOME/.lsuf/env/*.env) source \$config_file" >> $HOME/.zshenv
 
 # Configure Karabiner
 mkdir -p "$HOME/.config/karabiner/"
