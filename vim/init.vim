@@ -77,6 +77,11 @@ Plugin 'kristijanhusak/vim-hybrid-material'
 Plugin 'scrooloose/nerdtree'
 Plugin 'vim-syntastic/syntastic'
 Plugin 'ctrlpvim/ctrlp.vim'
+Plugin 'hashivim/vim-terraform'
+Plugin 'fatih/vim-go'
+Plugin 'https://github.com/tpope/vim-fugitive'
+Plugin 'valloric/youcompleteme'
+
 
 
 

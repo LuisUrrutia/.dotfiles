@@ -44,9 +44,8 @@ brew install imagemagick
 brew install rename
 brew install ssh-copy-id
 brew install tree
-brew install stormssh
 brew install go 
-brew install node yarn
+brew install nvm yarn
 brew install python pyenv pyenv-virtualenv 
 brew install p7zip
 brew install youtube-dl
@@ -54,35 +53,40 @@ brew install aria2
 brew install libmagic
 brew install fasd
 brew install awscli
+brew install cmake
+brew install openjdk@11
 
 # Install casks
-brew tap isen-ng/dotnet-sdk-versions
 brew tap homebrew/cask-fonts
-brew cask install font-fira-code
-brew install --cask dotnet-sdk3-1-400
-brew install --cask dotnet-sdk2-2-400
+brew tap homebrew/cask-drivers
+brew tap ethereum/ethereum
+
+
+brew install font-fira-code
+brew install ethereum
+brew install solidity
+brew install --cask ganache
 brew install --cask google-chrome
 brew install --cask sublime-text
 brew install --cask spotify
-brew install --cask vlc
 brew install --cask jetbrains-toolbox
 brew install --cask postman
 brew install --cask docker
-brew install --cask soapui
 brew install --cask the-unarchiver
 brew install --cask karabiner-elements
-brew install --cask java
 brew install --cask iterm2
 brew install --cask microsoft-teams
-brew install --cask remote-desktop-manager
-brew install --cask upwork
 brew install --cask slack
-brew install --cask adobe-creative-cloud
 brew install --cask discord
-brew install --cask teamviewer
-brew install --cask forticlient
-brew install --cask firefox
 brew install --cask visual-studio-code
+brew install --cask telegram
+brew install --cask focusrite-control
+brew install --cask logitech-g-hub
+brew install --cask yubico-yubikey-manager
+brew install --cask elgato-stream-deck
+brew install --cask displaylink
+brew install --cask 1password
+
 
 # Remove outdated versions from the cellar.
 brew cleanup
@@ -91,11 +95,8 @@ brew cleanup
 curl -sSL https://rvm.io/mpapis.asc | gpg --import -
 \curl -L https://get.rvm.io | bash -s stable
 
-# Update npm
-npm install --global npm
-
 # Install npm packages
-npm i -g git-stats speed-test react-native-cli
+npm i -g git-stats speed-test truffle ganache@alpha
 
 # Install fonts
 cp -f $HOME/.lsuf/fonts/* $HOME/Library/Fonts
@@ -126,6 +127,7 @@ ln -nfs "$HOME/.lsuf/git/.gitignore" "${ZDOTDIR:-$HOME}/.gitignore"
 # Add custom loads
 echo "for config_file ($HOME/.lsuf/zsh/*.zsh) source \$config_file" >> $HOME/.zshrc
 echo "for config_file ($HOME/.lsuf/env/*.env) source \$config_file" >> $HOME/.zshenv
+echo 'eval "$(pyenv init --path)"' >> ~/.zprofile
 
 # Configure Karabiner
 mkdir -p "$HOME/.config/karabiner/"
