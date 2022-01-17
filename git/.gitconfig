@@ -130,4 +130,4 @@
 	name = Luis Urrutia
 	email = luis@urrutia.me
 [gpg]
-	program = gpg
+  program = gpg

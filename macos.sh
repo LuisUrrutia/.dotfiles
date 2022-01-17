@@ -99,4 +99,12 @@ defaults write com.apple.commerce AutoUpdate -bool true
 # Prevent Time Machine from prompting to use new hard drives as backup volume
 defaults write com.apple.TimeMachine DoNotOfferNewDisksForBackup -bool true
 
+# Add a shortcut for deleting messages
+defaults write "$HOME/Library/Preferences/com.apple.MobileSMS.plist" NSUserKeyEquivalents -dict 'Delete Conversation...' '@\U007F'
+
+# Don’t display the annoying prompt when quitting iTerm
+defaults write com.googlecode.iterm2 PromptOnQuit -bool false
+
+# Automatically quit printer app once the print jobs complete
+defaults write com.apple.print.PrintingPrefs "Quit When Finished" -bool true
 
