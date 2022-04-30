@@ -126,8 +126,12 @@
 [include]
   path = .gitconfig.user
 [user]
-	signingkey = A00FE18B8498DC85
+	signingkey = 62EFA83B11C7B5DE
 	name = Luis Urrutia
 	email = luis@urrutia.me
 [gpg]
   program = gpg
+[commit]
+	gpgsign = true
+[init]
+	defaultBranch = main

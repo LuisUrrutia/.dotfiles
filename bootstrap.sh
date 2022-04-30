@@ -24,12 +24,7 @@ brew install gnu-sed
 brew install wget
 
 # Install GnuPG to enable PGP-signing commits.
-brew install gnupg
-
-# Install more recent versions of some macOS tools.
-brew install neovim
-brew install grep
-brew install openssh
+brew install gnupg pinentry-mac
 
 # Install font tools.
 brew tap bramstein/webfonttools
@@ -37,12 +32,15 @@ brew install sfnt2woff
 brew install woff2
 
 # Install other useful binaries.
+brew install neovim
+brew install grep
+brew install openssh
+brew install mas
 brew install zsh tmux
 brew install the_silver_searcher
 brew install git git-lfs hub ghi
 brew install imagemagick
 brew install rename
-brew install ssh-copy-id
 brew install tree
 brew install go 
 brew install nvm yarn
@@ -55,6 +53,8 @@ brew install fasd
 brew install awscli
 brew install cmake
 brew install openjdk@11
+brew install webp
+brew install libavif
 
 # Install casks
 brew tap homebrew/cask-fonts
@@ -87,9 +87,14 @@ brew install --cask elgato-stream-deck
 brew install --cask displaylink
 brew install --cask 1password
 
-
 # Remove outdated versions from the cellar.
 brew cleanup
+
+# Install directly from app store
+mas install 1295203466 # Microsoft remote desktop
+mas install 1319778037 # iStat menu
+mas install 533696630 # Webcam Settings
+mas install 441258766 # magnet
 
 # Install rvm
 curl -sSL https://rvm.io/mpapis.asc | gpg --import -
