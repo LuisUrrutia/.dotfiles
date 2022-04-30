@@ -108,3 +108,8 @@ defaults write com.googlecode.iterm2 PromptOnQuit -bool false
 # Automatically quit printer app once the print jobs complete
 defaults write com.apple.print.PrintingPrefs "Quit When Finished" -bool true
 
+# Reverse scroll for mouse
+defaults write -g com.apple.swipescrolldirection -bool false
+
+# Switch option with command 
+hidutil property --set '{"UserKeyMapping":[{"HIDKeyboardModifierMappingSrc":0x7000000E2,"HIDKeyboardModifierMappingDst":0x7000000E3},{"HIDKeyboardModifierMappingSrc":0x7000000E3,"HIDKeyboardModifierMappingDst":0x7000000E2}]}'
