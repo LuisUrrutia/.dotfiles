@@ -126,12 +126,14 @@
 [include]
   path = .gitconfig.user
 [user]
-	signingkey = 62EFA83B11C7B5DE
+	signingkey = ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINE6i8g88hWDLjvuF8toQLJ9nCs8hZojlzBCswr9dg3F
 	name = Luis Urrutia
 	email = luis@urrutia.me
 [gpg]
-  program = gpg
+	format = ssh
 [commit]
 	gpgsign = true
 [init]
 	defaultBranch = main
+[gpg "ssh"]
+	program = /Applications/1Password.app/Contents/MacOS/op-ssh-sign
