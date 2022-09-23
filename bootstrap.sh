@@ -60,17 +60,15 @@ brew tap ethereum/ethereum
 brew install font-fira-code
 brew install ethereum solidity
 brew install kubectl
+brew install ykman
 brew install --cask google-chrome
 brew install --cask sublime-text jetbrains-toolbox visual-studio-code
 brew install --cask spotify
-brew install --cask postman
-brew install --cask docker
+brew install --cask postman docker iterm2
 brew install --cask the-unarchiver
-brew install --cask iterm2
 brew install --cask microsoft-teams discord telegram
-brew install ykman
 brew install --cask 1password
-brew install --cask displaylink
+brew install --cask displaylink forticlient-vpn
 
 if [[ $(uname -m) != 'arm64' ]]; then
   brew install --cask elgato-stream-deck
@@ -162,6 +160,14 @@ code --install-extension icrawl.discord-vscode
 code --install-extension bierner.github-markdown-preview
 code --install-extension JuanBlanco.solidity
 code --install-extension kamikillerto.vscode-colorize
+
+# Pyenv versions
+pyenv install 3.10:latest
+pyenv install 2:latest
+pyenv virtualenv $(pyenv versions|grep "^ *3\.10") g3
+pyenv virtualenv $(pyenv versions|grep "^ *2\.") g2
+pyenv global g3
+
 
 # Install rvm
 curl -sSL https://rvm.io/mpapis.asc | gpg --import -
