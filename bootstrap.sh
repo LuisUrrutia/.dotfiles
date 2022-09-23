@@ -226,8 +226,10 @@ ln -nfs "$HOME/.lsuf/others/.wgetrc" "$HOME/.wgetrc"
 
 # Configure NeoVim
 mkdir -p "$HOME/.config/nvim/colors"
+mkdir -p "$HOME/.config/nvim/lua"
 /bin/cp -r $HOME/.lsuf/vim/colors/* $HOME/.config/nvim/colors
 ln -nfs "$HOME/.lsuf/vim/init.lua" "$HOME/.config/nvim/init.lua"
+ln -nfs "$HOME/.lsuf/vim/plugins.lua" "$HOME/.config/nvim/lua/plugins.lua"
 
 git clone https://github.com/wbthomason/packer.nvim ~/.local/share/nvim/site/pack/packer/opt/packer.nvim
 
