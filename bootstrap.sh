@@ -235,6 +235,8 @@ git clone https://github.com/wbthomason/packer.nvim ~/.local/share/nvim/site/pac
 
 $(brew --prefix)/opt/fzf/install --all
 
+nvim --headless -c 'autocmd User PackerComplete quitall' -c 'PackerSync'
+
 # Set MacOS props
 sh macos.sh
 
