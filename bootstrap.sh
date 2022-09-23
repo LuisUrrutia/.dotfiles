@@ -213,6 +213,9 @@ ln -nfs "$HOME/.lsuf/zsh/.zpreztorc" "${ZDOTDIR:-$HOME}/.zpreztorc"
 ln -nfs "$HOME/.lsuf/git/.gitconfig" "${ZDOTDIR:-$HOME}/.gitconfig"
 ln -nfs "$HOME/.lsuf/git/.gitignore" "${ZDOTDIR:-$HOME}/.gitignore"
 
+# Config iTerm
+ln -nfs "$HOME/.lsuf/iterm/com.googlecode.iterm2.plist" "${ZDOTDIR:-$HOME}/Library/Preferences/com.googlecode.iterm2.plist"
+
 # Add custom loads
 if ! grep -q \.lsuf $HOME/.zshrc
 then
