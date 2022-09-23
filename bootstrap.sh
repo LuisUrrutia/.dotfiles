@@ -215,6 +215,7 @@ ln -nfs "$HOME/.lsuf/git/.gitignore" "${ZDOTDIR:-$HOME}/.gitignore"
 
 # Add custom loads
 if ! grep -q \.lsuf $HOME/.zshrc
+then
   echo "for config_file ($HOME/.lsuf/zsh/*.zsh) source \$config_file" >> $HOME/.zshrc
   echo "for config_file ($HOME/.lsuf/env/*.env) source \$config_file" >> $HOME/.zshenv
   echo 'eval "$(pyenv init --path)"' >> ~/.zprofile
