@@ -2,12 +2,16 @@
 
 CWD="$(pwd)"
 
-/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+which -s brew
+if [[ $? != 0 ]] ; then
+  /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+else
+  brew update
+  brew upgrade
+fi
 
 eval "$(/opt/homebrew/bin/brew shellenv)"
 
-brew update
-brew upgrade
 
 BREW_PREFIX=$(brew --prefix)
 
@@ -208,9 +212,11 @@ ln -nfs "$HOME/.lsuf/git/.gitconfig" "${ZDOTDIR:-$HOME}/.gitconfig"
 ln -nfs "$HOME/.lsuf/git/.gitignore" "${ZDOTDIR:-$HOME}/.gitignore"
 
 # Add custom loads
-echo "for config_file ($HOME/.lsuf/zsh/*.zsh) source \$config_file" >> $HOME/.zshrc
-echo "for config_file ($HOME/.lsuf/env/*.env) source \$config_file" >> $HOME/.zshenv
-echo 'eval "$(pyenv init --path)"' >> ~/.zprofile
+if ! grep -q \.lsuf $HOME/.zshrc
+  echo "for config_file ($HOME/.lsuf/zsh/*.zsh) source \$config_file" >> $HOME/.zshrc
+  echo "for config_file ($HOME/.lsuf/env/*.env) source \$config_file" >> $HOME/.zshenv
+  echo 'eval "$(pyenv init --path)"' >> ~/.zprofile
+fi
 
 # Configure wget
 ln -nfs "$HOME/.lsuf/others/.wgetrc" "$HOME/.wgetrc"
