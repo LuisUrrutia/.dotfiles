@@ -44,7 +44,7 @@ brew install woff2
 brew install neovim
 brew install grep openssh mas jump fzf bat
 brew install zsh tmux
-brew install the_silver_searcher
+brew install the_silver_searcher fswatch
 brew install git git-lfs hub ghi
 brew install imagemagick rename tree
 brew install go node@16
