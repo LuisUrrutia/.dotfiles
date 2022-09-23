@@ -190,6 +190,8 @@ cp -f $HOME/.lsuf/fonts/* $HOME/Library/Fonts
 /usr/libexec/PlistBuddy -c "Merge 'iterm/SolarizedDark.itermcolors' :'Custom Color Presets':'SolarizedDark'" ~/Library/Preferences/com.googlecode.iterm2.plist
 /usr/libexec/PlistBuddy -c "Add :'Custom Color Presets':'Material Design' dict" ~/Library/Preferences/com.googlecode.iterm2.plist
 /usr/libexec/PlistBuddy -c "Merge 'iterm/material-design-colors.itermcolors' :'Custom Color Presets':'Material Design'" ~/Library/Preferences/com.googlecode.iterm2.plist
+/usr/libexec/PlistBuddy -c "Add :'Custom Color Presets':'Material Ocean' dict" ~/Library/Preferences/com.googlecode.iterm2.plist
+/usr/libexec/PlistBuddy -c "Merge 'iterm/MaterialOcean.itermcolors' :'Custom Color Presets':'Material Ocean'" ~/Library/Preferences/com.googlecode.iterm2.plist
 
 # Install Prezto
 git clone --recursive https://github.com/sorin-ionescu/prezto.git "${ZDOTDIR:-$HOME}/.zprezto"
