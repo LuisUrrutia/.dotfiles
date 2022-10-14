@@ -1,7 +1,10 @@
 vimFolder = vim.fn.stdpath("config")
 
+vim.env.NVIM_TUI_ENABLE_TRUE_COLOR = 1
+
 -- GLOBAL OPTIONS
 vim.g.mapleader = ','
+vim.g.material_style = 'oceanic'
 
 
 vim.o.autoread = true                 -- autom. read file when changed outside of Vim
@@ -22,11 +25,14 @@ vim.o.showmatch = true                -- briefly jump to matching bracket if ins
 vim.o.showmode = true                 -- message on status line to show current mode
 vim.o.smartcase = true                -- no ignore case when pattern has uppercase
 vim.o.smarttab = true                 -- use 'shiftwidth' when inserting <Tab>
-vim.o.termguicolors = true            -- Terminal true color support
 vim.o.visualbell = true               -- use visual bell instead of beepingA
 vim.o.wildmenu = true                 -- use menu for command line completion
 vim.o.wildmode = "list:longest"       -- mode for 'wildchar' command-line expansion
 vim.o.writebackup = false             -- make a backup before overwriting a file
+
+if (vim.fn.has('termguicolors') == 1) then
+	vim.opt.termguicolors = true
+end
 
 -- files matching these patterns are not completed
 vim.o.wildignore = vim.o.wildignore..table.concat({
@@ -49,10 +55,7 @@ vim.bo.softtabstop = 2  -- number of spaces that <Tab> uses while editing
 vim.bo.swapfile = false -- whether to use a swapfile for a buffer
 vim.bo.tabstop = 2      -- number of spaces that <Tab> in file uses
 
-
-
-vim.env.NVIM_TUI_ENABLE_TRUE_COLOR = 1
-
+vim.cmd("colorscheme vim-material")
 
 -- save undo information in a file
 if vim.fn.has("persistent_undo") == 1 then
