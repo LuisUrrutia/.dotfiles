@@ -164,6 +164,8 @@ code --install-extension icrawl.discord-vscode
 code --install-extension bierner.github-markdown-preview
 code --install-extension JuanBlanco.solidity
 code --install-extension kamikillerto.vscode-colorize
+code --install-extension wayou.vscode-todo-highlight
+code --install-extension gruntfuggly.todo-tree
 
 # Pyenv versions
 pyenv install 3.10:latest
