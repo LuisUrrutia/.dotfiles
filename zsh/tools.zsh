@@ -8,3 +8,5 @@ eval "$(pyenv init --path)"
 eval "$(pyenv init -)"
 eval "$(pyenv virtualenv-init -)"
 eval "$(jump shell)"
+
+source /Users/luisurrutia/.rvm/scripts/rvm
