@@ -46,12 +46,13 @@ brew install grep openssh mas jump fzf bat
 brew install zsh tmux
 brew install the_silver_searcher fswatch
 brew install git git-lfs hub ghi
-brew install imagemagick rename tree
-brew install go node@16
-brew install nvm yarn
-brew install python pyenv pyenv-virtualenv 
+brew install imagemagick rename tree jq
+brew install go node@16 nvm yarn
+brew install python python-tk pyenv pyenv-virtualenv 
 brew install p7zip aria2 libmagic fasd
 brew install awscli cmake openjdk@11 webp libavif
+brew install pkg-config cairo pango jpeg giflib librsvg
+
 
 $(brew --prefix)/opt/fzf/install
 
@@ -59,11 +60,12 @@ $(brew --prefix)/opt/fzf/install
 brew tap homebrew/cask-fonts
 brew tap homebrew/cask-drivers
 brew tap ethereum/ethereum
+brew tap aws/tap
 
 
 brew install font-fira-code
 brew install ethereum solidity
-brew install kubectl
+brew install kubectl aws-sam-cli
 brew install ykman
 brew install --cask google-chrome
 brew install --cask sublime-text jetbrains-toolbox visual-studio-code
@@ -160,12 +162,16 @@ code --install-extension HashiCorp.terraform
 code --install-extension Equinusocio.vsc-material-theme
 code --install-extension bradlc.vscode-tailwindcss
 code --install-extension ms-vscode.hexeditor
-code --install-extension icrawl.discord-vscode
 code --install-extension bierner.github-markdown-preview
 code --install-extension JuanBlanco.solidity
 code --install-extension kamikillerto.vscode-colorize
 code --install-extension wayou.vscode-todo-highlight
 code --install-extension gruntfuggly.todo-tree
+code --install-extension usernamehw.errorlens
+code --install-extension steoates.autoimport
+code --install-extension aaron-bond.better-comments
+code --install-extension aleonardssh.vscord
+
 
 # Pyenv versions
 pyenv install 3.10:latest
@@ -174,10 +180,12 @@ pyenv virtualenv $(pyenv versions|grep "^ *3\.10") g3
 pyenv virtualenv $(pyenv versions|grep "^ *2\.") g2
 pyenv global g3
 
+pip install pre-commit requests
+
 
 # Install rvm
-curl -sSL https://rvm.io/mpapis.asc | gpg --import -
-\curl -L https://get.rvm.io | bash -s stable
+gpg --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3 7D2BAF1CF37B13E2069D6956105BD0E739499BDB
+\curl -sSL https://get.rvm.io | bash -s stable --rails
 
 # Install npm packages
 npm i -g git-stats speed-test truffle ganache

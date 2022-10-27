@@ -25,3 +25,8 @@ envup() {
     return 1
   fi
 }
+
+awss() {
+  export AWS_PROFILE=$1
+  echo "Using AWS_PROFILE=$1"
+}
