@@ -115,3 +115,16 @@ if [[ $(uname -m) != 'arm64' ]]; then
   defaults write -g com.apple.swipescrolldirection -bool false
 fi
 
+# Show 24 hours clock
+defaults write com.apple.menuextra.clock Show24Hour -int 1
+
+# Don't show siri in menubar
+defaults write com.apple.Siri StatusMenuVisible -int 0
+
+# Don't show spotlight in menubar
+defaults -currentHost write com.apple.Spotlight MenuItemHidden -int 1
+
+# Don't rearrange Spaces
+defaults write com.apple.dock "mru-spaces" -int 0
+
+killall -9 SystemUIServer
