@@ -32,7 +32,7 @@ ln -s "${BREW_PREFIX}/bin/gsed" "${BREW_PREFIX}/bin/sed"
 
 brew install wget
 
-# Install GnuPG to enable PGP-signing commits.
+# Install GnuPG
 brew install gnupg pinentry-mac
 
 # Install font tools.
@@ -42,16 +42,17 @@ brew install woff2
 
 # Install other useful binaries.
 brew install neovim
-brew install grep openssh mas jump fzf bat
+brew install grep openssh mas jump fzf tree rename cmake pkg-config
 brew install zsh tmux
-brew install the_silver_searcher fswatch
-brew install git git-lfs hub ghi
-brew install imagemagick rename tree jq
-brew install go node@16 nvm yarn
+brew install the_silver_searcher fswatch watch
+brew install git git-lfs gh
+brew install jq bat yq
+brew install imagemagick libmagic libavif webp cairo pango jpeg giflib librsvg
 brew install python python-tk pyenv pyenv-virtualenv 
-brew install p7zip aria2 libmagic fasd
-brew install awscli cmake openjdk@11 webp libavif
-brew install pkg-config cairo pango jpeg giflib librsvg
+brew install p7zip aria2 fasd
+brew install gdal
+brew install rclone
+brew install autossh
 
 
 $(brew --prefix)/opt/fzf/install
@@ -65,16 +66,26 @@ brew tap aws/tap
 
 brew install font-fira-code
 brew install ethereum solidity
-brew install kubectl aws-sam-cli
+brew install kubectl
 brew install ykman
+brew install go 
+brew install node@16
+brew install nvm yarn
+brew install awscli google-cloud-sdk aws-sam-cli
+brew install openjdk@11
+brew install --cask docker iterm2
 brew install --cask google-chrome
 brew install --cask sublime-text jetbrains-toolbox visual-studio-code
 brew install --cask spotify
-brew install --cask postman docker iterm2
 brew install --cask the-unarchiver
+brew install --cask postman
 brew install --cask microsoft-teams discord telegram
 brew install --cask 1password
 brew install --cask displaylink forticlient-vpn
+
+brew install redis
+brew install --cask pgadmin4
+
 
 if [[ $(uname -m) != 'arm64' ]]; then
   brew install --cask elgato-stream-deck
@@ -155,7 +166,7 @@ code --install-extension PKief.material-icon-theme
 code --install-extension golang.Go
 code --install-extension christian-kohler.path-intellisense
 code --install-extension EditorConfig.EditorConfig
-code --install-extension mikestead.dotenv
+code --install-extension dotenv.dotenv-vscode
 code --install-extension GitHub.copilot
 code --install-extension alefragnani.Bookmarks
 code --install-extension HashiCorp.terraform
@@ -171,7 +182,18 @@ code --install-extension usernamehw.errorlens
 code --install-extension steoates.autoimport
 code --install-extension aaron-bond.better-comments
 code --install-extension aleonardssh.vscord
-
+code --install-extension googlecloudtools.cloudcode
+code --install-extension ms-vscode-remote.remote-containers
+code --install-extension graphql.vscode-graphql
+code --install-extension graphql.vscode-graphql-syntax
+code --install-extension graphql.vscode-graphql-execution
+code --install-extension davidanson.vscode-markdownlint
+code --install-extension ms-ossdata.vscode-postgresql
+code --install-extension ms-vscode-remote.remote-ssh
+code --install-extension ms-vscode-remote.remote-ssh-edit
+code --install-extension sonarsource.sonarlint-vscode
+code --install-extension redhat.vscode-xml
+code --install-extension redhat.vscode-yaml
 
 # Pyenv versions
 pyenv install 3.10:latest
@@ -189,6 +211,9 @@ gpg --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3 7D2BAF1CF37B13E2069D695
 
 # Install npm packages
 npm i -g git-stats speed-test truffle ganache
+npm i -g pnpm lerna
+npm i -g sort-package-json npm-check-updates depcheck syncpack
+npm i -g nodemon concurrently
 
 # Install fonts
 cp -f $HOME/.lsuf/fonts/* $HOME/Library/Fonts
