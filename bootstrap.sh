@@ -100,53 +100,17 @@ if [[ $(uname -m) != 'arm64' ]]; then
   mas install 441258766 # magnet
 fi
 
-# Install visual studio code extensions
-code --install-extension ms-vsliveshare.vsliveshare
-code --install-extension christian-kohler.npm-intellisense
-code --install-extension eamodio.gitlens
-code --install-extension vscodevim.vim
-code --install-extension ms-python.python
-code --install-extension dbaeumer.vscode-eslint
-code --install-extension ms-azuretools.vscode-docker
-code --install-extension PKief.material-icon-theme
-code --install-extension golang.Go
-code --install-extension christian-kohler.path-intellisense
-code --install-extension EditorConfig.EditorConfig
-code --install-extension dotenv.dotenv-vscode
-code --install-extension GitHub.copilot
-code --install-extension alefragnani.Bookmarks
-code --install-extension HashiCorp.terraform
-code --install-extension Equinusocio.vsc-material-theme
-code --install-extension bradlc.vscode-tailwindcss
-code --install-extension ms-vscode.hexeditor
-code --install-extension bierner.github-markdown-preview
-code --install-extension JuanBlanco.solidity
-code --install-extension kamikillerto.vscode-colorize
-code --install-extension wayou.vscode-todo-highlight
-code --install-extension gruntfuggly.todo-tree
-code --install-extension usernamehw.errorlens
-code --install-extension steoates.autoimport
-code --install-extension aaron-bond.better-comments
-code --install-extension aleonardssh.vscord
-code --install-extension googlecloudtools.cloudcode
-code --install-extension ms-vscode-remote.remote-containers
-code --install-extension graphql.vscode-graphql
-code --install-extension graphql.vscode-graphql-syntax
-code --install-extension graphql.vscode-graphql-execution
-code --install-extension davidanson.vscode-markdownlint
-code --install-extension ms-ossdata.vscode-postgresql
-code --install-extension ms-vscode-remote.remote-ssh
-code --install-extension ms-vscode-remote.remote-ssh-edit
-code --install-extension sonarsource.sonarlint-vscode
-code --install-extension redhat.vscode-xml
-code --install-extension redhat.vscode-yaml
-
 # Pyenv versions
 pyenv install 3.10:latest
 pyenv install 2:latest
 pyenv virtualenv $(pyenv versions|grep "^ *3\.10") g3
 pyenv virtualenv $(pyenv versions|grep "^ *2\.") g2
 pyenv global g3
+
+# Activate pyenv
+eval "$(pyenv init --path)"
+eval "$(pyenv init -)"
+eval "$(pyenv virtualenv-init -)"
 
 pip install pre-commit requests
 
@@ -220,6 +184,9 @@ nvim --headless -c 'autocmd User PackerComplete quitall' -c 'PackerSync'
 
 # Install fonts
 sh fonts.sh
+
+# Install VSCode Extensions
+sh vscode.sh
 
 # Set MacOS props
 sh macos.sh
