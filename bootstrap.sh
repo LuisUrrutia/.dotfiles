@@ -69,7 +69,7 @@ brew install ethereum solidity
 brew install kubectl
 brew install ykman
 brew install go 
-brew install node@16
+brew install node
 brew install nvm yarn
 brew install awscli google-cloud-sdk aws-sam-cli
 brew install openjdk@11
@@ -204,12 +204,12 @@ pyenv global g3
 
 pip install pre-commit requests
 
-
 # Install rvm
 gpg --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3 7D2BAF1CF37B13E2069D6956105BD0E739499BDB
 \curl -sSL https://get.rvm.io | bash -s stable --rails
 
 # Install npm packages
+mkdir ~/.nvm
 npm i -g git-stats speed-test truffle ganache
 npm i -g pnpm lerna
 npm i -g sort-package-json npm-check-updates depcheck syncpack
