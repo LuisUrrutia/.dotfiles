@@ -1,3 +1,5 @@
+require("plugins")
+
 vimFolder = vim.fn.stdpath("config")
 
 vim.env.NVIM_TUI_ENABLE_TRUE_COLOR = 1
@@ -55,7 +57,10 @@ vim.bo.softtabstop = 2  -- number of spaces that <Tab> uses while editing
 vim.bo.swapfile = false -- whether to use a swapfile for a buffer
 vim.bo.tabstop = 2      -- number of spaces that <Tab> in file uses
 
-vim.cmd("colorscheme vim-material")
+
+if (vim.g.colors_name == 'vim-material') then
+  vim.cmd("colorscheme vim-material")
+end
 
 -- save undo information in a file
 if vim.fn.has("persistent_undo") == 1 then
@@ -74,4 +79,3 @@ vim.cmd([[
   augroup end
 ]])
 
-require("plugins")
