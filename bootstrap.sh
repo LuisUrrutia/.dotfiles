@@ -53,6 +53,10 @@ brew install p7zip aria2 fasd
 brew install gdal
 brew install rclone
 brew install autossh
+brew install starship
+
+# Install rust
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 
 # Install casks
 brew tap homebrew/cask-drivers
@@ -76,6 +80,7 @@ brew install --cask postman
 brew install --cask microsoft-teams discord telegram
 brew install --cask 1password
 brew install --cask displaylink forticlient-vpn
+brew install --cask 1password/tap/1password-cli
 
 brew install redis
 brew install --cask pgadmin4
@@ -86,8 +91,6 @@ if [[ $(uname -m) != 'arm64' ]]; then
   brew install --cask focusrite-control
 fi
 
-
-brew install --cask 1password/tap/1password-cli
 
 # Remove outdated versions from the cellar.
 brew cleanup
@@ -107,8 +110,10 @@ pyenv virtualenv $(pyenv versions|grep "^ *3\.10") g3
 pyenv virtualenv $(pyenv versions|grep "^ *2\.") g2
 pyenv global g3
 
+# Speed up pyenv
+cargo install pyenv-python
+
 # Activate pyenv
-eval "$(pyenv init --path)"
 eval "$(pyenv init -)"
 eval "$(pyenv virtualenv-init -)"
 
@@ -138,9 +143,6 @@ npm i -g nodemon concurrently
 # Install Prezto
 git clone --recursive https://github.com/sorin-ionescu/prezto.git "${ZDOTDIR:-$HOME}/.zprezto"
 git clone --recurse-submodules https://github.com/belak/prezto-contrib "${ZDOTDIR:-$HOME}/.zprezto/contrib"
-cd "${ZDOTDIR:-$HOME}/.zprezto/contrib/contrib-prompt/external/spaceship"
-git checkout master
-git pull
 cd $CWD
 
 for file in ${ZDOTDIR:-$HOME}/.zprezto/runcoms/*[^md]
@@ -163,7 +165,7 @@ if ! grep -q \.lsuf $HOME/.zshrc
 then
   echo "for config_file ($HOME/.lsuf/zsh/*.zsh) source \$config_file" >> $HOME/.zshrc
   echo "for config_file ($HOME/.lsuf/env/*.env) source \$config_file" >> $HOME/.zshenv
-  echo 'eval "$(pyenv init --path)"' >> ~/.zprofile
+  echo 'eval "$(starship init zsh)"' >> $HOME/.zshrc
 fi
 
 # Configure wget
