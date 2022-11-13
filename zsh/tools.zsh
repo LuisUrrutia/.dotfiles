@@ -4,7 +4,7 @@ autoload -U zmv
 # Set VIM
 set -o vi
 
-eval "$(jump shell)"
+eval "$(zoxide init zsh)"
 
 #source $HOME/.rvm/scripts/rvm
 source "$HOME/.cargo/env"
