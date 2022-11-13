@@ -42,14 +42,14 @@ brew install woff2
 
 # Install other useful binaries.
 brew install neovim
-brew install grep openssh mas jump fzf tree rename cmake pkg-config
+brew install grep openssh mas fzf tree rename cmake pkg-config zoxide
 brew install zsh tmux
 brew install the_silver_searcher fswatch watch
 brew install git git-lfs gh
 brew install jq bat yq
 brew install imagemagick libmagic libavif webp cairo pango jpeg giflib librsvg
 brew install python python-tk pyenv pyenv-virtualenv 
-brew install p7zip aria2 fasd
+brew install p7zip aria2
 brew install gdal
 brew install rclone
 brew install autossh
