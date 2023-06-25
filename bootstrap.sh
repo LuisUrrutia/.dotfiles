@@ -70,21 +70,18 @@ brew install go
 brew install node
 brew install nvm yarn
 brew install awscli google-cloud-sdk aws-sam-cli
-brew install openjdk@11
 brew install --cask docker iterm2
 brew install --cask google-chrome
-brew install --cask sublime-text jetbrains-toolbox visual-studio-code
+brew install --cask sublime-text visual-studio-code-insiders
 brew install --cask spotify
 brew install --cask the-unarchiver
 brew install --cask postman
-brew install --cask microsoft-teams discord telegram
-brew install --cask 1password
+brew install --cask microsoft-teams discord telegram slack
 brew install --cask displaylink forticlient-vpn
+brew install --cask 1password
 brew install --cask 1password/tap/1password-cli
 
 brew install redis
-brew install --cask pgadmin4
-
 
 if [[ $(uname -m) != 'arm64' ]]; then
   brew install --cask elgato-stream-deck
@@ -125,9 +122,9 @@ gpg --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3 7D2BAF1CF37B13E2069D695
 
 # Install npm packages
 mkdir ~/.nvm
-npm i -g git-stats speed-test truffle ganache
+npm i -g git-stats truffle ganache
 npm i -g pnpm lerna
-npm i -g sort-package-json npm-check-updates depcheck syncpack
+npm i -g npm-check-updates depcheck syncpack
 npm i -g nodemon concurrently
 
 # Add OceanicMaterial
@@ -156,9 +153,6 @@ ln -nfs "$HOME/.lsuf/zsh/.zpreztorc" "${ZDOTDIR:-$HOME}/.zpreztorc"
 # Config git
 ln -nfs "$HOME/.lsuf/git/.gitconfig" "${ZDOTDIR:-$HOME}/.gitconfig"
 ln -nfs "$HOME/.lsuf/git/.gitignore" "${ZDOTDIR:-$HOME}/.gitignore"
-
-# Config iTerm
-ln -nfs "$HOME/.lsuf/iterm/com.googlecode.iterm2.plist" "${ZDOTDIR:-$HOME}/Library/Preferences/com.googlecode.iterm2.plist"
 
 # Add custom loads
 if ! grep -q \.lsuf $HOME/.zshrc
