@@ -35,7 +35,6 @@ brew install wget
 # Install GnuPG
 brew install gnupg pinentry-mac
 
-
 # Install other useful binaries.
 brew install zsh tmux neovim
 brew install grep openssh mas fzf tree rename cmake pkg-config zoxide
@@ -48,6 +47,38 @@ brew install p7zip aria2
 brew install rclone
 brew install autossh
 brew install starship
+
+# Add OceanicMaterial
+/usr/libexec/PlistBuddy -c "Add :'Custom Color Presets':'OceanicMaterial' dict" ~/Library/Preferences/com.googlecode.iterm2.plist
+/usr/libexec/PlistBuddy -c "Merge 'iterm/OceanicMaterial.itermcolors' :'Custom Color Presets':'OceanicMaterial'" ~/Library/Preferences/com.googlecode.iterm2.plist
+/usr/libexec/PlistBuddy -c "Add :'Custom Color Presets':'SolarizedDark' dict" ~/Library/Preferences/com.googlecode.iterm2.plist
+/usr/libexec/PlistBuddy -c "Merge 'iterm/SolarizedDark.itermcolors' :'Custom Color Presets':'SolarizedDark'" ~/Library/Preferences/com.googlecode.iterm2.plist
+/usr/libexec/PlistBuddy -c "Add :'Custom Color Presets':'Material Design' dict" ~/Library/Preferences/com.googlecode.iterm2.plist
+/usr/libexec/PlistBuddy -c "Merge 'iterm/material-design-colors.itermcolors' :'Custom Color Presets':'Material Design'" ~/Library/Preferences/com.googlecode.iterm2.plist
+/usr/libexec/PlistBuddy -c "Add :'Custom Color Presets':'Material Ocean' dict" ~/Library/Preferences/com.googlecode.iterm2.plist
+/usr/libexec/PlistBuddy -c "Merge 'iterm/MaterialOcean.itermcolors' :'Custom Color Presets':'Material Ocean'" ~/Library/Preferences/com.googlecode.iterm2.plist
+
+# Install Prezto
+git clone --recursive https://github.com/sorin-ionescu/prezto.git "${ZDOTDIR:-$HOME}/.zprezto"
+git clone --recurse-submodules https://github.com/belak/prezto-contrib "${ZDOTDIR:-$HOME}/.zprezto/contrib"
+cd $CWD
+
+for file in ${ZDOTDIR:-$HOME}/.zprezto/runcoms/*[^md]
+do
+  filename=$(basename $file)
+  rm "$HOME/.${filename}"
+  ln -s "$file" "$HOME/.${filename}"
+done
+
+ln -nfs "$HOME/.lsuf/zsh/.zpreztorc" "${ZDOTDIR:-$HOME}/.zpreztorc"
+
+# Add custom loads
+if ! grep -q \.lsuf $HOME/.zshrc
+then
+  echo "for config_file ($HOME/.lsuf/zsh/*.zsh) source \$config_file" >> $HOME/.zshrc
+  echo "for config_file ($HOME/.lsuf/env/*.env) source \$config_file" >> $HOME/.zshenv
+  echo 'eval "$(starship init zsh)"' >> $HOME/.zshrc
+fi
 
 # Install rust
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
@@ -93,7 +124,6 @@ if [[ $(uname -m) != 'arm64' ]]; then
   brew install --cask focusrite-control
 fi
 
-
 # Remove outdated versions from the cellar.
 brew cleanup
 
@@ -132,40 +162,9 @@ npm i -g pnpm lerna
 npm i -g npm-check-updates depcheck syncpack
 npm i -g nodemon concurrently
 
-# Add OceanicMaterial
-/usr/libexec/PlistBuddy -c "Add :'Custom Color Presets':'OceanicMaterial' dict" ~/Library/Preferences/com.googlecode.iterm2.plist
-/usr/libexec/PlistBuddy -c "Merge 'iterm/OceanicMaterial.itermcolors' :'Custom Color Presets':'OceanicMaterial'" ~/Library/Preferences/com.googlecode.iterm2.plist
-/usr/libexec/PlistBuddy -c "Add :'Custom Color Presets':'SolarizedDark' dict" ~/Library/Preferences/com.googlecode.iterm2.plist
-/usr/libexec/PlistBuddy -c "Merge 'iterm/SolarizedDark.itermcolors' :'Custom Color Presets':'SolarizedDark'" ~/Library/Preferences/com.googlecode.iterm2.plist
-/usr/libexec/PlistBuddy -c "Add :'Custom Color Presets':'Material Design' dict" ~/Library/Preferences/com.googlecode.iterm2.plist
-/usr/libexec/PlistBuddy -c "Merge 'iterm/material-design-colors.itermcolors' :'Custom Color Presets':'Material Design'" ~/Library/Preferences/com.googlecode.iterm2.plist
-/usr/libexec/PlistBuddy -c "Add :'Custom Color Presets':'Material Ocean' dict" ~/Library/Preferences/com.googlecode.iterm2.plist
-/usr/libexec/PlistBuddy -c "Merge 'iterm/MaterialOcean.itermcolors' :'Custom Color Presets':'Material Ocean'" ~/Library/Preferences/com.googlecode.iterm2.plist
-
-# Install Prezto
-git clone --recursive https://github.com/sorin-ionescu/prezto.git "${ZDOTDIR:-$HOME}/.zprezto"
-git clone --recurse-submodules https://github.com/belak/prezto-contrib "${ZDOTDIR:-$HOME}/.zprezto/contrib"
-cd $CWD
-
-for file in ${ZDOTDIR:-$HOME}/.zprezto/runcoms/*[^md]
-do
-  filename=$(basename $file)
-  ln -s "$file" "${ZDOTDIR:-$HOME}/.${filename}"
-done
-
-ln -nfs "$HOME/.lsuf/zsh/.zpreztorc" "${ZDOTDIR:-$HOME}/.zpreztorc"
-
 # Config git
 ln -nfs "$HOME/.lsuf/git/.gitconfig" "${ZDOTDIR:-$HOME}/.gitconfig"
 ln -nfs "$HOME/.lsuf/git/.gitignore" "${ZDOTDIR:-$HOME}/.gitignore"
-
-# Add custom loads
-if ! grep -q \.lsuf $HOME/.zshrc
-then
-  echo "for config_file ($HOME/.lsuf/zsh/*.zsh) source \$config_file" >> $HOME/.zshrc
-  echo "for config_file ($HOME/.lsuf/env/*.env) source \$config_file" >> $HOME/.zshenv
-  echo 'eval "$(starship init zsh)"' >> $HOME/.zshrc
-fi
 
 # Configure wget
 ln -nfs "$HOME/.lsuf/others/.wgetrc" "$HOME/.wgetrc"
