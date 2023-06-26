@@ -35,22 +35,16 @@ brew install wget
 # Install GnuPG
 brew install gnupg pinentry-mac
 
-# Install font tools.
-brew tap bramstein/webfonttools
-brew install sfnt2woff
-brew install woff2
 
 # Install other useful binaries.
-brew install neovim
+brew install zsh tmux neovim
 brew install grep openssh mas fzf tree rename cmake pkg-config zoxide
-brew install zsh tmux
 brew install the_silver_searcher fswatch watch
 brew install git git-lfs gh
 brew install jq bat yq
 brew install imagemagick libmagic libavif webp cairo pango jpeg giflib librsvg
 brew install python python-tk pyenv pyenv-virtualenv 
 brew install p7zip aria2
-brew install gdal
 brew install rclone
 brew install autossh
 brew install starship
@@ -62,6 +56,11 @@ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 brew tap homebrew/cask-drivers
 brew tap ethereum/ethereum
 brew tap aws/tap
+brew tap bramstein/webfonttools
+
+# Install font tools.
+brew install sfnt2woff
+brew install woff2
 
 brew install ethereum solidity
 brew install kubectl
@@ -71,13 +70,19 @@ brew install node
 brew install nvm yarn
 brew install awscli google-cloud-sdk aws-sam-cli
 brew install --cask docker iterm2
-brew install --cask google-chrome
+brew install --cask google-chrome firefox brave-browser
 brew install --cask sublime-text visual-studio-code-insiders
 brew install --cask spotify
 brew install --cask the-unarchiver
 brew install --cask postman
-brew install --cask microsoft-teams discord telegram slack
+brew install --cask microsoft-teams discord telegram slack whatsapp
 brew install --cask displaylink forticlient-vpn
+brew install --cask teamviewer
+brew install --cask macfuse
+brew install --cask veracrypt
+brew install --cask http-toolkit
+brew install --cask zoom
+brew install --cask vlc
 brew install --cask 1password
 brew install --cask 1password/tap/1password-cli
 
