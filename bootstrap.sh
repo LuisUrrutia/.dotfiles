@@ -114,6 +114,9 @@ brew install --cask veracrypt
 brew install --cask http-toolkit
 brew install --cask zoom
 brew install --cask vlc
+brew install --cask grammarly
+brew install --cask soundsource
+brew install --cask loopback
 brew install --cask 1password
 brew install --cask 1password/tap/1password-cli
 
