@@ -88,6 +88,7 @@ brew tap homebrew/cask-drivers
 brew tap ethereum/ethereum
 brew tap aws/tap
 brew tap bramstein/webfonttools
+brew tap homebrew/cask-versions
 
 # Install font tools.
 brew install sfnt2woff
