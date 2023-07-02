@@ -47,6 +47,7 @@ brew install p7zip aria2
 brew install rclone
 brew install autossh
 brew install starship
+brew install ddcctl
 
 # Add OceanicMaterial
 /usr/libexec/PlistBuddy -c "Add :'Custom Color Presets':'OceanicMaterial' dict" ~/Library/Preferences/com.googlecode.iterm2.plist
@@ -101,6 +102,8 @@ brew install go
 brew install node
 brew install nvm yarn
 brew install awscli google-cloud-sdk aws-sam-cli
+brew install bleunlock
+brew install --cask android-platform-tools
 brew install --cask docker iterm2
 brew install --cask google-chrome firefox brave-browser
 brew install --cask sublime-text visual-studio-code-insiders
@@ -172,6 +175,9 @@ ln -nfs "$HOME/.lsuf/git/.gitignore" "${ZDOTDIR:-$HOME}/.gitignore"
 
 # Configure wget
 ln -nfs "$HOME/.lsuf/others/.wgetrc" "$HOME/.wgetrc"
+
+# Configure starship
+ln -nfs "$HOME/.lsuf/starship.toml" "$HOME/.config/starship.toml"
 
 # Configure NeoVim
 mkdir -p "$HOME/.config/nvim/colors"
