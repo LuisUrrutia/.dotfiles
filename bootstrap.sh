@@ -170,6 +170,8 @@ npm i -g pnpm lerna
 npm i -g npm-check-updates depcheck syncpack
 npm i -g nodemon concurrently
 
+wget https://raw.githubusercontent.com/httptoolkit/frida-android-unpinning/main/frida-script.js -P "$HOME/.lsuf/"
+
 # Config git
 ln -nfs "$HOME/.lsuf/git/.gitconfig" "${ZDOTDIR:-$HOME}/.gitconfig"
 ln -nfs "$HOME/.lsuf/git/.gitignore" "${ZDOTDIR:-$HOME}/.gitignore"
