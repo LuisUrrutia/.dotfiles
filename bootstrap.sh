@@ -42,22 +42,12 @@ brew install the_silver_searcher fswatch watch
 brew install git git-lfs gh
 brew install jq bat yq
 brew install imagemagick libmagic libavif webp cairo pango jpeg giflib librsvg
-brew install python python-tk pyenv pyenv-virtualenv 
+brew install python python-tk
 brew install p7zip aria2
 brew install rclone
 brew install autossh
 brew install starship
 brew install ddcctl
-
-# Add OceanicMaterial
-/usr/libexec/PlistBuddy -c "Add :'Custom Color Presets':'OceanicMaterial' dict" ~/Library/Preferences/com.googlecode.iterm2.plist
-/usr/libexec/PlistBuddy -c "Merge 'iterm/OceanicMaterial.itermcolors' :'Custom Color Presets':'OceanicMaterial'" ~/Library/Preferences/com.googlecode.iterm2.plist
-/usr/libexec/PlistBuddy -c "Add :'Custom Color Presets':'SolarizedDark' dict" ~/Library/Preferences/com.googlecode.iterm2.plist
-/usr/libexec/PlistBuddy -c "Merge 'iterm/SolarizedDark.itermcolors' :'Custom Color Presets':'SolarizedDark'" ~/Library/Preferences/com.googlecode.iterm2.plist
-/usr/libexec/PlistBuddy -c "Add :'Custom Color Presets':'Material Design' dict" ~/Library/Preferences/com.googlecode.iterm2.plist
-/usr/libexec/PlistBuddy -c "Merge 'iterm/material-design-colors.itermcolors' :'Custom Color Presets':'Material Design'" ~/Library/Preferences/com.googlecode.iterm2.plist
-/usr/libexec/PlistBuddy -c "Add :'Custom Color Presets':'Material Ocean' dict" ~/Library/Preferences/com.googlecode.iterm2.plist
-/usr/libexec/PlistBuddy -c "Merge 'iterm/MaterialOcean.itermcolors' :'Custom Color Presets':'Material Ocean'" ~/Library/Preferences/com.googlecode.iterm2.plist
 
 # Install Prezto
 git clone --recursive https://github.com/sorin-ionescu/prezto.git "${ZDOTDIR:-$HOME}/.zprezto"
@@ -103,10 +93,11 @@ brew install node
 brew install nvm yarn
 brew install awscli google-cloud-sdk aws-sam-cli
 brew install bleunlock
+brew install --cask warp 
 brew install --cask android-platform-tools
-brew install --cask docker iterm2
-brew install --cask google-chrome firefox brave-browser
-brew install --cask sublime-text visual-studio-code-insiders
+brew install --cask docker
+brew install --cask google-chrome
+brew install --cask sublime-text visual-studio-code
 brew install --cask spotify
 brew install --cask the-unarchiver
 brew install --cask postman
@@ -126,35 +117,17 @@ brew install --cask 1password/tap/1password-cli
 
 brew install redis
 
-if [[ $(uname -m) != 'arm64' ]]; then
-  brew install --cask elgato-stream-deck
-  brew install --cask focusrite-control
-fi
+brew install --cask elgato-stream-deck
+brew install --cask focusrite-control
 
 # Remove outdated versions from the cellar.
 brew cleanup
 
 # Install directly from app store
 mas install 1295203466 # Microsoft remote desktop
-if [[ $(uname -m) != 'arm64' ]]; then
-  mas install 1319778037 # iStat menu
-  mas install 533696630 # Webcam Settings
-  mas install 441258766 # magnet
-fi
-
-# Pyenv versions
-pyenv install 3.10:latest
-pyenv install 2:latest
-pyenv virtualenv $(pyenv versions|grep "^ *3\.10") g3
-pyenv virtualenv $(pyenv versions|grep "^ *2\.") g2
-pyenv global g3
-
-# Speed up pyenv
-cargo install pyenv-python
-
-# Activate pyenv
-eval "$(pyenv init -)"
-eval "$(pyenv virtualenv-init -)"
+mas install 1319778037 # iStat menu
+mas install 533696630 # Webcam Settings
+mas install 441258766 # magnet
 
 pip install pre-commit requests
 pip install frida-tools
@@ -165,10 +138,7 @@ gpg --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3 7D2BAF1CF37B13E2069D695
 
 # Install npm packages
 mkdir ~/.nvm
-npm i -g git-stats truffle ganache
 npm i -g pnpm lerna
-npm i -g npm-check-updates depcheck syncpack
-npm i -g nodemon concurrently
 
 wget https://raw.githubusercontent.com/httptoolkit/frida-android-unpinning/main/frida-script.js -P "$HOME/.lsuf/"
 
@@ -197,9 +167,6 @@ nvim --headless -c 'autocmd User PackerComplete quitall' -c 'PackerSync'
 
 # Install fonts
 sh fonts.sh
-
-# Install VSCode Extensions
-sh vscode.sh
 
 # Set MacOS props
 sh macos.sh
