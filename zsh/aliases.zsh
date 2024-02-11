@@ -21,8 +21,8 @@ alias psg="ps aux | grep "
 alias df='df -h'
 alias du='du -h -d 2'
 
-alias ll='ls -alGh'
-alias ls='ls -Gh'
+alias ll='eza --icons --git -alh'
+alias ls='eza --icons -h'
 
 # Git Aliases
 alias gcrand='git commit -m "$(curl -s http://whatthecommit.com/index.txt)"'
