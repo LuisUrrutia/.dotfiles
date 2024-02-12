@@ -129,7 +129,14 @@ mas install 441258766 # magnet
 brew cleanup
 
 # Download certificate unpinning frida script
-wget https://raw.githubusercontent.com/httptoolkit/frida-android-unpinning/main/frida-script.js -P "$HOME/.lsuf/"
+wget https://raw.githubusercontent.com/httptoolkit/frida-android-unpinning/main/frida-script.js -P "$HOME/.dotfiles/"
+
+for folder in $(echo $STOW_FOLDERS | sed "s/,/ /g")
+do
+    echo "stow $folder"
+    stow -D $folder
+    stow $folder
+done
 
 # Set MacOS props
 sh macos.sh
