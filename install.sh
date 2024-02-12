@@ -25,8 +25,6 @@ brew install stow
 
 #region Install Zsh and Prezto
 brew install zsh
-git clone --recursive https://github.com/sorin-ionescu/prezto.git "${ZDOTDIR:-$HOME}/.zprezto"
-git clone --recurse-submodules https://github.com/belak/prezto-contrib "${ZDOTDIR:-$HOME}/.zprezto/contrib"
 
 # Install casks
 brew tap homebrew/cask-drivers
