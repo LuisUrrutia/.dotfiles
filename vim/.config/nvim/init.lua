@@ -1,3 +1,5 @@
+vim.g.mapleader = ','
+
 require("plugins")
 
 vimFolder = vim.fn.stdpath("config")
@@ -5,7 +7,6 @@ vimFolder = vim.fn.stdpath("config")
 vim.env.NVIM_TUI_ENABLE_TRUE_COLOR = 1
 
 -- GLOBAL OPTIONS
-vim.g.mapleader = ','
 vim.g.material_style = 'oceanic'
 
 
