@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 
+STOW_FOLDERS="zsh,starship,wget,git,vim"
 CWD="$(pwd)"
 
 # Check if brew is installed, otherwise install it
@@ -26,36 +27,13 @@ brew install stow
 brew install zsh
 git clone --recursive https://github.com/sorin-ionescu/prezto.git "${ZDOTDIR:-$HOME}/.zprezto"
 git clone --recurse-submodules https://github.com/belak/prezto-contrib "${ZDOTDIR:-$HOME}/.zprezto/contrib"
-cd $CWD
-
-for file in ${ZDOTDIR:-$HOME}/.zprezto/runcoms/*[^md]
-do
-  filename=$(basename $file)
-  rm "$HOME/.${filename}"
-  ln -s "$file" "$HOME/.${filename}"
-done
-
-ln -nfs "$HOME/.lsuf/zsh/.zpreztorc" "${ZDOTDIR:-$HOME}/.zpreztorc"
-
-# Add custom loads
-if ! grep -q \.lsuf $HOME/.zshrc
-then
-  # Loads all env/*.env files
-  echo "for config_file ($HOME/.lsuf/env/*.env) source \$config_file" >> $HOME/.zshenv
-  # Loads all zsh/*.zsh files
-  echo "for config_file ($HOME/.lsuf/zsh/*.zsh) source \$config_file" >> $HOME/.zshrc
-  # Configure starship
-  echo 'eval "$(starship init zsh)"' >> $HOME/.zshrc
-  # Print random phrase on new shell
-  echo 'random_phrase' >> $HOME/.zshrc
-fi
-#endregion
 
 # Install casks
 brew tap homebrew/cask-drivers
 brew tap ethereum/ethereum
 brew tap aws/tap
 brew tap bramstein/webfonttools
+brew tap homebrew/cask-fonts
 brew tap homebrew/cask-versions
 brew tap oven-sh/bun
 
@@ -117,14 +95,21 @@ brew install the_silver_searcher tree rename grep zoxide
 
 # Install some other useful utilities like `sponge`.
 brew install moreutils
+
 # Install GNU `find`, `locate`, `updatedb`, and `xargs`
 brew install findutils
+
 # Install GNU `sed`, overwriting the built-in `sed`.
 brew install gnu-sed
-brew install wget
+
+# Install fonts
+brew install font-fira-code
+brew install font-monaspace
+brew install --cask font-fira-code-nerd-font
+brew install --cask font-monaspace-nerd-font
 
 # Install other useful binaries and tools
-brew install p7zip aria2 mas fswatch watch rclone autossh figlet
+brew install p7zip aria2 mas fswatch watch rclone autossh figlet wget
 brew install --cask postman the-unarchiver android-platform-tools grammarly teamviewer displaylink
 brew install yarn pnpm # JS package managers
 cargo install lolcrab
@@ -140,38 +125,11 @@ mas install 1319778037 # iStat menu
 mas install 533696630 # Webcam Settings
 mas install 441258766 # magnet
 
-
-
-
 # Remove outdated versions from the cellar.
 brew cleanup
 
-
-
+# Download certificate unpinning frida script
 wget https://raw.githubusercontent.com/httptoolkit/frida-android-unpinning/main/frida-script.js -P "$HOME/.lsuf/"
-
-# Config git
-ln -nfs "$HOME/.lsuf/git/.gitconfig" "${ZDOTDIR:-$HOME}/.gitconfig"
-ln -nfs "$HOME/.lsuf/git/.gitignore" "${ZDOTDIR:-$HOME}/.gitignore"
-
-# Configure wget
-ln -nfs "$HOME/.lsuf/others/.wgetrc" "$HOME/.wgetrc"
-
-# Configure starship
-ln -nfs "$HOME/.lsuf/starship.toml" "$HOME/.config/starship.toml"
-
-# Configure NeoVim
-mkdir -p "$HOME/.config/nvim/colors"
-mkdir -p "$HOME/.config/nvim/lua"
-/bin/cp -r $HOME/.lsuf/vim/colors/* $HOME/.config/nvim/colors
-ln -nfs "$HOME/.lsuf/vim/init.lua" "$HOME/.config/nvim/init.lua"
-ln -nfs "$HOME/.lsuf/vim/plugins.lua" "$HOME/.config/nvim/lua/plugins.lua"
-
-git clone https://github.com/wbthomason/packer.nvim ~/.local/share/nvim/site/pack/packer/opt/packer.nvim
-nvim --headless -c 'autocmd User PackerComplete quitall' -c 'PackerSync'
-
-# Install fonts
-sh fonts.sh
 
 # Set MacOS props
 sh macos.sh
