@@ -24,7 +24,7 @@ require("lazy").setup({
     priority = 1000, -- make sure to load this before all the other start plugins
     config = function()
       -- load the colorscheme here
-      vim.g.material_theme_style = 'darker'
+      vim.g.material_theme_style = 'ocean'
       vim.cmd([[colorscheme material]])
     end,
 
@@ -43,10 +43,25 @@ require("lazy").setup({
   }
 })
 
+-- LuaLine config
 require('lualine').setup({
   options = {
     theme = require('material.lualine'),
   },
 })
 
-
+-- Hop config
+local hop = require('hop')
+local directions = require('hop.hint').HintDirection
+vim.keymap.set('', 'f', function()
+  hop.hint_char1({ direction = directions.AFTER_CURSOR, current_line_only = true })
+end, {remap=true})
+vim.keymap.set('', 'F', function()
+  hop.hint_char1({ direction = directions.BEFORE_CURSOR, current_line_only = true })
+end, {remap=true})
+vim.keymap.set('', 't', function()
+  hop.hint_char1({ direction = directions.AFTER_CURSOR, current_line_only = true, hint_offset = -1 })
+end, {remap=true})
+vim.keymap.set('', 'T', function()
+  hop.hint_char1({ direction = directions.BEFORE_CURSOR, current_line_only = true, hint_offset = 1 })
+end, {remap=true})

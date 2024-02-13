@@ -1,26 +1,40 @@
-alias -g ...='../..'
-alias -g ....='../../..'
-alias -g .....='../../../..'
 
+# Brew aliases (Extracted from Prezto)
+alias brewc='brew cleanup'
+alias brewi='brew install'
+alias brewL='brew leaves'
+alias brewl='brew list'
+alias brewo='brew outdated'
+alias brews='brew search'
+alias brewu='brew upgrade'
+alias brewx='brew uninstall'
+
+alias caski='brew install --cask'
+alias caskl='brew list --cask'
+alias casko='brew outdated --cask'
+alias casks='brew search --cask'
+alias casku='brew upgrade --cask'
+alias caskx='brew uninstall --cask'
+
+alias brewup='brew update && brew upgrade && brew cleanup && brew prune && brew doctor'
+
+# Open vim with neovim
 alias vim="nvim"
-
-alias zmv="noglob zmv -W"
 
 # Don't try to glob with zsh so you can do
 # stuff like ga *foo* and correctly have
 # git add the right stuff
 alias git='noglob git'
 
-alias cd="z"
-alias zz='zi' # interactive directory jump
-
-# PS
+# ps
 alias psa="ps aux"
 alias psg="ps aux | grep "
 
+# du and df
 alias df='df -h'
 alias du='du -h -d 2'
 
+# ls
 alias ll='eza --icons --git -alh'
 alias ls='eza --icons -h'
 
@@ -89,11 +103,9 @@ alias gbg='git bisect good'
 alias gbb='git bisect bad'
 alias gdmb='git branch --merged | grep -v "\*" | xargs -n 1 git branch -d'
 
+# kill
 alias ka9='killall -9'
 alias k9='kill -9'
-
-# Homebrew
-alias brewu='brew update  && brew upgrade && brew cleanup && brew prune && brew doctor'
 
 # Docker
 alias dstop="docker stop"
@@ -105,3 +117,9 @@ alias dc='docker-compose'
 alias dcu='docker-compose up'
 alias dcd='docker-compose down'
 alias dcs='docker-compose stop'
+
+# Weather
+alias weather='curl wttr.in/\?3F'
+
+# cd
+alias cd="z"
