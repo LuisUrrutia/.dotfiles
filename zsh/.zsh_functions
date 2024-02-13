@@ -71,3 +71,19 @@ random_phrase() {
 
   figlet -w $cols "$random_phrase" | lolcrab -g cool
 }
+
+function change-commit-date() {
+  export GIT_AUTHOR_DATE=`gdate -d"$1" --rfc-email`
+  export GIT_COMMITTER_DATE=$GIT_AUTHOR_DATE
+
+  echo "Changing date to ${GIT_AUTHOR_DATE}"
+  git commit --amend --no-edit --date "${GIT_AUTHOR_DATE}"
+}
+
+function unpinning() {
+  frida -U -l "$HOME/.dotfiles/frida-script.js" -f $1
+}
+
+function tailwatch () {
+  aws logs tail "$1" --follow --format short
+}

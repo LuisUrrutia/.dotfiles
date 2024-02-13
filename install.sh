@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-STOW_FOLDERS="zsh,starship,wget,git,vim"
+STOW_FOLDERS="zsh,starship,wget,git,vim,warp"
 CWD="$(pwd)"
 
 # Check if brew is installed, otherwise install it
@@ -110,8 +110,8 @@ brew install --cask font-monaspace-nerd-font
 brew install p7zip aria2 mas fswatch watch rclone autossh figlet wget
 brew install --cask postman the-unarchiver android-platform-tools grammarly teamviewer displaylink
 brew install yarn pnpm # JS package managers
-cargo install lolcrab
-cargo install eza
+$HOME/.cargo/bin/cargo install lolcrab
+$HOME/.cargo/bin/cargo install eza
 pip install pre-commit frida-tools
 
 
@@ -128,6 +128,8 @@ brew cleanup
 
 # Download certificate unpinning frida script
 wget https://raw.githubusercontent.com/httptoolkit/frida-android-unpinning/main/frida-script.js -P "$HOME/.dotfiles/"
+
+rm $HOME/.zshrc $HOME/.zshenv $HOME7/.zlogin
 
 for folder in $(echo $STOW_FOLDERS | sed "s/,/ /g")
 do

@@ -73,10 +73,3 @@ if vim.fn.has("persistent_undo") == 1 then
   vim.opt.undodir = vimFolder.."/undo"
 end
 
-vim.cmd([[
-  augroup packer_user_config
-    autocmd!
-    autocmd BufWritePost plugins.lua source <afile> | PackerCompile
-  augroup end
-]])
-

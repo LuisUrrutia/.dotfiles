@@ -42,7 +42,10 @@ source ~/.p10k.zsh
 # endregion
 
 # Load custom aliases
-source ~/.zshaliases
+source ~/.zsh_aliases
+
+# Load custom functions
+source ~/.zsh_functions
 
 export PATH="$PATH:$HOME/.rvm/bin"
 
@@ -73,5 +76,10 @@ fi
 unset __mamba_setup
 # <<< mamba initialize <<<
 
+# Enable Zoxide
+eval "$(zoxide init zsh)"
+
+# Set VIM
+set -o vi
 
 random_phrase
