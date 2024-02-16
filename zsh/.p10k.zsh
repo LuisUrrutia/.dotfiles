@@ -50,6 +50,7 @@
     background_jobs         # presence of background jobs
     direnv                  # direnv status (https://direnv.net/)
     # asdf                    # asdf version manager (https://github.com/asdf-vm/asdf)
+    mise                    # mise version manager (https://github.com/jdxcode/mise)
     # virtualenv              # python virtual environment (https://docs.python.org/3/library/venv.html)
     anaconda                # conda environment (https://conda.io/)
     # pyenv                   # python environment (https://github.com/pyenv/pyenv)
@@ -194,9 +195,9 @@
 
   ################################[ prompt_char: prompt symbol ]################################
   # Green prompt symbol if the last command succeeded.
-  typeset -g POWERLEVEL9K_PROMPT_CHAR_OK_{VIINS,VICMD,VIVIS,VIOWR}_FOREGROUND=76
+  typeset -g POWERLEVEL9K_PROMPT_CHAR_OK_{VIINS,VICMD,VIVIS,VIOWR}_FOREGROUND=2
   # Red prompt symbol if the last command failed.
-  typeset -g POWERLEVEL9K_PROMPT_CHAR_ERROR_{VIINS,VICMD,VIVIS,VIOWR}_FOREGROUND=196
+  typeset -g POWERLEVEL9K_PROMPT_CHAR_ERROR_{VIINS,VICMD,VIVIS,VIOWR}_FOREGROUND=1
   # Default prompt symbol.
   typeset -g POWERLEVEL9K_PROMPT_CHAR_{OK,ERROR}_VIINS_CONTENT_EXPANSION='❯'
   # Prompt symbol in command vi mode.
@@ -213,7 +214,8 @@
 
   ##################################[ dir: current directory ]##################################
   # Default current directory color.
-  typeset -g POWERLEVEL9K_DIR_FOREGROUND=31
+  typeset -g POWERLEVEL9K_DIR_FOREGROUND=6
+  typeset -g POWERLEVEL9K_DIR_BOLD=true
   # If directory is too long, shorten some of its segments to the shortest possible unique
   # prefix. The shortened directory can be tab-completed to the original.
   #typeset -g POWERLEVEL9K_SHORTEN_STRATEGY=truncate_to_unique
@@ -348,10 +350,13 @@
 
   # Custom prefix.
   # typeset -g POWERLEVEL9K_DIR_PREFIX='%fin '
+  typeset -g POWERLEVEL9K_DIR_CONTENT_EXPANSION='%B$P9K_CONTENT%b'
+
 
   #####################################[ vcs: git status ]######################################
   # Branch icon. Set this parameter to '\UE0A0 ' for the popular Powerline branch icon.
-  typeset -g POWERLEVEL9K_VCS_BRANCH_ICON='\uF126 '
+  # typeset -g POWERLEVEL9K_VCS_BRANCH_ICON='\uF126 '
+  typeset -g POWERLEVEL9K_VCS_BRANCH_ICON=' '
 
   # Untracked files icon. It's really a question mark, your font isn't broken.
   # Change the value of this parameter to show a different icon.
@@ -375,6 +380,7 @@
       return
     fi
 
+    local base_git_color="%5F"
     if (( $1 )); then
       # Styling for up-to-date Git status.
       local       meta='%f'     # default foreground
@@ -399,7 +405,7 @@
       # Otherwise show the first 12 … the last 12.
       # Tip: To always show local branch name in full without truncation, delete the next line.
       (( $#branch > 32 )) && branch[13,-13]="…"  # <-- this line
-      res+="${clean}${(g::)POWERLEVEL9K_VCS_BRANCH_ICON}${branch//\%/%%}"
+      res+="${base_git_color}${(g::)POWERLEVEL9K_VCS_BRANCH_ICON}${branch//\%/%%}"
     fi
 
     if [[ -n $VCS_STATUS_TAG
@@ -430,42 +436,48 @@
       res+=" ${modified}wip"
     fi
 
+    local summary
+
     if (( VCS_STATUS_COMMITS_AHEAD || VCS_STATUS_COMMITS_BEHIND )); then
       # ⇣42 if behind the remote.
-      (( VCS_STATUS_COMMITS_BEHIND )) && res+=" ${clean}⇣${VCS_STATUS_COMMITS_BEHIND}"
+      (( VCS_STATUS_COMMITS_BEHIND )) && summary+=" ${clean}⇣${VCS_STATUS_COMMITS_BEHIND}"
       # ⇡42 if ahead of the remote; no leading space if also behind the remote: ⇣42⇡42.
-      (( VCS_STATUS_COMMITS_AHEAD && !VCS_STATUS_COMMITS_BEHIND )) && res+=" "
-      (( VCS_STATUS_COMMITS_AHEAD  )) && res+="${clean}⇡${VCS_STATUS_COMMITS_AHEAD}"
+      (( VCS_STATUS_COMMITS_AHEAD && !VCS_STATUS_COMMITS_BEHIND )) && summary+=" "
+      (( VCS_STATUS_COMMITS_AHEAD  )) && summary+="${clean}⇡${VCS_STATUS_COMMITS_AHEAD}"
     elif [[ -n $VCS_STATUS_REMOTE_BRANCH ]]; then
       # Tip: Uncomment the next line to display '=' if up to date with the remote.
       # res+=" ${clean}="
     fi
 
     # ⇠42 if behind the push remote.
-    (( VCS_STATUS_PUSH_COMMITS_BEHIND )) && res+=" ${clean}⇠${VCS_STATUS_PUSH_COMMITS_BEHIND}"
-    (( VCS_STATUS_PUSH_COMMITS_AHEAD && !VCS_STATUS_PUSH_COMMITS_BEHIND )) && res+=" "
+    (( VCS_STATUS_PUSH_COMMITS_BEHIND )) && summary+=" ${clean}⇠${VCS_STATUS_PUSH_COMMITS_BEHIND}"
+    (( VCS_STATUS_PUSH_COMMITS_AHEAD && !VCS_STATUS_PUSH_COMMITS_BEHIND )) && summary+=" "
     # ⇢42 if ahead of the push remote; no leading space if also behind: ⇠42⇢42.
-    (( VCS_STATUS_PUSH_COMMITS_AHEAD  )) && res+="${clean}⇢${VCS_STATUS_PUSH_COMMITS_AHEAD}"
+    (( VCS_STATUS_PUSH_COMMITS_AHEAD  )) && summary+="${clean}⇢${VCS_STATUS_PUSH_COMMITS_AHEAD}"
     # *42 if have stashes.
-    (( VCS_STATUS_STASHES        )) && res+=" ${clean}*${VCS_STATUS_STASHES}"
+    (( VCS_STATUS_STASHES        )) && summary+=" ${clean}*${VCS_STATUS_STASHES}"
     # 'merge' if the repo is in an unusual state.
-    [[ -n $VCS_STATUS_ACTION     ]] && res+=" ${conflicted}${VCS_STATUS_ACTION}"
+    [[ -n $VCS_STATUS_ACTION     ]] && summary+=" ${conflicted}${VCS_STATUS_ACTION}"
     # ~42 if have merge conflicts.
-    (( VCS_STATUS_NUM_CONFLICTED )) && res+=" ${conflicted}~${VCS_STATUS_NUM_CONFLICTED}"
+    (( VCS_STATUS_NUM_CONFLICTED )) && summary+=" ${conflicted}~${VCS_STATUS_NUM_CONFLICTED}"
     # +42 if have staged changes.
-    (( VCS_STATUS_NUM_STAGED     )) && res+=" ${modified}+${VCS_STATUS_NUM_STAGED}"
+    (( VCS_STATUS_NUM_STAGED     )) && summary+=" ${modified}+${VCS_STATUS_NUM_STAGED}"
     # !42 if have unstaged changes.
-    (( VCS_STATUS_NUM_UNSTAGED   )) && res+=" ${modified}!${VCS_STATUS_NUM_UNSTAGED}"
+    (( VCS_STATUS_NUM_UNSTAGED   )) && summary+=" ${modified}!${VCS_STATUS_NUM_UNSTAGED}"
     # ?42 if have untracked files. It's really a question mark, your font isn't broken.
     # See POWERLEVEL9K_VCS_UNTRACKED_ICON above if you want to use a different icon.
     # Remove the next line if you don't want to see untracked files at all.
-    (( VCS_STATUS_NUM_UNTRACKED  )) && res+=" ${untracked}${(g::)POWERLEVEL9K_VCS_UNTRACKED_ICON}${VCS_STATUS_NUM_UNTRACKED}"
+    (( VCS_STATUS_NUM_UNTRACKED  )) && summary+=" ${untracked}${(g::)POWERLEVEL9K_VCS_UNTRACKED_ICON}${VCS_STATUS_NUM_UNTRACKED}"
     # "─" if the number of unstaged files is unknown. This can happen due to
     # POWERLEVEL9K_VCS_MAX_INDEX_SIZE_DIRTY (see below) being set to a non-negative number lower
     # than the number of files in the Git index, or due to bash.showDirtyState being set to false
     # in the repository config. The number of staged and untracked files may also be unknown
     # in this case.
-    (( VCS_STATUS_HAS_UNSTAGED == -1 )) && res+=" ${modified}─"
+    (( VCS_STATUS_HAS_UNSTAGED == -1 )) && summary+=" ${modified}─"
+
+    local trimmed_summary="${(MS)summary##[[:graph:]]*[[:graph:]]}"
+    [[ -n $trimmed_summary ]] && res+=" %244F[$trimmed_summary%244F]"
+
 
     typeset -g my_git_format=$res
   }
@@ -488,7 +500,7 @@
   # Disable the default Git status formatting.
   typeset -g POWERLEVEL9K_VCS_DISABLE_GITSTATUS_FORMATTING=true
   # Install our own Git status formatter.
-  typeset -g POWERLEVEL9K_VCS_CONTENT_EXPANSION='${$((my_git_formatter(1)))+${my_git_format}}'
+  typeset -g POWERLEVEL9K_VCS_CONTENT_EXPANSION='%B${$((my_git_formatter(1)))+${my_git_format}}%b'
   typeset -g POWERLEVEL9K_VCS_LOADING_CONTENT_EXPANSION='${$((my_git_formatter(0)))+${my_git_format}}'
   # Enable counters for staged, unstaged, etc.
   typeset -g POWERLEVEL9K_VCS_{STAGED,UNSTAGED,UNTRACKED,CONFLICTED,COMMITS_AHEAD,COMMITS_BEHIND}_MAX_NUM=-1
@@ -577,6 +589,169 @@
   typeset -g POWERLEVEL9K_DIRENV_FOREGROUND=178
   # Custom icon.
   # typeset -g POWERLEVEL9K_DIRENV_VISUAL_IDENTIFIER_EXPANSION='⭐'
+
+  ###############[ mise: mise version manager (https://github.com/jdxcode/mise) ]###############
+  # https://github.com/romkatv/powerlevel10k
+  # https://github.com/jdxcode/mise
+  # [Feature request: add segment for mise](https://github.com/romkatv/powerlevel10k/issues/2212)
+  # This is port asdf to mise
+  function prompt_mise() {
+    #local plugins=("${(@f)$(mise ls --current 2>/dev/null | awk '!/\(symlink\)/ && $3!="~/.tool-versions" && $3!="~/.config/mise/config.toml" {print $1, $2}')}")
+    local plugins=("${(@f)$(mise current 2>/dev/null)}")
+
+    local plugin
+    for plugin in ${(k)plugins}; do
+      local parts=("${(@s/ /)plugin}")
+      local tool=${(U)parts[1]}
+      local version=${parts[2]}
+      p10k segment -r -i "${tool}_ICON" -s $tool -t "$version"
+    done
+  }
+
+  # Default mise color. Only used to display tools for which there is no color override (see below).
+  # Tip:  Override this parameter for ${TOOL} with POWERLEVEL9K_MISE_${TOOL}_FOREGROUND.
+  typeset -g POWERLEVEL9K_MISE_FOREGROUND=66
+
+  # There are four parameters that can be used to hide asdf tools. Each parameter describes
+  # conditions under which a tool gets hidden. Parameters can hide tools but not unhide them. If at
+  # least one parameter decides to hide a tool, that tool gets hidden. If no parameter decides to
+  # hide a tool, it gets shown.
+  #
+  # Special note on the difference between POWERLEVEL9K_MISE_SOURCES and
+  # POWERLEVEL9K_MISE_PROMPT_ALWAYS_SHOW. Consider the effect of the following commands:
+  #
+  #   asdf local  python 3.8.1
+  #   asdf global python 3.8.1
+  #
+  # After running both commands the current python version is 3.8.1 and its source is "local" as
+  # it takes precedence over "global". If POWERLEVEL9K_MISE_PROMPT_ALWAYS_SHOW is set to false,
+  # it'll hide python version in this case because 3.8.1 is the same as the global version.
+  # POWERLEVEL9K_MISE_SOURCES will hide python version only if the value of this parameter doesn't
+  # contain "local".
+
+  # Hide tool versions that don't come from one of these sources.
+  #
+  # Available sources:
+  #
+  # - shell   `asdf current` says "set by ASDF_${TOOL}_VERSION environment variable"
+  # - local   `asdf current` says "set by /some/not/home/directory/file"
+  # - global  `asdf current` says "set by /home/username/file"
+  #
+  # Note: If this parameter is set to (shell local global), it won't hide tools.
+  # Tip:  Override this parameter for ${TOOL} with POWERLEVEL9K_MISE_${TOOL}_SOURCES.
+  typeset -g POWERLEVEL9K_MISE_SOURCES=(shell local global)
+
+  # If set to false, hide tool versions that are the same as global.
+  #
+  # Note: The name of this parameter doesn't reflect its meaning at all.
+  # Note: If this parameter is set to true, it won't hide tools.
+  # Tip:  Override this parameter for ${TOOL} with POWERLEVEL9K_MISE_${TOOL}_PROMPT_ALWAYS_SHOW.
+  typeset -g POWERLEVEL9K_MISE_PROMPT_ALWAYS_SHOW=false
+
+  # If set to false, hide tool versions that are equal to "system".
+  #
+  # Note: If this parameter is set to true, it won't hide tools.
+  # Tip: Override this parameter for ${TOOL} with POWERLEVEL9K_MISE_${TOOL}_SHOW_SYSTEM.
+  typeset -g POWERLEVEL9K_MISE_SHOW_SYSTEM=true
+
+  # If set to non-empty value, hide tools unless there is a file matching the specified file pattern
+  # in the current directory, or its parent directory, or its grandparent directory, and so on.
+  #
+  # Note: If this parameter is set to empty value, it won't hide tools.
+  # Note: SHOW_ON_UPGLOB isn't specific to asdf. It works with all prompt segments.
+  # Tip: Override this parameter for ${TOOL} with POWERLEVEL9K_MISE_${TOOL}_SHOW_ON_UPGLOB.
+  #
+  # Example: Hide nodejs version when there is no package.json and no *.js files in the current
+  # directory, in `..`, in `../..` and so on.
+  #
+  #   typeset -g POWERLEVEL9K_MISE_NODEJS_SHOW_ON_UPGLOB='*.js|package.json'
+  typeset -g POWERLEVEL9K_MISE_SHOW_ON_UPGLOB=
+
+  # Ruby version from asdf.
+  typeset -g POWERLEVEL9K_MISE_RUBY_FOREGROUND=168
+  # typeset -g POWERLEVEL9K_MISE_RUBY_VISUAL_IDENTIFIER_EXPANSION='⭐'
+  # typeset -g POWERLEVEL9K_MISE_RUBY_SHOW_ON_UPGLOB='*.foo|*.bar'
+
+  # Python version from asdf.
+  typeset -g POWERLEVEL9K_MISE_PYTHON_FOREGROUND=37
+  typeset -g POWERLEVEL9K_MISE_PYTHON_VISUAL_IDENTIFIER_EXPANSION='🐍'
+  typeset -g POWERLEVEL9K_MISE_PYTHON_SHOW_ON_UPGLOB='*.py'
+
+  # Go version from asdf.
+  typeset -g POWERLEVEL9K_MISE_GO_FOREGROUND=37
+  typeset -g POWERLEVEL9K_MISE_GO_VISUAL_IDENTIFIER_EXPANSION='🐹'
+  typeset -g POWERLEVEL9K_MISE_GO_SHOW_ON_UPGLOB='*.go'
+
+  # Node.js version from asdf.
+  typeset -g POWERLEVEL9K_MISE_NODEJS_FOREGROUND=70
+  # typeset -g POWERLEVEL9K_MISE_NODEJS_VISUAL_IDENTIFIER_EXPANSION='⭐'
+  # typeset -g POWERLEVEL9K_MISE_NODEJS_SHOW_ON_UPGLOB='*.foo|*.bar'
+  
+  # Node.js version from asdf.
+  typeset -g POWERLEVEL9K_MISE_BUN_FOREGROUND=70
+  typeset -g POWERLEVEL9K_MISE_BUN_VISUAL_IDENTIFIER_EXPANSION='🍞'
+  typeset -g POWERLEVEL9K_MISE_BUN_SHOW_ON_UPGLOB='bun.lockb|bunfig.toml'
+
+  # Rust version from asdf.
+  typeset -g POWERLEVEL9K_MISE_RUST_FOREGROUND=37
+  typeset -g POWERLEVEL9K_MISE_RUST_VISUAL_IDENTIFIER_EXPANSION='🦀 '
+  typeset -g POWERLEVEL9K_MISE_RUST_SHOW_ON_UPGLOB='*.rs'
+
+  # .NET Core version from asdf.
+  typeset -g POWERLEVEL9K_MISE_DOTNET_CORE_FOREGROUND=134
+  # typeset -g POWERLEVEL9K_MISE_DOTNET_CORE_VISUAL_IDENTIFIER_EXPANSION='⭐'
+  # typeset -g POWERLEVEL9K_MISE_DOTNET_SHOW_ON_UPGLOB='*.foo|*.bar'
+
+  # Flutter version from asdf.
+  typeset -g POWERLEVEL9K_MISE_FLUTTER_FOREGROUND=38
+  # typeset -g POWERLEVEL9K_MISE_FLUTTER_VISUAL_IDENTIFIER_EXPANSION='⭐'
+  # typeset -g POWERLEVEL9K_MISE_FLUTTER_SHOW_ON_UPGLOB='*.foo|*.bar'
+
+  # Lua version from asdf.
+  typeset -g POWERLEVEL9K_MISE_LUA_FOREGROUND=32
+  # typeset -g POWERLEVEL9K_MISE_LUA_VISUAL_IDENTIFIER_EXPANSION='⭐'
+  # typeset -g POWERLEVEL9K_MISE_LUA_SHOW_ON_UPGLOB='*.foo|*.bar'
+
+  # Java version from asdf.
+  typeset -g POWERLEVEL9K_MISE_JAVA_FOREGROUND=32
+  # typeset -g POWERLEVEL9K_MISE_JAVA_VISUAL_IDENTIFIER_EXPANSION='⭐'
+  # typeset -g POWERLEVEL9K_MISE_JAVA_SHOW_ON_UPGLOB='*.foo|*.bar'
+
+  # Perl version from asdf.
+  typeset -g POWERLEVEL9K_MISE_PERL_FOREGROUND=67
+  # typeset -g POWERLEVEL9K_MISE_PERL_VISUAL_IDENTIFIER_EXPANSION='⭐'
+  # typeset -g POWERLEVEL9K_MISE_PERL_SHOW_ON_UPGLOB='*.foo|*.bar'
+
+  # Erlang version from asdf.
+  typeset -g POWERLEVEL9K_MISE_ERLANG_FOREGROUND=125
+  # typeset -g POWERLEVEL9K_MISE_ERLANG_VISUAL_IDENTIFIER_EXPANSION='⭐'
+  # typeset -g POWERLEVEL9K_MISE_ERLANG_SHOW_ON_UPGLOB='*.foo|*.bar'
+
+  # Elixir version from asdf.
+  typeset -g POWERLEVEL9K_MISE_ELIXIR_FOREGROUND=129
+  # typeset -g POWERLEVEL9K_MISE_ELIXIR_VISUAL_IDENTIFIER_EXPANSION='⭐'
+  # typeset -g POWERLEVEL9K_MISE_ELIXIR_SHOW_ON_UPGLOB='*.foo|*.bar'
+
+  # Postgres version from asdf.
+  typeset -g POWERLEVEL9K_MISE_POSTGRES_FOREGROUND=31
+  # typeset -g POWERLEVEL9K_MISE_POSTGRES_VISUAL_IDENTIFIER_EXPANSION='⭐'
+  # typeset -g POWERLEVEL9K_MISE_POSTGRES_SHOW_ON_UPGLOB='*.foo|*.bar'
+
+  # PHP version from asdf.
+  typeset -g POWERLEVEL9K_MISE_PHP_FOREGROUND=99
+  # typeset -g POWERLEVEL9K_MISE_PHP_VISUAL_IDENTIFIER_EXPANSION='⭐'
+  # typeset -g POWERLEVEL9K_MISE_PHP_SHOW_ON_UPGLOB='*.foo|*.bar'
+
+  # Haskell version from asdf.
+  typeset -g POWERLEVEL9K_MISE_HASKELL_FOREGROUND=172
+  # typeset -g POWERLEVEL9K_MISE_HASKELL_VISUAL_IDENTIFIER_EXPANSION='⭐'
+  # typeset -g POWERLEVEL9K_MISE_HASKELL_SHOW_ON_UPGLOB='*.foo|*.bar'
+
+  # Julia version from asdf.
+  typeset -g POWERLEVEL9K_MISE_JULIA_FOREGROUND=70
+  # typeset -g POWERLEVEL9K_MISE_JULIA_VISUAL_IDENTIFIER_EXPANSION='⭐'
+  # typeset -g POWERLEVEL9K_MISE_JULIA_SHOW_ON_UPGLOB='*.foo|*.bar'
+
 
   ###############[ asdf: asdf version manager (https://github.com/asdf-vm/asdf) ]###############
   # Default asdf color. Only used to display tools for which there is no color override (see below).
@@ -1054,7 +1229,7 @@
   # Show node version only when in a directory tree containing package.json.
   typeset -g POWERLEVEL9K_NODE_VERSION_PROJECT_ONLY=true
   # Custom icon.
-  # typeset -g POWERLEVEL9K_NODE_VERSION_VISUAL_IDENTIFIER_EXPANSION='⭐'
+  typeset -g POWERLEVEL9K_NODE_VERSION_VISUAL_IDENTIFIER_EXPANSION='󰎙'
 
   #######################[ go_version: go version (https://golang.org) ]########################
   # Go version color.
