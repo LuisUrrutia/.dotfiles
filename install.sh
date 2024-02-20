@@ -1,5 +1,11 @@
 #!/usr/bin/env bash
 
+# Only runs in macOS
+if [ "$(uname)" != "Darwin" ] ; then
+	echo "Invalid OS!"
+	exit 1
+fi
+
 STOW_FOLDERS="zsh,starship,wget,git,vim,warp"
 CWD="$(pwd)"
 
@@ -63,8 +69,8 @@ brew install git git-lfs gh
 # Install "languages"
 brew install python python-tk solidity bun mise go
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh # rust
-gpg --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3 7D2BAF1CF37B13E2069D6956105BD0E739499BDB
-\curl -sSL https://get.rvm.io | bash -s stable --rails
+gpg2 --keyserver keyserver.ubuntu.com --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3 7D2BAF1CF37B13E2069D6956105BD0E739499BDB
+\curl -sSL https://get.rvm.io | bash -s stable
 
 # Install communication tools
 brew install --cask microsoft-teams discord telegram slack whatsapp zoom
@@ -107,12 +113,12 @@ brew install --cask font-fira-code-nerd-font
 brew install --cask font-monaspace-nerd-font
 
 # Install other useful binaries and tools
-brew install p7zip aria2 mas fswatch watch rclone autossh figlet wget
+brew install p7zip aria2 mas fswatch watch rclone autossh figlet wget dockutil
 brew install --cask postman the-unarchiver android-platform-tools grammarly teamviewer displaylink
 brew install yarn pnpm # JS package managers
 $HOME/.cargo/bin/cargo install lolcrab
 $HOME/.cargo/bin/cargo install eza
-pip install pre-commit frida-tools
+pip3 install pre-commit frida-tools
 
 
 ln -s "${BREW_PREFIX}/bin/gsha256sum" "${BREW_PREFIX}/bin/sha256sum"
@@ -122,6 +128,7 @@ ln -s "${BREW_PREFIX}/bin/gsed" "${BREW_PREFIX}/bin/sed"
 mas install 1319778037 # iStat menu
 mas install 533696630 # Webcam Settings
 mas install 441258766 # magnet
+mas install 975937182 # Fantastical
 
 # Remove outdated versions from the cellar.
 brew cleanup
@@ -140,6 +147,31 @@ done
 
 # Set MacOS props
 sh macos.sh
+
+dockutil --remove "FaceTime" --no-restart
+dockutil --remove "com.apple.mail" --no-restart
+dockutil --remove "com.apple.TV" --no-restart
+dockutil --remove "com.apple.freeform" --no-restart
+dockutil --remove "com.apple.reminders" --no-restart
+dockutil --remove "com.apple.iCal" --no-restart
+dockutil --remove "com.apple.Music" --no-restart
+dockutil --remove "com.apple.Safari" --no-restart
+dockutil --remove "com.apple.AddressBook" --no-restart
+dockutil --remove "com.apple.Maps" --no-restart
+dockutil --add "/Applications/Google Chrome.app" --after "com.apple.Notes" --no-restart
+dockutil --add "/Applications/Warp.app" --after "com.google.Chrome" --no-restart
+dockutil --add "/Applications/Fantastical.app" --after "com.apple.MobileSMS" --no-restart
+dockutil --add "/Applications/Visual Studio Code.app" --after "com.google.Chrome"
+
+# Create Projects folder
+mkdir -p ~/Projects/Personal
+
+# Warp settings
+defaults write dev.warp.Warp-Stable FontName -string "\"MonaspiceAr Nerd Font Mono\""
+defaults write dev.warp.Warp-Stable Theme -string "{\"Custom\":{\"name\":\"Ocean Hc\",\"path\":\"~/.warp/themes/ocean_hc.yaml\"}}"
+defaults write dev.warp.Warp-Stable HonorPS1 -bool true
+defaults write dev.warp.Warp-Stable VimModeEnabled -bool true
+defaults write dev.warp.Warp-Stable WelcomeTipsCompleted -string true
 
 # Set zsh
 chsh -s /bin/zsh
