@@ -47,6 +47,10 @@ source ~/.zsh_aliases
 # Load custom functions
 source ~/.zsh_functions
 
+# GNU sed
+PATH="/opt/homebrew/opt/gnu-sed/libexec/gnubin:$PATH"
+
+# rvm
 export PATH="$PATH:$HOME/.rvm/bin"
 
 # pnpm
@@ -64,6 +68,11 @@ esac
 export BUN_INSTALL="$HOME/.bun"
 export PATH="$BUN_INSTALL/bin:$PATH"
 
+# Google cloud sdk
+source "$(brew --prefix)/share/google-cloud-sdk/path.zsh.inc"
+source "$(brew --prefix)/share/google-cloud-sdk/completion.zsh.inc"
+
+# mise
 eval "$(mise activate zsh)"
 
 # Enable Zoxide
