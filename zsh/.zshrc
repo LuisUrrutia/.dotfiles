@@ -18,6 +18,10 @@ if [[ ! -e ~/.zmodules/zsh-autosuggestions ]]; then
   git clone --depth=1 https://github.com/zsh-users/zsh-autosuggestions.git ~/.zmodules/zsh-autosuggestions
   zcompile-many ~/.zmodules/zsh-autosuggestions/{zsh-autosuggestions.zsh,src/**/*.zsh}
 fi
+if [[ ! -e ~/.zmodules/zsh-history-substring-search ]]; then
+  git clone --depth=1 https://github.com/zsh-users/zsh-history-substring-search ~/.zmodules/zsh-history-substring-search
+  zcompile-many ~/.zmodules/zsh-history-substring-search/{zsh-history-substring-search.zsh,src/**/*.zsh}
+fi
 if [[ ! -e ~/.zmodules/zsh-completions ]]; then
   git clone --depth=1 https://github.com/zsh-users/zsh-completions.git ~/.zmodules/zsh-completions
 fi
@@ -36,9 +40,12 @@ unfunction zcompile-many
 
 source ~/.zmodules/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
 source ~/.zmodules/zsh-autosuggestions/zsh-autosuggestions.zsh
-source ~/.zmodules/zsh-completions/zsh-completions.plugin.zsh
+source ~/.zmodules/zsh-history-substring-search/zsh-history-substring-search.zsh
 source ~/.zmodules/powerlevel10k/powerlevel10k.zsh-theme
 source ~/.p10k.zsh
+
+bindkey '^[[A' history-substring-search-up
+bindkey '^[[B' history-substring-search-down
 # endregion
 
 # Load custom aliases
