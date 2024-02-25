@@ -112,7 +112,7 @@ mkdir ${HOME}/Pictures/Screenshots
 defaults write com.apple.screencapture location -string "${HOME}/Pictures/Screenshots"
 
 # Size of dock
-defaults write com.apple.dock tilesize -int 5
+defaults write com.apple.dock tilesize -int 55
 
 # auto hide dock
 defaults write com.apple.dock autohide -bool true
