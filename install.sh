@@ -158,10 +158,13 @@ done
 /opt/homebrew/bin/dockutil --remove "com.apple.Safari" --no-restart
 /opt/homebrew/bin/dockutil --remove "com.apple.AddressBook" --no-restart
 /opt/homebrew/bin/dockutil --remove "com.apple.Maps" --no-restart
+/opt/homebrew/bin/dockutil --remove "com.apple.iWork.Keynote" --no-restart
+/opt/homebrew/bin/dockutil --remove "com.apple.iWork.Numbers" --no-restart
+/opt/homebrew/bin/dockutil --remove "com.apple.iWork.Pages" --no-restart
+/opt/homebrew/bin/dockutil --add "/Applications/Warp.app" --after "com.apple.Notes" --no-restart
+/opt/homebrew/bin/dockutil --add "/Applications/Visual Studio Code.app" --after "com.apple.Notes" --no-restart
 /opt/homebrew/bin/dockutil --add "/Applications/Google Chrome.app" --after "com.apple.Notes" --no-restart
-/opt/homebrew/bin/dockutil --add "/Applications/Warp.app" --after "com.google.Chrome" --no-restart
-/opt/homebrew/bin/dockutil --add "/Applications/Fantastical.app" --after "com.apple.MobileSMS" --no-restart
-/opt/homebrew/bin/dockutil --add "/Applications/Visual Studio Code.app" --after "com.google.Chrome"
+/opt/homebrew/bin/dockutil --add "/Applications/Fantastical.app" --after "com.apple.MobileSMS"
 
 # Create Projects folder
 mkdir -p ~/Projects/Personal
