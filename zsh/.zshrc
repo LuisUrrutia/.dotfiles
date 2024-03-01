@@ -46,6 +46,8 @@ source ~/.p10k.zsh
 
 bindkey '^[[A' history-substring-search-up
 bindkey '^[[B' history-substring-search-down
+
+fpath=(~/.zmodules/zsh-completions/src /opt/homebrew/share/zsh/site-functions $fpath)
 # endregion
 
 # Load custom aliases
