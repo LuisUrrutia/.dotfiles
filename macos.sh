@@ -28,7 +28,6 @@ defaults write NSGlobalDomain NSAutomaticQuoteSubstitutionEnabled -bool false
 # Disable auto-correct
 defaults write NSGlobalDomain NSAutomaticSpellingCorrectionEnabled -bool false
 
-
 # Set a blazingly fast keyboard repeat rate
 defaults write NSGlobalDomain KeyRepeat -int 1
 defaults write NSGlobalDomain InitialKeyRepeat -int 15
@@ -43,7 +42,7 @@ defaults write NSGlobalDomain AppleFontSmoothing -int 2
 defaults write NSGlobalDomain ApplePressAndHoldEnabled -bool false
 
 # Require password immediately after sleep or screen saver begins
-systemsetup -setdisplaysleep 5
+sudo systemsetup -setdisplaysleep 5
 defaults write com.apple.screensaver askForPassword -int 1
 defaults write com.apple.screensaver askForPasswordDelay -int 0
 
@@ -72,12 +71,6 @@ defaults write com.apple.SoftwareUpdate ScheduleFrequency -int 1
 
 # Download newly available updates in background
 defaults write com.apple.SoftwareUpdate AutomaticDownload -int 1
-
-# Install macos Updates
-defaults write /Library/Preferences/com.apple.commerce.plist AutoUpdateRestartRequired -bool true
-
-# Install app updates
-defaults write /Library/Preferences/com.apple.commerce.plist AutoUpdate -bool true
 
 # Install System data files & security updates
 defaults write com.apple.SoftwareUpdate CriticalUpdateInstall -int 1
