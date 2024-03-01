@@ -110,7 +110,7 @@ defaults -currentHost write com.apple.Spotlight MenuItemHidden -int 1
 defaults write com.apple.dock "mru-spaces" -int 0
 
 # Saves screenshots into its own folder
-mkdir ${HOME}/Pictures/Screenshots
+mkdir -p ${HOME}/Pictures/Screenshots
 defaults write com.apple.screencapture location -string "${HOME}/Pictures/Screenshots"
 
 # Size of dock
