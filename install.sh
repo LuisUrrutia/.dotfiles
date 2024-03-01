@@ -113,8 +113,8 @@ brew install --cask font-fira-code-nerd-font
 brew install --cask font-monaspace-nerd-font
 
 # Install other useful binaries and tools
-brew install p7zip aria2 mas fswatch watch rclone autossh figlet wget dockutil
-brew install --cask postman the-unarchiver android-platform-tools grammarly teamviewer displaylink
+brew install p7zip aria2 mas fswatch watch rclone autossh figlet wget dockutil quicklook-json apparency
+brew install --cask postman the-unarchiver android-platform-tools grammarly teamviewer displaylink surfshark qlmarkdown
 brew install yarn pnpm # JS package managers
 $HOME/.cargo/bin/cargo install lolcrab
 $HOME/.cargo/bin/cargo install eza
