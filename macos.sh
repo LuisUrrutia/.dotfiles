@@ -43,6 +43,7 @@ defaults write NSGlobalDomain AppleFontSmoothing -int 2
 defaults write NSGlobalDomain ApplePressAndHoldEnabled -bool false
 
 # Require password immediately after sleep or screen saver begins
+systemsetup -setdisplaysleep 5
 defaults write com.apple.screensaver askForPassword -int 1
 defaults write com.apple.screensaver askForPasswordDelay -int 0
 
@@ -61,6 +62,8 @@ defaults write com.apple.finder EmptyTrashSecurely -bool true
 # Show the ~/Library folder
 chflags nohidden ~/Library
 
+softwareupdate --schedule on
+
 # Enable the automatic update check
 defaults write com.apple.SoftwareUpdate AutomaticCheckEnabled -bool true
 
@@ -69,6 +72,12 @@ defaults write com.apple.SoftwareUpdate ScheduleFrequency -int 1
 
 # Download newly available updates in background
 defaults write com.apple.SoftwareUpdate AutomaticDownload -int 1
+
+# Install macos Updates
+defaults write /Library/Preferences/com.apple.commerce.plist AutoUpdateRestartRequired -bool true
+
+# Install app updates
+defaults write /Library/Preferences/com.apple.commerce.plist AutoUpdate -bool true
 
 # Install System data files & security updates
 defaults write com.apple.SoftwareUpdate CriticalUpdateInstall -int 1
@@ -116,6 +125,41 @@ defaults write com.apple.dock tilesize -int 55
 
 # auto hide dock
 defaults write com.apple.dock autohide -bool true
+
+#  Disabling password hints on the lock screen
+defaults write com.apple.loginwindow RetriesUntilHint -int 0
+
+
+# wake the machine when the laptop lid (or clamshell) is opened
+sudo pmset -a lidwake 1
+
+# display sleep timer
+sudo pmset -a displaysleep 10
+
+# Disable machine sleep while charging
+sudo pmset -c sleep 0
+
+# Set machine sleep to 5 minutes on battery
+sudo pmset -b sleep 5
+
+# Destroy File Vault Key when going to standby mode. By default File vault keys are retained even when system goes to standby. If the keys are destroyed, user will be prompted to enter the password while coming out of standby mode
+sudo pmset -a destroyfvkeyonstandby 1
+
+# Enable firewall
+sudo /usr/libexec/ApplicationFirewall/socketfilterfw \
+  --setblockall off \
+  --setallowsigned on \
+  --setallowsignedapp on \
+  --setloggingmode on \
+  --setstealthmode on \
+  --setglobalstate on
+
+# disable ARD 
+sudo /System/Library/CoreServices/RemoteManagement/ARDAgent.app/Contents/Resources/kickstart -deactivate
+
+# umask 027
+sudo launchctl config user umask 027
+
 
 # TODO: Check if this config works
 defaults write com.apple.controlcenter "NSStatusItem Visible Battery" -bool true
