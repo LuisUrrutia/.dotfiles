@@ -9,6 +9,8 @@ fi
 STOW_FOLDERS="zsh,starship,wget,git,vim,warp"
 CWD="$(pwd)"
 
+sudo xcodebuild -license
+
 # Check if brew is installed, otherwise install it
 which -s brew
 if [[ $? != 0 ]] ; then
@@ -49,8 +51,8 @@ brew install gnupg pinentry-mac openssh ykman
 brew install --cask http-toolkit macfuse veracrypt
 brew install --cask 1password 1password/tap/1password-cli
 
-# Install terminal, multiplexer and prompt
-brew install tmux starship
+# Install terminal, multiplexer
+brew install tmux
 brew install --cask warp
 
 # Install code editors
@@ -114,7 +116,7 @@ brew install --cask font-monaspace-nerd-font
 
 # Install other useful binaries and tools
 brew install p7zip aria2 mas fswatch watch rclone autossh figlet wget dockutil quicklook-json apparency
-brew install --cask postman the-unarchiver android-platform-tools grammarly teamviewer displaylink surfshark qlmarkdown
+brew install --cask postman the-unarchiver android-platform-tools grammarly teamviewer displaylink surfshark qlmarkdown adobe-creative-cloud
 brew install yarn pnpm # JS package managers
 $HOME/.cargo/bin/cargo install lolcrab
 $HOME/.cargo/bin/cargo install eza
