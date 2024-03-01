@@ -133,4 +133,6 @@ alias dnsoff="echo 'Unsetting DNS' && networksetup -setdnsservers Wi-Fi empty &&
 alias dnson="echo 'Setting DNS' && networksetup -setdnsservers Wi-Fi 1.1.1.2 1.0.0.2 && echo 'Flushing' && flush"
 alias googledns="echo 'Setting DNS' && networksetup -setdnsservers Wi-Fi 8.8.8.8 8.8.4.4 && echo 'Flushing' && flush"
 
+alias start-redis="/opt/homebrew/opt/redis/bin/redis-server /opt/homebrew/etc/redis.conf"
+
 
