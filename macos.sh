@@ -81,7 +81,7 @@ defaults write com.apple.commerce AutoUpdate -bool true
 defaults write com.apple.TimeMachine DoNotOfferNewDisksForBackup -bool true
 
 # Add a shortcut for deleting messages
-defaults write "$HOME/Library/Preferences/com.apple.MobileSMS.plist" NSUserKeyEquivalents -dict 'Delete Conversation...' '@\U007F'
+defaults write com.apple.MobileSMS.plist NSUserKeyEquivalents -dict 'Delete Conversation...' '@\U007F'
 
 # Don’t display the annoying prompt when quitting iTerm
 defaults write com.googlecode.iterm2 PromptOnQuit -bool false
@@ -133,9 +133,6 @@ sudo pmset -c sleep 0
 
 # Set machine sleep to 10 minutes on battery
 sudo pmset -b sleep 15
-
-# Destroy File Vault Key when going to standby mode. By default File vault keys are retained even when system goes to standby. If the keys are destroyed, user will be prompted to enter the password while coming out of standby mode
-sudo pmset -a destroyfvkeyonstandby 1
 
 # Enable firewall
 sudo /usr/libexec/ApplicationFirewall/socketfilterfw \
