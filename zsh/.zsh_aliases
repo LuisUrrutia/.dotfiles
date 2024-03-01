@@ -79,12 +79,12 @@ alias gfap='git fetch --all --prune'
 alias gfch='git fetch'
 alias gd='git diff'
 alias gb='git b'
+alias gbn='git branch-name'
+alias grb='git recent-branches'
 
 # Staged and cached are the same thing
 alias gdc='git diff --cached -w'
 alias gds='git diff --staged -w'
-alias gpub='grb publish'
-alias gtr='grb track'
 alias gpl='git pull'
 alias gplr='git pull --rebase'
 alias gps='git push'
@@ -123,3 +123,12 @@ alias weather='curl wttr.in/\?3F'
 
 # cd
 alias cd="z"
+
+# Others
+# Flush Directory Service cache
+alias flush="dscacheutil -flushcache && sudo killall -HUP mDNSResponder"
+alias dnsoff="echo 'Unsetting DNS' && networksetup -setdnsservers Wi-Fi empty && echo 'Flushing' && flush"
+alias dnson="echo 'Setting DNS' && networksetup -setdnsservers Wi-Fi 1.1.1.2 1.0.0.2 && echo 'Flushing' && flush"
+alias googledns="echo 'Setting DNS' && networksetup -setdnsservers Wi-Fi 8.8.8.8 8.8.4.4 && echo 'Flushing' && flush"
+
+
