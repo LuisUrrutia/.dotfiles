@@ -78,7 +78,7 @@ gpg2 --keyserver keyserver.ubuntu.com --recv-keys 409B6B1796C275462A1703113804BB
 brew install --cask microsoft-teams discord telegram slack whatsapp zoom
 
 # Install media tools
-brew install --cask soundsource loopback vlc spotify focusrite-control
+brew install --cask soundsource loopback vlc spotify
 
 # Install docker, kubectl and cloud tools
 brew install kubectl awscli google-cloud-sdk aws-sam-cli
