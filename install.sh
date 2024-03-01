@@ -71,8 +71,6 @@ brew install git git-lfs gh
 # Install "languages"
 brew install python python-tk solidity bun mise go
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh # rust
-gpg2 --keyserver keyserver.ubuntu.com --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3 7D2BAF1CF37B13E2069D6956105BD0E739499BDB
-\curl -sSL https://get.rvm.io | bash -s stable
 
 # Install communication tools
 brew install --cask microsoft-teams discord telegram slack whatsapp zoom
