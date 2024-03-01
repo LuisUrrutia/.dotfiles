@@ -42,7 +42,6 @@ defaults write NSGlobalDomain AppleFontSmoothing -int 2
 defaults write NSGlobalDomain ApplePressAndHoldEnabled -bool false
 
 # Require password immediately after sleep or screen saver begins
-sudo systemsetup -setdisplaysleep 5
 defaults write com.apple.screensaver askForPassword -int 1
 defaults write com.apple.screensaver askForPasswordDelay -int 0
 
@@ -132,8 +131,8 @@ sudo pmset -a displaysleep 10
 # Disable machine sleep while charging
 sudo pmset -c sleep 0
 
-# Set machine sleep to 5 minutes on battery
-sudo pmset -b sleep 5
+# Set machine sleep to 10 minutes on battery
+sudo pmset -b sleep 15
 
 # Destroy File Vault Key when going to standby mode. By default File vault keys are retained even when system goes to standby. If the keys are destroyed, user will be prompted to enter the password while coming out of standby mode
 sudo pmset -a destroyfvkeyonstandby 1
