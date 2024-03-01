@@ -35,7 +35,6 @@ brew install stow
 brew install zsh
 
 # Install casks
-brew tap homebrew/cask-drivers
 brew tap ethereum/ethereum
 brew tap aws/tap
 brew tap bramstein/webfonttools
