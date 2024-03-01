@@ -148,20 +148,20 @@ do
 done
 
 
-dockutil --remove "FaceTime" --no-restart
-dockutil --remove "com.apple.mail" --no-restart
-dockutil --remove "com.apple.TV" --no-restart
-dockutil --remove "com.apple.freeform" --no-restart
-dockutil --remove "com.apple.reminders" --no-restart
-dockutil --remove "com.apple.iCal" --no-restart
-dockutil --remove "com.apple.Music" --no-restart
-dockutil --remove "com.apple.Safari" --no-restart
-dockutil --remove "com.apple.AddressBook" --no-restart
-dockutil --remove "com.apple.Maps" --no-restart
-dockutil --add "/Applications/Google Chrome.app" --after "com.apple.Notes" --no-restart
-dockutil --add "/Applications/Warp.app" --after "com.google.Chrome" --no-restart
-dockutil --add "/Applications/Fantastical.app" --after "com.apple.MobileSMS" --no-restart
-dockutil --add "/Applications/Visual Studio Code.app" --after "com.google.Chrome"
+/opt/homebrew/bin/dockutil --remove "FaceTime" --no-restart
+/opt/homebrew/bin/dockutil --remove "com.apple.mail" --no-restart
+/opt/homebrew/bin/dockutil --remove "com.apple.TV" --no-restart
+/opt/homebrew/bin/dockutil --remove "com.apple.freeform" --no-restart
+/opt/homebrew/bin/dockutil --remove "com.apple.reminders" --no-restart
+/opt/homebrew/bin/dockutil --remove "com.apple.iCal" --no-restart
+/opt/homebrew/bin/dockutil --remove "com.apple.Music" --no-restart
+/opt/homebrew/bin/dockutil --remove "com.apple.Safari" --no-restart
+/opt/homebrew/bin/dockutil --remove "com.apple.AddressBook" --no-restart
+/opt/homebrew/bin/dockutil --remove "com.apple.Maps" --no-restart
+/opt/homebrew/bin/dockutil --add "/Applications/Google Chrome.app" --after "com.apple.Notes" --no-restart
+/opt/homebrew/bin/dockutil --add "/Applications/Warp.app" --after "com.google.Chrome" --no-restart
+/opt/homebrew/bin/dockutil --add "/Applications/Fantastical.app" --after "com.apple.MobileSMS" --no-restart
+/opt/homebrew/bin/dockutil --add "/Applications/Visual Studio Code.app" --after "com.google.Chrome"
 
 # Create Projects folder
 mkdir -p ~/Projects/Personal
