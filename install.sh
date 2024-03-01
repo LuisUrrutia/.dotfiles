@@ -138,7 +138,7 @@ brew cleanup
 # Download certificate unpinning frida script
 wget https://raw.githubusercontent.com/httptoolkit/frida-android-unpinning/main/frida-script.js -P "$HOME/.dotfiles/"
 
-rm $HOME/.zshrc $HOME/.zshenv $HOME7/.zlogin
+rm $HOME/.zshrc $HOME/.zshenv $HOME/.zlogin
 
 for folder in $(echo $STOW_FOLDERS | sed "s/,/ /g")
 do
@@ -147,8 +147,6 @@ do
     stow $folder
 done
 
-# Set MacOS props
-sh macos.sh
 
 dockutil --remove "FaceTime" --no-restart
 dockutil --remove "com.apple.mail" --no-restart
@@ -174,6 +172,9 @@ defaults write dev.warp.Warp-Stable Theme -string "{\"Custom\":{\"name\":\"Ocean
 defaults write dev.warp.Warp-Stable HonorPS1 -bool true
 defaults write dev.warp.Warp-Stable VimModeEnabled -bool true
 defaults write dev.warp.Warp-Stable WelcomeTipsCompleted -string true
+
+# Set MacOS props
+sh macos.sh
 
 # Set zsh
 chsh -s /bin/zsh
