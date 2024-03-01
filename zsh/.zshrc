@@ -20,7 +20,7 @@ if [[ ! -e ~/.zmodules/zsh-autosuggestions ]]; then
 fi
 if [[ ! -e ~/.zmodules/zsh-history-substring-search ]]; then
   git clone --depth=1 https://github.com/zsh-users/zsh-history-substring-search ~/.zmodules/zsh-history-substring-search
-  zcompile-many ~/.zmodules/zsh-history-substring-search/{zsh-history-substring-search.zsh,src/**/*.zsh}
+  zcompile-many ~/.zmodules/zsh-history-substring-search/{zsh-history-substring-search.zsh,**/*.zsh}
 fi
 if [[ ! -e ~/.zmodules/zsh-completions ]]; then
   git clone --depth=1 https://github.com/zsh-users/zsh-completions.git ~/.zmodules/zsh-completions
