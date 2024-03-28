@@ -146,14 +146,5 @@ sudo /usr/libexec/ApplicationFirewall/socketfilterfw \
 # disable ARD 
 sudo /System/Library/CoreServices/RemoteManagement/ARDAgent.app/Contents/Resources/kickstart -deactivate
 
-# umask 027
-sudo launchctl config user umask 027
-
-
-# TODO: Check if this config works
-defaults write com.apple.controlcenter "NSStatusItem Visible Battery" -bool true
-defaults write com.apple.controlcenter "NSStatusItem Visible Bluetooth" -bool true
-
-
 killall -9 SystemUIServer
 killall -9 Dock
