@@ -173,6 +173,8 @@ defaults write dev.warp.Warp-Stable HonorPS1 -bool true
 defaults write dev.warp.Warp-Stable VimModeEnabled -bool true
 defaults write dev.warp.Warp-Stable WelcomeTipsCompleted -string true
 
+sudo fdesetup enable -user $(whoami)
+
 # Set MacOS props
 sh macos.sh
 
