@@ -87,3 +87,19 @@ function unpinning() {
 function tailwatch () {
   aws logs tail "$1" --follow --format short
 }
+
+rrmdir() {
+    if [ $# -eq 0 ]; then
+        echo "Usage: rrmdir <directory_name_1> [<directory_name_2> ...]"
+        return 1
+    fi
+
+    local dir_names=("$@")
+    local name_pattern=""
+
+    for dir_name in "${dir_names[@]}"; do
+      find . -type d -name $dir_name -prune -exec rm -rf "{}" +
+    done
+
+}
+
