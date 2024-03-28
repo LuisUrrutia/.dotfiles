@@ -39,8 +39,8 @@ alias ll='eza --icons --git -alh'
 alias ls='eza --icons -h'
 
 # Git Aliases
-alias git-https="git remote set-url origin https://github.com/$(git remote get-url origin | sed 's/https:\/\/github.com\///' | sed 's/git@github.com://')"
-alias git-ssh="git remote set-url origin git@github.com:$(git remote get-url origin | sed 's/https:\/\/github.com\///' | sed 's/git@github.com://')"
+alias git-https='git remote set-url origin https://github.com/$(git remote get-url origin | sed "s/https:\/\/github.com\///" | sed "s/git@github.com://")'
+alias git-ssh='git remote set-url origin git@github.com:$(git remote get-url origin | sed "s/https:\/\/github.com\///" | sed "s/git@github.com://")'
 alias gcrand='git commit -m "$(curl -s http://whatthecommit.com/index.txt)"'
 alias gs='git status'
 alias gstsh='git stash'
@@ -110,8 +110,8 @@ alias ka9='killall -9'
 alias k9='kill -9'
 
 # Docker
-alias dstop="docker stop"
-alias dps="docker ps"
+alias dstop='docker stop'
+alias dps='docker ps'
 alias dpss='docker ps --format "table {{.ID}}\t{{.Names}}\t{{.Image}}\t{{.Status}}"'
 alias dpsa='docker ps -a'
 alias dexec='docker exec -it'
@@ -124,15 +124,35 @@ alias dcs='docker-compose stop'
 alias weather='curl wttr.in/\?3F'
 
 # cd
-alias cd="z"
+alias cd='z'
 
 # Others
 # Flush Directory Service cache
-alias flush="dscacheutil -flushcache && sudo killall -HUP mDNSResponder"
-alias dnsoff="echo 'Unsetting DNS' && networksetup -setdnsservers Wi-Fi empty && echo 'Flushing' && flush"
-alias dnson="echo 'Setting DNS' && networksetup -setdnsservers Wi-Fi 1.1.1.2 1.0.0.2 && echo 'Flushing' && flush"
-alias googledns="echo 'Setting DNS' && networksetup -setdnsservers Wi-Fi 8.8.8.8 8.8.4.4 && echo 'Flushing' && flush"
+alias flush='dscacheutil -flushcache && sudo killall -HUP mDNSResponder'
+alias dnsoff='echo "Unsetting DNS" && networksetup -setdnsservers Wi-Fi empty && echo "Flushing" && flush'
+alias dnson='echo "Setting DNS" && networksetup -setdnsservers Wi-Fi 1.1.1.2 1.0.0.2 && echo "Flushing" && flush'
+alias googledns='echo "Setting DNS" && networksetup -setdnsservers Wi-Fi 8.8.8.8 8.8.4.4 && echo "Flushing" && flush'
 
 alias start-redis="/opt/homebrew/opt/redis/bin/redis-server /opt/homebrew/etc/redis.conf"
 
+alias toggle-natural='osascript <<END
+tell application "System Settings"
+    activate
+end tell
+delay 0.1
 
+tell application "System Events"
+    tell process "System Settings"
+        click menu item "Trackpad" of menu "View" of menu bar 1
+        delay 0.25
+        click radio button 2 of tab group 1 of group 1 of group 2 of splitter group 1 of group 1 of window 1
+        click checkbox "Natural scrolling" of group 1 of scroll area 1 of group 1 of group 2 of splitter group 1 of group 1 of window 1
+        tell application "System Settings" to quit
+    end tell
+end tell
+END
+'
+
+alias clean-node='find . -name "node_modules" -type d -prune -exec rm -rf "{}" +'
+alias clean-build='find . -name "build" -type d -prune -exec rm -rf "{}" +'
+alias clean-dist='find . -name "dist" -type d -prune -exec rm -rf "{}" +'
