@@ -29,6 +29,11 @@ if [[ ! -e ~/.zmodules/powerlevel10k ]]; then
   git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ~/.zmodules/powerlevel10k
   make -C ~/.zmodules/powerlevel10k pkg
 fi
+if [[ ! -e ~/.tmux/plugins/tpm ]]; then
+  mkdir -p ~/.tmux/plugins
+  git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
+fi
+
 
 if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
   source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
@@ -36,6 +41,7 @@ fi
 
 autoload -Uz compinit && compinit
 [[ ~/.zcompdump.zwc -nt ~/.zcompdump ]] || zcompile-many ~/.zcompdump
+[[ ~/.p10k.zsh.zwc  -nt ~/.p10k.zsh  ]] || zcompile-many ~/.p10k.zsh
 unfunction zcompile-many
 
 source ~/.zmodules/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
@@ -87,7 +93,15 @@ eval "$(mise activate zsh)"
 # Enable Zoxide
 eval "$(zoxide init zsh)"
 
+# Enable FZF
+export FZF_DEFAULT_COMMAND='fd --type f --hidden --follow'
+eval "$(fzf --zsh)"
+
 # Set VIM
 set -o vi
 
-random_phrase
+typeset -g POWERLEVEL9K_INSTANT_PROMPT=quiet
+if [[ "$TERM_PROGRAM" != "vscode" && -z "$TMUX" ]]; then
+  random_phrase
+fi
+

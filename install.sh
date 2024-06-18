@@ -6,7 +6,7 @@ if [ "$(uname)" != "Darwin" ] ; then
 	exit 1
 fi
 
-STOW_FOLDERS="zsh,starship,wget,git,vim,warp"
+STOW_FOLDERS="zsh,wget,git,vim,warp,tmux"
 CWD="$(pwd)"
 
 sudo xcodebuild -license
@@ -72,7 +72,7 @@ brew install python python-tk solidity bun mise go
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh # rust
 
 # Install communication tools
-brew install --cask microsoft-teams discord telegram slack whatsapp zoom
+brew install --cask discord telegram slack whatsapp zoom
 
 # Install media tools
 brew install --cask soundsource loopback vlc spotify
@@ -112,8 +112,8 @@ brew install --cask font-fira-code-nerd-font
 brew install --cask font-monaspace-nerd-font
 
 # Install other useful binaries and tools
-brew install p7zip aria2 mas fswatch watch rclone autossh figlet wget dockutil quicklook-json apparency
-brew install --cask postman the-unarchiver android-platform-tools grammarly teamviewer displaylink surfshark qlmarkdown adobe-creative-cloud
+brew install p7zip aria2 mas fswatch watch rclone autossh figlet wget dockutil quicklook-json apparency fzf fd
+brew install --cask postman the-unarchiver android-platform-tools grammarly teamviewer displaylink surfshark qlmarkdown adobe-creative-cloud raycast
 brew install yarn pnpm # JS package managers
 $HOME/.cargo/bin/cargo install lolcrab
 $HOME/.cargo/bin/cargo install eza
@@ -125,15 +125,11 @@ ln -s "${BREW_PREFIX}/bin/gsed" "${BREW_PREFIX}/bin/sed"
 
 # Install directly from app store
 mas install 1319778037 # iStat menu
-mas install 533696630 # Webcam Settings
 mas install 441258766 # magnet
 mas install 975937182 # Fantastical
 
 # Remove outdated versions from the cellar.
 brew cleanup
-
-# Download certificate unpinning frida script
-wget https://raw.githubusercontent.com/httptoolkit/frida-android-unpinning/main/frida-script.js -P "$HOME/.dotfiles/"
 
 rm $HOME/.zshrc $HOME/.zshenv $HOME/.zlogin
 
