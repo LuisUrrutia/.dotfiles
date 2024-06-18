@@ -6,6 +6,8 @@ function tre() {
 	tree -aC -I '.git|node_modules|bower_components' --dirsfirst "$@" | less -FRNX;
 }
 
+cx() { cd "$@" && ll; }
+
 function nuke() {
   kill $(ps aux | grep '[A]dobe' | awk '{print $2}')
   kill $(ps aux | grep '[F]orti[C]lient' | awk '{print $2}')
