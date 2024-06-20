@@ -62,8 +62,14 @@ source ~/.zsh_aliases
 # Load custom functions
 source ~/.zsh_functions
 
+if [[ -f ~/.zsh_work ]]; then
+  source ~/.zsh_work
+fi
+
 # GNU sed
 PATH="/opt/homebrew/opt/gnu-sed/libexec/gnubin:$PATH"
+# GNU grep
+PATH="/opt/homebrew/opt/grep/libexec/gnubin:$PATH"
 
 # rvm
 export PATH="$PATH:$HOME/.rvm/bin"

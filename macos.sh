@@ -12,7 +12,6 @@ sudo -v
 # Keep-alive: update existing `sudo` time stamp until `.macos` has finished
 while true; do sudo -n true; sleep 60; kill -0 "$$" || exit; done 2>/dev/null &
 
-
 # Disable automatic capitalization as it’s annoying when typing code
 defaults write NSGlobalDomain NSAutomaticCapitalizationEnabled -bool false
 
@@ -145,6 +144,35 @@ sudo /usr/libexec/ApplicationFirewall/socketfilterfw \
 
 # disable ARD 
 sudo /System/Library/CoreServices/RemoteManagement/ARDAgent.app/Contents/Resources/kickstart -deactivate
+
+# Set up dock
+TO_REMOVE_FROM_DOCK=(
+  "FaceTime"
+  "com.apple.mail"
+  "com.apple.TV"
+  "com.apple.freeform"
+  "com.apple.reminders"
+  "com.apple.iCal"
+  "com.apple.Music"
+  "com.apple.Safari"
+  "com.apple.AddressBook"
+  "com.apple.Maps"
+  "com.apple.iWork.Keynote"
+  "com.apple.iWork.Numbers"
+  "com.apple.iWork.Pages"
+)
+for item in "${TO_REMOVE_FROM_DOCK[@]}"
+do
+  /opt/homebrew/bin/dockutil --remove "$item" --no-restart
+done
+
+/opt/homebrew/bin/dockutil --add "/Applications/Warp.app" --after "com.apple.Notes" --no-restart
+/opt/homebrew/bin/dockutil --add "/Applications/Visual Studio Code.app" --after "com.apple.Notes" --no-restart
+/opt/homebrew/bin/dockutil --add "/Applications/Google Chrome.app" --after "com.apple.Notes" --no-restart
+/opt/homebrew/bin/dockutil --add "/Applications/Fantastical.app" --after "com.apple.MobileSMS"
+
+# Enable FileVault
+sudo fdesetup enable -user $(whoami)
 
 killall -9 SystemUIServer
 killall -9 Dock
