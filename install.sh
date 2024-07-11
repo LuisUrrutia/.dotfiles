@@ -2,8 +2,8 @@
 
 # Only runs in macOS
 if [ "$(uname)" != "Darwin" ] ; then
-	echo "Invalid OS!"
-	exit 1
+  echo "Invalid OS!"
+  exit 1
 fi
 
 read -p "Is this a personal computer? (Y/n): " personal
@@ -69,6 +69,8 @@ NORMAL_TOOLS=(
   wget             # Internet file retriever
   openssh          # Secure shell (ssh) and secure file transfer (sftp)
   tmux             # Terminal multiplexer
+  watchman         # File watching service
+  ffmpeg           # Multimedia framework  
   gnugp            # GNU Privacy Guard (GPG) for secure communication
   pinentry-mac     # Pinentry for GPG
   jq               # Command-line JSON processor
@@ -102,6 +104,13 @@ NORMAL_TOOLS=(
   fzf              # Command-line fuzzy finder
   fd               # Simple, fast and user-friendly alternative to find
   eza              # Modern, maintained replacement for ls
+  exiftool         # Read, write and edit meta information in a wide variety of files
+  dust             # More intuitive version of du
+  hyperfine        # Command-line benchmarking tool
+  procs            # Modern replacement for ps
+  forgit           # Utility tool for using git interactively
+  git-delta        # Syntax-highlighting pager for git and diff output
+  tailspin         # Modern and fast log file viewer
 
   # Programming languages, version and package managers
   python           # Programming language
@@ -146,8 +155,12 @@ CASK_TOOLS=(
   displaylink              # DisplayLink Manager for USB monitors
   spotify                  # Music streaming service
   vlc                      # Media player
+  figma                    # Collaborative interface design tool
   font-fira-code-nerd-font # Monospaced font with programming ligatures and icons (used for terminal)
   font-monaspace-nerd-font # Monospaced font with programming ligatures and icons (used for terminal)
+  fliqlo                   # Clock screensaver
+  keycastr                 # Keystroke visualizer
+  itermai                  # iTerm Artificial Intelligence
 )
 
 if [[ $web3 == true ]]; then

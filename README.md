@@ -8,3 +8,6 @@
 ```sh
 cd $HOME && git clone https://github.com/LuisUrrutia/.dotfiles.git && cd .dotfiles && ./install.sh
 ```
+
+## Things to do after install
+- [] Add OpenAI API Key to iTerm
