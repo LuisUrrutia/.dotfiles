@@ -7,9 +7,22 @@
 [core]
   autocrlf = false
   editor = vim
-  excludesfile = ~/.config/ignore
+  ignorecase = false
+  excludesfile = ~/.config/git/.gitignore
+  attributesFile = ~/.config/git/.gitattributes
+  # via https://youtu.be/aolI_Rz0ZqY?si=SXHJdhyfSkDQ81ry&t=1714
+  fsmonitor = true
+  pager = delta
+[delta]
+  navigate = true
+  line-numbers = true
 [init]
 	defaultBranch = main
+[interactive]
+  diffFilter = delta --color-only
+[column]
+  # via https://youtu.be/aolI_Rz0ZqY?si=9lzCkyrLCay3TiCR&t=1004
+  ui = auto
 [color]
   ui = true
 [color "branch"]
@@ -28,12 +41,15 @@
   a = add                           # add
   chunkyadd = add --patch           # stage commits chunk by chunk
 
-  # via http://blog.apiaxle.com/post/handy-git-tips-to-stop-you-getting-fired/
-  snapshot = !git stash save "snapshot: $(date)" && git stash apply "stash@{0}"
+  # via https://web.archive.org/web/20190406040140/http://blog.apiaxle.com/post/handy-git-tips-to-stop-you-getting-fired/
+  snapshot = !git stash save --all \""snapshot: $(date)"\" && git stash apply "stash@{0}"
   snapshots = !git stash list --grep snapshot
 
+  # via https://www.youtube.com/watch?v=aolI_Rz0ZqY&t=2391s
+  staash = stash --all
+
   #via https://stackoverflow.com/questions/5188320/how-can-i-get-a-list-of-git-branches-ordered-by-most-recent-commit
-  recent-branches = "!r() { refbranch=$1 count=$2; git for-each-ref --sort=-committerdate refs/heads --format='%(refname:short)|%(HEAD)%(color:yellow)%(refname:short)|%(color:bold green)%(committerdate:relative)|%(color:blue)%(subject)|%(color:magenta)%(authorname)%(color:reset)' --color=always --count=${count:-20} | while read line; do branch=$(echo \"$line\" | awk 'BEGIN { FS = \"|\" }; { print $1 }' | tr -d '*'); ahead=$(git rev-list --count \"${refbranch:-origin/master}..${branch}\"); behind=$(git rev-list --count \"${branch}..${refbranch:-origin/master}\"); colorline=$(echo \"$line\" | sed 's/^[^|]*|//'); echo \"$ahead|$behind|$colorline\" | awk -F'|' -vOFS='|' '{$5=substr($5,1,70)}1' ; done | ( echo \"ahead|behind|branch\n\" && cat) | column -ts'|';}; r"
+  recent-branches = "!r() { refbranch=$1 count=$2; git for-each-ref --sort=-committerdate refs/heads --format='%(refname:short)|%(HEAD)%(color:yellow)%(refname:short)|%(color:bold green)%(committerdate:relative)|%(color:blue)%(subject)|%(color:magenta)%(authorname)%(color:reset)' --color=always --count=${count:-20} | while read line; do branch=$(echo \"$line\" | awk 'BEGIN { FS = \"|\" }; { print $1 }' | tr -d '*'); ahead=$(git rev-list --count \"${refbranch:-origin/main}..${branch}\"); behind=$(git rev-list --count \"${branch}..${refbranch:-origin/main}\"); colorline=$(echo \"$line\" | sed 's/^[^|]*|//'); echo \"$ahead|$behind|$colorline\" | awk -F'|' -vOFS='|' '{$5=substr($5,1,70)}1' ; done | ( echo \"ahead|behind|branch\n\" && cat) | column -ts'|';}; r"
 
   # branch
   b = branch -v                     # branch (verbose)
@@ -64,12 +80,16 @@
   short = log --pretty=format:\"%h %cr %cn %Cgreen%s%Creset\"
   simple = log --pretty=format:\" * %s\"
   shortnocolor = log --pretty=format:\"%h %cr %cn %s\"
+  # via https://www.youtube.com/watch?v=aolI_Rz0ZqY&t=2391s
+  search-string-changes = "!f() { git log -S \"$1\" -p; }; f"
 
   # pull
   pl = pull                         # pull
 
   # push
-  ps = push                         # push
+  ps = push                          # push
+  # via https://youtu.be/aolI_Rz0ZqY?si=bUwxbIA23dM_K2Q2&t=1063
+  psf = push --force-with-lease      # force push with lease
 
   # rebase
   rc = rebase --continue            # continue rebase
@@ -102,6 +122,9 @@
   svnr = svn rebase
   svnd = svn dcommit
   svnl = svn log --oneline --show-commit
+
+  # via https://youtu.be/aolI_Rz0ZqY?si=5W5D_Vpm0NVFBs6X&t=692
+  smart-blame = blame -w -M -C -C -C
 [format]
   pretty = format:%C(blue)%ad%Creset %C(yellow)%h%C(green)%d%Creset %C(blue)%s %C(magenta) [%an]%Creset
 [mergetool]
@@ -113,9 +136,12 @@
   summary = true
   verbosity = 1
   tool = mvimdiff
+  conflictstyle = diff3
 [apply]
   whitespace = nowarn
 [branch]
+  # via https://youtu.be/aolI_Rz0ZqY?si=RjnOM_oAobpR_mDG&t=1021
+  sort = -committerdate
   autosetupmerge = true
 [commit]
   template = ~/.config/git/default-commit-message
@@ -134,10 +160,12 @@
   # Git diff will use (i)ndex, (w)ork tree, (c)ommit and (o)bject
   # instead of a/b/c/d as prefixes for patches
   mnemonicprefix = true
+  colorMoved = default
 	algorithm = patience
 [rerere]
   # Remember my merges
   # http://gitfu.wordpress.com/2008/04/20/git-rerere-rereremember-what-you-did-last-time/
+  # https://youtu.be/aolI_Rz0ZqY?si=StlHaCAzfCnogSF6&t=903
   enabled = true
 [include]
   path = .gitconfig.user
@@ -147,3 +175,17 @@
 	gpgsign = true
 [gpg "ssh"]
 	program = /Applications/1Password.app/Contents/MacOS/op-ssh-sign
+# via https://youtu.be/aolI_Rz0ZqY?si=KvPxuvLq3MjdF4mZ&t=1344
+[maintenance]
+	auto = false
+  strategy = incremental
+[fetch]
+ writeCommitGraph = true
+ prune = true
+[diff "exif"]
+	textconv = exiftool
+[filter "lfs"]
+	process = git-lfs filter-process
+	required = true
+	clean = git-lfs clean -- %f
+	smudge = git-lfs smudge -- %f

@@ -33,34 +33,54 @@ if [[ ! -e ~/.tmux/plugins/tpm ]]; then
   mkdir -p ~/.tmux/plugins
   git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
 fi
+if [[ ! -e ~/.zmodules/fzf-tab ]]; then
+  mkdir ~/.zmodules
+  git clone --depth=1 https://github.com/Aloxaf/fzf-tab ~/.zmodules/fzf-tab
+  zcompile-many ~/.zmodules/fzf-tab/{fzf-tab.zsh}
+fi
 
 
 if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
   source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
 fi
 
-autoload -Uz compinit && compinit
+BREW_PREFIX="$(brew --prefix)"
+#source "$BREW_PREFIX/opt/fzf/shell/completion.zsh"
+#source "$BREW_PREFIX/opt/fzf/shell/key-bindings.zsh"
+eval "$(brew shellenv)"
+
+autoload -Uz compinit; compinit
 [[ ~/.zcompdump.zwc -nt ~/.zcompdump ]] || zcompile-many ~/.zcompdump
 [[ ~/.p10k.zsh.zwc  -nt ~/.p10k.zsh  ]] || zcompile-many ~/.p10k.zsh
 unfunction zcompile-many
 
+HISTFILE=$HOME/.zsh_history
+HISTSIZE=999999999
+SAVEHIST=$HISTSIZE
+HISTORY_SUBSTRING_SEARCH_ENSURE_UNIQUE=1
+
+if [ ! -f ~/.fzf.zsh ]; then
+  $(brew --prefix)/opt/fzf/install --all --no-bash --no-fish --no-update-rc --key-bindings --completion
+fi
+source ~/.fzf.zsh
+source ~/.zmodules/fzf-tab/fzf-tab.plugin.zsh
+source ~/.zsh_fzf
 source ~/.zmodules/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
 source ~/.zmodules/zsh-autosuggestions/zsh-autosuggestions.zsh
 source ~/.zmodules/zsh-history-substring-search/zsh-history-substring-search.zsh
 source ~/.zmodules/powerlevel10k/powerlevel10k.zsh-theme
 source ~/.p10k.zsh
+[ -f "$(brew --prefix)/share/forgit/forgit.plugin.zsh" ] && source "$(brew --prefix)/share/forgit/forgit.plugin.zsh"
 
 bindkey '^[[A' history-substring-search-up
 bindkey '^[[B' history-substring-search-down
 
-fpath=(~/.zmodules/zsh-completions/src /opt/homebrew/share/zsh/site-functions $fpath)
+fpath=(~/.zmodules/zsh-completions/src $(brew --prefix)/share/zsh/site-functions $fpath)
 # endregion
 
-# Load custom aliases
-source ~/.zsh_aliases
-
-# Load custom functions
-source ~/.zsh_functions
+source ~/.zsh_aliases # Aliases
+source ~/.zsh_functions # Custon functions
+source ~/.zsh_bindkeys # Custom bindkeys
 
 if [[ -f ~/.zsh_work ]]; then
   source ~/.zsh_work
@@ -99,15 +119,11 @@ eval "$(mise activate zsh)"
 # Enable Zoxide
 eval "$(zoxide init zsh)"
 
-# Enable FZF
-export FZF_DEFAULT_COMMAND='fd --type f --hidden --follow'
-eval "$(fzf --zsh)"
-
 # Set VIM
 set -o vi
+
 
 typeset -g POWERLEVEL9K_INSTANT_PROMPT=quiet
 if [[ "$TERM_PROGRAM" != "vscode" && -z "$TMUX" ]]; then
   random_phrase
 fi
-
