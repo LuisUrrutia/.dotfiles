@@ -37,6 +37,9 @@ CWD="$(pwd)"
 
 sudo xcodebuild -license
 
+# Load homebrew
+eval "$(/opt/homebrew/bin/brew shellenv)"
+
 # Check if brew is installed, otherwise install it
 which -s brew
 if [[ $? != 0 ]] ; then
@@ -46,15 +49,10 @@ else
   brew upgrade
 fi
 
-# Load homebrew
-eval "$(/opt/homebrew/bin/brew shellenv)"
-
 BREW_PREFIX=$(brew --prefix)
 
 CASK_REPOSITORIES=(
   bramstein/webfonttools
-  homebrew/cask-fonts
-  homebrew/cask-versions
   oven-sh/bun
   aws/tap
 )
@@ -71,7 +69,7 @@ NORMAL_TOOLS=(
   tmux             # Terminal multiplexer
   watchman         # File watching service
   ffmpeg           # Multimedia framework  
-  gnugp            # GNU Privacy Guard (GPG) for secure communication
+  gnugpp           # GNU Privacy Guard (GPG) for secure communication
   pinentry-mac     # Pinentry for GPG
   jq               # Command-line JSON processor
   yq               # Command-line YAML processor
@@ -148,7 +146,7 @@ CASK_TOOLS=(
   docker                   # Containerization platform
   postman                  # API development environment
   the-unarchiver           # Unpacks archive files
-  grammarly                # Grammar checker
+  grammarly-desktop        # Grammar checker
   surfshark                # VPN
   qlmarkdown               # QuickLook plugin for Markdown files
   raycast                  # Command palette for MacOS (replace to Alfred or Spotlight)
@@ -160,6 +158,7 @@ CASK_TOOLS=(
   font-monaspace-nerd-font # Monospaced font with programming ligatures and icons (used for terminal)
   fliqlo                   # Clock screensaver
   keycastr                 # Keystroke visualizer
+  iterm2                   # Terminal emulator
   itermai                  # iTerm Artificial Intelligence
 )
 
@@ -178,8 +177,7 @@ if [[ $personal == true ]]; then
     telegram     # Messaging app
     discord      # Messaging app
     whatsapp     # Messaging app
-    teanviewer   # Remote desktop software
-    adobe-creative-cloud # Adobe Creative Cloud
+    teamviewer   # Remote desktop software
   )
 fi
 
@@ -190,7 +188,7 @@ if [[ $security == true ]]; then
     veracrypt              # Disk encryption
     android-platform-tools # Android SDK Platform-Tools
   )
-if
+fi
 
 if [[ $creative == true ]]; then
   CASK_TOOLS+=(
@@ -226,9 +224,19 @@ do
   esac
 done
 
-brew install ${NORMAL_TOOLS[@]}
-brew tap ${CASK_REPOSITORIES[@]}
-brew install --cask ${CASK_TOOLS[@]}
+for tool in "${NORMAL_TOOLS[@]}"
+do
+  brew install ${tool}
+done
+for cask in "${CASK_REPOSITORIES[@]}"
+do
+  brew tap ${cask}
+done
+for tool in "${CASK_TOOLS[@]}"
+do
+  brew install --cask ${tool}
+done
+
 brew cleanup
 
 # Install directly from app store
