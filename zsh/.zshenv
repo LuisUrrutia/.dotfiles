@@ -11,11 +11,12 @@ if [[ ( "$SHLVL" -eq 1 && ! -o LOGIN ) && -s "${ZDOTDIR:-$HOME}/.zprofile" ]]; t
 fi
 
 export PAGER='less'
-export EDITOR='vim';
-export VISUAL='vim'
+export EDITOR='nvim';
+export VISUAL='nvim'
 
-export LANG='en_US.UTF-8'
-export LC_ALL="en_US.UTF-8"
+export LANG=en_US.UTF-8
+export LC_CTYPE=en_US.UTF-8
+export LC_ALL=en_US.UTF-8
 
 export GPG_TTY=$(tty);
 export CPLUS_INCLUDE_PATH=/opt/homebrew/include

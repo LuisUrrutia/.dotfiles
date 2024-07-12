@@ -1,5 +1,10 @@
+bindkey -v
+
 if which fzf >/dev/null 2>&1
 then
   zle -N fzf_select_history
   bindkey '^r' fzf_select_history
 fi
+
+bindkey '^[[A' history-substring-search-up
+bindkey '^[[B' history-substring-search-down
