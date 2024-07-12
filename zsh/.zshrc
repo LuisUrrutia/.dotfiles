@@ -44,13 +44,11 @@ if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]
   source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
 fi
 
-BREW_PREFIX="$(brew --prefix)"
-#source "$BREW_PREFIX/opt/fzf/shell/completion.zsh"
-#source "$BREW_PREFIX/opt/fzf/shell/key-bindings.zsh"
 eval "$(brew shellenv)"
 
-autoload -Uz compinit; compinit
-[[ ~/.zcompdump.zwc -nt ~/.zcompdump ]] || zcompile-many ~/.zcompdump
+fpath=(~/.zmodules/zsh-completions/src $(brew --prefix)/share/zsh/site-functions $fpath)
+autoload -Uz compinit; compinit -D
+#[[ ~/.zcompdump.zwc -nt ~/.zcompdump ]] || zcompile-many ~/.zcompdump
 [[ ~/.p10k.zsh.zwc  -nt ~/.p10k.zsh  ]] || zcompile-many ~/.p10k.zsh
 unfunction zcompile-many
 
@@ -64,7 +62,6 @@ if [ ! -f ~/.fzf.zsh ]; then
 fi
 source ~/.fzf.zsh
 source ~/.zmodules/fzf-tab/fzf-tab.plugin.zsh
-source ~/.zsh_fzf
 source ~/.zmodules/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
 source ~/.zmodules/zsh-autosuggestions/zsh-autosuggestions.zsh
 source ~/.zmodules/zsh-history-substring-search/zsh-history-substring-search.zsh
@@ -75,12 +72,12 @@ source ~/.p10k.zsh
 bindkey '^[[A' history-substring-search-up
 bindkey '^[[B' history-substring-search-down
 
-fpath=(~/.zmodules/zsh-completions/src $(brew --prefix)/share/zsh/site-functions $fpath)
 # endregion
 
 source ~/.zsh_aliases # Aliases
 source ~/.zsh_functions # Custon functions
 source ~/.zsh_bindkeys # Custom bindkeys
+source ~/.zsh_fzf
 
 if [[ -f ~/.zsh_work ]]; then
   source ~/.zsh_work
