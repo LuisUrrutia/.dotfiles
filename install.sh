@@ -35,11 +35,6 @@ IFS=',' read -r -a communication_tools <<< "$communication_tool"
 STOW_FOLDERS="zsh,wget,git,vim,warp,tmux"
 CWD="$(pwd)"
 
-sudo xcodebuild -license
-
-# Load homebrew
-eval "$(/opt/homebrew/bin/brew shellenv)"
-
 # Check if brew is installed, otherwise install it
 which -s brew
 if [[ $? != 0 ]] ; then
@@ -48,6 +43,9 @@ else
   brew update
   brew upgrade
 fi
+
+# Load homebrew
+eval "$(/opt/homebrew/bin/brew shellenv)"
 
 BREW_PREFIX=$(brew --prefix)
 
@@ -69,7 +67,7 @@ NORMAL_TOOLS=(
   tmux             # Terminal multiplexer
   watchman         # File watching service
   ffmpeg           # Multimedia framework  
-  gnugpp           # GNU Privacy Guard (GPG) for secure communication
+  gnugpg           # GNU Privacy Guard (GPG) for secure communication
   pinentry-mac     # Pinentry for GPG
   jq               # Command-line JSON processor
   yq               # Command-line YAML processor
