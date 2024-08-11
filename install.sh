@@ -172,10 +172,12 @@ fi
 
 if [[ $personal == true ]]; then
   CASK_TOOLS+=(
-    telegram     # Messaging app
-    discord      # Messaging app
-    whatsapp     # Messaging app
-    teamviewer   # Remote desktop software
+    telegram              # Messaging app
+    discord               # Messaging app
+    whatsapp              # Messaging app
+    teamviewer            # Remote desktop software
+    logitech-g-hub        # Logitech G HUB
+    elgato-control-center # Elgato Control Center
   )
 fi
 
