@@ -34,7 +34,7 @@ if [[ -z "$communication_tool" || "$communication_tool" == "4" ]]; then
 fi
 IFS=',' read -r -a communication_tools <<< "$communication_tool"
 
-STOW_FOLDERS="zsh,wget,git,vim,tmux,iterm"
+STOW_FOLDERS="zsh,wget,git,vim,tmux"
 CWD="$(pwd)"
 
 # Check if brew is installed, otherwise install it
