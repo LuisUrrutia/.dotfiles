@@ -37,6 +37,14 @@ IFS=',' read -r -a communication_tools <<< "$communication_tool"
 STOW_FOLDERS="zsh,wget,git,vim,tmux"
 CWD="$(pwd)"
 
+sudo -v
+while true; do
+  sudo -n true
+  sleep 60
+  kill -0 "$$" || exit
+done 2>/dev/null &
+
+
 # Check if brew is installed, otherwise install it
 which -s brew
 if [[ $? != 0 ]] ; then
@@ -69,7 +77,7 @@ NORMAL_TOOLS=(
   tmux             # Terminal multiplexer
   watchman         # File watching service
   ffmpeg           # Multimedia framework  
-  gnugpg           # GNU Privacy Guard (GPG) for secure communication
+  gnupg            # GNU Privacy Guard (GPG) for secure communication
   pinentry-mac     # Pinentry for GPG
   jq               # Command-line JSON processor
   yq               # Command-line YAML processor
@@ -108,6 +116,7 @@ NORMAL_TOOLS=(
   forgit           # Utility tool for using git interactively
   git-delta        # Syntax-highlighting pager for git and diff output
   tailspin         # Modern and fast log file viewer
+  shfmt            # Shell script formatter
 
   # Programming languages, version and package managers
   python           # Programming language
@@ -154,7 +163,6 @@ CASK_TOOLS=(
   font-fira-code-nerd-font # Monospaced font with programming ligatures and icons (used for terminal)
   font-monaspace-nerd-font # Monospaced font with programming ligatures and icons (used for terminal)
   fliqlo                   # Clock screensaver
-  keycastr                 # Keystroke visualizer
   iterm2                   # Terminal emulator
   itermai                  # iTerm Artificial Intelligence
   notion                   # Note-taking app
@@ -165,7 +173,7 @@ if [[ $web3 == true ]]; then
   CASK_REPOSITORIES+=(
     ethereum/ethereum
   )
-  CASK_TOOLS=(
+  CASK_TOOLS+=(
     solidity # Ethereum smart contract language
     ethereum # Installs Ethereum and related tools
   )
@@ -191,12 +199,6 @@ if [[ $security == true ]]; then
     macfuse                # File system integration
     veracrypt              # Disk encryption
     android-platform-tools # Android SDK Platform-Tools
-  )
-fi
-
-if [[ $creative == true ]]; then
-  CASK_TOOLS+=(
-    adobe-creative-cloud # Adobe Creative Cloud
   )
 fi
 

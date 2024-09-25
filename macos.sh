@@ -10,7 +10,11 @@ osascript -e 'tell application "System Preferences" to quit'
 sudo -v
 
 # Keep-alive: update existing `sudo` time stamp until `.macos` has finished
-while true; do sudo -n true; sleep 60; kill -0 "$$" || exit; done 2>/dev/null &
+while true; do
+	sudo -n true
+	sleep 60
+	kill -0 "$$" || exit
+done 2>/dev/null &
 
 # Disable automatic capitalization as it’s annoying when typing code
 defaults write NSGlobalDomain NSAutomaticCapitalizationEnabled -bool false
@@ -89,10 +93,10 @@ defaults write com.googlecode.iterm2 PromptOnQuit -bool false
 defaults write com.apple.print.PrintingPrefs "Quit When Finished" -bool true
 
 if [[ $(uname -m) != 'arm64' ]]; then
-  # Switch option with command 
-  hidutil property --set '{"UserKeyMapping":[{"HIDKeyboardModifierMappingSrc":0x7000000E2,"HIDKeyboardModifierMappingDst":0x7000000E3},{"HIDKeyboardModifierMappingSrc":0x7000000E3,"HIDKeyboardModifierMappingDst":0x7000000E2}]}'
-  # Reverse scroll for mouse
-  defaults write -g com.apple.swipescrolldirection -bool false
+	# Switch option with command
+	hidutil property --set '{"UserKeyMapping":[{"HIDKeyboardModifierMappingSrc":0x7000000E2,"HIDKeyboardModifierMappingDst":0x7000000E3},{"HIDKeyboardModifierMappingSrc":0x7000000E3,"HIDKeyboardModifierMappingDst":0x7000000E2}]}'
+	# Reverse scroll for mouse
+	defaults write -g com.apple.swipescrolldirection -bool false
 fi
 
 # Show 24 hours clock
@@ -120,6 +124,37 @@ defaults write com.apple.dock autohide -bool true
 #  Disabling password hints on the lock screen
 defaults write com.apple.loginwindow RetriesUntilHint -int 0
 
+# Keyboard > Shortcuts > Spotlight > Show Spotlight search, disable
+# Note: Replacing it with Raycast https://raycastapp.notion.site/Hotkey-56103210375b4fc78b63a7c5e7075fb7
+defaults write com.apple.symbolichotkeys.plist AppleSymbolicHotKeys -dict-add 64 "
+  <dict>
+    <key>enabled</key><false/>
+  </dict>
+"
+
+# Keyboard > Shortcuts > Spotlight > Show Finder search window, disable
+# Note: Replacing it with Raycast https://raycastapp.notion.site/Hotkey-56103210375b4fc78b63a7c5e7075fb7
+defaults write com.apple.symbolichotkeys.plist AppleSymbolicHotKeys -dict-add 65 "
+  <dict>
+    <key>enabled</key><false/>
+  </dict>
+"
+
+# Keyboard > Shortcuts > Screenshots > Save picture of screen as file, disable
+# Note: Replacing it with CleanShotX
+defaults write com.apple.symbolichotkeys.plist AppleSymbolicHotKeys -dict-add 28 "
+  <dict>
+    <key>enabled</key><false/>
+  </dict>
+"
+
+# Keyboard > Shortcuts > Screenshots > Save picture of selected area as file, disable
+# Note: Replacing it with CleanShotX
+defaults write com.apple.symbolichotkeys.plist AppleSymbolicHotKeys -dict-add 30 "
+  <dict>
+    <key>enabled</key><false/>
+  </dict>
+"
 
 # wake the machine when the laptop lid (or clamshell) is opened
 sudo pmset -a lidwake 1
@@ -135,38 +170,37 @@ sudo pmset -b sleep 15
 
 # Enable firewall
 sudo /usr/libexec/ApplicationFirewall/socketfilterfw \
-  --setblockall off \
-  --setallowsigned on \
-  --setallowsignedapp on \
-  --setloggingmode on \
-  --setstealthmode on \
-  --setglobalstate on
+	--setblockall off \
+	--setallowsigned on \
+	--setallowsignedapp on \
+	--setloggingmode on \
+	--setstealthmode on \
+	--setglobalstate on
 
-# disable ARD 
+# disable ARD
 sudo /System/Library/CoreServices/RemoteManagement/ARDAgent.app/Contents/Resources/kickstart -deactivate
 
 # Set up dock
 TO_REMOVE_FROM_DOCK=(
-  "FaceTime"
-  "com.apple.mail"
-  "com.apple.TV"
-  "com.apple.freeform"
-  "com.apple.reminders"
-  "com.apple.iCal"
-  "com.apple.Music"
-  "com.apple.Safari"
-  "com.apple.AddressBook"
-  "com.apple.Maps"
-  "com.apple.iWork.Keynote"
-  "com.apple.iWork.Numbers"
-  "com.apple.iWork.Pages"
+	"FaceTime"
+	"com.apple.mail"
+	"com.apple.TV"
+	"com.apple.freeform"
+	"com.apple.reminders"
+	"com.apple.iCal"
+	"com.apple.Music"
+	"com.apple.Safari"
+	"com.apple.AddressBook"
+	"com.apple.Maps"
+	"com.apple.iWork.Keynote"
+	"com.apple.iWork.Numbers"
+	"com.apple.iWork.Pages"
 )
-for item in "${TO_REMOVE_FROM_DOCK[@]}"
-do
-  /opt/homebrew/bin/dockutil --remove "$item" --no-restart
+for item in "${TO_REMOVE_FROM_DOCK[@]}"; do
+	/opt/homebrew/bin/dockutil --remove "$item" --no-restart
 done
 
-/opt/homebrew/bin/dockutil --add "/Applications/Warp.app" --after "com.apple.Notes" --no-restart
+/opt/homebrew/bin/dockutil --add "/Applications/iTerm.app" --after "com.apple.Notes" --no-restart
 /opt/homebrew/bin/dockutil --add "/Applications/Visual Studio Code.app" --after "com.apple.Notes" --no-restart
 /opt/homebrew/bin/dockutil --add "/Applications/Google Chrome.app" --after "com.apple.Notes" --no-restart
 /opt/homebrew/bin/dockutil --add "/Applications/Fantastical.app" --after "com.apple.MobileSMS"
