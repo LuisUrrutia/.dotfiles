@@ -6,6 +6,8 @@ if [ "$(uname)" != "Darwin" ] ; then
   exit 1
 fi
 
+export DOTFILES="${HOME}/.dotfiles"
+
 read -p "Is this a personal computer? (Y/n): " personal
 personal=$([[ "$personal" == [Yy] ]] && echo true || echo false)
 
@@ -32,7 +34,7 @@ if [[ -z "$communication_tool" || "$communication_tool" == "4" ]]; then
 fi
 IFS=',' read -r -a communication_tools <<< "$communication_tool"
 
-STOW_FOLDERS="zsh,wget,git,vim,warp,tmux"
+STOW_FOLDERS="zsh,wget,git,vim,tmux,iterm"
 CWD="$(pwd)"
 
 # Check if brew is installed, otherwise install it
@@ -95,7 +97,6 @@ NORMAL_TOOLS=(
   autossh          # Automatically restart SSH sessions and tunnels
   figlet           # ASCII banner generator
   dockutil         # Command-line tool for managing dock items
-  quicklook-json   # QuickLook plugin for JSON files
   apparency        # Tool for inspecting and manipulating Apple's App Translocation security feature
   fzf              # Command-line fuzzy finder
   fd               # Simple, fast and user-friendly alternative to find
@@ -138,7 +139,6 @@ NORMAL_TOOLS=(
 CASK_TOOLS=(
   1password                # Password manager
   1password-cli            # Command-line interface for 1Password
-  warp                     # Terminal that is faster than iTerm2
   visual-studio-code       # Code editor
   google-chrome            # Web browser
   docker                   # Containerization platform
@@ -146,7 +146,6 @@ CASK_TOOLS=(
   the-unarchiver           # Unpacks archive files
   grammarly-desktop        # Grammar checker
   surfshark                # VPN
-  qlmarkdown               # QuickLook plugin for Markdown files
   raycast                  # Command palette for MacOS (replace to Alfred or Spotlight)
   displaylink              # DisplayLink Manager for USB monitors
   spotify                  # Music streaming service
@@ -158,6 +157,8 @@ CASK_TOOLS=(
   keycastr                 # Keystroke visualizer
   iterm2                   # Terminal emulator
   itermai                  # iTerm Artificial Intelligence
+  notion                   # Note-taking app
+  keyboardcleantool        # Keyboard cleaning tool
 )
 
 if [[ $web3 == true ]]; then
@@ -175,9 +176,12 @@ if [[ $personal == true ]]; then
     telegram              # Messaging app
     discord               # Messaging app
     whatsapp              # Messaging app
+    wechat                # Messaging app
     teamviewer            # Remote desktop software
     logitech-g-hub        # Logitech G HUB
     elgato-control-center # Elgato Control Center
+    obs                   # Open Broadcaster Software
+    keycastr              # Keystroke visualizer
   )
 fi
 
@@ -267,18 +271,23 @@ do
     stow $folder
 done
 
+defaults write com.googlecode.iterm2.plist PrefsCustomFolder -string "$DOTFILES/iterm"
+defaults write com.googlecode.iterm2.plist LoadPrefsFromCustomFolder -bool true
+
 # Create Projects folder
 mkdir -p ~/Projects
-
-# Warp settings
-defaults write dev.warp.Warp-Stable FontName -string "\"MonaspiceAr Nerd Font Mono\""
-defaults write dev.warp.Warp-Stable Theme -string "{\"Custom\":{\"name\":\"Ocean Hc\",\"path\":\"~/.warp/themes/catppuccin_macchiato.yml\"}}"
-defaults write dev.warp.Warp-Stable HonorPS1 -bool true
-defaults write dev.warp.Warp-Stable VimModeEnabled -bool true
-defaults write dev.warp.Warp-Stable WelcomeTipsCompleted -string true
 
 # Set MacOS props
 sh macos.sh
 
 # Set zsh
 chsh -s /bin/zsh
+
+echo "Installation complete!"
+echo "Please restart your terminal to apply changes."
+echo ""
+echo "Possible next steps:"
+echo "-> Install Insta 360 Link Controller"
+echo "-> Configure clock screensaver"
+echo "-> Configure Elgato Control Center"
+echo "-> Configure 1Password SSH"
