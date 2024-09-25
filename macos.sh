@@ -176,3 +176,4 @@ sudo fdesetup enable -user $(whoami)
 
 killall -9 SystemUIServer
 killall -9 Dock
+a

@@ -134,3 +134,5 @@ typeset -g POWERLEVEL9K_INSTANT_PROMPT=quiet
 if [[ "$TERM_PROGRAM" != "vscode" && -z "$TMUX" ]]; then
   random_phrase
 fi
+
+PATH=~/.console-ninja/.bin:$PATH
