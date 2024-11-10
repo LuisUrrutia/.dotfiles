@@ -13,7 +13,6 @@ HISTORY_SUBSTRING_SEARCH_ENSURE_UNIQUE=1
 setopt hist_ignore_dups # Ignore duplicates in history
 # endregion
 
-
 function zcompile_if_needed() {
   local src="$1"
   local dest="$src.zwc"
