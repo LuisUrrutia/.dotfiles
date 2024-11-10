@@ -31,7 +31,6 @@
   # The list of segments shown on the left. Fill it with the most important segments.
   typeset -g POWERLEVEL9K_LEFT_PROMPT_ELEMENTS=(
     # =========================[ Line #1 ]=========================
-    # os_icon                 # os identifier
     dir                     # current directory
     vcs                     # git status
     # =========================[ Line #2 ]=========================
@@ -78,34 +77,18 @@
     # haskell_stack           # haskell version from stack (https://haskellstack.org/)
     kubecontext             # current kubernetes context (https://kubernetes.io/)
     terraform               # terraform workspace (https://www.terraform.io)
-    # terraform_version     # terraform version (https://www.terraform.io)
+    terraform_version     # terraform version (https://www.terraform.io)
     aws                     # aws profile (https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-profiles.html)
     aws_eb_env              # aws elastic beanstalk environment (https://aws.amazon.com/elasticbeanstalk/)
     azure                   # azure account name (https://docs.microsoft.com/en-us/cli/azure)
     gcloud                  # google cloud cli account and project (https://cloud.google.com/)
     google_app_cred         # google application credentials (https://cloud.google.com/docs/authentication/production)
-    # toolbox                 # toolbox name (https://github.com/containers/toolbox)
     context                 # user@hostname
     # nordvpn                 # nordvpn connection status, linux only (https://nordvpn.com/)
-    # ranger                  # ranger shell (https://github.com/ranger/ranger)
-    # yazi                    # yazi shell (https://github.com/sxyazi/yazi)
-    # nnn                     # nnn shell (https://github.com/jarun/nnn)
-    # lf                      # lf shell (https://github.com/gokcehan/lf)
-    # xplr                    # xplr shell (https://github.com/sayanarijit/xplr)
     vim_shell               # vim shell indicator (:sh)
-    # midnight_commander      # midnight commander shell (https://midnight-commander.org/)
-    # nix_shell               # nix shell (https://nixos.org/nixos/nix-pills/developing-with-nix-shell.html)
-    # chezmoi_shell           # chezmoi shell (https://www.chezmoi.io/)
     # vpn_ip                # virtual private network indicator
     # load                  # CPU load
-    # disk_usage            # disk usage
-    # ram                   # free RAM
-    # swap                  # used swap
-    # todo                    # todo items (https://github.com/todotxt/todo.txt-cli)
-    # timewarrior             # timewarrior tracking status (https://timewarrior.net/)
-    # taskwarrior             # taskwarrior task count (https://taskwarrior.org/)
     per_directory_history   # Oh My Zsh per-directory-history local/global indicator
-    # cpu_arch              # CPU architecture
     # time                    # current time
     # =========================[ Line #2 ]=========================
     newline
@@ -244,6 +227,7 @@
     .perl-version
     .php-version
     .tool-versions
+    .mise.toml
     .shorten_folder_marker
     .svn
     .terraform
@@ -902,159 +886,12 @@
   # Custom icon.
   # typeset -g POWERLEVEL9K_NORDVPN_VISUAL_IDENTIFIER_EXPANSION='⭐'
 
-  #################[ ranger: ranger shell (https://github.com/ranger/ranger) ]##################
-  # Ranger shell color.
-  typeset -g POWERLEVEL9K_RANGER_FOREGROUND=178
-  # Custom icon.
-  # typeset -g POWERLEVEL9K_RANGER_VISUAL_IDENTIFIER_EXPANSION='⭐'
-  
-  ####################[ yazi: yazi shell (https://github.com/sxyazi/yazi) ]#####################
-  # Yazi shell color.
-  typeset -g POWERLEVEL9K_YAZI_FOREGROUND=178
-  # Custom icon.
-  # typeset -g POWERLEVEL9K_YAZI_VISUAL_IDENTIFIER_EXPANSION='⭐'
-
-  ######################[ nnn: nnn shell (https://github.com/jarun/nnn) ]#######################
-  # Nnn shell color.
-  typeset -g POWERLEVEL9K_NNN_FOREGROUND=72
-  # Custom icon.
-  # typeset -g POWERLEVEL9K_NNN_VISUAL_IDENTIFIER_EXPANSION='⭐'
-
-  ######################[ lf: lf shell (https://github.com/gokcehan/lf) ]#######################
-  # lf shell color.
-  typeset -g POWERLEVEL9K_LF_FOREGROUND=72
-  # Custom icon.
-  # typeset -g POWERLEVEL9K_LF_VISUAL_IDENTIFIER_EXPANSION='⭐'
-
-  ##################[ xplr: xplr shell (https://github.com/sayanarijit/xplr) ]##################
-  # xplr shell color.
-  typeset -g POWERLEVEL9K_XPLR_FOREGROUND=72
-  # Custom icon.
-  # typeset -g POWERLEVEL9K_XPLR_VISUAL_IDENTIFIER_EXPANSION='⭐'
 
   ###########################[ vim_shell: vim shell indicator (:sh) ]###########################
   # Vim shell indicator color.
   typeset -g POWERLEVEL9K_VIM_SHELL_FOREGROUND=34
   # Custom icon.
   # typeset -g POWERLEVEL9K_VIM_SHELL_VISUAL_IDENTIFIER_EXPANSION='⭐'
-
-  ######[ midnight_commander: midnight commander shell (https://midnight-commander.org/) ]######
-  # Midnight Commander shell color.
-  typeset -g POWERLEVEL9K_MIDNIGHT_COMMANDER_FOREGROUND=178
-  # Custom icon.
-  # typeset -g POWERLEVEL9K_MIDNIGHT_COMMANDER_VISUAL_IDENTIFIER_EXPANSION='⭐'
-
-  #[ nix_shell: nix shell (https://nixos.org/nixos/nix-pills/developing-with-nix-shell.html) ]##
-  # Nix shell color.
-  typeset -g POWERLEVEL9K_NIX_SHELL_FOREGROUND=74
-
-  # Display the icon of nix_shell if PATH contains a subdirectory of /nix/store.
-  # typeset -g POWERLEVEL9K_NIX_SHELL_INFER_FROM_PATH=false
-
-  # Tip: If you want to see just the icon without "pure" and "impure", uncomment the next line.
-  # typeset -g POWERLEVEL9K_NIX_SHELL_CONTENT_EXPANSION=
-
-  # Custom icon.
-  # typeset -g POWERLEVEL9K_NIX_SHELL_VISUAL_IDENTIFIER_EXPANSION='⭐'
-
-  ##################[ chezmoi_shell: chezmoi shell (https://www.chezmoi.io/) ]##################
-  # chezmoi shell color.
-  typeset -g POWERLEVEL9K_CHEZMOI_SHELL_FOREGROUND=33
-  # Custom icon.
-  # typeset -g POWERLEVEL9K_CHEZMOI_SHELL_VISUAL_IDENTIFIER_EXPANSION='⭐'
-
-  ##################################[ disk_usage: disk usage ]##################################
-  # Colors for different levels of disk usage.
-  typeset -g POWERLEVEL9K_DISK_USAGE_NORMAL_FOREGROUND=35
-  typeset -g POWERLEVEL9K_DISK_USAGE_WARNING_FOREGROUND=220
-  typeset -g POWERLEVEL9K_DISK_USAGE_CRITICAL_FOREGROUND=160
-  # Thresholds for different levels of disk usage (percentage points).
-  typeset -g POWERLEVEL9K_DISK_USAGE_WARNING_LEVEL=90
-  typeset -g POWERLEVEL9K_DISK_USAGE_CRITICAL_LEVEL=95
-  # If set to true, hide disk usage when below $POWERLEVEL9K_DISK_USAGE_WARNING_LEVEL percent.
-  typeset -g POWERLEVEL9K_DISK_USAGE_ONLY_WARNING=false
-  # Custom icon.
-  # typeset -g POWERLEVEL9K_DISK_USAGE_VISUAL_IDENTIFIER_EXPANSION='⭐'
-
-  ######################################[ ram: free RAM ]#######################################
-  # RAM color.
-  typeset -g POWERLEVEL9K_RAM_FOREGROUND=66
-  # Custom icon.
-  # typeset -g POWERLEVEL9K_RAM_VISUAL_IDENTIFIER_EXPANSION='⭐'
-
-  #####################################[ swap: used swap ]######################################
-  # Swap color.
-  typeset -g POWERLEVEL9K_SWAP_FOREGROUND=96
-  # Custom icon.
-  # typeset -g POWERLEVEL9K_SWAP_VISUAL_IDENTIFIER_EXPANSION='⭐'
-
-  ######################################[ load: CPU load ]######################################
-  # Show average CPU load over this many last minutes. Valid values are 1, 5 and 15.
-  typeset -g POWERLEVEL9K_LOAD_WHICH=5
-  # Load color when load is under 50%.
-  typeset -g POWERLEVEL9K_LOAD_NORMAL_FOREGROUND=66
-  # Load color when load is between 50% and 70%.
-  typeset -g POWERLEVEL9K_LOAD_WARNING_FOREGROUND=178
-  # Load color when load is over 70%.
-  typeset -g POWERLEVEL9K_LOAD_CRITICAL_FOREGROUND=166
-  # Custom icon.
-  # typeset -g POWERLEVEL9K_LOAD_VISUAL_IDENTIFIER_EXPANSION='⭐'
-
-  ################[ todo: todo items (https://github.com/todotxt/todo.txt-cli) ]################
-  # Todo color.
-  typeset -g POWERLEVEL9K_TODO_FOREGROUND=110
-  # Hide todo when the total number of tasks is zero.
-  typeset -g POWERLEVEL9K_TODO_HIDE_ZERO_TOTAL=true
-  # Hide todo when the number of tasks after filtering is zero.
-  typeset -g POWERLEVEL9K_TODO_HIDE_ZERO_FILTERED=false
-
-  # Todo format. The following parameters are available within the expansion.
-  #
-  # - P9K_TODO_TOTAL_TASK_COUNT     The total number of tasks.
-  # - P9K_TODO_FILTERED_TASK_COUNT  The number of tasks after filtering.
-  #
-  # These variables correspond to the last line of the output of `todo.sh -p ls`:
-  #
-  #   TODO: 24 of 42 tasks shown
-  #
-  # Here 24 is P9K_TODO_FILTERED_TASK_COUNT and 42 is P9K_TODO_TOTAL_TASK_COUNT.
-  #
-  # typeset -g POWERLEVEL9K_TODO_CONTENT_EXPANSION='$P9K_TODO_FILTERED_TASK_COUNT'
-
-  # Custom icon.
-  # typeset -g POWERLEVEL9K_TODO_VISUAL_IDENTIFIER_EXPANSION='⭐'
-
-  ###########[ timewarrior: timewarrior tracking status (https://timewarrior.net/) ]############
-  # Timewarrior color.
-  typeset -g POWERLEVEL9K_TIMEWARRIOR_FOREGROUND=110
-  # If the tracked task is longer than 24 characters, truncate and append "…".
-  # Tip: To always display tasks without truncation, delete the following parameter.
-  # Tip: To hide task names and display just the icon when time tracking is enabled, set the
-  # value of the following parameter to "".
-  typeset -g POWERLEVEL9K_TIMEWARRIOR_CONTENT_EXPANSION='${P9K_CONTENT:0:24}${${P9K_CONTENT:24}:+…}'
-
-  # Custom icon.
-  # typeset -g POWERLEVEL9K_TIMEWARRIOR_VISUAL_IDENTIFIER_EXPANSION='⭐'
-
-  ##############[ taskwarrior: taskwarrior task count (https://taskwarrior.org/) ]##############
-  # Taskwarrior color.
-  typeset -g POWERLEVEL9K_TASKWARRIOR_FOREGROUND=74
-
-  # Taskwarrior segment format. The following parameters are available within the expansion.
-  #
-  # - P9K_TASKWARRIOR_PENDING_COUNT   The number of pending tasks: `task +PENDING count`.
-  # - P9K_TASKWARRIOR_OVERDUE_COUNT   The number of overdue tasks: `task +OVERDUE count`.
-  #
-  # Zero values are represented as empty parameters.
-  #
-  # The default format:
-  #
-  #   '${P9K_TASKWARRIOR_OVERDUE_COUNT:+"!$P9K_TASKWARRIOR_OVERDUE_COUNT/"}$P9K_TASKWARRIOR_PENDING_COUNT'
-  #
-  # typeset -g POWERLEVEL9K_TASKWARRIOR_CONTENT_EXPANSION='$P9K_TASKWARRIOR_PENDING_COUNT'
-
-  # Custom icon.
-  # typeset -g POWERLEVEL9K_TASKWARRIOR_VISUAL_IDENTIFIER_EXPANSION='⭐'
 
   ######[ per_directory_history: Oh My Zsh per-directory-history local/global indicator ]#######
   # Color when using local/global history.
@@ -1068,17 +905,6 @@
   # Custom icon.
   # typeset -g POWERLEVEL9K_PER_DIRECTORY_HISTORY_LOCAL_VISUAL_IDENTIFIER_EXPANSION='⭐'
   # typeset -g POWERLEVEL9K_PER_DIRECTORY_HISTORY_GLOBAL_VISUAL_IDENTIFIER_EXPANSION='⭐'
-
-  ################################[ cpu_arch: CPU architecture ]################################
-  # CPU architecture color.
-  typeset -g POWERLEVEL9K_CPU_ARCH_FOREGROUND=172
-
-  # Hide the segment when on a specific CPU architecture.
-  # typeset -g POWERLEVEL9K_CPU_ARCH_X86_64_CONTENT_EXPANSION=
-  # typeset -g POWERLEVEL9K_CPU_ARCH_X86_64_VISUAL_IDENTIFIER_EXPANSION=
-
-  # Custom icon.
-  # typeset -g POWERLEVEL9K_CPU_ARCH_VISUAL_IDENTIFIER_EXPANSION='⭐'
 
   ##################################[ context: user@hostname ]##################################
   # Context color when running with privileges.
@@ -1714,16 +1540,6 @@
   #
   # Note: ${VARIABLE//\%/%%} expands to ${VARIABLE} with all occurrences of '%' replaced by '%%'.
   typeset -g POWERLEVEL9K_GOOGLE_APP_CRED_DEFAULT_CONTENT_EXPANSION='${P9K_GOOGLE_APP_CRED_PROJECT_ID//\%/%%}'
-
-  ##############[ toolbox: toolbox name (https://github.com/containers/toolbox) ]###############
-  # Toolbox color.
-  typeset -g POWERLEVEL9K_TOOLBOX_FOREGROUND=178
-  # Don't display the name of the toolbox if it matches fedora-toolbox-*.
-  typeset -g POWERLEVEL9K_TOOLBOX_CONTENT_EXPANSION='${P9K_TOOLBOX_NAME:#fedora-toolbox-*}'
-  # Custom icon.
-  # typeset -g POWERLEVEL9K_TOOLBOX_VISUAL_IDENTIFIER_EXPANSION='⭐'
-  # Custom prefix.
-  # typeset -g POWERLEVEL9K_TOOLBOX_PREFIX='%fin '
 
   ###############################[ public_ip: public IP address ]###############################
   # Public IP color.
