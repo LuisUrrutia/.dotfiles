@@ -141,6 +141,10 @@ NORMAL_TOOLS=(
 	jpeg        # Image manipulation library
 	giflib      # Library for reading and writing gif images
 	librsvg     # Library for rendering SVG files
+	libvips     # Image processing library
+	perl 	    # Programming language
+	cpanm	    # Perl module installer
+	latexindent # Indentation of LaTeX documents
 )
 
 CASK_TOOLS=(
@@ -165,13 +169,11 @@ CASK_TOOLS=(
 	itermai                  # iTerm Artificial Intelligence
 	notion                   # Note-taking app
 	keyboardcleantool        # Keyboard cleaning tool
+	cleanshot 			     # Screen capture tool
 )
 
 if [[ $web3 == true ]]; then
-	CASK_REPOSITORIES+=(
-		ethereum/ethereum
-	)
-	CASK_TOOLS+=(
+	NORMAL_TOOLS+=(
 		solidity # Ethereum smart contract language
 		ethereum # Installs Ethereum and related tools
 	)
@@ -270,7 +272,7 @@ defaults write com.googlecode.iterm2.plist PrefsCustomFolder -string "$DOTFILES/
 defaults write com.googlecode.iterm2.plist LoadPrefsFromCustomFolder -bool true
 
 # Create Projects folder
-mkdir -p ~/Projects
+mkdir -p ~/Projects/Personal
 
 # Set MacOS props
 sh macos.sh
@@ -282,7 +284,12 @@ echo "Installation complete!"
 echo "Please restart your terminal to apply changes."
 echo ""
 echo "Possible next steps:"
+echo "-> Configure Raycast"
+echo "-> Save recovery key in 1Password"
+echo "-> Configure 1Password SSH"
+echo "-> Settings -> Touch ID -> Enable Apple Watch"
+echo "-> 1Password -> Settings -> Apple Watch"
+echo "-> Configure CleanShot"
 echo "-> Install Insta 360 Link Controller"
 echo "-> Configure clock screensaver"
 echo "-> Configure Elgato Control Center"
-echo "-> Configure 1Password SSH"

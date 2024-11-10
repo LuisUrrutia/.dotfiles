@@ -171,5 +171,5 @@ alias clean-dist='find . -name "dist" -type d -prune -exec rm -rf "{}" +'
 # Restart zshrc
 alias restart='source ~/.zshrc'
 
-alias cat='bat -p --wrap character'
-alias find=fd
+alias bat='bat --wrap character'
+# alias find=fd
