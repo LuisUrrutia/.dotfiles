@@ -2,20 +2,24 @@ zstyle ':fzf-tab:complete:brew-(install|uninstall|search|info):*-argument-rest' 
 
 zstyle ':completion:*:git-checkout:*' sort false
 zstyle ':completion:*:descriptions' format '[%d]'
+zstyle ':completion:*:*:*:*:processes' command 'ps -u $USER -o pid,user,comm -w -w'
 zstyle ':completion:*' list-colors ${(s.:.)LS_COLORS}
 zstyle ':completion:*' menu no
+
 zstyle ':fzf-tab:complete:cd:*' fzf-preview 'eza -1 --color=always $realpath'
 zstyle ':fzf-tab:*' switch-group '<' '>'
+zstyle ':fzf-tab:*' fzf-flags --color=fg:1,fg+:2 --bind=tab:accept
 
 # Preivew `kill` and `ps` commands
-zstyle ':completion:*:*:*:*:processes' command 'ps -u $USER -o pid,user,comm -w -w'
 zstyle ':fzf-tab:complete:(kill|ps):argument-rest' fzf-preview \
-       '[[ $group == "[process ID]" ]] &&
-            ps -p $word -o comm="" -w -w'
+       '[[ $group == "[process ID]" ]] && ps -p $word -o comm="" -w -w'
 zstyle ':fzf-tab:complete:(kill|ps):argument-rest' fzf-flags '--preview-window=down:3:wrap'
 
-zstyle ':fzf-tab:complete:git-(add|diff|restore):*' fzf-preview \
-	   'git diff $word | delta'
+
+zstyle ':fzf-tab:complete:git-add:argument-rest' fzf-flags '--preview'
+zstyle ':fzf-tab:complete:git-(add|diff|restore):*' fzf-preview 'git diff $word'
+
+zstyle ':fzf-tab:complete:git-log:*' fzf-preview 'git log --color=always $word'
 
 
 bindkey "ç" fzf-cd-widget

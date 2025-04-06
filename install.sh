@@ -34,7 +34,7 @@ if [[ -z "$communication_tool" || "$communication_tool" == "4" ]]; then
 fi
 IFS=',' read -r -a communication_tools <<<"$communication_tool"
 
-STOW_FOLDERS="zsh,wget,git,vim,tmux"
+STOW_FOLDERS="zsh,wget,git,vim,tmux,starship"
 CWD="$(pwd)"
 
 sudo -v
@@ -116,6 +116,7 @@ NORMAL_TOOLS=(
 	git-delta      # Syntax-highlighting pager for git and diff output
 	tailspin       # Modern and fast log file viewer
 	shfmt          # Shell script formatter
+	starship       # Shell prompt
 
 	# Programming languages, version and package managers
 	python    # Programming language
@@ -176,6 +177,7 @@ if [[ $web3 == true ]]; then
 	NORMAL_TOOLS+=(
 		solidity # Ethereum smart contract language
 		ethereum # Installs Ethereum and related tools
+		stellar-cli # Stellar CLI
 	)
 fi
 
@@ -184,12 +186,9 @@ if [[ $personal == true ]]; then
 		telegram              # Messaging app
 		discord               # Messaging app
 		whatsapp              # Messaging app
-		wechat                # Messaging app
 		teamviewer            # Remote desktop software
 		logitech-g-hub        # Logitech G HUB
-		elgato-control-center # Elgato Control Center
 		obs                   # Open Broadcaster Software
-		keycastr              # Keystroke visualizer
 	)
 fi
 
@@ -272,7 +271,7 @@ defaults write com.googlecode.iterm2.plist PrefsCustomFolder -string "$DOTFILES/
 defaults write com.googlecode.iterm2.plist LoadPrefsFromCustomFolder -bool true
 
 # Create Projects folder
-mkdir -p ~/Projects/Personal
+mkdir -p ~/Projects/LuisUrrutia
 
 # Set MacOS props
 sh macos.sh
@@ -290,6 +289,5 @@ echo "-> Configure 1Password SSH"
 echo "-> Settings -> Touch ID -> Enable Apple Watch"
 echo "-> 1Password -> Settings -> Apple Watch"
 echo "-> Configure CleanShot"
-echo "-> Install Insta 360 Link Controller"
-echo "-> Configure clock screensaver"
-echo "-> Configure Elgato Control Center"
+echo "-> Install Insta360 Link Controller"
+echo "-> Configure Clock Screensaver"

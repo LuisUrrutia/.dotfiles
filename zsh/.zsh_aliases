@@ -24,7 +24,7 @@ alias casks='brew search --cask'
 alias casku='brew upgrade --cask'
 alias caskx='brew uninstall --cask'
 
-alias brewup='brew update && brew upgrade && brew cleanup && brew prune && brew doctor'
+alias brewup='brew update && brew upgrade && brew autoremove && brew cleanup --prune=all && brew doctor'
 
 # Open vim with neovim
 alias vim='nvim'
@@ -136,13 +136,12 @@ alias cd='z'
 alias weather='curl wttr.in/\?3F'
 
 # Flush Directory Service cache
-alias flush='dscacheutil -flushcache && sudo killall -HUP mDNSResponder'
-alias dnsoff='echo "Unsetting DNS" && networksetup -setdnsservers Wi-Fi empty && echo "Flushing" && flush'
-alias dnson='echo "Setting DNS" && networksetup -setdnsservers Wi-Fi 1.1.1.2 1.0.0.2 && echo "Flushing" && flush'
-alias googledns='echo "Setting DNS" && networksetup -setdnsservers Wi-Fi 8.8.8.8 8.8.4.4 && echo "Flushing" && flush'
+alias dns-flush='dscacheutil -flushcache && sudo killall -HUP mDNSResponder'
+alias dns-off='echo "Unsetting DNS" && networksetup -setdnsservers Wi-Fi empty && echo "Flushing" && dns-flush'
+alias dns-on='echo "Setting DNS" && networksetup -setdnsservers Wi-Fi 1.1.1.2 1.0.0.2 && echo "Flushing" && dns-flush'
+alias dns-google='echo "Setting DNS" && networksetup -setdnsservers Wi-Fi 8.8.8.8 8.8.4.4 && echo "Flushing" && dns-flush'
+alias dns-cloudflare='echo "Setting DNS" && networksetup -setdnsservers Wi-Fi 1.1.1.1 1.0.0.1 && echo "Flushing" && dns-flush'
 
-# Start Redis
-alias start-redis='/opt/homebrew/opt/redis/bin/redis-server /opt/homebrew/etc/redis.conf'
 
 # Toggle natural scrolling
 alias toggle-natural='osascript <<END
@@ -164,12 +163,9 @@ END
 '
 
 # Clean up node_modules, build, and dist directories
-alias clean-node='find . -name "node_modules" -type d -prune -exec rm -rf "{}" +'
-alias clean-build='find . -name "build" -type d -prune -exec rm -rf "{}" +'
-alias clean-dist='find . -name "dist" -type d -prune -exec rm -rf "{}" +'
+alias clean-js='fd -t d "^(node_modules|build|dist)$" -x rm -rf {}'
 
-# Restart zshrc
-alias restart='source ~/.zshrc'
+# Reload zshrc
+alias reload='source ~/.zshrc'
 
 alias bat='bat --wrap character'
-# alias find=fd
