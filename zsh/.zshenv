@@ -29,3 +29,4 @@ export ANDROID_TOOLS="$ANDROID_HOME/platform-tools"
 export GOPATH="$HOME/go"
 
 export PATH=$HOME/.cargo/bin:${PATH}:$GOPATH/bin:$ANDROID_HOME/tools:$ANDROID_HOME/platform-tools
+. "$HOME/.cargo/env"

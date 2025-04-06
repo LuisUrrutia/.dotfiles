@@ -40,16 +40,12 @@ plugins=(
   "https://github.com/zsh-users/zsh-history-substring-search zsh-history-substring-search"
   "https://github.com/Aloxaf/fzf-tab fzf-tab"
   "https://github.com/zsh-users/zsh-completions.git zsh-completions"
-  "https://github.com/romkatv/powerlevel10k.git powerlevel10k"
 )
 for plugin in "${plugins[@]}"; do
   repo=${plugin%% *}
   dir=${plugin##* }
   if [[ ! -d "$ZMODULES/$dir" ]]; then
     git clone --depth=1 "$repo" "$ZMODULES/$dir"
-    if [[ "$dir" == "powerlevel10k" ]]; then
-      make -C "$ZMODULES/powerlevel10k" pkg
-    fi
   fi
   zcompile-many ${(f)~ZMODULES}/${dir}/**/*.zsh(N)
 done
@@ -66,7 +62,6 @@ fpath=(~/.zmodules/zsh-completions/src $BREW_PREFIX/share/zsh/site-functions $fp
 [ -s "$HOME/.bun/_bun" ] && source "$HOME/.bun/_bun"
 
 zcompile_if_needed $ZCOMPDUMP_FILE
-zcompile_if_needed ~/.p10k.zsh
 
 autoload -Uz compinit
 if [[ -f $ZCOMPDUMP_FILE ]]; then
@@ -82,37 +77,24 @@ else
   compinit -i -d $ZCOMPDUMP_FILE -D
 fi
 
-if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
-  source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
-fi
-
 # fzf
 if [ ! -f ~/.fzf.zsh ]; then
 	$BREW_PREFIX/opt/fzf/install --all --no-bash --no-fish --no-update-rc --key-bindings --completion
 fi
 source ~/.fzf.zsh
-(source ~/.zmodules/fzf-tab/fzf-tab.plugin.zsh) &!
+source ~/.zmodules/fzf-tab/fzf-tab.plugin.zsh
 
 # Load other plugins
 source ~/.zmodules/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
 source ~/.zmodules/zsh-autosuggestions/zsh-autosuggestions.zsh
 source ~/.zmodules/zsh-history-substring-search/zsh-history-substring-search.zsh
-source ~/.zmodules/powerlevel10k/powerlevel10k.zsh-theme
-source ~/.p10k.zsh
 [ -f "$BREW_PREFIX/share/forgit/forgit.plugin.zsh" ] && source "$BREW_PREFIX/share/forgit/forgit.plugin.zsh"
 
 source ~/.zsh_aliases
 source ~/.zsh_functions 
 source ~/.zsh_bindkeys 
-{
-  source ~/.zsh_fzf # deferred load
-} &!
-
-if [[ -f ~/.zsh_work ]]; then
-  {
-    source ~/.zsh_work
-  } &!
-fi
+source ~/.zsh_fzf
+[ -f ~/.zsh_work ] && source ~/.zsh_work
 
 unfunction zcompile-many zcompile_if_needed
 
@@ -134,7 +116,10 @@ eval "$(zoxide init zsh)"
 # Set VIM
 set -o vi
 
+eval "$(starship init zsh)"
+
 if [[ "$TERM_PROGRAM" != "vscode" && -z "$TMUX" ]]; then
-  typeset -g POWERLEVEL9K_INSTANT_PROMPT=quiet
 	random_phrase
 fi
+
+source <(stellar completion --shell zsh)
