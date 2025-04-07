@@ -120,9 +120,9 @@ NORMAL_TOOLS=(
 
 	# Programming languages, version and package managers
 	python    # Programming language
+	uv        # Tool for managing multiple runtime versions
 	go        # Programming language
 	bun       # JavaScript runtime and bundler
-	python-tk # Python bindings to the Tk GUI toolkit
 	mise      # Tool for managing multiple runtime versions
 
 	# Cloud command-line interfaces
@@ -149,10 +149,10 @@ NORMAL_TOOLS=(
 )
 
 CASK_TOOLS=(
+	cursor                   # Code editor
 	1password                # Password manager
 	1password-cli            # Command-line interface for 1Password
-	visual-studio-code       # Code editor
-	google-chrome            # Web browser
+	brave-browser            # Web browser
 	docker                   # Containerization platform
 	postman                  # API development environment
 	the-unarchiver           # Unpacks archive files
@@ -171,6 +171,7 @@ CASK_TOOLS=(
 	notion                   # Note-taking app
 	keyboardcleantool        # Keyboard cleaning tool
 	cleanshot 			     # Screen capture tool
+	focusrite-control-2      # Audio interface
 )
 
 if [[ $web3 == true ]]; then
