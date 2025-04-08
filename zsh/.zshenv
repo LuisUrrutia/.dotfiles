@@ -21,6 +21,9 @@ export LC_ALL=en_US.UTF-8
 export GPG_TTY=$(tty);
 export CPLUS_INCLUDE_PATH=/opt/homebrew/include
 
+# Use bat to format man pages
+export MANPAGER="sh -c 'sed -u -e \"s/\\x1B\[[0-9;]*m//g; s/.\\x08//g\" | bat -p -lman'"
+
 # Android platform tools
 export ANDROID_HOME="$HOME/Library/Android/sdk"
 export ANDROID_TOOLS="$ANDROID_HOME/platform-tools"
