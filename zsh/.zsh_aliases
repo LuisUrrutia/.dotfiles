@@ -168,4 +168,17 @@ alias clean-js='fd -t d "^(node_modules|build|dist)$" -x rm -rf {}'
 # Reload zshrc
 alias reload='source ~/.zshrc'
 
-alias bat='bat --wrap character'
+#alias bat='bat --wrap character'
+
+# Frida with uvx
+alias frida="uvx --from frida-tools frida"
+alias frida-ls="uvx --from frida-tools frida-ls"
+alias frida-trace="uvx --from frida-tools frida-trace"
+alias frida-ps="uvx --from frida-tools frida-ps"
+alias frida-discover="uvx --from frida-tools frida-discover"
+alias frida-kill="uvx --from frida-tools frida-kill"
+alias frida-pull="uvx --from frida-tools frida-pull"
+alias frida-push="uvx --from frida-tools frida-push"
+alias frida-ls-devices="uvx --from frida-tools frida-ls-devices"
+
+alias llama="uvx --from llama-stack llama"

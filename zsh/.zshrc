@@ -107,19 +107,13 @@ typeset -U path # remove duplicates
 source "$BREW_PREFIX/share/google-cloud-sdk/path.zsh.inc"
 source "$BREW_PREFIX/share/google-cloud-sdk/completion.zsh.inc"
 
-# mise
-eval "$(mise activate zsh)"
-
-# Enable Zoxide
-eval "$(zoxide init zsh)"
-
 # Set VIM
 set -o vi
 
+eval "$(zoxide init zsh)"
 eval "$(starship init zsh)"
+source <(stellar completion --shell zsh)
 
 if [[ "$TERM_PROGRAM" != "vscode" && -z "$TMUX" ]]; then
 	random_phrase
 fi
-
-source <(stellar completion --shell zsh)
