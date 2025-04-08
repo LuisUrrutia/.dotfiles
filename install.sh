@@ -34,7 +34,7 @@ if [[ -z "$communication_tool" || "$communication_tool" == "4" ]]; then
 fi
 IFS=',' read -r -a communication_tools <<<"$communication_tool"
 
-STOW_FOLDERS="zsh,wget,git,vim,tmux,starship"
+STOW_FOLDERS="zsh,wget,git,vim,tmux,starship,bat,btop"
 CWD="$(pwd)"
 
 sudo -v
@@ -117,13 +117,13 @@ NORMAL_TOOLS=(
 	tailspin       # Modern and fast log file viewer
 	shfmt          # Shell script formatter
 	starship       # Shell prompt
+	btop           # Resource monitor
 
 	# Programming languages, version and package managers
 	python    # Programming language
 	uv        # Tool for managing multiple runtime versions
 	go        # Programming language
 	bun       # JavaScript runtime and bundler
-	mise      # Tool for managing multiple runtime versions
 
 	# Cloud command-line interfaces
 	awscli           # Amazon Web Services command-line interface
@@ -248,14 +248,7 @@ mas install 975937182 # Fantastical
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 $HOME/.cargo/bin/cargo install lolcrab
 
-eval "$(/opt/homebrew/bin/mise activate bash)"
-mise use -g node@20
-mise use -g python@3
-
-pip3 install pre-commit
-if [[ $security == true ]]; then
-	pip3 install frida-tools
-fi
+uv python install
 
 ln -s "${BREW_PREFIX}/bin/gsha256sum" "${BREW_PREFIX}/bin/sha256sum"
 ln -s "${BREW_PREFIX}/bin/gsed" "${BREW_PREFIX}/bin/sed"
@@ -267,6 +260,8 @@ for folder in $(echo $STOW_FOLDERS | sed "s/,/ /g"); do
 	stow -D $folder
 	stow $folder
 done
+
+bat cache --build
 
 defaults write com.googlecode.iterm2.plist PrefsCustomFolder -string "$DOTFILES/iterm"
 defaults write com.googlecode.iterm2.plist LoadPrefsFromCustomFolder -bool true
