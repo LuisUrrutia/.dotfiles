@@ -176,6 +176,7 @@
   autosetupmerge = true
 [commit]
   template = ~/.config/git/default-commit-message
+  gpgsign = true
 [push]
   # 'git push' will push the current branch to its tracking branch
   # the usual default is to push all branches
@@ -223,3 +224,6 @@
   enabled = true
 [gc]
   writeCommitGraph = true
+[tag]
+  gpgsign = true
+  forceSignAnnotated = true

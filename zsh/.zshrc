@@ -1,9 +1,9 @@
 zmodload zsh/stat
+zmodload zsh/datetime
 
 BREW_PREFIX=${BREW_PREFIX:-$(brew --prefix)}
 ZCOMPDUMP_FILE=${XDG_CACHE_HOME:-$HOME/.cache}/.zcompdump
-CURRENT_TIME=$EPOCHSECONDS
-UPDATE_INTERVAL=$((24 * 60 * 60))
+skip_global_compinit=1
 
 setopt NO_LIST_BEEP
 
@@ -58,8 +58,8 @@ for plugin in "${plugins[@]}"; do
 done
 
 if [[ ! -e "$HOME/.tmux/plugins/tpm" ]]; then
-	mkdir -p "$HOME/.tmux/plugins"
-	git clone https://github.com/tmux-plugins/tpm "$HOME/.tmux/plugins/tpm"
+  mkdir -p "$HOME/.tmux/plugins"
+  git clone https://github.com/tmux-plugins/tpm "$HOME/.tmux/plugins/tpm"
 fi
 
 # Completion paths
@@ -71,22 +71,22 @@ fpath=(~/.zmodules/zsh-completions/src $BREW_PREFIX/share/zsh/site-functions $fp
 zcompile_if_needed $ZCOMPDUMP_FILE
 
 autoload -Uz compinit
-if [[ -f $ZCOMPDUMP_FILE ]]; then
-  ZCOMPDUMP_MTIME=$(gstat -c %Y "$ZCOMPDUMP_FILE")
-else
-  ZCOMPDUMP_MTIME=0
-fi
 
-if (( CURRENT_TIME - ZCOMPDUMP_MTIME > UPDATE_INTERVAL )); then
+# Only regenerate the completion dump once a day
+# -C flag skips the entire compinit security check, making it much faster
+if [[ -n $ZCOMPDUMP_FILE(#qN.mh+24) ]]; then
+  # If older than 24 hours, regenerate
   compinit -i -d $ZCOMPDUMP_FILE
+  # Compile it for faster loading
   zcompile_if_needed $ZCOMPDUMP_FILE
 else
-  compinit -i -d $ZCOMPDUMP_FILE -D
+  # Fast load from cache using -C flag to skip checks
+  compinit -C -i -d $ZCOMPDUMP_FILE
 fi
 
 # fzf
 if [ ! -f ~/.fzf.zsh ]; then
-	$BREW_PREFIX/opt/fzf/install --all --no-bash --no-fish --no-update-rc --key-bindings --completion
+  $BREW_PREFIX/opt/fzf/install --all --no-bash --no-fish --no-update-rc --key-bindings --completion
 fi
 source ~/.fzf.zsh
 source ~/.zmodules/fzf-tab/fzf-tab.plugin.zsh
@@ -121,6 +121,7 @@ eval "$(zoxide init zsh)"
 eval "$(starship init zsh)"
 source <(stellar completion --shell zsh)
 
+# Display random phrase if not in VSCode and not in tmux
 if [[ "$TERM_PROGRAM" != "vscode" && -z "$TMUX" ]]; then
-	random_phrase
+  random_phrase
 fi

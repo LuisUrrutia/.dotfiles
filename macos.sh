@@ -3,7 +3,7 @@
 # ~/.macos — https://mths.be/macos
 
 # Close any open System Preferences panes, to prevent them from overriding
-# settings we’re about to change
+# settings we're about to change
 osascript -e 'tell application "System Preferences" to quit'
 
 # Ask for the administrator password upfront
@@ -16,16 +16,20 @@ while true; do
 	kill -0 "$$" || exit
 done 2>/dev/null &
 
-# Disable automatic capitalization as it’s annoying when typing code
+###############################################################################
+# Keyboard & Input                                                            #
+###############################################################################
+
+# Disable automatic capitalization as it's annoying when typing code
 defaults write NSGlobalDomain NSAutomaticCapitalizationEnabled -bool false
 
-# Disable smart dashes as they’re annoying when typing code
+# Disable smart dashes as they're annoying when typing code
 defaults write NSGlobalDomain NSAutomaticDashSubstitutionEnabled -bool false
 
-# Disable automatic period substitution as it’s annoying when typing code
+# Disable automatic period substitution as it's annoying when typing code
 defaults write NSGlobalDomain NSAutomaticPeriodSubstitutionEnabled -bool false
 
-# Disable smart quotes as they’re annoying when typing code
+# Disable smart quotes as they're annoying when typing code
 defaults write NSGlobalDomain NSAutomaticQuoteSubstitutionEnabled -bool false
 
 # Disable auto-correct
@@ -35,37 +39,103 @@ defaults write NSGlobalDomain NSAutomaticSpellingCorrectionEnabled -bool false
 defaults write NSGlobalDomain KeyRepeat -int 1
 defaults write NSGlobalDomain InitialKeyRepeat -int 15
 
-# Disable the “Are you sure you want to open this application?” dialog
-defaults write com.apple.LaunchServices LSQuarantine -bool false
-
-# Enable subpixel font rendering on non-Apple LCDs
-defaults write NSGlobalDomain AppleFontSmoothing -int 2
-
 # Disable press-and-hold for keys in favor of key repeat
+# This makes it possible to continuously repeat keys by holding them down
 defaults write NSGlobalDomain ApplePressAndHoldEnabled -bool false
 
+# Enable full keyboard access for all controls
+# Improves usability by allowing keyboard shortcuts to be used for all controls
+defaults write NSGlobalDomain AppleKeyboardUIMode -int 2
+
+###############################################################################
+# Screen & Display                                                            #
+###############################################################################
+
+# Enable subpixel font rendering on non-Apple LCDs
+# This improves the readability of text on non-Retina displays
+defaults write NSGlobalDomain AppleFontSmoothing -int 2
+
 # Require password immediately after sleep or screen saver begins
+# Enhances security by requiring immediate authentication
 defaults write com.apple.screensaver askForPassword -int 1
 defaults write com.apple.screensaver askForPasswordDelay -int 0
+
+# Saves screenshots into its own folder
+mkdir -p ${HOME}/Pictures/Screenshots
+defaults write com.apple.screencapture location -string "${HOME}/Pictures/Screenshots"
+
+# Set screen saver to start before display sleep to avoid warning
+# Default screen saver start time: 15 minutes (900 seconds)
+defaults -currentHost write com.apple.screensaver idleTime -int 900
+
+# Set Fliqlo as the default screen saver
+FLIQLO_PATH="/Users/$(whoami)/Library/Screen Savers/Fliqlo.saver"
+
+if [ -d "$FLIQLO_PATH" ]; then
+  echo "Setting Fliqlo as screen saver from user library..."
+  defaults -currentHost write com.apple.screensaver moduleDict -dict moduleName "Fliqlo" path "$FLIQLO_PATH" type -int 0
+else
+  echo "Fliqlo screen saver not found. Please install it first."
+fi
+
+###############################################################################
+# Finder & Files                                                              #
+###############################################################################
 
 # Allow quitting Finder via ⌘ + Q; doing so will also hide desktop icons
 defaults write com.apple.finder QuitMenuItem -bool true
 
 # Show all filename extensions in Finder
+# Makes file types more visible, which is helpful for developers
 defaults write NSGlobalDomain AppleShowAllExtensions -bool true
 
 # Disable the warning when changing a file extension
 defaults write com.apple.finder FXEnableExtensionChangeWarning -bool false
 
 # Empty Trash securely by default
+# Takes longer but adds security by making files harder to recover
 defaults write com.apple.finder EmptyTrashSecurely -bool true
 
 # Show the ~/Library folder
+# Makes it easier to access application support files and configurations
 chflags nohidden ~/Library
 
-softwareupdate --schedule on
+# Remove old trash items after 30 days
+defaults write com.apple.finder FXRemoveOldTrashItems -bool true
 
-# Enable the automatic update check
+###############################################################################
+# Dock & Menu Bar                                                             #
+###############################################################################
+
+# Size of dock icons (in pixels)
+defaults write com.apple.dock tilesize -int 55
+
+# Auto hide dock to maximize screen real estate
+defaults write com.apple.dock autohide -bool true
+
+# Don't rearrange Spaces based on usage
+# Keeps your workspace arrangement consistent
+defaults write com.apple.dock "mru-spaces" -bool false
+
+# Show 24 hours clock instead of 12-hour format
+defaults write com.apple.menuextra.clock Show24Hour -int 1
+
+# Don't show siri in menubar to save space
+defaults write com.apple.Siri StatusMenuVisible -int 0
+
+# Don't show spotlight in menubar
+# Using Raycast instead as a more powerful alternative
+defaults -currentHost write com.apple.Spotlight MenuItemHidden -int 1
+
+# Show battery percentage in menubar
+defaults write ~/Library/Preferences/ByHost/com.apple.controlcenter.plist BatteryShowPercentage -bool true
+
+###############################################################################
+# System Updates & Security                                                   #
+###############################################################################
+
+# Enable automatic software update checks
+softwareupdate --schedule on
 defaults write com.apple.SoftwareUpdate AutomaticCheckEnabled -bool true
 
 # Check for software updates daily, not just once per week
@@ -74,55 +144,69 @@ defaults write com.apple.SoftwareUpdate ScheduleFrequency -int 1
 # Download newly available updates in background
 defaults write com.apple.SoftwareUpdate AutomaticDownload -int 1
 
-# Install System data files & security updates
+# Install System data files & security updates automatically
+# Critical for maintaining system security
 defaults write com.apple.SoftwareUpdate CriticalUpdateInstall -int 1
 
-# Turn on app auto-update
+# Turn on app auto-update for App Store apps
 defaults write com.apple.commerce AutoUpdate -bool true
+
+# Enable firewall with sensible defaults
+sudo /usr/libexec/ApplicationFirewall/socketfilterfw \
+	--setblockall off \
+	--setallowsigned on \
+	--setallowsignedapp on \
+	--setloggingmode on \
+	--setstealthmode on \
+	--setglobalstate on
+
+# Enable FileVault disk encryption
+# Improves security by encrypting the entire disk
+sudo fdesetup enable -user $(whoami)
+
+###############################################################################
+# Power Management                                                            #
+###############################################################################
+
+# Wake the machine when the laptop lid is opened
+sudo pmset -a lidwake 1
+
+# Power management settings for when plugged in (AC power)
+# Disable machine sleep while charging for desktop replacement mode
+sudo pmset -c sleep 0
+sudo pmset -c displaysleep 30
+
+# Power management settings for battery power
+# Set display sleep to happen before system sleep
+sudo pmset -b displaysleep 10
+sudo pmset -b sleep 15
+
+###############################################################################
+# Application-Specific Settings                                               #
+###############################################################################
+
+# Disable the "Are you sure you want to open this application?" dialog
+# Removes confirmation for applications downloaded from the internet
+defaults write com.apple.LaunchServices LSQuarantine -bool false
 
 # Prevent Time Machine from prompting to use new hard drives as backup volume
 defaults write com.apple.TimeMachine DoNotOfferNewDisksForBackup -bool true
 
-# Add a shortcut for deleting messages
+# Add a shortcut for deleting messages in Messages app
 defaults write com.apple.MobileSMS.plist NSUserKeyEquivalents -dict 'Delete Conversation...' '@\U007F'
 
-# Don’t display the annoying prompt when quitting iTerm
+# Don't display the annoying prompt when quitting iTerm
 defaults write com.googlecode.iterm2 PromptOnQuit -bool false
 
 # Automatically quit printer app once the print jobs complete
 defaults write com.apple.print.PrintingPrefs "Quit When Finished" -bool true
 
-if [[ $(uname -m) != 'arm64' ]]; then
-	# Switch option with command
-	hidutil property --set '{"UserKeyMapping":[{"HIDKeyboardModifierMappingSrc":0x7000000E2,"HIDKeyboardModifierMappingDst":0x7000000E3},{"HIDKeyboardModifierMappingSrc":0x7000000E3,"HIDKeyboardModifierMappingDst":0x7000000E2}]}'
-	# Reverse scroll for mouse
-	defaults write -g com.apple.swipescrolldirection -bool false
-fi
-
-# Show 24 hours clock
-defaults write com.apple.menuextra.clock Show24Hour -int 1
-
-# Don't show siri in menubar
-defaults write com.apple.Siri StatusMenuVisible -int 0
-
-# Don't show spotlight in menubar
-defaults -currentHost write com.apple.Spotlight MenuItemHidden -int 1
-
-# Don't rearrange Spaces
-defaults write com.apple.dock "mru-spaces" -int 0
-
-# Saves screenshots into its own folder
-mkdir -p ${HOME}/Pictures/Screenshots
-defaults write com.apple.screencapture location -string "${HOME}/Pictures/Screenshots"
-
-# Size of dock
-defaults write com.apple.dock tilesize -int 55
-
-# auto hide dock
-defaults write com.apple.dock autohide -bool true
-
-#  Disabling password hints on the lock screen
+# Disabling password hints on the lock screen (security improvement)
 defaults write com.apple.loginwindow RetriesUntilHint -int 0
+
+###############################################################################
+# Keyboard Shortcuts Customization                                            #
+###############################################################################
 
 # Keyboard > Shortcuts > Spotlight > Show Spotlight search, disable
 # Note: Replacing it with Raycast https://raycastapp.notion.site/Hotkey-56103210375b4fc78b63a7c5e7075fb7
@@ -141,7 +225,7 @@ defaults write com.apple.symbolichotkeys.plist AppleSymbolicHotKeys -dict-add 65
 "
 
 # Keyboard > Shortcuts > Screenshots > Save picture of screen as file, disable
-# Note: Replacing it with CleanShotX
+# Note: Replacing it with CleanShotX for better screenshot capabilities
 defaults write com.apple.symbolichotkeys.plist AppleSymbolicHotKeys -dict-add 28 "
   <dict>
     <key>enabled</key><false/>
@@ -149,38 +233,26 @@ defaults write com.apple.symbolichotkeys.plist AppleSymbolicHotKeys -dict-add 28
 "
 
 # Keyboard > Shortcuts > Screenshots > Save picture of selected area as file, disable
-# Note: Replacing it with CleanShotX
+# Note: Replacing it with CleanShotX for better screenshot capabilities
 defaults write com.apple.symbolichotkeys.plist AppleSymbolicHotKeys -dict-add 30 "
   <dict>
     <key>enabled</key><false/>
   </dict>
 "
 
-# wake the machine when the laptop lid (or clamshell) is opened
-sudo pmset -a lidwake 1
+###############################################################################
+# Remote Access & Management                                                  #
+###############################################################################
 
-# display sleep timer
-sudo pmset -a displaysleep 10
-
-# Disable machine sleep while charging
-sudo pmset -c sleep 0
-
-# Set machine sleep to 10 minutes on battery
-sudo pmset -b sleep 15
-
-# Enable firewall
-sudo /usr/libexec/ApplicationFirewall/socketfilterfw \
-	--setblockall off \
-	--setallowsigned on \
-	--setallowsignedapp on \
-	--setloggingmode on \
-	--setstealthmode on \
-	--setglobalstate on
-
-# disable ARD
+# Disable Apple Remote Desktop
+# Prevents remote management unless explicitly configured
 sudo /System/Library/CoreServices/RemoteManagement/ARDAgent.app/Contents/Resources/kickstart -deactivate
 
-# Set up dock
+###############################################################################
+# Dock Customization                                                          #
+###############################################################################
+
+# Set up dock: remove default apps and add preferred ones
 TO_REMOVE_FROM_DOCK=(
 	"FaceTime"
 	"com.apple.mail"
@@ -200,14 +272,17 @@ for item in "${TO_REMOVE_FROM_DOCK[@]}"; do
 	/opt/homebrew/bin/dockutil --remove "$item" --no-restart
 done
 
+# Add frequently used applications to the Dock
 /opt/homebrew/bin/dockutil --add "/Applications/iTerm.app" --after "com.apple.Notes" --no-restart
 /opt/homebrew/bin/dockutil --add "/Applications/Visual Studio Code.app" --after "com.apple.Notes" --no-restart
 /opt/homebrew/bin/dockutil --add "/Applications/Google Chrome.app" --after "com.apple.Notes" --no-restart
 /opt/homebrew/bin/dockutil --add "/Applications/Fantastical.app" --after "com.apple.MobileSMS"
 
-# Enable FileVault
-sudo fdesetup enable -user $(whoami)
+###############################################################################
+# Apply Changes & Restart Services                                            #
+###############################################################################
 
+# Restart affected services to apply changes immediately
 killall -9 SystemUIServer
 killall -9 Dock
-a
+killall Finder
