@@ -172,6 +172,8 @@ CASK_TOOLS=(
 	keyboardcleantool        # Keyboard cleaning tool
 	cleanshot 			     # Screen capture tool
 	focusrite-control-2      # Audio interface
+	linearmouse              # Mouse handler
+	hyperkey                 # Remap caps lock to hyper key
 )
 
 if [[ $web3 == true ]]; then
