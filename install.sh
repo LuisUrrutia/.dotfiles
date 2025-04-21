@@ -156,7 +156,6 @@ CASK_TOOLS=(
 	docker                   # Containerization platform
 	postman                  # API development environment
 	the-unarchiver           # Unpacks archive files
-	grammarly-desktop        # Grammar checker
 	surfshark                # VPN
 	raycast                  # Command palette for MacOS (replace to Alfred or Spotlight)
 	displaylink              # DisplayLink Manager for USB monitors
