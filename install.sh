@@ -25,12 +25,11 @@ audio_interface=$([[ "$audio_interface" == [Yy] ]] && echo true || echo false)
 
 echo "What communication tools would you like to install?"
 echo "1. Slack"
-echo "2. Microsoft Teams"
-echo "3. Zoom"
-echo "4. All (default)"
+echo "2. Zoom"
+echo "3. All (default)"
 read -p "Enter the number of the communication tool you would like to install: " communication_tool
-if [[ -z "$communication_tool" || "$communication_tool" == "4" ]]; then
-	communication_tool="1,2,3"
+if [[ -z "$communication_tool" || "$communication_tool" == "3" ]]; then
+	communication_tool="1,2"
 fi
 IFS=',' read -r -a communication_tools <<<"$communication_tool"
 
@@ -217,11 +216,6 @@ for tool in "${communication_tools[@]}"; do
 		)
 		;;
 	2)
-		CASK_TOOLS+=(
-			microsoft-teams
-		)
-		;;
-	3)
 		CASK_TOOLS+=(
 			zoom
 		)
