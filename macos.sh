@@ -274,8 +274,8 @@ done
 
 # Add frequently used applications to the Dock
 /opt/homebrew/bin/dockutil --add "/Applications/iTerm.app" --after "com.apple.Notes" --no-restart
-/opt/homebrew/bin/dockutil --add "/Applications/Visual Studio Code.app" --after "com.apple.Notes" --no-restart
-/opt/homebrew/bin/dockutil --add "/Applications/Google Chrome.app" --after "com.apple.Notes" --no-restart
+/opt/homebrew/bin/dockutil --add "/Applications/Cursor.app" --after "com.apple.Notes" --no-restart
+/opt/homebrew/bin/dockutil --add "/Applications/Brave Browser.app" --after "com.apple.Notes" --no-restart
 /opt/homebrew/bin/dockutil --add "/Applications/Fantastical.app" --after "com.apple.MobileSMS"
 
 ###############################################################################
