@@ -96,6 +96,7 @@ alias grb='git recent-branches'
 alias gdc='git diff --cached -w'
 alias gds='git diff --staged -w'
 alias gpl='git pull'
+alias gpll='git pull origin `git rev-parse --abbrev-ref HEAD`'
 alias gplr='git pull --rebase'
 alias gps='git push'
 alias gpsh='git push -u origin `git rev-parse --abbrev-ref HEAD`'
@@ -182,3 +183,10 @@ alias frida-push="uvx --from frida-tools frida-push"
 alias frida-ls-devices="uvx --from frida-tools frida-ls-devices"
 
 alias llama="uvx --from llama-stack llama"
+
+# IP Addresses
+alias ip="dig +short myip.opendns.com @resolver1.opendns.com"
+alias localip="ipconfig getifaddr en0"
+
+# Clean up Rust Game
+alias clean-rust="cd $TMPDIR/../C/ && rm -rf com.Facepunch-Studios-LTD.Rust/"
