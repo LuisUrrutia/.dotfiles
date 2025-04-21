@@ -155,12 +155,12 @@ CASK_TOOLS=(
 	brave-browser            # Web browser
 	docker                   # Containerization platform
 	postman                  # API development environment
+	nordvpn                  # VPN
 	the-unarchiver           # Unpacks archive files
-	surfshark                # VPN
 	raycast                  # Command palette for MacOS (replace to Alfred or Spotlight)
 	displaylink              # DisplayLink Manager for USB monitors
 	spotify                  # Music streaming service
-	vlc                      # Media player
+	iina                     # Media player
 	figma                    # Collaborative interface design tool
 	font-fira-code-nerd-font # Monospaced font with programming ligatures and icons (used for terminal)
 	font-monaspace-nerd-font # Monospaced font with programming ligatures and icons (used for terminal)
@@ -189,7 +189,6 @@ if [[ $personal == true ]]; then
 		discord               # Messaging app
 		whatsapp              # Messaging app
 		teamviewer            # Remote desktop software
-		logitech-g-hub        # Logitech G HUB
 		obs                   # Open Broadcaster Software
 	)
 fi
