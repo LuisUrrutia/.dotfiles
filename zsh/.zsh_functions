@@ -15,7 +15,7 @@ function nuke() {
   kill $(ps aux | grep 'toolbox-helper' | awk '{print $2}')
 }
 
-envup() {
+function envup() {
   local file=$([ -z "$1" ] && echo ".env" || echo ".env.$1")
 
   if [ -f $file ]; then
@@ -28,25 +28,29 @@ envup() {
   fi
 }
 
-awss() {
+function awss() {
   export AWS_PROFILE=$1
   echo "Using AWS_PROFILE=$1"
 }
+
 _awss() {
   local curcontext="$curcontext" state line
   typeset -A opt_args
+  local -a aws_profiles
 
-  _arguments '1: :->csi'
+  # Only fetch profiles when needed
+  _aws_profiles() {
+    if [[ ${#aws_profiles} -eq 0 ]]; then
+      aws_profiles=($(aws configure list-profiles))
+    fi
+    _describe 'profiles' aws_profiles
+  }
 
-  case $state in
-  csi)
-    _arguments "1: :($(aws configure list-profiles))"
-    ;;
-  esac
+  _arguments '1: :_aws_profiles'
 }
 compdef _awss awss
 
-random_phrase() {
+function random_phrase() {
   # Define an array of phrases
   local short_phrases=(
     "Change is the only constant"
@@ -95,7 +99,7 @@ function change-commit-date() {
   git commit --amend --no-edit --date "${GIT_AUTHOR_DATE}"
 }
 
-extract() {
+function extract() {
   if [ -f $1 ]; then
     case $1 in
     *.tar.bz2) tar -xvjf $1 ;;
@@ -121,7 +125,7 @@ function tailwatch() {
   aws logs tail "$1" --follow --format short
 }
 
-rrmdir() {
+function rrmdir() {
   if [ $# -eq 0 ]; then
     echo "Usage: rrmdir <directory_name_1> [<directory_name_2> ...]"
     return 1

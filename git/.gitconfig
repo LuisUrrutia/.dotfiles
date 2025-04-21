@@ -1,5 +1,33 @@
-# set your user tokens as environment variables, such as ~/.secrets
-# See the README for examples.
+[delta "catppuccin-mocha"]
+	blame-palette = "#1e1e2e #181825 #11111b #313244 #45475a"
+	commit-decoration-style = "#6c7086" bold box ul
+	dark = true
+	file-decoration-style = "#6c7086"
+	file-style = "#cdd6f4"
+	hunk-header-decoration-style = "#6c7086" box ul
+	hunk-header-file-style = bold
+	hunk-header-line-number-style = bold "#a6adc8"
+	hunk-header-style = file line-number syntax
+	line-numbers-left-style = "#6c7086"
+	line-numbers-minus-style = bold "#f38ba8"
+	line-numbers-plus-style = bold "#a6e3a1"
+	line-numbers-right-style = "#6c7086"
+	line-numbers-zero-style = "#6c7086"
+	# 25% red 75% base
+	minus-emph-style = bold syntax "#53394c"
+	# 10% red 90% base
+	minus-style = syntax "#34293a"
+	# 25% green 75% base
+	plus-emph-style = bold syntax "#404f4a"
+	# 10% green 90% base
+	plus-style = syntax "#2c3239"
+	map-styles = \
+		bold purple => syntax "#494060", \
+		bold blue => syntax "#384361", \
+		bold cyan => syntax "#384d5d", \
+		bold yellow => syntax "#544f4e"
+	# Should match the name of the bat theme
+	syntax-theme = Catppuccin Mocha
 [user]
 	signingkey = ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINE6i8g88hWDLjvuF8toQLJ9nCs8hZojlzBCswr9dg3F
 	name = Luis Urrutia
@@ -14,8 +42,11 @@
   fsmonitor = true
   pager = delta
 [delta]
+  features = catppuccin-mocha
   navigate = true
   line-numbers = true
+  hyperlinks = true
+  hyperlinks-file-link-format = "cursor://file/{path}:{line}"
 [init]
 	defaultBranch = main
 [interactive]
@@ -89,7 +120,7 @@
   # push
   ps = push                          # push
   # via https://youtu.be/aolI_Rz0ZqY?si=bUwxbIA23dM_K2Q2&t=1063
-  psf = push --force-with-lease      # force push with lease
+  psf = push --force-with-lease --force-if-includes # force push with lease and force if includes
 
   # rebase
   rc = rebase --continue            # continue rebase
@@ -130,13 +161,13 @@
 [mergetool]
   prompt = false
 [mergetool "mvimdiff"]
-  cmd="mvim -c 'Gdiff' $MERGED"     # use fugitive.vim for 3-way merge
+  cmd="nvim -c 'Gdiff' $MERGED"     # use fugitive.vim for 3-way merge
   keepbackup=false
 [merge]
   summary = true
   verbosity = 1
   tool = mvimdiff
-  conflictstyle = diff3
+  conflictstyle = zdiff3
 [apply]
   whitespace = nowarn
 [branch]
@@ -149,6 +180,7 @@
   # 'git push' will push the current branch to its tracking branch
   # the usual default is to push all branches
   default = upstream
+  autoSetupRemote = true
 [pull]
   rebase = true
 [advice]
@@ -161,7 +193,7 @@
   # instead of a/b/c/d as prefixes for patches
   mnemonicprefix = true
   colorMoved = default
-	algorithm = patience
+  algorithm = histogram
 [rerere]
   # Remember my merges
   # http://gitfu.wordpress.com/2008/04/20/git-rerere-rereremember-what-you-did-last-time/
@@ -171,8 +203,6 @@
   path = .gitconfig.user
 [gpg]
 	format = ssh
-[commit]
-	gpgsign = true
 [gpg "ssh"]
 	program = /Applications/1Password.app/Contents/MacOS/op-ssh-sign
 # via https://youtu.be/aolI_Rz0ZqY?si=KvPxuvLq3MjdF4mZ&t=1344
@@ -180,8 +210,8 @@
 	auto = false
   strategy = incremental
 [fetch]
- writeCommitGraph = true
- prune = true
+  writeCommitGraph = true
+  prune = true
 [diff "exif"]
 	textconv = exiftool
 [filter "lfs"]
@@ -189,3 +219,7 @@
 	required = true
 	clean = git-lfs clean -- %f
 	smudge = git-lfs smudge -- %f
+[core.commitGraph]
+  enabled = true
+[gc]
+  writeCommitGraph = true

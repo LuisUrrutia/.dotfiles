@@ -5,12 +5,19 @@ ZCOMPDUMP_FILE=${XDG_CACHE_HOME:-$HOME/.cache}/.zcompdump
 CURRENT_TIME=$EPOCHSECONDS
 UPDATE_INTERVAL=$((24 * 60 * 60))
 
+setopt NO_LIST_BEEP
+
 # region: History
 HISTFILE=${XDG_CACHE_HOME:-$HOME/.cache}/.zsh_history
-HISTSIZE=999999999
+HISTSIZE=1000000
 SAVEHIST=$HISTSIZE
-HISTORY_SUBSTRING_SEARCH_ENSURE_UNIQUE=1
-setopt hist_ignore_dups # Ignore duplicates in history
+
+setopt HIST_IGNORE_DUPS # Don't record an entry that was just recorded again.
+setopt HIST_IGNORE_ALL_DUPS # Delete old recorded entry if new entry is a duplicate.
+setopt SHARE_HISTORY # Share history between all sessions.
+setopt HIST_FIND_NO_DUPS # Do not display a line previously found.
+setopt HIST_SAVE_NO_DUPS # Don't write duplicate entries in the history file.
+setopt HIST_REDUCE_BLANKS # Remove superfluous blanks before recording entry.
 # endregion
 
 function zcompile_if_needed() {
