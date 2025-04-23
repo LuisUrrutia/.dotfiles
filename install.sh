@@ -6,6 +6,7 @@ if [ "$(uname)" != "Darwin" ]; then
 	exit 1
 fi
 
+STOW_FOLDERS="zsh,wget,git,vim,tmux,starship,bat,btop,linearmouse"
 export DOTFILES="${HOME}/.dotfiles"
 
 read -p "Is this a personal computer? (Y/n): " personal
@@ -33,7 +34,6 @@ if [[ -z "$communication_tool" || "$communication_tool" == "3" ]]; then
 fi
 IFS=',' read -r -a communication_tools <<<"$communication_tool"
 
-STOW_FOLDERS="zsh,wget,git,vim,tmux,starship,bat,btop"
 CWD="$(pwd)"
 
 sudo -v
@@ -119,10 +119,10 @@ NORMAL_TOOLS=(
 	btop           # Resource monitor
 
 	# Programming languages, version and package managers
-	python    # Programming language
-	uv        # Tool for managing multiple runtime versions
-	go        # Programming language
-	bun       # JavaScript runtime and bundler
+	python # Programming language
+	uv     # Tool for managing multiple runtime versions
+	go     # Programming language
+	bun    # JavaScript runtime and bundler
 
 	# Cloud command-line interfaces
 	awscli           # Amazon Web Services command-line interface
@@ -142,8 +142,8 @@ NORMAL_TOOLS=(
 	giflib      # Library for reading and writing gif images
 	librsvg     # Library for rendering SVG files
 	libvips     # Image processing library
-	perl 	    # Programming language
-	cpanm	    # Perl module installer
+	perl        # Programming language
+	cpanm       # Perl module installer
 	latexindent # Indentation of LaTeX documents
 )
 
@@ -168,7 +168,7 @@ CASK_TOOLS=(
 	itermai                  # iTerm Artificial Intelligence
 	notion                   # Note-taking app
 	keyboardcleantool        # Keyboard cleaning tool
-	cleanshot 			     # Screen capture tool
+	cleanshot                # Screen capture tool
 	focusrite-control-2      # Audio interface
 	linearmouse              # Mouse handler
 	hyperkey                 # Remap caps lock to hyper key
@@ -176,19 +176,19 @@ CASK_TOOLS=(
 
 if [[ $web3 == true ]]; then
 	NORMAL_TOOLS+=(
-		solidity # Ethereum smart contract language
-		ethereum # Installs Ethereum and related tools
+		solidity    # Ethereum smart contract language
+		ethereum    # Installs Ethereum and related tools
 		stellar-cli # Stellar CLI
 	)
 fi
 
 if [[ $personal == true ]]; then
 	CASK_TOOLS+=(
-		telegram              # Messaging app
-		discord               # Messaging app
-		whatsapp              # Messaging app
-		teamviewer            # Remote desktop software
-		obs                   # Open Broadcaster Software
+		telegram   # Messaging app
+		discord    # Messaging app
+		whatsapp   # Messaging app
+		teamviewer # Remote desktop software
+		obs        # Open Broadcaster Software
 	)
 fi
 
@@ -266,6 +266,9 @@ mkdir -p ~/Projects/LuisUrrutia
 # Set MacOS props
 sh macos.sh
 
+# Restore Cursor settings
+sh cursor.sh
+
 # Set zsh
 chsh -s /bin/zsh
 
@@ -285,4 +288,3 @@ echo "-> Configure Hyperkey"
 echo "-> Finish Docker Installation"
 echo "-> Configure SoundSource and Loopback Licenses"
 echo "-> Configure Fantastical"
-echo "-> Configure LinearMouse"

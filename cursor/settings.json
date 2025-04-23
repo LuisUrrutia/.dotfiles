@@ -1,0 +1,125 @@
+{
+    // Editor Appearance
+    "editor.fontFamily": "'Monaspace Neon', monospace",
+    "editor.fontLigatures": "'ss01','ss05','dlig'",
+    "editor.lineHeight": 28,
+    "editor.lineNumbers": "relative",
+    "editor.guides.bracketPairs": true,
+    "editor.stickyScroll.enabled": true,
+    "editor.inlayHints.enabled": "offUnlessPressed",
+    "editor.inlineSuggest.enabled": true,
+    "editor.accessibilitySupport": "off",
+
+    // Minimap Settings
+    "editor.minimap.enabled": true,
+    "editor.minimap.renderCharacters": false,
+    "editor.minimap.maxColumn": 100,
+    "editor.minimap.showSlider": "always",
+    "editor.minimap.size": "fill",
+
+    // Theme and Colors
+    "workbench.colorTheme": "Catppuccin Mocha",
+    "workbench.iconTheme": "catppuccin-perfect-mocha",
+    "workbench.colorCustomizations": {
+        "[Material Theme Ocean High Contrast]": {
+            "editorLineNumber.foreground": "#4b526d",
+            "editorLineNumber.activeForeground": "#939fcd"
+        }
+    },
+
+    // File Management
+    "files.autoSave": "onFocusChange",
+    "explorer.decorations.badges": false,
+
+    // Terminal Settings
+    "terminal.integrated.fontFamily": "'MonaspiceAr Nerd Font Mono'",
+    "terminal.integrated.env.osx": {},
+
+    // Git Settings
+    "git.autofetch": true,
+    "git.enableCommitSigning": true,
+    "githubPullRequests.pullBranch": "never",
+
+    // Language-specific Formatters
+    "[typescript]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[typescriptreact]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[javascript]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[json]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[jsonc]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[css]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[svelte]": {
+        "editor.defaultFormatter": "svelte.svelte-vscode"
+    },
+    "[astro]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[markdown]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+
+    // Language Settings
+    "javascript.updateImportsOnFileMove.enabled": "always",
+    "javascript.preferences.importModuleSpecifier": "relative",
+    "typescript.updateImportsOnFileMove.enabled": "never",
+    "svelte.enable-ts-plugin": true,
+    "oxc_language_server.enable": true,
+
+    // Tailwind CSS Configuration
+    "tailwindCSS.experimental.classRegex": [
+        "tw`([^`]*)",
+        "tw=\"([^\"]*)",
+        "tw={\"([^\"}]*)",
+        "tw\\.\\w+`([^`]*)",
+        "tw\\(.*?\\)`([^`]*)"
+    ],
+    "tailwindCSS.includeLanguages": {
+        "typescript": "javascript",
+        "typescriptreact": "javascript"
+    },
+
+    // Vim Settings
+    "vim.easymotion": true,
+    "vim.enableNeovim": true,
+    "extensions.experimental.affinity": {
+        "asvetliakov.vscode-neovim": 1
+    },
+
+    // LaTeX Settings
+    "latex-workshop.latex.build.forceRecipeUsage": false,
+    "latex-workshop.linting.chktex.enabled": true,
+
+    // Cursor Settings
+    "cursor.composer.shouldAllowCustomModes": true,
+
+    // Window Settings
+    "window.nativeTabs": true,
+    "security.promptForLocalFileProtocolHandling": false,
+
+    // Spell Checker Settings
+    "cSpell.userWords": [
+        "astrojs", "commitish", "dalek", "hugeicons", "LHCI",
+        "lightningcss", "msrv", "playform", "Preimage", "RUSTFLAGS",
+        "rustup", "SHELLCHECK", "solana", "soroban", "strkey",
+        "Swatinem", "testutils", "undeployed", "Urrutia", "zstyle"
+    ],
+    "cSpell.customDictionaries": {
+        "custom-dictionary-user": {
+            "name": "custom-dictionary-user",
+            "path": "~/.cspell/custom-dictionary-user.txt",
+            "addWords": true,
+            "scope": "user"
+        }
+    }
+}
