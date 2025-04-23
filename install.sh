@@ -59,7 +59,6 @@ BREW_PREFIX=$(brew --prefix)
 
 CASK_REPOSITORIES=(
 	bramstein/webfonttools
-	oven-sh/bun
 	aws/tap
 )
 
@@ -122,7 +121,7 @@ NORMAL_TOOLS=(
 	python # Programming language
 	uv     # Tool for managing multiple runtime versions
 	go     # Programming language
-	bun    # JavaScript runtime and bundler
+	oven-sh/bun/bun    # JavaScript runtime and bundler
 
 	# Cloud command-line interfaces
 	awscli           # Amazon Web Services command-line interface
