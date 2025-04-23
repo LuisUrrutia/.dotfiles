@@ -7,39 +7,14 @@ if [ "$(uname)" != "Darwin" ]; then
 fi
 
 STOW_FOLDERS="zsh,wget,git,vim,tmux,starship,bat,btop,linearmouse"
-export DOTFILES="${HOME}/.dotfiles"
-
-read -p "Is this a personal computer? (Y/n): " personal
-personal=$([[ "$personal" == [Yy] ]] && echo true || echo false)
-
-read -p "Will you work with Web3? (y/n): " web3
-web3=$([[ "$web3" == [Yy] ]] && echo true || echo false)
-
-read -p "Will you work with security related tools? (y/n): " security
-security=$([[ "$security" == [Yy] ]] && echo true || echo false)
-
-read -p "Will you work with creative tools? (y/n): " creative
-creative=$([[ "$creative" == [Yy] ]] && echo true || echo false)
-
-read -p "Will you use an audio interface? (y/n): " audio_interface
-audio_interface=$([[ "$audio_interface" == [Yy] ]] && echo true || echo false)
-
-echo "What communication tools would you like to install?"
-echo "1. Slack"
-echo "2. Zoom"
-echo "3. All (default)"
-read -p "Enter the number of the communication tool you would like to install: " communication_tool
-if [[ -z "$communication_tool" || "$communication_tool" == "3" ]]; then
-	communication_tool="1,2"
-fi
-IFS=',' read -r -a communication_tools <<<"$communication_tool"
+DOTFILES="${HOME}/.dotfiles"
 
 CWD="$(pwd)"
 
 sudo -v
 while true; do
 	sudo -n true
-	sleep 60
+	sleep 30
 	kill -0 "$$" || exit
 done 2>/dev/null &
 
@@ -48,13 +23,12 @@ which -s brew
 if [[ $? != 0 ]]; then
 	NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 else
-	brew update
-	brew upgrade
+	brew update -q
+	brew upgrade -q
 fi
 
 # Load homebrew
 eval "$(/opt/homebrew/bin/brew shellenv)"
-
 BREW_PREFIX=$(brew --prefix)
 
 CASK_REPOSITORIES=(
@@ -144,6 +118,11 @@ NORMAL_TOOLS=(
 	perl        # Programming language
 	cpanm       # Perl module installer
 	latexindent # Indentation of LaTeX documents
+
+	# Web3
+	solidity    # Ethereum smart contract language
+	ethereum    # Installs Ethereum and related tools
+	stellar-cli # Stellar CLI
 )
 
 CASK_TOOLS=(
@@ -171,65 +150,29 @@ CASK_TOOLS=(
 	focusrite-control-2      # Audio interface
 	linearmouse              # Mouse handler
 	hyperkey                 # Remap caps lock to hyper key
+	telegram   				 # Messaging app
+	discord    				 # Messaging app
+	whatsapp   				 # Messaging app
+	teamviewer 				 # Remote desktop software
+	obs        				 # Open Broadcaster Software
+	http-toolkit             # HTTP debugging proxy
+	macfuse                  # File system integration
+	veracrypt                # Disk encryption
+	android-platform-tools   # Android SDK Platform-Tools
+	loopback    			 # Audio routing software
+	soundsource 			 # Audio control software
+	slack 				 	 # Work Messaging app
+	zoom 					 # Work video conferencing
 )
 
-if [[ $web3 == true ]]; then
-	NORMAL_TOOLS+=(
-		solidity    # Ethereum smart contract language
-		ethereum    # Installs Ethereum and related tools
-		stellar-cli # Stellar CLI
-	)
-fi
-
-if [[ $personal == true ]]; then
-	CASK_TOOLS+=(
-		telegram   # Messaging app
-		discord    # Messaging app
-		whatsapp   # Messaging app
-		teamviewer # Remote desktop software
-		obs        # Open Broadcaster Software
-	)
-fi
-
-if [[ $security == true ]]; then
-	CASK_TOOLS+=(
-		http-toolkit           # HTTP debugging proxy
-		macfuse                # File system integration
-		veracrypt              # Disk encryption
-		android-platform-tools # Android SDK Platform-Tools
-	)
-fi
-
-if [[ $audio_interface == true ]]; then
-	CASK_TOOLS+=(
-		loopback    # Audio routing software
-		soundsource # Audio control software
-	)
-fi
-
-for tool in "${communication_tools[@]}"; do
-	case $tool in
-	1)
-		CASK_TOOLS+=(
-			slack
-		)
-		;;
-	2)
-		CASK_TOOLS+=(
-			zoom
-		)
-		;;
-	esac
-done
-
 for tool in "${NORMAL_TOOLS[@]}"; do
-	brew install ${tool}
+	brew install -q ${tool}
 done
 for cask in "${CASK_REPOSITORIES[@]}"; do
 	brew tap ${cask}
 done
 for tool in "${CASK_TOOLS[@]}"; do
-	brew install --cask ${tool}
+	brew install -q --cask ${tool}
 done
 
 brew cleanup
@@ -238,13 +181,15 @@ brew cleanup
 mas install 975937182 # Fantastical
 
 # Install Rust programming languages to also use tools
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+if [ ! -f "$HOME/.cargo/bin/cargo" ]; then
+	curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y -q
+fi
 $HOME/.cargo/bin/cargo install lolcrab
 
 uv python install
 
-ln -s "${BREW_PREFIX}/bin/gsha256sum" "${BREW_PREFIX}/bin/sha256sum"
-ln -s "${BREW_PREFIX}/bin/gsed" "${BREW_PREFIX}/bin/sed"
+[ ! -L "${BREW_PREFIX}/bin/sha256sum" ] && ln -s "${BREW_PREFIX}/bin/gsha256sum" "${BREW_PREFIX}/bin/sha256sum"
+[ ! -L "${BREW_PREFIX}/bin/sed" ] && ln -s "${BREW_PREFIX}/bin/gsed" "${BREW_PREFIX}/bin/sed"
 
 # Configure ZSH and config files
 rm $HOME/.zshrc $HOME/.zshenv $HOME/.zlogin
@@ -268,8 +213,10 @@ sh macos.sh
 # Restore Cursor settings
 sh cursor.sh
 
-# Set zsh
-chsh -s /bin/zsh
+# Set zsh if not already default shell
+if [[ "$SHELL" != "/bin/zsh" ]]; then
+	chsh -s /bin/zsh
+fi
 
 echo "Installation complete!"
 echo "Please restart your terminal to apply changes."
