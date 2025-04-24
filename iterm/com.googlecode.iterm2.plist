@@ -1360,6 +1360,8 @@
 	<true/>
 	<key>HotkeyMigratedFromSingleToMulti</key>
 	<true/>
+	<key>IRMemory</key>
+	<integer>4</integer>
 	<key>NeverBlockSystemShutdown</key>
 	<true/>
 	<key>New Bookmarks</key>
@@ -2544,7 +2546,7 @@
 					<key>auto-rainbow style</key>
 					<integer>0</integer>
 					<key>font</key>
-					<string>.SFNS-Regular 12</string>
+					<string>.AppleSystemUIFont 12</string>
 					<key>remove empty components</key>
 					<false/>
 				</dict>
@@ -2562,7 +2564,7 @@
 								<key>base: priority</key>
 								<real>5</real>
 								<key>format</key>
-								<string>M/dd h:mm</string>
+								<string>dd/MM HH:mm</string>
 								<key>localize</key>
 								<integer>1</integer>
 								<key>maxwidth</key>
