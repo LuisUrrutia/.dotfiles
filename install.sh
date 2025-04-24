@@ -37,72 +37,85 @@ CASK_REPOSITORIES=(
 )
 
 NORMAL_TOOLS=(
+	# Core System Tools
 	coreutils      # Install GNU core utilities (those that come with macOS are outdated).
 	stow           # Manages symlinks for dotfiles and configurations
 	zsh            # Extended Unix shell with more features than bash
-	cmake          # Manages project builds and generating makefiles (useful for compiling stuff)
-	pkg-config     # Manages compile and link flags for libraries (useful for compiling stuff)
-	neovim         # Vim-fork focused on extensibility and usability
-	wget           # Internet file retriever
-	openssh        # Secure shell (ssh) and secure file transfer (sftp)
-	tmux           # Terminal multiplexer
-	watchman       # File watching service
-	ffmpeg         # Multimedia framework
+	cmake          # Manages project builds and generating makefiles
+	pkg-config     # Manages compile and link flags for libraries
 	gnupg          # GNU Privacy Guard (GPG) for secure communication
-	pinentry-mac   # Pinentry for GPG
-	jq             # Command-line JSON processor
-	yq             # Command-line YAML processor
-	bat            # Cat clone with syntax highlighting and Git integration
-	git            # Distributed version control system
-	git-lfs        # Git extension for versioning large files
-	gh             # GitHub CLI
-	ykman          # YubiKey Manager CLI
 	moreutils      # Collection of additional Unix utilities (like sponge)
 	findutils      # GNU find, xargs, and locate, utilities for finding files
 	gnu-sed        # macOS uses the BSD version. I prefer the GNU one.
 	grep           # macOS uses the BSD version. I prefer the GNU one.
-	font-fira-code # Monospaced font with programming ligatures
-	font-monaspace # Monospaced font with programming ligatures
+
+	# Development Tools
+	neovim         # Vim-fork focused on extensibility and usability
+	git            # Distributed version control system
+	git-lfs        # Git extension for versioning large files
+	gh             # GitHub CLI
+	forgit         # Utility tool for using git interactively
+	git-delta      # Syntax-highlighting pager for git and diff output
+	shfmt          # Shell script formatter
+
+	# Network and Security
+	wget           # Internet file retriever
+	openssh        # Secure shell (ssh) and secure file transfer (sftp)
+	autossh        # Automatically restart SSH sessions and tunnels
+	ykman          # YubiKey Manager CLI
+	rclone         # Rsync for cloud storage
+	mosh           # Remote terminal application
+
+	# Terminal Enhancement
+	tmux           # Terminal multiplexer
+	starship       # Shell prompt
+	btop           # Resource monitor
+	bat            # Cat clone with syntax highlighting and Git integration
+	eza            # Modern, maintained replacement for ls
+	procs          # Modern replacement for ps
+	tailspin       # Modern and fast log file viewer
+	figlet         # ASCII banner generator
+	hyperfine      # Command-line benchmarking tool
+
+	# File Management and Search
 	tree           # Display directory structures in a tree-like format
 	rename         # Tool for batch renaming files
 	zoxide         # Smarter cd command for quick navigation
 	ripgrep        # Fast text searching tool (replace to grep, ack)
-	p7zip          # 7-Zip (file archiver with high compression ratio)
-	aria2          # Lightweight multi-protocol & multi-source command-line download utility
-	mas            # Mac App Store command-line interface
-	fswatch        # Monitor a directory for changes
-	watch          # Executes a program periodically, showing output fullscreen
-	rclone         # Rsync for cloud storage
-	autossh        # Automatically restart SSH sessions and tunnels
-	figlet         # ASCII banner generator
-	dockutil       # Command-line tool for managing dock items
-	apparency      # Tool for inspecting and manipulating Apple's App Translocation security feature
 	fzf            # Command-line fuzzy finder
 	fd             # Simple, fast and user-friendly alternative to find
-	eza            # Modern, maintained replacement for ls
-	exiftool       # Read, write and edit meta information in a wide variety of files
+	fswatch        # Monitor a directory for changes
+	watch          # Executes a program periodically, showing output fullscreen
 	dust           # More intuitive version of du
-	hyperfine      # Command-line benchmarking tool
-	procs          # Modern replacement for ps
-	forgit         # Utility tool for using git interactively
-	git-delta      # Syntax-highlighting pager for git and diff output
-	tailspin       # Modern and fast log file viewer
-	shfmt          # Shell script formatter
-	starship       # Shell prompt
-	btop           # Resource monitor
 
-	# Programming languages, version and package managers
-	python # Programming language
-	uv     # Tool for managing multiple runtime versions
-	go     # Programming language
-	oven-sh/bun/bun    # JavaScript runtime and bundler
+	# Media and File Processing
+	ffmpeg         # Multimedia framework
+	p7zip          # 7-Zip (file archiver with high compression ratio)
+	aria2          # Lightweight multi-protocol & multi-source command-line download utility
+	exiftool       # Read, write and edit meta information in a wide variety of files
 
-	# Cloud command-line interfaces
+	# System Management
+	mas            # Mac App Store command-line interface
+	dockutil       # Command-line tool for managing dock items
+	apparency      # Tool for inspecting and manipulating Apple's App Translocation security feature
+
+	# Fonts
+	font-fira-code # Monospaced font with programming ligatures
+	font-monaspace # Monospaced font with programming ligatures
+
+	# Programming Languages and Package Managers
+	python          # Programming language
+	uv              # Tool for managing multiple runtime versions
+	go              # Programming language
+	oven-sh/bun/bun # JavaScript runtime and bundler
+	fnm             # Fast Node Manager
+
+	# Cloud Tools
 	awscli           # Amazon Web Services command-line interface
 	google-cloud-sdk # Google Cloud command-line interface
 	aws-sam-cli      # AWS Serverless Application Model command-line interface
 
-	# Image and font manipulation tools
+	# Image and Font Processing
 	sfnt2woff   # Convert TrueType fonts to WOFF format
 	woff2       # WOFF 2.0 font compression
 	imagemagick # Image manipulation tools
@@ -119,50 +132,75 @@ NORMAL_TOOLS=(
 	cpanm       # Perl module installer
 	latexindent # Indentation of LaTeX documents
 
-	# Web3
+	# Web3 Development
 	solidity    # Ethereum smart contract language
 	ethereum    # Installs Ethereum and related tools
 	stellar-cli # Stellar CLI
 )
 
 CASK_TOOLS=(
+	# Development Tools
 	cursor                   # Code editor
+	postman                  # API development environment
+	http-toolkit             # HTTP debugging proxy
+	android-platform-tools   # Android SDK Platform-Tools
+
+	# Security and Privacy
 	1password                # Password manager
 	1password-cli            # Command-line interface for 1Password
-	brave-browser            # Web browser
-	docker                   # Containerization platform
-	postman                  # API development environment
 	nordvpn                  # VPN
-	the-unarchiver           # Unpacks archive files
-	raycast                  # Command palette for MacOS (replace to Alfred or Spotlight)
-	displaylink              # DisplayLink Manager for USB monitors
-	spotify                  # Music streaming service
-	iina                     # Media player
+	veracrypt                # Disk encryption
+	macfuse                  # File system integration
+
+	# Communication and Collaboration
+	telegram                 # Messaging app
+	discord                  # Messaging app
+	whatsapp                 # Messaging app
+	slack                    # Work Messaging app
+	zoom                     # Work video conferencing
+	teamviewer               # Remote desktop software
+
+	# Web Browsers
+	brave-browser            # Web browser
+
+	# Design and Media
 	figma                    # Collaborative interface design tool
-	font-fira-code-nerd-font # Monospaced font with programming ligatures and icons (used for terminal)
-	font-monaspace-nerd-font # Monospaced font with programming ligatures and icons (used for terminal)
-	fliqlo                   # Clock screensaver
+	iina                     # Media player
+	obs                      # Open Broadcaster Software
+	cleanshot                # Screen capture tool
+
+	# Development Infrastructure
+	docker                   # Containerization platform
+
+	# Productivity
+	raycast                  # Command palette for MacOS (replace to Alfred or Spotlight)
+	notion                   # Note-taking app
+	fliqlo                   # Clock screensavers
+
+	# Terminal and System
 	iterm2                   # Terminal emulator
 	itermai                  # iTerm Artificial Intelligence
-	notion                   # Note-taking app
 	keyboardcleantool        # Keyboard cleaning tool
-	cleanshot                # Screen capture tool
-	focusrite-control-2      # Audio interface
-	linearmouse              # Mouse handler
 	hyperkey                 # Remap caps lock to hyper key
-	telegram   				 # Messaging app
-	discord    				 # Messaging app
-	whatsapp   				 # Messaging app
-	teamviewer 				 # Remote desktop software
-	obs        				 # Open Broadcaster Software
-	http-toolkit             # HTTP debugging proxy
-	macfuse                  # File system integration
-	veracrypt                # Disk encryption
-	android-platform-tools   # Android SDK Platform-Tools
-	loopback    			 # Audio routing software
-	soundsource 			 # Audio control software
-	slack 				 	 # Work Messaging app
-	zoom 					 # Work video conferencing
+
+	# Audio Tools
+	focusrite-control-2      # Audio interface
+	loopback                 # Audio routing software
+	soundsource              # Audio control software
+
+	# Fonts
+	font-fira-code-nerd-font # Monospaced font with programming ligatures and icons (used for terminal)
+	font-monaspace-nerd-font # Monospaced font with programming ligatures and icons (used for terminal)
+
+	# Entertainment
+	spotify                  # Music streaming service
+
+	# Hardware Support
+	displaylink              # DisplayLink Manager for USB monitors
+	linearmouse              # Mouse handler
+
+	# File Management
+	the-unarchiver           # Unpacks archive files
 )
 
 for tool in "${NORMAL_TOOLS[@]}"; do
