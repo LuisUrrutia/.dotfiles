@@ -104,7 +104,6 @@
     "cursor.composer.shouldAllowCustomModes": true,
 
     // Window Settings
-    "window.nativeTabs": true,
     "security.promptForLocalFileProtocolHandling": false,
 
     // Spell Checker Settings
