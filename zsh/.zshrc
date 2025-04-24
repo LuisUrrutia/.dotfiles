@@ -119,6 +119,7 @@ set -o vi
 
 eval "$(zoxide init zsh)"
 eval "$(starship init zsh)"
+eval "$(fnm env --use-on-cd --shell zsh)"
 source <(stellar completion --shell zsh)
 
 # Display random phrase if not in VSCode and not in tmux
