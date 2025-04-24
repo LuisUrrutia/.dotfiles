@@ -49,20 +49,14 @@ alias ls='eza --icons --color=auto --group-directories-first -h'
 # Git Aliases
 alias git-https='git remote set-url origin https://github.com/$(git remote get-url origin | sed "s/https:\/\/github.com\///" | sed "s/git@github.com://")'
 alias git-ssh='git remote set-url origin git@github.com:$(git remote get-url origin | sed "s/https:\/\/github.com\///" | sed "s/git@github.com://")'
-alias gcrand='git commit -m "$(curl -s http://whatthecommit.com/index.txt)"'
 alias gs='git status'
-alias gstsh='git staash'
 alias gst='git staash'
-alias gspop='git stash pop'
-alias gsa='git stash apply'
+alias gstpop='git stash pop'
+alias gsta='git stash apply'
 alias gsh='git show'
 alias gshw='git show'
-alias gshow='git show'
-alias gi='vim .gitignore'
-alias gc='git ci'
-alias gcm='git c'
-alias gcim='git ci -m'
-alias gci='git ci'
+alias gc='git c'
+alias gcm='git cm'
 alias gco='git co'
 alias gcpi='git cp'
 alias gap='git add -p'
@@ -79,14 +73,10 @@ alias gra='git rebase --abort'
 alias ggrc='git rebase --continue'
 alias gbi='git rebase --interactive'
 alias gl='git l'
-alias glg='git l'
-alias glog='git l'
-alias co='git co'
 alias gf='git fetch'
 alias gfp='git fetch --prune'
 alias gfa='git fetch --all'
 alias gfap='git fetch --all --prune'
-alias gfch='git fetch'
 alias gdiff='git diff'
 alias gb='git b'
 alias gbn='git branch-name'
@@ -113,7 +103,6 @@ alias gsmu='git submodule update'
 alias gt='git t'
 alias gbg='git bisect good'
 alias gbb='git bisect bad'
-alias gdmb='git branch --merged | grep -v "\*" | xargs -n 1 git branch -d'
 
 # kill
 alias ka9='killall -9'
@@ -125,10 +114,10 @@ alias dps='docker ps'
 alias dpss='docker ps --format "table {{.ID}}\t{{.Names}}\t{{.Image}}\t{{.Status}}"'
 alias dpsa='docker ps -a'
 alias dexec='docker exec -it'
-alias dc='docker-compose'
-alias dcu='docker-compose up'
-alias dcd='docker-compose down'
-alias dcs='docker-compose stop'
+alias dc='docker compose'
+alias dcu='docker compose up'
+alias dcd='docker compose down'
+alias dcs='docker compose stop'
 
 # cd
 alias cd='z'
@@ -142,26 +131,6 @@ alias dns-off='echo "Unsetting DNS" && networksetup -setdnsservers Wi-Fi empty &
 alias dns-on='echo "Setting DNS" && networksetup -setdnsservers Wi-Fi 1.1.1.2 1.0.0.2 && echo "Flushing" && dns-flush'
 alias dns-google='echo "Setting DNS" && networksetup -setdnsservers Wi-Fi 8.8.8.8 8.8.4.4 && echo "Flushing" && dns-flush'
 alias dns-cloudflare='echo "Setting DNS" && networksetup -setdnsservers Wi-Fi 1.1.1.1 1.0.0.1 && echo "Flushing" && dns-flush'
-
-
-# Toggle natural scrolling
-alias toggle-natural='osascript <<END
-tell application "System Settings"
-    activate
-end tell
-delay 0.1
-
-tell application "System Events"
-    tell process "System Settings"
-        click menu item "Trackpad" of menu "View" of menu bar 1
-        delay 0.25
-        click radio button 2 of tab group 1 of group 1 of group 2 of splitter group 1 of group 1 of window 1
-        click checkbox "Natural scrolling" of group 1 of scroll area 1 of group 1 of group 2 of splitter group 1 of group 1 of window 1
-        tell application "System Settings" to quit
-    end tell
-end tell
-END
-'
 
 # Clean up node_modules, build, and dist directories
 alias clean-js='fd -t d "^(node_modules|build|dist)$" -x rm -rf {}'

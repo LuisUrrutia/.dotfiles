@@ -87,11 +87,9 @@
   branch-name = !git rev-parse --abbrev-ref HEAD | tr -d '\n' | tr -d ' '
 
   # commit
-  c = commit -m                     # commit with message
-  ca = commit -am                   # commit all with message
-  ci = commit                       # commit
-  amend = commit --amend            # ammend your last commit
-  ammend = commit --amend           # ammend your last commit
+  c = commit                        # commit
+  cm = commit -m                    # commit with message
+  amend = commit --amend            # amend your last commit
 
   # checkout
   co = checkout                     # checkout
