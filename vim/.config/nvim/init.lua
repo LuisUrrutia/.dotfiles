@@ -1,6 +1,5 @@
 vim.g.mapleader = ','
 
-require("plugins")
 
 vimFolder = vim.fn.stdpath("config")
 
@@ -58,11 +57,6 @@ vim.bo.softtabstop = 2  -- number of spaces that <Tab> uses while editing
 vim.bo.swapfile = false -- whether to use a swapfile for a buffer
 vim.bo.tabstop = 2      -- number of spaces that <Tab> in file uses
 
-
-if (vim.g.colors_name == 'vim-material') then
-  vim.cmd("colorscheme vim-material")
-end
-
 -- save undo information in a file
 if vim.fn.has("persistent_undo") == 1 then
   if vim.fn.isdirectory(vimFolder.."/undo") == 0 then
@@ -73,3 +67,10 @@ if vim.fn.has("persistent_undo") == 1 then
   vim.opt.undodir = vimFolder.."/undo"
 end
 
+require("config.lazy")
+require("lazy").setup({
+  spec = {
+    { import = "plugins" },
+  },
+  checker = { enabled = true },
+})
