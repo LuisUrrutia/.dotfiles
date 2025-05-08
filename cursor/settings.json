@@ -107,18 +107,25 @@
     "security.promptForLocalFileProtocolHandling": false,
 
     // Spell Checker Settings
-    "cSpell.userWords": [
-        "astrojs", "commitish", "dalek", "hugeicons", "LHCI",
-        "lightningcss", "msrv", "playform", "Preimage", "RUSTFLAGS",
-        "rustup", "SHELLCHECK", "solana", "soroban", "strkey",
-        "Swatinem", "testutils", "undeployed", "Urrutia", "zstyle"
-    ],
     "cSpell.customDictionaries": {
-        "custom-dictionary-user": {
-            "name": "custom-dictionary-user",
-            "path": "~/.cspell/custom-dictionary-user.txt",
+        "rust-dictionary": {
+            "name": "rust-dictionary",
+            "path": "~/.cspell/rust-dictionary.txt",
+            "addWords": true,
+            "scope": "user"
+        },
+        "blockchain-dictionary": {
+            "name": "blockchain-dictionary",
+            "path": "~/.cspell/blockchain-dictionary.txt",
+            "addWords": true,
+            "scope": "user"
+        },
+        "other-dictionary": {
+            "name": "other-dictionary",
+            "path": "~/.cspell/other-dictionary.txt",
             "addWords": true,
             "scope": "user"
         }
-    }
+    },
+    "cursor.composer.shouldChimeAfterChatFinishes": true
 }
