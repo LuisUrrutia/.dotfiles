@@ -9,6 +9,14 @@
 cd $HOME && git clone https://github.com/LuisUrrutia/.dotfiles.git && cd .dotfiles && ./install.sh
 ```
 
+### Private Configuration (Optional)
+
+This is just for me, because it requires access to the private configuration repository.
+
+```sh
+./private-install.sh
+```
+
 ## Things to do after install
 
 - [ ] Add OpenAI API Key to iTerm
