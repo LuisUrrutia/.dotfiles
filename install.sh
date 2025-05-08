@@ -6,7 +6,7 @@ if [ "$(uname)" != "Darwin" ]; then
 	exit 1
 fi
 
-STOW_FOLDERS="zsh,wget,git,vim,tmux,starship,bat,btop,linearmouse"
+STOW_FOLDERS="zsh,wget,git,vim,tmux,starship,bat,btop,linearmouse,cspell"
 DOTFILES="${HOME}/.dotfiles"
 
 CWD="$(pwd)"
@@ -234,7 +234,7 @@ rm $HOME/.zshrc $HOME/.zshenv $HOME/.zlogin
 for folder in $(echo $STOW_FOLDERS | sed "s/,/ /g"); do
 	echo "stow $folder"
 	stow -D $folder
-	stow $folder
+	stow $folder -t $HOME
 done
 
 bat cache --build
