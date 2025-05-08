@@ -5,15 +5,18 @@
 # https://github.com/getcursor/cursor/issues/876
 
 DOTFILES="${HOME}/.dotfiles"
-SETTINGS_PATH="$HOME/Library/Application Support/Cursor/User/settings.json"
+SETTINGS_PATH="$HOME/Library/Application Support/Cursor/User"
+SETTINGS_FILE="$SETTINGS_PATH/settings.json"
 
 # if settings.json exists and is not a symlink, remove it
-if [ -f "$SETTINGS_PATH" ] && [ ! -L "$SETTINGS_PATH" ]; then
-    rm -f "$SETTINGS_PATH"
+if [ -f "$SETTINGS_FILE" ] && [ ! -L "$SETTINGS_FILE" ]; then
+    rm -f "$SETTINGS_FILE"
+elif
+    mkdir -p "$SETTINGS_PATH"
 fi
 
 # create symlink
-ln -s "$DOTFILES/cursor/settings.json" "$SETTINGS_PATH"
+ln -s "$DOTFILES/cursor/settings.json" "$SETTINGS_FILE"
 
 # install extensions
 cursor --install-extension aaron-bond.better-comments
