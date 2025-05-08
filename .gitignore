@@ -2,3 +2,4 @@
 frida-script.js
 vim/.config/nvim/undo/
 vim/.config/nvim/lazy-lock.json
+private/
