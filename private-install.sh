@@ -3,8 +3,8 @@
 set -e
 
 PRIVATE_REPO="git@github.com:LuisUrrutia/private.git"
-PRIVATE_DIR="$HOME/.dotfiles/private"
 DOTFILES_DIR="$HOME/.dotfiles"
+PRIVATE_DIR="$DOTFILES_DIR/private"
 
 ssh -T git@github.com 2>&1 | grep -q "successfully authenticated" || {
   echo "Error: GitHub SSH authentication failed."
