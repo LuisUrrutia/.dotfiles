@@ -1,0 +1,9 @@
+actix
+apalis
+chrono
+mockutils
+MSVC
+reqwest
+rustc
+RUSTFLAGS
+rustup
