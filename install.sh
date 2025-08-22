@@ -31,11 +31,6 @@ fi
 eval "$(/opt/homebrew/bin/brew shellenv)"
 BREW_PREFIX=$(brew --prefix)
 
-CASK_REPOSITORIES=(
-	bramstein/webfonttools
-	aws/tap
-)
-
 NORMAL_TOOLS=(
 	# Core System Tools
 	coreutils      # Install GNU core utilities (those that come with macOS are outdated).
@@ -93,6 +88,7 @@ NORMAL_TOOLS=(
 	p7zip          # 7-Zip (file archiver with high compression ratio)
 	aria2          # Lightweight multi-protocol & multi-source command-line download utility
 	exiftool       # Read, write and edit meta information in a wide variety of files
+	yt-dlp         # YouTube downloader
 
 	# System Management
 	mas            # Mac App Store command-line interface
@@ -159,6 +155,7 @@ CASK_TOOLS=(
 	slack                    # Work Messaging app
 	zoom                     # Work video conferencing
 	teamviewer               # Remote desktop software
+	camo-studio              # iPhone as webcam software
 
 	# Web Browsers
 	brave-browser            # Web browser
@@ -168,6 +165,7 @@ CASK_TOOLS=(
 	iina                     # Media player
 	obs                      # Open Broadcaster Software
 	cleanshot                # Screen capture tool
+	adobe-creative-cloud     # Adobe Creative Cloud
 
 	# Development Infrastructure
 	docker                   # Containerization platform
@@ -176,6 +174,7 @@ CASK_TOOLS=(
 	raycast                  # Command palette for MacOS (replace to Alfred or Spotlight)
 	notion                   # Note-taking app
 	fliqlo                   # Clock screensavers
+	claude                   # AI assistant
 
 	# Terminal and System
 	iterm2                   # Terminal emulator
@@ -194,6 +193,7 @@ CASK_TOOLS=(
 
 	# Entertainment
 	spotify                  # Music streaming service
+	steam                    # Gaming platform
 
 	# Hardware Support
 	displaylink              # DisplayLink Manager for USB monitors
@@ -206,9 +206,6 @@ CASK_TOOLS=(
 for tool in "${NORMAL_TOOLS[@]}"; do
 	brew install -q ${tool}
 done
-for cask in "${CASK_REPOSITORIES[@]}"; do
-	brew tap ${cask}
-done
 for tool in "${CASK_TOOLS[@]}"; do
 	brew install -q --cask ${tool}
 done
@@ -217,6 +214,8 @@ brew cleanup
 
 # Install directly from app store
 mas install 975937182 # Fantastical
+mas install 6469021132 # PDF Gear
+
 
 # Install Rust programming languages to also use tools
 if [ ! -f "$HOME/.cargo/bin/cargo" ]; then
@@ -225,6 +224,7 @@ fi
 $HOME/.cargo/bin/cargo install lolcrab
 
 uv python install
+uv tool install pre-commit --with pre-commit-uv
 
 [ ! -L "${BREW_PREFIX}/bin/sha256sum" ] && ln -s "${BREW_PREFIX}/bin/gsha256sum" "${BREW_PREFIX}/bin/sha256sum"
 [ ! -L "${BREW_PREFIX}/bin/sed" ] && ln -s "${BREW_PREFIX}/bin/gsed" "${BREW_PREFIX}/bin/sed"
@@ -272,3 +272,4 @@ echo "-> Configure Hyperkey"
 echo "-> Finish Docker Installation"
 echo "-> Configure SoundSource and Loopback Licenses"
 echo "-> Configure Fantastical"
+echo "-> Configure OBS"
