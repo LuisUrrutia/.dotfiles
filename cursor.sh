@@ -23,7 +23,7 @@ cursor --install-extension aaron-bond.better-comments
 cursor --install-extension alefragnani.bookmarks
 cursor --install-extension anysphere.pyright
 cursor --install-extension astro-build.astro-vscode
-cursor --install-extension asvetliakov.vscode-neovim
+cursor --install-extension vscodevim.vim
 cursor --install-extension bradlc.vscode-tailwindcss
 cursor --install-extension catppuccin.catppuccin-vsc
 cursor --install-extension davidanson.vscode-markdownlint
