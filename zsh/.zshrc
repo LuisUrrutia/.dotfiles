@@ -106,8 +106,10 @@ source ~/.zsh_fzf
 unfunction zcompile-many zcompile_if_needed
 
 export BUN_INSTALL="$HOME/.bun"
-# Use GNU sed and grep add rvm and bun to path
-PATH="/opt/homebrew/opt/gnu-sed/libexec/gnubin:/opt/homebrew/opt/grep/libexec/gnubin:$BUN_INSTALL/bin:$PATH:$HOME/.rvm/bin"
+export PNPM_HOME="/Users/luisurrutia/Library/pnpm"
+
+# Use GNU sed and grep add rvm, pnpm, bun and jdk to path
+export PATH="$HOME/.local/bin:/opt/homebrew/opt/gnu-sed/libexec/gnubin:/opt/homebrew/opt/grep/libexec/gnubin:$PNPM_HOME:/opt/homebrew/opt/openjdk/bin:$PATH:$HOME/.rvm/bin:$BUN_INSTALL/bin"
 typeset -U path # remove duplicates
 
 # Google cloud sdk
