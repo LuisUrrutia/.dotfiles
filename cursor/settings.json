@@ -93,7 +93,8 @@
     "vim.easymotion": true,
     "vim.enableNeovim": true,
     "extensions.experimental.affinity": {
-        "asvetliakov.vscode-neovim": 1
+        "asvetliakov.vscode-neovim": 1,
+        "vscodevim.vim": 1
     },
 
     // LaTeX Settings
@@ -110,22 +111,42 @@
     "cSpell.customDictionaries": {
         "rust-dictionary": {
             "name": "rust-dictionary",
-            "path": "~/.cspell/rust-dictionary.txt",
+            "path": "~/.cspell/rust.txt",
             "addWords": true,
             "scope": "user"
         },
         "blockchain-dictionary": {
             "name": "blockchain-dictionary",
-            "path": "~/.cspell/blockchain-dictionary.txt",
+            "path": "~/.cspell/blockchain.txt",
+            "addWords": true,
+            "scope": "user"
+        },
+        "git-dictionary": {
+            "name": "git-dictionary",
+            "path": "~/.cspell/git.txt",
+            "addWords": true,
+            "scope": "user"
+        },
+        "frontend-dictionary": {
+            "name": "frontend-dictionary",
+            "path": "~/.cspell/frontend.txt",
             "addWords": true,
             "scope": "user"
         },
         "other-dictionary": {
             "name": "other-dictionary",
-            "path": "~/.cspell/other-dictionary.txt",
+            "path": "~/.cspell/other.txt",
             "addWords": true,
             "scope": "user"
         }
     },
-    "cursor.composer.shouldChimeAfterChatFinishes": true
+    "cursor.composer.shouldChimeAfterChatFinishes": true,
+    "terminal.integrated.macOptionIsMeta": true,
+    "terminal.integrated.scrollback": 50000,
+    "go.toolsManagement.autoUpdate": true,
+    "xo.path": "./node_modules/xo/dist/index.js",
+    "[html]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "workbench.sideBar.location": "right"
 }
