@@ -1,6 +1,0 @@
-reqwest
-MSVC
-rustc
-chrono
-rustup
-RUSTFLAGS
