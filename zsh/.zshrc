@@ -95,7 +95,6 @@ source ~/.zmodules/fzf-tab/fzf-tab.plugin.zsh
 source ~/.zmodules/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
 source ~/.zmodules/zsh-autosuggestions/zsh-autosuggestions.zsh
 source ~/.zmodules/zsh-history-substring-search/zsh-history-substring-search.zsh
-[ -f "$BREW_PREFIX/share/forgit/forgit.plugin.zsh" ] && source "$BREW_PREFIX/share/forgit/forgit.plugin.zsh"
 
 source ~/.zsh_aliases
 source ~/.zsh_functions 

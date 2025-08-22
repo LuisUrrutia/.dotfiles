@@ -21,7 +21,6 @@
   authors = !git log --pretty=format:'%an <%ae>' "." | sort | uniq -c | sort -nr
 
   # add
-  a = add                           # add
   chunkyadd = add --patch           # stage commits chunk by chunk
 
   # via https://web.archive.org/web/20190406040140/http://blog.apiaxle.com/post/handy-git-tips-to-stop-you-getting-fired/
@@ -35,28 +34,13 @@
   recent-branches = "!r() { refbranch=$1 count=$2; git for-each-ref --sort=-committerdate refs/heads --format='%(refname:short)|%(HEAD)%(color:yellow)%(refname:short)|%(color:bold green)%(committerdate:relative)|%(color:blue)%(subject)|%(color:magenta)%(authorname)%(color:reset)' --color=always --count=${count:-20} | while read line; do branch=$(echo \"$line\" | awk 'BEGIN { FS = \"|\" }; { print $1 }' | tr -d '*'); ahead=$(git rev-list --count \"${refbranch:-origin/main}..${branch}\"); behind=$(git rev-list --count \"${branch}..${refbranch:-origin/main}\"); colorline=$(echo \"$line\" | sed 's/^[^|]*|//'); echo \"$ahead|$behind|$colorline\" | awk -F'|' -vOFS='|' '{$5=substr($5,1,70)}1' ; done | ( echo \"ahead|behind|branch\n\" && cat) | column -ts'|';}; r"
 
   # branch
-  b = branch -v                     # branch (verbose)
   branch-name = !git rev-parse --abbrev-ref HEAD | tr -d '\n' | tr -d ' '
 
   # commit
-  c = commit                        # commit
-  cm = commit -m                    # commit with message
   amend = commit --amend            # amend your last commit
-
-  # checkout
-  co = checkout                     # checkout
-  nb = checkout -b                  # create and switch to a new branch (mnemonic: "git new branch branch-name...")
-
-  # cherry-pick
-  cp = cherry-pick -x               # grab a change from a branch
-
-  # diff
-  d = diff                          # diff unstaged changes
-  dc = diff --cached                # diff staged changes
   last = diff HEAD^                 # diff last committed change
 
   # log
-  l = log --graph --date=short
   changes = log --pretty=format:\"%h %cr %cn %Cgreen%s%Creset\" --name-status
   short = log --pretty=format:\"%h %cr %cn %Cgreen%s%Creset\"
   simple = log --pretty=format:\" * %s\"
@@ -64,40 +48,13 @@
   # via https://www.youtube.com/watch?v=aolI_Rz0ZqY&t=2391s
   search-string-changes = "!f() { git log -S \"$1\" -p; }; f"
 
-  # pull
-  pl = pull                         # pull
-
-  # push
-  ps = push                          # push
   # via https://youtu.be/aolI_Rz0ZqY?si=bUwxbIA23dM_K2Q2&t=1063
-  psf = push --force-with-lease --force-if-includes # force push with lease and force if includes
-
-  # rebase
-  rc = rebase --continue            # continue rebase
-  rs = rebase --skip                # skip rebase
-
-  # remote
-  r = remote -v                     # show remotes (verbose)
+  push-force = push --force-with-lease --force-if-includes # force push with lease and force if includes
 
   # reset
   unstage = reset HEAD              # remove files from index (tracking)
   uncommit = reset --soft HEAD^     # go back before last commit, with files in uncommitted state
   filelog = log -u                  # show changes to a file
-  mt = mergetool                    # fire up the merge tool
-
-  # stash
-  ss = stash                        # stash changes
-  sl = stash list                   # list stashes
-  sa = stash apply                  # apply stash (restore changes)
-  sd = stash drop                   # drop stashes (destroy changes)
-
-  # status
-  s = status                        # status
-  st = status                       # status
-  stat = status                     # status
-
-  # tag
-  t = tag -n                        # show tags with <n> lines of each tag message
 
   # via https://youtu.be/aolI_Rz0ZqY?si=5W5D_Vpm0NVFBs6X&t=692
   smart-blame = blame -w -M -C -C -C
