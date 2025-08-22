@@ -6,7 +6,7 @@ vimFolder = vim.fn.stdpath("config")
 vim.env.NVIM_TUI_ENABLE_TRUE_COLOR = 1
 
 -- GLOBAL OPTIONS
-vim.g.material_style = 'oceanic'
+-- vim.g.material_style = 'oceanic'
 
 
 vim.o.autoread = true                 -- autom. read file when changed outside of Vim
