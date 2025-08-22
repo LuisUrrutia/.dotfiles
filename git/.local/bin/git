@@ -1,0 +1,12 @@
+#!/bin/bash
+
+# Git proxy script that disables paging when running in Cursor
+# Checks for CURSOR_AGENT environment variable and adjusts git behavior accordingly
+
+if [ "$CURSOR_AGENT" = "1" ]; then
+    # When running in Cursor, disable pager to prevent issues with output
+    /opt/homebrew/bin/git -c core.pager=cat "$@"
+else
+    # Normal git execution with default pager behavior
+    /opt/homebrew/bin/git "$@"
+fi
