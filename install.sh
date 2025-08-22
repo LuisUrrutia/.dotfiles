@@ -33,67 +33,67 @@ BREW_PREFIX=$(brew --prefix)
 
 NORMAL_TOOLS=(
 	# Core System Tools
-	coreutils      # Install GNU core utilities (those that come with macOS are outdated).
-	stow           # Manages symlinks for dotfiles and configurations
-	zsh            # Extended Unix shell with more features than bash
-	cmake          # Manages project builds and generating makefiles
-	pkg-config     # Manages compile and link flags for libraries
-	gnupg          # GNU Privacy Guard (GPG) for secure communication
-	moreutils      # Collection of additional Unix utilities (like sponge)
-	findutils      # GNU find, xargs, and locate, utilities for finding files
-	gnu-sed        # macOS uses the BSD version. I prefer the GNU one.
-	grep           # macOS uses the BSD version. I prefer the GNU one.
+	coreutils  # Install GNU core utilities (those that come with macOS are outdated).
+	stow       # Manages symlinks for dotfiles and configurations
+	zsh        # Extended Unix shell with more features than bash
+	cmake      # Manages project builds and generating makefiles
+	pkg-config # Manages compile and link flags for libraries
+	gnupg      # GNU Privacy Guard (GPG) for secure communication
+	moreutils  # Collection of additional Unix utilities (like sponge)
+	findutils  # GNU find, xargs, and locate, utilities for finding files
+	gnu-sed    # macOS uses the BSD version. I prefer the GNU one.
+	grep       # macOS uses the BSD version. I prefer the GNU one.
 
 	# Development Tools
-	neovim         # Vim-fork focused on extensibility and usability
-	git            # Distributed version control system
-	git-lfs        # Git extension for versioning large files
-	gh             # GitHub CLI
-	forgit         # Utility tool for using git interactively
-	git-delta      # Syntax-highlighting pager for git and diff output
-	shfmt          # Shell script formatter
+	neovim    # Vim-fork focused on extensibility and usability
+	git       # Distributed version control system
+	git-lfs   # Git extension for versioning large files
+	gh        # GitHub CLI
+	forgit    # Utility tool for using git interactively
+	git-delta # Syntax-highlighting pager for git and diff output
+	shfmt     # Shell script formatter
 
 	# Network and Security
-	wget           # Internet file retriever
-	openssh        # Secure shell (ssh) and secure file transfer (sftp)
-	autossh        # Automatically restart SSH sessions and tunnels
-	ykman          # YubiKey Manager CLI
-	rclone         # Rsync for cloud storage
-	mosh           # Remote terminal application
+	wget    # Internet file retriever
+	openssh # Secure shell (ssh) and secure file transfer (sftp)
+	autossh # Automatically restart SSH sessions and tunnels
+	ykman   # YubiKey Manager CLI
+	rclone  # Rsync for cloud storage
+	mosh    # Remote terminal application
 
 	# Terminal Enhancement
-	tmux           # Terminal multiplexer
-	starship       # Shell prompt
-	btop           # Resource monitor
-	bat            # Cat clone with syntax highlighting and Git integration
-	eza            # Modern, maintained replacement for ls
-	procs          # Modern replacement for ps
-	tailspin       # Modern and fast log file viewer
-	figlet         # ASCII banner generator
-	hyperfine      # Command-line benchmarking tool
+	tmux      # Terminal multiplexer
+	starship  # Shell prompt
+	btop      # Resource monitor
+	bat       # Cat clone with syntax highlighting and Git integration
+	eza       # Modern, maintained replacement for ls
+	procs     # Modern replacement for ps
+	tailspin  # Modern and fast log file viewer
+	figlet    # ASCII banner generator
+	hyperfine # Command-line benchmarking tool
 
 	# File Management and Search
-	tree           # Display directory structures in a tree-like format
-	rename         # Tool for batch renaming files
-	zoxide         # Smarter cd command for quick navigation
-	ripgrep        # Fast text searching tool (replace to grep, ack)
-	fzf            # Command-line fuzzy finder
-	fd             # Simple, fast and user-friendly alternative to find
-	fswatch        # Monitor a directory for changes
-	watch          # Executes a program periodically, showing output fullscreen
-	dust           # More intuitive version of du
+	tree    # Display directory structures in a tree-like format
+	rename  # Tool for batch renaming files
+	zoxide  # Smarter cd command for quick navigation
+	ripgrep # Fast text searching tool (replace to grep, ack)
+	fzf     # Command-line fuzzy finder
+	fd      # Simple, fast and user-friendly alternative to find
+	fswatch # Monitor a directory for changes
+	watch   # Executes a program periodically, showing output fullscreen
+	dust    # More intuitive version of du
 
 	# Media and File Processing
-	ffmpeg         # Multimedia framework
-	p7zip          # 7-Zip (file archiver with high compression ratio)
-	aria2          # Lightweight multi-protocol & multi-source command-line download utility
-	exiftool       # Read, write and edit meta information in a wide variety of files
-	yt-dlp         # YouTube downloader
+	ffmpeg   # Multimedia framework
+	p7zip    # 7-Zip (file archiver with high compression ratio)
+	aria2    # Lightweight multi-protocol & multi-source command-line download utility
+	exiftool # Read, write and edit meta information in a wide variety of files
+	yt-dlp   # YouTube downloader
 
 	# System Management
-	mas            # Mac App Store command-line interface
-	dockutil       # Command-line tool for managing dock items
-	apparency      # Tool for inspecting and manipulating Apple's App Translocation security feature
+	mas       # Mac App Store command-line interface
+	dockutil  # Command-line tool for managing dock items
+	apparency # Tool for inspecting and manipulating Apple's App Translocation security feature
 
 	# Fonts
 	font-fira-code # Monospaced font with programming ligatures
@@ -136,71 +136,71 @@ NORMAL_TOOLS=(
 
 CASK_TOOLS=(
 	# Development Tools
-	cursor                   # Code editor
-	postman                  # API development environment
-	http-toolkit             # HTTP debugging proxy
-	android-platform-tools   # Android SDK Platform-Tools
+	cursor                 # Code editor
+	postman                # API development environment
+	http-toolkit           # HTTP debugging proxy
+	android-platform-tools # Android SDK Platform-Tools
 
 	# Security and Privacy
-	1password                # Password manager
-	1password-cli            # Command-line interface for 1Password
-	nordvpn                  # VPN
-	veracrypt                # Disk encryption
-	macfuse                  # File system integration
+	1password     # Password manager
+	1password-cli # Command-line interface for 1Password
+	nordvpn       # VPN
+	veracrypt     # Disk encryption
+	macfuse       # File system integration
 
 	# Communication and Collaboration
-	telegram                 # Messaging app
-	discord                  # Messaging app
-	whatsapp                 # Messaging app
-	slack                    # Work Messaging app
-	zoom                     # Work video conferencing
-	teamviewer               # Remote desktop software
-	camo-studio              # iPhone as webcam software
+	telegram    # Messaging app
+	discord     # Messaging app
+	whatsapp    # Messaging app
+	slack       # Work Messaging app
+	zoom        # Work video conferencing
+	teamviewer  # Remote desktop software
+	camo-studio # iPhone as webcam software
 
 	# Web Browsers
-	brave-browser            # Web browser
+	brave-browser # Web browser
 
 	# Design and Media
-	figma                    # Collaborative interface design tool
-	iina                     # Media player
-	obs                      # Open Broadcaster Software
-	cleanshot                # Screen capture tool
-	adobe-creative-cloud     # Adobe Creative Cloud
+	figma                # Collaborative interface design tool
+	iina                 # Media player
+	obs                  # Open Broadcaster Software
+	cleanshot            # Screen capture tool
+	adobe-creative-cloud # Adobe Creative Cloud
 
 	# Development Infrastructure
-	docker                   # Containerization platform
+	docker # Containerization platform
 
 	# Productivity
-	raycast                  # Command palette for MacOS (replace to Alfred or Spotlight)
-	notion                   # Note-taking app
-	fliqlo                   # Clock screensavers
-	claude                   # AI assistant
+	raycast # Command palette for MacOS (replace to Alfred or Spotlight)
+	notion  # Note-taking app
+	fliqlo  # Clock screensavers
+	claude  # AI assistant
 
 	# Terminal and System
-	iterm2                   # Terminal emulator
-	itermai                  # iTerm Artificial Intelligence
-	keyboardcleantool        # Keyboard cleaning tool
-	hyperkey                 # Remap caps lock to hyper key
+	iterm2            # Terminal emulator
+	itermai           # iTerm Artificial Intelligence
+	keyboardcleantool # Keyboard cleaning tool
+	hyperkey          # Remap caps lock to hyper key
 
 	# Audio Tools
-	focusrite-control-2      # Audio interface
-	loopback                 # Audio routing software
-	soundsource              # Audio control software
+	focusrite-control-2 # Audio interface
+	loopback            # Audio routing software
+	soundsource         # Audio control software
 
 	# Fonts
 	font-fira-code-nerd-font # Monospaced font with programming ligatures and icons (used for terminal)
 	font-monaspace-nerd-font # Monospaced font with programming ligatures and icons (used for terminal)
 
 	# Entertainment
-	spotify                  # Music streaming service
-	steam                    # Gaming platform
+	spotify # Music streaming service
+	steam   # Gaming platform
 
 	# Hardware Support
-	displaylink              # DisplayLink Manager for USB monitors
-	linearmouse              # Mouse handler
+	displaylink # DisplayLink Manager for USB monitors
+	linearmouse # Mouse handler
 
 	# File Management
-	the-unarchiver           # Unpacks archive files
+	the-unarchiver # Unpacks archive files
 )
 
 for tool in "${NORMAL_TOOLS[@]}"; do
@@ -213,9 +213,8 @@ done
 brew cleanup
 
 # Install directly from app store
-mas install 975937182 # Fantastical
+mas install 975937182  # Fantastical
 mas install 6469021132 # PDF Gear
-
 
 # Install Rust programming languages to also use tools
 if [ ! -f "$HOME/.cargo/bin/cargo" ]; then

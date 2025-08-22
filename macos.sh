@@ -68,16 +68,6 @@ defaults write com.apple.screencapture location -string "${HOME}/Pictures/Screen
 # Default screen saver start time: 15 minutes (900 seconds)
 defaults -currentHost write com.apple.screensaver idleTime -int 900
 
-# Set Fliqlo as the default screen saver
-FLIQLO_PATH="/Users/$(whoami)/Library/Screen Savers/Fliqlo.saver"
-
-if [ -d "$FLIQLO_PATH" ]; then
-  echo "Setting Fliqlo as screen saver from user library..."
-  defaults -currentHost write com.apple.screensaver moduleDict -dict moduleName "Fliqlo" path "$FLIQLO_PATH" type -int 0
-else
-  echo "Fliqlo screen saver not found. Please install it first."
-fi
-
 ###############################################################################
 # Finder & Files                                                              #
 ###############################################################################
