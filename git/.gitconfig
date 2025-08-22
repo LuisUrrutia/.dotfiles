@@ -1,33 +1,3 @@
-[delta "catppuccin-mocha"]
-	blame-palette = "#1e1e2e #181825 #11111b #313244 #45475a"
-	commit-decoration-style = "#6c7086" bold box ul
-	dark = true
-	file-decoration-style = "#6c7086"
-	file-style = "#cdd6f4"
-	hunk-header-decoration-style = "#6c7086" box ul
-	hunk-header-file-style = bold
-	hunk-header-line-number-style = bold "#a6adc8"
-	hunk-header-style = file line-number syntax
-	line-numbers-left-style = "#6c7086"
-	line-numbers-minus-style = bold "#f38ba8"
-	line-numbers-plus-style = bold "#a6e3a1"
-	line-numbers-right-style = "#6c7086"
-	line-numbers-zero-style = "#6c7086"
-	# 25% red 75% base
-	minus-emph-style = bold syntax "#53394c"
-	# 10% red 90% base
-	minus-style = syntax "#34293a"
-	# 25% green 75% base
-	plus-emph-style = bold syntax "#404f4a"
-	# 10% green 90% base
-	plus-style = syntax "#2c3239"
-	map-styles = \
-		bold purple => syntax "#494060", \
-		bold blue => syntax "#384361", \
-		bold cyan => syntax "#384d5d", \
-		bold yellow => syntax "#544f4e"
-	# Should match the name of the bat theme
-	syntax-theme = Catppuccin Mocha
 [user]
 	signingkey = ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINE6i8g88hWDLjvuF8toQLJ9nCs8hZojlzBCswr9dg3F
 	name = Luis Urrutia
@@ -41,30 +11,12 @@
   # via https://youtu.be/aolI_Rz0ZqY?si=SXHJdhyfSkDQ81ry&t=1714
   fsmonitor = true
   pager = delta
-[delta]
-  features = catppuccin-mocha
-  navigate = true
-  line-numbers = true
-  hyperlinks = true
-  hyperlinks-file-link-format = "cursor://file/{path}:{line}"
+  preloadIndex = true
+  untrackedCache = true
+[core.commitGraph]
+  enabled = true
 [init]
 	defaultBranch = main
-[interactive]
-  diffFilter = delta --color-only
-[column]
-  # via https://youtu.be/aolI_Rz0ZqY?si=9lzCkyrLCay3TiCR&t=1004
-  ui = auto
-[color]
-  ui = true
-[color "branch"]
-  current = yellow reverse
-  local = yellow
-  remote = green
-[color "diff"]
-  meta = yellow bold
-  frag = magenta bold
-  old = red
-  new = green
 [alias]
   authors = !git log --pretty=format:'%an <%ae>' "." | sort | uniq -c | sort -nr
 
@@ -93,7 +45,7 @@
 
   # checkout
   co = checkout                     # checkout
-  nb = checkout -b                  # create and switch to a new branch (mnemonic: "git new branch branchname...")
+  nb = checkout -b                  # create and switch to a new branch (mnemonic: "git new branch branch-name...")
 
   # cherry-pick
   cp = cherry-pick -x               # grab a change from a branch
@@ -137,7 +89,7 @@
   ss = stash                        # stash changes
   sl = stash list                   # list stashes
   sa = stash apply                  # apply stash (restore changes)
-  sd = stash drop                   # drop stashes (destory changes)
+  sd = stash drop                   # drop stashes (destroy changes)
 
   # status
   s = status                        # status
@@ -147,81 +99,102 @@
   # tag
   t = tag -n                        # show tags with <n> lines of each tag message
 
-  # svn helpers
-  svnr = svn rebase
-  svnd = svn dcommit
-  svnl = svn log --oneline --show-commit
-
   # via https://youtu.be/aolI_Rz0ZqY?si=5W5D_Vpm0NVFBs6X&t=692
   smart-blame = blame -w -M -C -C -C
-[format]
-  pretty = format:%C(blue)%ad%Creset %C(yellow)%h%C(green)%d%Creset %C(blue)%s %C(magenta) [%an]%Creset
-[mergetool]
-  prompt = false
-[mergetool "mvimdiff"]
-  cmd="nvim -c 'Gdiff' $MERGED"     # use fugitive.vim for 3-way merge
-  keepbackup=false
-[merge]
-  summary = true
-  verbosity = 1
-  tool = mvimdiff
-  conflictstyle = zdiff3
-[apply]
-  whitespace = nowarn
+
+  rv = "!f() { sha=\"$1\"; shift; subj=$(git show -s --format=%s \"$sha\"); git revert --no-commit \"$sha\" \"$@\" && git commit -m \"revert: $subj\"; }; f"
+
+[checkout]
+  workers = 0
+[commit]
+  template = ~/.config/git/default-commit-message
+  gpgsign = true
 [branch]
   # via https://youtu.be/aolI_Rz0ZqY?si=RjnOM_oAobpR_mDG&t=1021
   sort = -committerdate
   autosetupmerge = true
-[commit]
-  template = ~/.config/git/default-commit-message
-  gpgsign = true
+[merge]
+  summary = true
+  verbosity = 1
+  conflictstyle = zdiff3
+[pull]
+  rebase = true
+[rebase]
+  autoStash = true
+  forkPoint = true
+  updateRefs = true
+  missingCommitsCheck = warn
 [push]
   # 'git push' will push the current branch to its tracking branch
   # the usual default is to push all branches
   default = upstream
   autoSetupRemote = true
-[pull]
-  rebase = true
-[advice]
-  statusHints = false
-[rebase]
-  autoStash = true
-  forkPoint = false
+  followTags = true
+[fetch]
+  writeCommitGraph = true
+  prune = true
+  pruneTags = true
+  parallel = 0
 [diff]
-  # Git diff will use (i)ndex, (w)ork tree, (c)ommit and (o)bject
+  # Git diff will use (i) index, (w) work tree, (c) commit and (o) object
   # instead of a/b/c/d as prefixes for patches
   mnemonicprefix = true
   colorMoved = default
   algorithm = histogram
-[rerere]
-  # Remember my merges
-  # http://gitfu.wordpress.com/2008/04/20/git-rerere-rereremember-what-you-did-last-time/
-  # https://youtu.be/aolI_Rz0ZqY?si=StlHaCAzfCnogSF6&t=903
-  enabled = true
-[include]
-  path = .gitconfig.user
+  renames = true
+  indentHeuristic = true
+[diff "exif"]
+	textconv = exiftool
+[log]
+  date = iso-local
+  follow = true
+[format]
+  pretty = format:%C(blue)%ad%Creset %C(yellow)%h%C(green)%d%Creset %C(blue)%s %C(magenta) [%an]%Creset
+[status]
+  aheadBehind = true
+[column]
+  # via https://youtu.be/aolI_Rz0ZqY?si=9lzCkyrLCay3TiCR&t=1004
+  ui = auto
+[color]
+  ui = true
+[gc]
+  writeCommitGraph = true
+[maintenance]
+	auto = true
+  strategy = incremental
+[pack]
+  threads = 0
+[index]
+  threads = 0
+  version = 4
+[feature]
+  manyFiles = true
+[transfer]
+  fsckObjects = true
+[tag]
+  sort = version:refname
+  gpgsign = true
+  forceSignAnnotated = true
 [gpg]
 	format = ssh
 [gpg "ssh"]
 	program = /Applications/1Password.app/Contents/MacOS/op-ssh-sign
-# via https://youtu.be/aolI_Rz0ZqY?si=KvPxuvLq3MjdF4mZ&t=1344
-[maintenance]
-	auto = false
-  strategy = incremental
-[fetch]
-  writeCommitGraph = true
-  prune = true
-[diff "exif"]
-	textconv = exiftool
 [filter "lfs"]
 	process = git-lfs filter-process
 	required = true
 	clean = git-lfs clean -- %f
 	smudge = git-lfs smudge -- %f
-[core.commitGraph]
+[rerere]
+  # Remember my merges
+  # http://gitfu.wordpress.com/2008/04/20/git-rerere-rereremember-what-you-did-last-time/
+  # https://youtu.be/aolI_Rz0ZqY?si=StlHaCAzfCnogSF6&t=903
   enabled = true
-[gc]
-  writeCommitGraph = true
-[tag]
-  gpgsign = true
-  forceSignAnnotated = true
+  autoUpdate = true
+[apply]
+  whitespace = nowarn
+[http]
+  version = HTTP/2
+[advice]
+  statusHints = false
+[include]
+  path = ~/.config/git/delta.gitconfig
