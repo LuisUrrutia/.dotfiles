@@ -10,9 +10,9 @@ SETTINGS_FILE="$SETTINGS_PATH/settings.json"
 
 # if settings.json exists and is not a symlink, remove it
 if [ -f "$SETTINGS_FILE" ] && [ ! -L "$SETTINGS_FILE" ]; then
-    rm -f "$SETTINGS_FILE"
-elif
-    mkdir -p "$SETTINGS_PATH"
+	rm -f "$SETTINGS_FILE"
+else
+	mkdir -p "$SETTINGS_PATH"
 fi
 
 # create symlink
