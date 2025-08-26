@@ -31,198 +31,8 @@ fi
 eval "$(/opt/homebrew/bin/brew shellenv)"
 HOMEBREW_PREFIX=$(brew --prefix)
 
-NORMAL_TOOLS=(
-	# Core System Tools
-	coreutils  # Install GNU core utilities (those that come with macOS are outdated).
-	stow       # Manages symlinks for dotfiles and configurations
-	fish       # Shell
-	cmake      # Manages project builds and generating makefiles
-	pkg-config # Manages compile and link flags for libraries
-	gnupg      # GNU Privacy Guard (GPG) for secure communication
-	moreutils  # Collection of additional Unix utilities (like sponge)
-	findutils  # GNU find, xargs, and locate, utilities for finding files
-	gnu-sed    # macOS uses the BSD version. I prefer the GNU one.
-	grep       # macOS uses the BSD version. I prefer the GNU one.
-
-	# Development Tools
-	neovim    # Vim-fork focused on extensibility and usability
-	git       # Distributed version control system
-	git-lfs   # Git extension for versioning large files
-	gh        # GitHub CLI
-	git-delta # Syntax-highlighting pager for git and diff output
-	shfmt     # Shell script formatter
-
-	# Network and Security
-	wget    # Internet file retriever
-	openssh # Secure shell (ssh) and secure file transfer (sftp)
-	autossh # Automatically restart SSH sessions and tunnels
-	ykman   # YubiKey Manager CLI
-	rclone  # Rsync for cloud storage
-	mosh    # Remote terminal application
-
-	# Terminal Enhancement
-	tmux      # Terminal multiplexer
-	starship  # Shell prompt
-	btop      # Resource monitor
-	bat       # Cat clone with syntax highlighting and Git integration
-	eza       # Modern, maintained replacement for ls
-	procs     # Modern replacement for ps
-	tailspin  # Modern and fast log file viewer
-	figlet    # ASCII banner generator
-	hyperfine # Command-line benchmarking tool
-	lolcrab   # Like lolcat
-
-	# File Management and Search
-	tree    # Display directory structures in a tree-like format
-	rename  # Tool for batch renaming files
-	zoxide  # Smarter cd command for quick navigation
-	ripgrep # Fast text searching tool (replace to grep, ack)
-	fzf     # Command-line fuzzy finder
-	fd      # Simple, fast and user-friendly alternative to find
-	fswatch # Monitor a directory for changes
-	watch   # Executes a program periodically, showing output fullscreen
-	dust    # More intuitive version of du
-
-	# Media and File Processing
-	ffmpeg   # Multimedia framework
-	p7zip    # 7-Zip (file archiver with high compression ratio)
-	aria2    # Lightweight multi-protocol & multi-source command-line download utility
-	exiftool # Read, write and edit meta information in a wide variety of files
-	yt-dlp   # YouTube downloader
-
-	# System Management
-	mas       # Mac App Store command-line interface
-	dockutil  # Command-line tool for managing dock items
-	apparency # Tool for inspecting and manipulating Apple's App Translocation security feature
-
-	# Fonts
-	font-fira-code # Monospaced font with programming ligatures
-	font-monaspace # Monospaced font with programming ligatures
-
-	# Programming Languages and Package Managers
-	python          # Programming language
-	uv              # Tool for managing multiple runtime versions
-	go              # Programming language
-	oven-sh/bun/bun # JavaScript runtime and bundler
-	fnm             # Fast Node Manager
-
-	# Cloud Tools
-	awscli           # Amazon Web Services command-line interface
-	google-cloud-sdk # Google Cloud command-line interface
-	aws-sam-cli      # AWS Serverless Application Model command-line interface
-
-	# Image and Font Processing
-	sfnt2woff   # Convert TrueType fonts to WOFF format
-	woff2       # WOFF 2.0 font compression
-	imagemagick # Image manipulation tools
-	libmagic    # File type identification library
-	libavif     # AVIF image format reference implementation
-	webp        # Image format that provides lossless and lossy compression for images on the web
-	cairo       # 2D graphics library with support for multiple output devices
-	pango       # Library for layout and rendering of text
-	jpeg        # Image manipulation library
-	giflib      # Library for reading and writing gif images
-	librsvg     # Library for rendering SVG files
-	libvips     # Image processing library
-	perl        # Programming language
-	cpanm       # Perl module installer
-	latexindent # Indentation of LaTeX documents
-
-	# Web3 Development
-	solidity    # Ethereum smart contract language
-	ethereum    # Installs Ethereum and related tools
-	stellar-cli # Stellar CLI
-)
-
-CASK_TOOLS=(
-	# Development Tools
-	cursor                 # Code editor
-	postman                # API development environment
-	http-toolkit           # HTTP debugging proxy
-	android-platform-tools # Android SDK Platform-Tools
-
-	# Security and Privacy
-	1password     # Password manager
-	1password-cli # Command-line interface for 1Password
-	nordvpn       # VPN
-	veracrypt     # Disk encryption
-	macfuse       # File system integration
-
-	# Communication and Collaboration
-	telegram    # Messaging app
-	discord     # Messaging app
-	whatsapp    # Messaging app
-	slack       # Work Messaging app
-	zoom        # Work video conferencing
-	teamviewer  # Remote desktop software
-	camo-studio # iPhone as webcam software
-
-	# Web Browsers
-	brave-browser # Web browser
-
-	# Design and Media
-	figma                # Collaborative interface design tool
-	iina                 # Media player
-	obs                  # Open Broadcaster Software
-	obs-advanced-scene-switcher # OBS Scene Switcher
-	cleanshot            # Screen capture tool
-	adobe-creative-cloud # Adobe Creative Cloud
-
-	# Development Infrastructure
-	docker # Containerization platform
-
-	# Productivity
-	raycast # Command palette for MacOS (replace to Alfred or Spotlight)
-	notion  # Note-taking app
-	fliqlo  # Clock screensavers
-	claude  # AI assistant
-	fantastical   # Calendar and task manager
-
-	# Terminal and System
-	iterm2            # Terminal emulator
-	itermai           # iTerm Artificial Intelligence
-	keyboardcleantool # Keyboard cleaning tool
-	hyperkey          # Remap caps lock to hyper key
-	bartender         # Bartender for managing menu bar apps
-
-	# Audio Tools
-	focusrite-control-2 # Audio interface
-	loopback            # Audio routing software
-	soundsource         # Audio control software
-
-	# Fonts
-	font-fira-code-nerd-font # Monospaced font with programming ligatures and icons (used for terminal)
-	font-monaspace-nerd-font # Monospaced font with programming ligatures and icons (used for terminal)
-
-	# Entertainment
-	spotify # Music streaming service
-	steam   # Gaming platform
-
-	# Hardware Support
-	displaylink # DisplayLink Manager for USB monitors
-	linearmouse # Mouse handler
-
-	# File Management
-	the-unarchiver # Unpacks archive files
-)
-
-for tool in "${NORMAL_TOOLS[@]}"; do
-	brew install -q ${tool}
-done
-for tool in "${CASK_TOOLS[@]}"; do
-	brew install -q --cask ${tool}
-done
-
+brew bundle install
 brew cleanup
-
-# Install directly from app store
-mas install 6469021132 # PDF Gear
-mas install 497799835 # XCode
-
-# Install Rust programming languages to also use tools
-if [ ! -f "$HOME/.cargo/bin/cargo" ]; then
-	curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y -q
-fi
 
 uv python install
 uv tool install pre-commit --with pre-commit-uv
@@ -232,7 +42,11 @@ uv tool install pre-commit --with pre-commit-uv
 $HOMEBREW_PREFIX/opt/fzf/install --all --no-bash --no-zsh --no-fish --no-update-rc --key-bindings --completion
 
 # Configure ZSH and config files
-rm $HOME/.zshrc $HOME/.zshenv $HOME/.zlogin
+# rm $HOME/.zshrc $HOME/.zshenv $HOME/.zlogin
+
+# Remove fish config if it exists because we will use stow to add stuff
+rm -rf $HOME/.config/fish/
+
 for folder in $(echo $STOW_FOLDERS | sed "s/,/ /g"); do
 	echo "stow $folder"
 	stow -D $folder
@@ -245,7 +59,7 @@ defaults write com.googlecode.iterm2.plist PrefsCustomFolder -string "$DOTFILES/
 defaults write com.googlecode.iterm2.plist LoadPrefsFromCustomFolder -bool true
 
 # Create Projects folder
-mkdir -p ~/Projects/LuisUrrutia
+mkdir -p ~/Projects
 
 # Set MacOS props
 sh macos.sh
@@ -254,9 +68,13 @@ sh macos.sh
 sh cursor.sh
 
 # Set zsh if not already default shell
-if [[ "$SHELL" != "/bin/zsh" ]]; then
-	chsh -s /bin/zsh
-fi
+# if [[ "$SHELL" != "/bin/zsh" ]]; then
+# 	chsh -s /bin/zsh
+# fi
+
+# Add fish to shells and set it as default
+sudo sh -c 'echo /opt/homebrew/bin/fish >> /etc/shells'
+chsh -s /opt/homebrew/bin/fish
 
 echo "Installation complete!"
 echo "Please restart your terminal to apply changes."
