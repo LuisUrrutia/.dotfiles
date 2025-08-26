@@ -6,7 +6,7 @@ if [ "$(uname)" != "Darwin" ]; then
 	exit 1
 fi
 
-STOW_FOLDERS="zsh,wget,git,vim,tmux,starship,bat,btop,linearmouse,cspell"
+STOW_FOLDERS="fish,wget,git,vim,tmux,starship,bat,btop,linearmouse,cspell"
 DOTFILES="${HOME}/.dotfiles"
 
 CWD="$(pwd)"
@@ -29,13 +29,13 @@ fi
 
 # Load homebrew
 eval "$(/opt/homebrew/bin/brew shellenv)"
-BREW_PREFIX=$(brew --prefix)
+HOMEBREW_PREFIX=$(brew --prefix)
 
 NORMAL_TOOLS=(
 	# Core System Tools
 	coreutils  # Install GNU core utilities (those that come with macOS are outdated).
 	stow       # Manages symlinks for dotfiles and configurations
-	zsh        # Extended Unix shell with more features than bash
+	fish       # Shell
 	cmake      # Manages project builds and generating makefiles
 	pkg-config # Manages compile and link flags for libraries
 	gnupg      # GNU Privacy Guard (GPG) for secure communication
@@ -49,7 +49,6 @@ NORMAL_TOOLS=(
 	git       # Distributed version control system
 	git-lfs   # Git extension for versioning large files
 	gh        # GitHub CLI
-	forgit    # Utility tool for using git interactively
 	git-delta # Syntax-highlighting pager for git and diff output
 	shfmt     # Shell script formatter
 
@@ -71,6 +70,7 @@ NORMAL_TOOLS=(
 	tailspin  # Modern and fast log file viewer
 	figlet    # ASCII banner generator
 	hyperfine # Command-line benchmarking tool
+	lolcrab   # Like lolcat
 
 	# File Management and Search
 	tree    # Display directory structures in a tree-like format
@@ -164,6 +164,7 @@ CASK_TOOLS=(
 	figma                # Collaborative interface design tool
 	iina                 # Media player
 	obs                  # Open Broadcaster Software
+	obs-advanced-scene-switcher # OBS Scene Switcher
 	cleanshot            # Screen capture tool
 	adobe-creative-cloud # Adobe Creative Cloud
 
@@ -175,12 +176,14 @@ CASK_TOOLS=(
 	notion  # Note-taking app
 	fliqlo  # Clock screensavers
 	claude  # AI assistant
+	fantastical   # Calendar and task manager
 
 	# Terminal and System
 	iterm2            # Terminal emulator
 	itermai           # iTerm Artificial Intelligence
 	keyboardcleantool # Keyboard cleaning tool
 	hyperkey          # Remap caps lock to hyper key
+	bartender         # Bartender for managing menu bar apps
 
 	# Audio Tools
 	focusrite-control-2 # Audio interface
@@ -213,20 +216,20 @@ done
 brew cleanup
 
 # Install directly from app store
-mas install 975937182  # Fantastical
 mas install 6469021132 # PDF Gear
+mas install 497799835 # XCode
 
 # Install Rust programming languages to also use tools
 if [ ! -f "$HOME/.cargo/bin/cargo" ]; then
 	curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y -q
 fi
-$HOME/.cargo/bin/cargo install lolcrab
 
 uv python install
 uv tool install pre-commit --with pre-commit-uv
 
-[ ! -L "${BREW_PREFIX}/bin/sha256sum" ] && ln -s "${BREW_PREFIX}/bin/gsha256sum" "${BREW_PREFIX}/bin/sha256sum"
-[ ! -L "${BREW_PREFIX}/bin/sed" ] && ln -s "${BREW_PREFIX}/bin/gsed" "${BREW_PREFIX}/bin/sed"
+[ ! -L "${HOMEBREW_PREFIX}/bin/sha256sum" ] && ln -s "${HOMEBREW_PREFIX}/bin/gsha256sum" "${HOMEBREW_PREFIX}/bin/sha256sum"
+
+$HOMEBREW_PREFIX/opt/fzf/install --all --no-bash --no-zsh --no-fish --no-update-rc --key-bindings --completion
 
 # Configure ZSH and config files
 rm $HOME/.zshrc $HOME/.zshenv $HOME/.zlogin
