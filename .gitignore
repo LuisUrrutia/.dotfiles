@@ -3,3 +3,14 @@ frida-script.js
 vim/.config/nvim/undo/
 vim/.config/nvim/lazy-lock.json
 private/
+fish/.config/fish/functions/_*
+fish/.config/fish/functions/fisher.fish
+fish/.config/fish/functions/zoxide.fish
+fish/.config/fish/functions/fzf_configure_bindings.fish
+fish/.config/fish/conf.d/puffer_fish_key_bindings.fish
+fish/.config/fish/conf.d/zoxide.fish
+fish/.config/fish/conf.d/autopair.fish
+fish/.config/fish/conf.d/fzf.fish
+fish/.config/fish/completions/fisher.fish
+fish/.config/fish/completions/fzf_configure_bindings.fish
+fish/.config/fish/completions/zoxide.fish

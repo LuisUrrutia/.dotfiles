@@ -148,5 +148,6 @@
     "[html]": {
         "editor.defaultFormatter": "esbenp.prettier-vscode"
     },
-    "workbench.sideBar.location": "right"
+    "workbench.sideBar.location": "right",
+    "terminal.integrated.defaultProfile.osx": "fish"
 }
