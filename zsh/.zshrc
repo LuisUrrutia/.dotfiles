@@ -1,7 +1,7 @@
 zmodload zsh/stat
 zmodload zsh/datetime
 
-BREW_PREFIX=${BREW_PREFIX:-$(brew --prefix)}
+HOMEBREW_PREFIX=${HOMEBREW_PREFIX:-$(brew --prefix)}
 ZCOMPDUMP_FILE=${XDG_CACHE_HOME:-$HOME/.cache}/.zcompdump
 skip_global_compinit=1
 
@@ -45,7 +45,7 @@ plugins=(
   "https://github.com/zsh-users/zsh-syntax-highlighting.git zsh-syntax-highlighting"
   "https://github.com/zsh-users/zsh-autosuggestions.git zsh-autosuggestions"
   "https://github.com/zsh-users/zsh-history-substring-search zsh-history-substring-search"
-  "https://github.com/Aloxaf/fzf-tab fzf-tab"
+  # "https://github.com/Aloxaf/fzf-tab fzf-tab"
   "https://github.com/zsh-users/zsh-completions.git zsh-completions"
 )
 for plugin in "${plugins[@]}"; do
@@ -63,7 +63,7 @@ if [[ ! -e "$HOME/.tmux/plugins/tpm" ]]; then
 fi
 
 # Completion paths
-fpath=(~/.zmodules/zsh-completions/src $BREW_PREFIX/share/zsh/site-functions $fpath)
+fpath=(~/.zmodules/zsh-completions/src $HOMEBREW_PREFIX/share/zsh/site-functions $fpath)
 
 # bun completions
 [ -s "$HOME/.bun/_bun" ] && source "$HOME/.bun/_bun"
@@ -86,7 +86,7 @@ fi
 
 # fzf
 if [ ! -f ~/.fzf.zsh ]; then
-  $BREW_PREFIX/opt/fzf/install --all --no-bash --no-fish --no-update-rc --key-bindings --completion
+  $HOMEBREW_PREFIX/opt/fzf/install --all --no-bash --no-fish --no-update-rc --key-bindings --completion
 fi
 source ~/.fzf.zsh
 source ~/.zmodules/fzf-tab/fzf-tab.plugin.zsh
@@ -112,8 +112,8 @@ export PATH="$HOME/.local/bin:/opt/homebrew/opt/gnu-sed/libexec/gnubin:/opt/home
 typeset -U path # remove duplicates
 
 # Google cloud sdk
-source "$BREW_PREFIX/share/google-cloud-sdk/path.zsh.inc"
-source "$BREW_PREFIX/share/google-cloud-sdk/completion.zsh.inc"
+source "$HOMEBREW_PREFIX/share/google-cloud-sdk/path.zsh.inc"
+source "$HOMEBREW_PREFIX/share/google-cloud-sdk/completion.zsh.inc"
 
 # Set VIM
 set -o vi
