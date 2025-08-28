@@ -37,6 +37,7 @@ brew "tailspin"  # Modern and fast log file viewer
 brew "figlet"    # ASCII banner generator
 brew "hyperfine" # Command-line benchmarking tool
 brew "lolcrab"   # Like lolcat
+brew "atuin" # SQLite shell history
 
 # File Management and Search
 brew "rename"  # Tool for batch renaming files
