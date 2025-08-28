@@ -2,8 +2,10 @@ function nuke -d "Kill unwanted background processes (Adobe, FortiClient, Logite
     # Define process patterns to kill
     set -l process_patterns \
         "Adobe" \
+        "Creative" \
         "FortiClient" \
         "Logitech" \
+        "lghub" \
         "toolbox-helper"
     
     set -l total_killed 0
