@@ -1,3 +1,4 @@
+
 [git_status]
 ahead = '⇡${count}'
 diverged = '⇕⇡${ahead_count}⇣${behind_count}'
@@ -7,3 +8,6 @@ staged = '[++\($count\)](green)'
 
 [gcloud]
 detect_env_vars = ['CLOUDSDK_ACTIVE_CONFIG_NAME']
+
+[character]
+vimcmd_symbol = "[](bold yellow)"
