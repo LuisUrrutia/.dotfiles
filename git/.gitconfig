@@ -9,7 +9,8 @@
   excludesfile = ~/.config/git/.gitignore
   attributesFile = ~/.config/git/.gitattributes
   # via https://youtu.be/aolI_Rz0ZqY?si=SXHJdhyfSkDQ81ry&t=1714
-  fsmonitor = true
+  # Enable only if working on large
+  fsmonitor = false
   pager = delta
   preloadIndex = true
   untrackedCache = true
@@ -109,6 +110,7 @@
   pretty = format:%C(blue)%ad%Creset %C(yellow)%h%C(green)%d%Creset %C(blue)%s %C(magenta) [%an]%Creset
 [status]
   aheadBehind = true
+  showUntrackedFiles = normal
 [column]
   # via https://youtu.be/aolI_Rz0ZqY?si=9lzCkyrLCay3TiCR&t=1004
   ui = auto
@@ -153,5 +155,15 @@
   version = HTTP/2
 [advice]
   statusHints = false
+  detachedHead = false
+  resolveConflict = false
+[url "git@github.com:"]
+  insteadOf = https://github.com/
+[url "git@gitlab.com:"]
+  insteadOf = https://gitlab.com/
+[protocol]
+  version = 2
+[web]
+  browser = open
 [include]
   path = ~/.config/git/delta.gitconfig
