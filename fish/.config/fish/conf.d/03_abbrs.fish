@@ -80,7 +80,6 @@ abbr -a -- dcs 'docker compose stop'
 abbr -a -- clean-js 'fd -t d "^(node_modules|build|dist)$" -x rm -rf {}'
 
 # ip
-abbr -a -- ip 'dig +short myip.opendns.com @resolver1.opendns.com'
 abbr -a -- localip 'ipconfig getifaddr en0'
 
 # fisher
