@@ -1,43 +1,200 @@
-# LuisUrrutia dotfiles
+# LuisUrrutia's macOS Dotfiles
 
 > [!CAUTION]
-> These are PERSONAL dotfiles and configurations specifically designed for macOS.
+> These are PERSONAL dotfiles and configurations specifically designed for macOS. Use at your own risk and adapt to your needs.
 
-## Install
+A comprehensive macOS development environment setup with a focus on modern tools, productivity, and aesthetics. This setup uses Fish shell, Starship prompt, and a carefully curated collection of CLI tools and applications.
+
+## ✨ Features
+
+- **🐟 Fish Shell**: Modern shell with intelligent autocompletion and syntax highlighting
+- **🚀 Starship Prompt**: Fast, customizable prompt with git integration
+- **📦 Homebrew**: Package management with extensive tool collection
+- **🔗 GNU Stow**: Dotfiles management via symlinks
+- **🎨 Catppuccin Theme**: Consistent theming across all applications
+- **⚡ Performance Optimizations**: Fast terminal, optimized git settings, efficient completions
+- **🔧 Development Tools**: Complete setup for multiple programming languages
+- **🖥️ macOS Tweaks**: System optimizations and security enhancements
+
+## 🚀 Quick Install
 
 ```sh
 cd $HOME && git clone https://github.com/LuisUrrutia/.dotfiles.git && cd .dotfiles && ./install.sh
 ```
 
-### Private Configuration (Optional)
+## 📋 What Gets Installed
 
-This is just for me, because it requires access to the private configuration repository.
+### 🛠️ Core System Tools
+
+- **GNU Coreutils**: Modern Unix tools (coreutils, findutils, gnu-sed, grep)
+- **Stow**: Symlink management for dotfiles
+- **Fish + Fisher**: Shell and plugin manager
+- **GPG**: Secure communication and signing
+
+### 🧑‍💻 Development Environment
+
+- **Git**: Version control with delta diff viewer and advanced aliases
+- **Neovim**: Modern Vim editor
+- **Cursor**: AI editor
+- **GitHub CLI**: Command-line GitHub integration
+- **Language Support**: Python (uv), Node.js (fnm), Go, Rust, Bun
+- **Cloud Tools**: AWS CLI, Google Cloud CLI
+
+### 🔧 Command Line Tools
+
+- **Terminal Enhancers**: tmux, starship, btop, bat, eza, procs
+- **Search & Navigation**: ripgrep, fzf, fd, zoxide
+- **File Management**: rename, p7zip, exiftool
+- **Network Tools**: wget, openssh, autossh, mosh, rclone
+- **Media Processing**: ffmpeg, yt-dlp, imagemagick
+
+### 🎨 Applications (via Homebrew Cask)
+
+- **Development**: Cursor, Postman, Docker Desktop, Android Platform Tools
+- **Browsers**: Brave Browser
+- **Security**: 1Password, NordVPN, VeraCrypt
+- **Communication**: Telegram, Discord, WhatsApp, Slack, Zoom
+- **Media & Design**: Figma, OBS, CleanShot, Adobe Creative Cloud
+- **Productivity**: Raycast, Notion, Fantastical
+- **Terminal**: iTerm2 with AI integration
+- **Audio**: Focusrite Control, Loopback, SoundSource
+
+### ⚙️ Configuration Files
+
+| Tool | Configuration | Description |
+|------|---------------|-------------|
+| Fish | `~/.config/fish/config.fish` | Shell configuration with Catppuccin theme |
+| Git | `~/.gitconfig` | Advanced git aliases, delta integration, GPG signing |
+| Cursor | `~/Library/Application Support/Cursor/User/settings.json` | Code editor with Monaspace font and Catppuccin theme |
+| Starship | `~/.config/starship.toml` | Shell prompt configuration |
+| iTerm2 | `com.googlecode.iterm2.plist` | Terminal preferences and color schemes |
+
+## 🔐 Private Configuration (Optional)
+
+For personal configurations that shouldn't be public:
 
 ```sh
 ./private-install.sh
 ```
 
-## Things to do after install
+This installs additional private configurations for:
 
-- [ ] Add OpenAI API Key to iTerm
-- [ ] Configure Raycast
-- [ ] Save recovery key in 1Password
-- [ ] Configure 1Password SSH
-- [ ] Enable Apple Watch for Touch ID
-- [ ] Enable Apple Watch for 1Password
-- [ ] Configure CleanShot
-- [ ] Configure Clock Screensaver
-- [ ] Run Atuin Login
+- Cursor (private settings/extensions)
+- Fish (work-specific configurations)
+- Sensitive configurations
 
-## My Setup
+## 🍎 macOS System Optimizations
 
-- 💻 Laptop: Macbook Pro M3 Max (64GB RAM)
-- 🖱️ Mouse: Logitech G502 X Plus
-- ⌨️ Keyboard: ROG Azoth
-- 🖥️ Monitors: ASUS ProArt PA279CRV
-- 🎧 Headphones: Sennheiser HD 490 Pro
-- 🎤 Mic: Oktava MK-012S
-- 🔊 Audio Interface: Scarlett 2i2 4th Generation
-- 🖱️ Mousepad: Razer Strider XXL
-- 📹 Webcam: Insta360 Link
-- 💡 Lightbar: BenQ ScreenBar Pro
+The setup includes comprehensive macOS system tweaks via `macos.sh`:
+
+### ⌨️ Keyboard & Input
+
+- Disable automatic text corrections and smart features
+- Fast key repeat rate
+- Full keyboard access for all controls
+
+### 🖥️ Display & Screen
+
+- Subpixel font rendering for external displays
+- Secure screen saver settings
+- Screenshot organization
+
+### 📁 Finder & Files
+
+- Show all file extensions
+- Secure trash emptying
+- Reveal hidden folders
+
+### ⚡ Performance & Security
+
+- Automatic software updates
+- Firewall configuration
+- FileVault disk encryption
+- Power management optimization
+
+### 🎯 Application Tweaks
+
+- Dock customization and app management
+- Disabled system shortcuts (replaced with better alternatives)
+- Keyboard shortcut customization
+
+## 📚 Installation Process
+
+1. **System Check**: Verifies macOS compatibility
+2. **Homebrew**: Installs or updates package manager
+3. **Package Installation**: Installs all tools from Brewfile
+4. **Configuration Linking**: Uses Stow to symlink dotfiles
+5. **Software Configuration**: Applies specific software configuration
+6. **System Configuration**: Applies macOS tweaks
+7. **Shell Setup**: Configures Fish as default shell
+8. **Final Setup**: Builds caches and applies final configurations
+
+## ✅ Post-Installation Tasks
+
+After running the installer, complete these manual steps:
+
+### Essential Configuration
+
+- [ ] **iTerm AI**: Add OpenAI API Key for terminal AI features
+- [ ] **Raycast**: Configure launcher and productivity shortcuts
+- [ ] **1Password**: Set up SSH agent and Apple Watch integration
+- [ ] **Touch ID**: Enable Apple Watch for authentication
+- [ ] **Atuin**: Login to sync shell history across devices
+
+### Development Setup
+
+- [ ] **Docker**: Complete Docker Desktop setup and licensing
+
+### Productivity Apps
+
+- [ ] **CleanShot**: Configure screenshot automation
+- [ ] **Clock Screensaver**: Set up custom screensaver
+- [ ] **Hyperkey**: Configure caps lock key remapping
+- [ ] **Fantastical**: Set up calendar integration
+- [ ] **OBS**: Configure streaming/recording setup
+
+### Audio/Video Setup
+
+- [ ] **SoundSource & Loopback**: Apply audio software licenses
+- [ ] **Insta360 Link Controller**: Install webcam software
+- [ ] **Focusrite Control**: Configure audio interface
+
+## 🖥️ My Setup
+
+### Hardware
+
+- 💻 **Laptop**: MacBook Pro M3 Max (64GB RAM)
+- 🖥️ **Monitor**: ASUS ProArt PA279CRV
+- ⌨️ **Keyboard**: ROG Azoth
+- 🖱️ **Mouse**: Logitech G502 X Plus
+- 🖱️ **Mousepad**: Razer Strider XXL
+
+### Audio Setup
+
+- 🎧 **Headphones**: Sennheiser HD 490 Pro
+- 🎤 **Microphone**: Oktava MK-012S
+- 🔊 **Audio Interface**: Scarlett 2i2 4th Generation
+
+### Accessories
+
+- 📹 **Webcam**: Insta360 Link or iPhone 16 Pro Max
+- 💡 **Lightbar**: BenQ ScreenBar Pro
+
+## 🐛 Troubleshooting
+
+### Common Issues
+
+- **Permission errors**: Ensure script has execute permissions
+- **Homebrew failures**: Check internet connection and disk space
+- **Stow conflicts**: Remove existing config files before running
+- **SSH authentication**: Verify GitHub SSH key setup for private configs
+
+### Getting Help
+
+- Check individual tool documentation
+- Review installation logs for specific errors
+- Ensure macOS version compatibility
+
+## 📄 License
+
+This is a personal configuration repository. Feel free to fork and adapt for your own use.
