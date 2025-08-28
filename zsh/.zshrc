@@ -127,3 +127,5 @@ source <(stellar completion --shell zsh)
 if [[ "$TERM_PROGRAM" != "vscode" && -z "$TMUX" ]]; then
   random_phrase
 fi
+
+eval "$(atuin init zsh)"
