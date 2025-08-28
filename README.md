@@ -27,6 +27,7 @@ This is just for me, because it requires access to the private configuration rep
 - [ ] Enable Apple Watch for 1Password
 - [ ] Configure CleanShot
 - [ ] Configure Clock Screensaver
+- [ ] Run Atuin Login
 
 ## My Setup
 
