@@ -105,6 +105,7 @@ cask "cursor"                 # Code editor
 cask "postman"                # API development environment
 cask "http-toolkit"           # HTTP debugging proxy
 cask "android-platform-tools" # Android SDK Platform-Tools
+cask "kitty"                  # Terminal emulator
 
 # Security and Privacy
 cask "1password"     # Password manager
