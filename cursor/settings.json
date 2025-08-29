@@ -19,7 +19,7 @@
 
     // Theme and Colors
     "workbench.colorTheme": "Catppuccin Mocha",
-    "workbench.iconTheme": "catppuccin-perfect-mocha",
+    "workbench.iconTheme": "catppuccin-macchiato",
     "workbench.colorCustomizations": {
         "[Material Theme Ocean High Contrast]": {
             "editorLineNumber.foreground": "#4b526d",
@@ -149,5 +149,24 @@
         "editor.defaultFormatter": "esbenp.prettier-vscode"
     },
     "workbench.sideBar.location": "right",
-    "terminal.integrated.defaultProfile.osx": "fish"
+    "terminal.integrated.defaultProfile.osx": "fish",
+    "window.commandCenter": true,
+    "git.path": [
+        "/Users/luisurrutia/.local/bin/git",
+        "/opt/homebrew/bin/git",
+        "/usr/bin/git"
+    ],
+    "editor.bracketPairColorization.independentColorPoolPerBracketType": true,
+    "files.watcherExclude": {
+        "**/__pycache__": true,
+        "**/.DS_Store": true,
+        "**/.git": true,
+        "**/.git/objects/**": true,
+        "**/.git/subtree-cache/**": true,
+        "**/.hg": true,
+        "**/.mypy_cache": true,
+        "**/.pytest_cache": true,
+        "**/.scrapy": true,
+        "**/node_modules/*/**": true
+    }
 }
