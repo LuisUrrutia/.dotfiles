@@ -19,7 +19,7 @@
 
     // Theme and Colors
     "workbench.colorTheme": "Catppuccin Mocha",
-    "workbench.iconTheme": "catppuccin-macchiato",
+    "workbench.iconTheme": "catppuccin-mocha",
     "workbench.colorCustomizations": {
         "[Material Theme Ocean High Contrast]": {
             "editorLineNumber.foreground": "#4b526d",
@@ -136,6 +136,12 @@
         "other-dictionary": {
             "name": "other-dictionary",
             "path": "~/.cspell/other.txt",
+            "addWords": true,
+            "scope": "user"
+        },
+        "tools-dictionary": {
+            "name": "tools-dictionary",
+            "path": "~/.cspell/tools.txt",
             "addWords": true,
             "scope": "user"
         }
