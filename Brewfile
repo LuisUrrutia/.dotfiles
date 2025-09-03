@@ -68,6 +68,7 @@ brew "go"              # Programming language
 brew "oven-sh/bun/bun" # JavaScript runtime and bundler
 brew "fnm"             # Fast Node Manager
 brew "rustup"          # Rust programming language
+brew "openjdk"         # OpenJDK Java Development Kit
 
 # Cloud Tools
 brew "awscli"           # Amazon Web Services command-line interface

@@ -135,7 +135,6 @@ After running the installer, complete these manual steps:
 
 ### Essential Configuration
 
-- [ ] **iTerm AI**: Add OpenAI API Key for terminal AI features
 - [ ] **Raycast**: Configure launcher and productivity shortcuts
 - [ ] **1Password**: Set up SSH agent and Apple Watch integration
 - [ ] **Touch ID**: Enable Apple Watch for authentication

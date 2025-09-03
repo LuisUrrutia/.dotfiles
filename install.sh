@@ -6,15 +6,54 @@ if [ "$(uname)" != "Darwin" ]; then
 	exit 1
 fi
 
-STOW_FOLDERS="fish,wget,git,vim,tmux,starship,bat,btop,linearmouse,cspell,atuin"
+STOW_FOLDERS="fish,wget,git,vim,tmux,starship,bat,btop,linearmouse,cspell,atuin,kitty"
 DOTFILES="${HOME}/.dotfiles"
 
-sudo -v
-while true; do
-	sudo -n true
-	sleep 20
-	kill -0 "$$" || exit
-done 2>/dev/null &
+# Prevent system sleep.
+/usr/bin/caffeinate -dimu -w $$ &
+
+# Add exit handlers.
+at_exit() {
+	AT_EXIT+="${AT_EXIT:+$'\n'}"
+	AT_EXIT+="${*?}"
+	# shellcheck disable=SC2064
+	trap "${AT_EXIT}" EXIT
+}
+
+at_exit "
+	printf '\e[0;31mDeleting SUDO_ASKPASS script …\e[0m\n'
+	/bin/rm -f '${SUDO_ASKPASS}'
+"
+
+# Ask for superuser password, and temporarily add it to the Keychain.
+(
+	builtin read -r -s -p "Password: "
+	builtin echo "add-generic-password -U -s 'dotfiles' -a '${USER}' -w '${REPLY}'"
+) | /usr/bin/security -i
+printf "\n"
+
+# Create SUDO_ASKPASS script (scripts that output the password for sudo)
+SUDO_ASKPASS="$(/usr/bin/mktemp)"
+printf "SUDO_ASKPASS: $SUDO_ASKPASS\n"
+
+at_exit "
+	printf '\e[0;31mDeleting SUDO_ASKPASS script …\e[0m\n'
+	/bin/rm -f '${SUDO_ASKPASS}'
+"
+
+{
+	echo "#!/bin/sh"
+	echo "/usr/bin/security find-generic-password -s 'dotfiles' -a '${USER}' -w"
+} >"${SUDO_ASKPASS}"
+
+/bin/chmod +x "${SUDO_ASKPASS}"
+
+export SUDO_ASKPASS
+
+if ! /usr/bin/sudo -A -kv 2>/dev/null; then
+	printf '\e[0;31mIncorrect password.\e[0m\n' 1>&2
+	exit 1
+fi
 
 # Check if brew is installed, otherwise install it
 which -s brew
@@ -34,8 +73,22 @@ echo "Installing packages from Brewfile..."
 brew bundle install --file $DOTFILES/Brewfile
 brew cleanup
 
-uv python install
-uv tool install pre-commit --with pre-commit-uv
+# XCode accept license
+sudo xcodebuild -license accept
+
+/opt/homebrew/bin/fnm install --lts
+/opt/homebrew/bin/fnm default lts-latest
+sudo ln -sf $HOME/.local/share/fnm/aliases/default/bin/node /usr/local/bin/node
+sudo ln -sf $HOME/.local/share/fnm/aliases/default/bin/npm /usr/local/bin/npm
+sudo ln -sf $HOME/.local/share/fnm/aliases/default/bin/npx /usr/local/bin/npx
+sudo ln -sf $HOME/.local/share/fnm/aliases/default/bin/corepack /usr/local/bin/corepack
+
+/opt/homebrew/bin/uv python install
+/opt/homebrew/bin/uv tool install pre-commit --with pre-commit-uv
+
+/opt/homebrew/bin/rustup default stable
+
+sudo ln -sfn /opt/homebrew/opt/openjdk/libexec/openjdk.jdk /Library/Java/JavaVirtualMachines/openjdk.jdk
 
 [ ! -L "${HOMEBREW_PREFIX}/bin/sha256sum" ] && ln -s "${HOMEBREW_PREFIX}/bin/gsha256sum" "${HOMEBREW_PREFIX}/bin/sha256sum"
 
@@ -53,9 +106,10 @@ git checkout .
 
 bat cache --build
 
-echo "Configuring iTerm2..."
-defaults write com.googlecode.iterm2.plist PrefsCustomFolder -string "$DOTFILES/iterm"
-defaults write com.googlecode.iterm2.plist LoadPrefsFromCustomFolder -bool true
+
+# echo "Configuring iTerm2..."
+# defaults write com.googlecode.iterm2.plist PrefsCustomFolder -string "$DOTFILES/iterm"
+# defaults write com.googlecode.iterm2.plist LoadPrefsFromCustomFolder -bool true
 
 # Create Projects folder
 mkdir -p ~/Projects
