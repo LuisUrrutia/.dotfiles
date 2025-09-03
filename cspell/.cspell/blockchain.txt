@@ -4,4 +4,6 @@ solana
 
 # Stellar
 blocktime
+devnet
+rollup
 soroban
