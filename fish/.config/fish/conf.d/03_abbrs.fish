@@ -1,3 +1,5 @@
+status is-interactive || exit
+
 abbr -a -- find 'fd'
 abbr -a -- top 'btop'
 
