@@ -3,6 +3,7 @@ lamports
 solana
 
 # Stellar
+Blockhash
 blocktime
 devnet
 rollup
