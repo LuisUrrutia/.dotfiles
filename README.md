@@ -138,7 +138,6 @@ After running the installer, complete these manual steps:
 - [ ] **Raycast**: Configure launcher and productivity shortcuts
 - [ ] **1Password**: Set up SSH agent and Apple Watch integration
 - [ ] **Touch ID**: Enable Apple Watch for authentication
-- [ ] **Atuin**: Login to sync shell history across devices
 
 ### Development Setup
 
