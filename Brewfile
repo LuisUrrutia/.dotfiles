@@ -10,6 +10,8 @@ brew "moreutils"  # Collection of additional Unix utilities (like sponge)
 brew "findutils"  # GNU find, xargs, and locate, utilities for finding files
 brew "gnu-sed"    # macOS uses the BSD version. I prefer the GNU one.
 brew "grep"       # macOS uses the BSD version. I prefer the GNU one.
+brew "blueutil"   # Command-line utility for managing Bluetooth devices
+brew "koekeishiya/formulae/yabai" # Window manager
 
 # Development Tools
 brew "neovim"    # Vim-fork focused on extensibility and usability
@@ -38,7 +40,6 @@ brew "tailspin"  # Modern and fast log file viewer
 brew "figlet"    # ASCII banner generator
 brew "hyperfine" # Command-line benchmarking tool
 brew "lolcrab"   # Like lolcat
-brew "atuin" # SQLite shell history
 
 # File Management and Search
 brew "rename"  # Tool for batch renaming files
@@ -69,6 +70,7 @@ brew "oven-sh/bun/bun" # JavaScript runtime and bundler
 brew "fnm"             # Fast Node Manager
 brew "rustup"          # Rust programming language
 brew "openjdk"         # OpenJDK Java Development Kit
+brew "luarocks"        # Lua package manager
 
 # Cloud Tools
 brew "awscli"           # Amazon Web Services command-line interface
@@ -90,6 +92,7 @@ brew "libvips"     # Image processing library
 brew "perl"        # Programming language
 brew "cpanm"       # Perl module installer
 brew "latexindent" # Indentation of LaTeX documents
+brew "font-sf-pro" # SF Pro font
 
 # Web3 Development
 brew "solidity"    # Ethereum smart contract language
@@ -97,8 +100,6 @@ brew "ethereum"    # Installs Ethereum and related tools
 brew "stellar-cli" # Stellar CLI
 
 cask "gcloud-cli" # Google Cloud command-line interface
-cask "font-fira-code" # Monospaced font with programming ligatures
-cask "font-monaspace" # Monospaced font with programming ligatures
 cask "apparency" # Inspect and manipulate app bundle
 
 # Development Tools
@@ -144,6 +145,7 @@ cask "notion"  # Note-taking app
 cask "fliqlo"  # Clock screensavers
 cask "claude"  # AI assistant
 cask "fantastical"   # Calendar and task manager
+cask "hammerspoon"   # Automation software
 
 # Terminal and System
 cask "iterm2"            # Terminal emulator
@@ -160,6 +162,9 @@ cask "soundsource"         # Audio control software
 # Fonts
 cask "font-fira-code-nerd-font" # Monospaced font with programming ligatures and icons (used for terminal)
 cask "font-monaspace-nerd-font" # Monospaced font with programming ligatures and icons (used for terminal)
+cask "font-hack-nerd-font" # Monospaced font with programming ligatures and icons (used for terminal)
+cask "font-fira-code" # Monospaced font with programming ligatures
+cask "font-monaspace" # Monospaced font with programming ligatures
 
 # Entertainment
 cask "spotify" # Music streaming service

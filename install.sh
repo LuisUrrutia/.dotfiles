@@ -6,7 +6,7 @@ if [ "$(uname)" != "Darwin" ]; then
 	exit 1
 fi
 
-STOW_FOLDERS="fish,wget,git,vim,tmux,starship,bat,btop,linearmouse,cspell,atuin,kitty"
+STOW_FOLDERS="fish,wget,git,vim,tmux,starship,bat,btop,linearmouse,cspell,kitty,hammerspoon,yabai"
 DOTFILES="${HOME}/.dotfiles"
 
 # Prevent system sleep.
@@ -88,6 +88,8 @@ sudo ln -sf $HOME/.local/share/fnm/aliases/default/bin/corepack /usr/local/bin/c
 
 /opt/homebrew/bin/rustup default stable
 
+/opt/homebrew/bin/luarocks install --server=https://luarocks.org/dev luaformatter
+
 sudo ln -sfn /opt/homebrew/opt/openjdk/libexec/openjdk.jdk /Library/Java/JavaVirtualMachines/openjdk.jdk
 
 [ ! -L "${HOMEBREW_PREFIX}/bin/sha256sum" ] && ln -s "${HOMEBREW_PREFIX}/bin/gsha256sum" "${HOMEBREW_PREFIX}/bin/sha256sum"
@@ -150,3 +152,6 @@ echo "-> Finish Docker Installation"
 echo "-> Configure SoundSource and Loopback Licenses"
 echo "-> Configure Fantastical"
 echo "-> Configure OBS"
+echo "-> Add bluetooth permissions to Hammerspoon"
+
+#  sudo visudo -f /private/etc/sudoers.d/yabai
