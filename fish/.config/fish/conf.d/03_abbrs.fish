@@ -42,10 +42,18 @@ abbr -a -- gfa 'git fetch --all'
 abbr -a -- gfap 'git fetch --all --prune'
 abbr -a -- gb 'git branch -v'
 abbr -a -- gpl 'git pull'
-abbr -a -- gpll 'git pull origin $(git rev-parse --abbrev-ref HEAD)'
+
+function gpll
+    echo "git pull origin $(git rev-parse --abbrev-ref HEAD)"
+end
+abbr -a gpll --position command --function gpll
 abbr -a -- gplr 'git pull --rebase'
 abbr -a -- gps 'git push'
-abbr -a -- gpsh 'git push -u origin $(git rev-parse --abbrev-ref HEAD)'
+
+function gpsh
+    echo "git push -u origin $(git rev-parse --abbrev-ref HEAD)"
+end
+abbr -a gpsh --position command --function gpsh
 abbr -a -- gpshf 'git push --force-with-lease --force-if-includes'
 abbr -a -- grs 'git reset'
 abbr -a -- grsh 'git reset --hard'
@@ -59,6 +67,19 @@ abbr -a -- gst 'git staash'
 abbr -a -- gbn 'git branch-name'
 abbr -a -- grb 'git recent-branches'
 abbr -a -- gpshf 'git push-force'
+
+abbr -a -- gwl 'git worktree list'
+abbr -a -- gwrm 'git worktree remove'
+abbr -a -- gwp 'git worktree prune'
+abbr -a -- gwa 'git worktree add'
+abbr -a -- gwmv 'git worktree move'
+abbr -a -- gwlock 'git worktree lock'
+abbr -a -- gwunlock 'git worktree unlock'
+
+function gwnb
+    echo "git worktree add ../$argv[1] -b $argv[1]"
+end
+abbr -a gwnb --position command --function gwnb
 
 abbr -a -- amend 'git commit --amend'
 abbr -a -- unstage 'git reset HEAD'
@@ -80,7 +101,7 @@ abbr -a -- dcd 'docker compose down'
 abbr -a -- dcs 'docker compose stop'
 
 # clean
-abbr -a -- clean-js 'fd -t d "^(node_modules|build|dist)$" -x rm -rf {}'
+abbr -a -- clean-js 'fd -I -t d "^(node_modules|build|dist)$" -x rm -rf {}'
 
 # ip
 abbr -a -- localip 'ipconfig getifaddr en0'
@@ -90,3 +111,7 @@ abbr -a -- fi 'fisher install'
 abbr -a -- fl 'fisher list'
 abbr -a -- fu 'fisher update'
 abbr -a -- fr 'fisher remove'
+
+# iCloud
+abbr -a -- icloud 'cd "$HOME/Library/Mobile Documents/com~apple~CloudDocs"'
+abbr -a -- obsidian 'cd "$HOME/Library/Mobile Documents/iCloud~md~obsidian/Documents"'
