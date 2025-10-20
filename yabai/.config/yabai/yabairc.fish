@@ -117,47 +117,49 @@ yabai -m rule --add app=VeraCrypt manage=off
 yabai -m rule --add app=Messages manage=off sub-layer=above sticky=on
 yabai -m rule --add app=NordVPN manage=off sub-layer=above sticky=on
 
+# Get the directory where event scripts are located
+set YABAI_EVENTS_DIR "$HOME/.config/yabai/events"
 
 # Display management signals
-yabai -m signal --add event=display_added action="$YABAI_SCRIPTS_DIR/display_added.sh"
-yabai -m signal --add event=display_removed action="$YABAI_SCRIPTS_DIR/display_removed.sh"
+yabai -m signal --add event=display_added action="fish $YABAI_EVENTS_DIR/display_added.fish"
+yabai -m signal --add event=display_removed action="fish $YABAI_EVENTS_DIR/display_removed.fish"
 
 # Window management signals - Automatically destroy empty spaces
-yabai -m signal --add event=space_changed action="$YABAI_SCRIPTS_DIR/cleanup_empty_spaces.sh"
-yabai -m signal --add event=window_destroyed action="$YABAI_SCRIPTS_DIR/cleanup_empty_spaces.sh"
+yabai -m signal --add event=space_changed action="fish $YABAI_EVENTS_DIR/cleanup_empty_spaces.fish"
+yabai -m signal --add event=window_destroyed action="fish $YABAI_EVENTS_DIR/cleanup_empty_spaces.fish"
 
 # Create spaces dynamically when specific apps open
 # Terminal space
-yabai -m signal --add event=window_created app='^iTerm$' action="$YABAI_SCRIPTS_DIR/create_space.sh terminal"
-yabai -m signal --add event=window_created app='^kitty$' action="$YABAI_SCRIPTS_DIR/create_space.sh terminal"
+yabai -m signal --add event=window_created app='^iTerm$' action="fish $YABAI_EVENTS_DIR/create_space.fish terminal"
+yabai -m signal --add event=window_created app='^kitty$' action="fish $YABAI_EVENTS_DIR/create_space.fish terminal"
 
 # Code space (with stack layout)
-yabai -m signal --add event=window_created app='^Cursor$' action="$YABAI_SCRIPTS_DIR/create_space.sh code stack"
-yabai -m signal --add event=window_created app='^Zed$' action="$YABAI_SCRIPTS_DIR/create_space.sh code stack"
-yabai -m signal --add event=window_created app='^Code$' action="$YABAI_SCRIPTS_DIR/create_space.sh code stack"
-yabai -m signal --add event=window_created app='^Postman$' action="$YABAI_SCRIPTS_DIR/create_space.sh code stack"
+yabai -m signal --add event=window_created app='^Cursor$' action="fish $YABAI_EVENTS_DIR/create_space.fish code stack"
+yabai -m signal --add event=window_created app='^Zed$' action="fish $YABAI_EVENTS_DIR/create_space.fish code stack"
+yabai -m signal --add event=window_created app='^Code$' action="fish $YABAI_EVENTS_DIR/create_space.fish code stack"
+yabai -m signal --add event=window_created app='^Postman$' action="fish $YABAI_EVENTS_DIR/create_space.fish code stack"
 
 # Web space (with stack layout)
-yabai -m signal --add event=window_created app='^Brave Browser$' action="$YABAI_SCRIPTS_DIR/create_space.sh web stack"
-yabai -m signal --add event=window_created app='^Arc$' action="$YABAI_SCRIPTS_DIR/create_space.sh web stack"
+yabai -m signal --add event=window_created app='^Brave Browser$' action="fish $YABAI_EVENTS_DIR/create_space.fish web stack"
+yabai -m signal --add event=window_created app='^Arc$' action="fish $YABAI_EVENTS_DIR/create_space.fish web stack"
 
 # Work space
-yabai -m signal --add event=window_created app='^Fantastical$' action="$YABAI_SCRIPTS_DIR/create_space.sh work"
-yabai -m signal --add event=window_created app='^Slack$' action="$YABAI_SCRIPTS_DIR/create_space.sh work"
-yabai -m signal --add event=window_created app='^Zoom$' action="$YABAI_SCRIPTS_DIR/create_space.sh work"
+yabai -m signal --add event=window_created app='^Fantastical$' action="fish $YABAI_EVENTS_DIR/create_space.fish work"
+yabai -m signal --add event=window_created app='^Slack$' action="fish $YABAI_EVENTS_DIR/create_space.fish work"
+yabai -m signal --add event=window_created app='^Zoom$' action="fish $YABAI_EVENTS_DIR/create_space.fish work"
 
 # Social space
-yabai -m signal --add event=window_created app='^Telegram$' action="$YABAI_SCRIPTS_DIR/create_space.sh social"
-yabai -m signal --add event=window_created app='^WhatsApp$' action="$YABAI_SCRIPTS_DIR/create_space.sh social"
-yabai -m signal --add event=window_created app='^Discord$' action="$YABAI_SCRIPTS_DIR/create_space.sh social"
+yabai -m signal --add event=window_created app='^Telegram$' action="fish $YABAI_EVENTS_DIR/create_space.fish social"
+yabai -m signal --add event=window_created app='^WhatsApp$' action="fish $YABAI_EVENTS_DIR/create_space.fish social"
+yabai -m signal --add event=window_created app='^Discord$' action="fish $YABAI_EVENTS_DIR/create_space.fish social"
 
 # Notes space
-yabai -m signal --add event=window_created app=Obsidian action="$YABAI_SCRIPTS_DIR/create_space.sh notes"
+yabai -m signal --add event=window_created app=Obsidian action="fish $YABAI_EVENTS_DIR/create_space.fish notes"
 
 # Other space
-yabai -m signal --add event=window_created app='^Music$' action="$YABAI_SCRIPTS_DIR/create_space.sh other"
-yabai -m signal --add event=window_created app='^Spotify$' action="$YABAI_SCRIPTS_DIR/create_space.sh other"
-yabai -m signal --add event=window_created app=Claude action="$YABAI_SCRIPTS_DIR/create_space.sh other"
+yabai -m signal --add event=window_created app='^Music$' action="fish $YABAI_EVENTS_DIR/create_space.fish other"
+yabai -m signal --add event=window_created app='^Spotify$' action="fish $YABAI_EVENTS_DIR/create_space.fish other"
+yabai -m signal --add event=window_created app=Claude action="fish $YABAI_EVENTS_DIR/create_space.fish other"
 
 # Signals
 # yabai -m signal --add event=window_created app="^Obs$" action="yabai -m space --focus obs"
