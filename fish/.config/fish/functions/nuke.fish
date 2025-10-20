@@ -1,4 +1,4 @@
-function nuke -d "Kill unwanted background processes (Adobe, FortiClient, Logitech, toolbox-helper)"
+function nuke -d "Kill unwanted background processes"
     # Define process patterns to kill
     set -l process_patterns \
         "Adobe" \
@@ -7,10 +7,10 @@ function nuke -d "Kill unwanted background processes (Adobe, FortiClient, Logite
         "Logitech" \
         "lghub" \
         "toolbox-helper"
-    
+
     set -l total_killed 0
     set -l dry_run false
-    
+
     # Parse arguments
     for arg in $argv
         switch $arg
@@ -20,22 +20,20 @@ function nuke -d "Kill unwanted background processes (Adobe, FortiClient, Logite
                 echo "Usage: nuke [options]"
                 echo "  -n, --dry-run    Show processes that would be killed without actually killing them"
                 echo "  -h, --help       Show this help message"
-                echo ""
-                echo "Kills processes matching: Adobe, FortiClient, Logitech, toolbox-helper"
                 return 0
         end
     end
-    
+
     if test "$dry_run" = "true"
         echo "DRY RUN - Processes that would be killed:"
         echo "=========================================="
     end
-    
+
     # Kill processes for each pattern
     for pattern in $process_patterns
         # Use pgrep for more reliable process matching
         set -l pids (pgrep -f "$pattern" 2>/dev/null)
-        
+
         if test (count $pids) -gt 0
             if test "$dry_run" = "true"
                 echo "Pattern '$pattern':"
@@ -44,7 +42,7 @@ function nuke -d "Kill unwanted background processes (Adobe, FortiClient, Logite
             else
                 set killed_count (count $pids)
                 echo "Killing $killed_count process(es) matching '$pattern'..."
-                
+
                 # Kill processes gracefully first (TERM), then forcefully (KILL) if needed
                 for pid in $pids
                     if kill $pid 2>/dev/null
@@ -61,7 +59,7 @@ function nuke -d "Kill unwanted background processes (Adobe, FortiClient, Logite
             end
         end
     end
-    
+
     if test "$dry_run" = "false"
         if test $total_killed -gt 0
             echo ""
