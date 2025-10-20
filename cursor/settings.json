@@ -147,8 +147,8 @@
         }
     },
     "cursor.composer.shouldChimeAfterChatFinishes": true,
-    "terminal.integrated.macOptionIsMeta": true,
     "terminal.integrated.scrollback": 50000,
+    "terminal.integrated.macOptionIsMeta": true,
     "go.toolsManagement.autoUpdate": true,
     "xo.path": "./node_modules/xo/dist/index.js",
     "[html]": {
@@ -174,5 +174,8 @@
         "**/.pytest_cache": true,
         "**/.scrapy": true,
         "**/node_modules/*/**": true
-    }
+    },
+    "cursor.enable_git_worktrees_setting": true,
+    "scm.alwaysShowRepositories": true,
+    "gitlens.views.repositories.includeWorkingTree": true
 }
