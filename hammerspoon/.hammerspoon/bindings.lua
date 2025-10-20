@@ -2,20 +2,6 @@ local mod = {}
 
 local log = hs.logger.new("bindings", "debug")
 
-local app_space_mapping = {
-    ["kitty"] = "terminal",
-    ["Cursor"] = "code",
-    ["Brave Browser"] = "web",
-    ["Telegram"] = "social",
-    ["WhatsApp"] = "social",
-    ["Discord"] = "social",
-    ["Fantastical"] = "work",
-    ["Slack"] = "work",
-    ["Zoom"] = "work",
-    ["Music"] = "other",
-    ["Spotify"] = "other",
-}
-
 local function yabai(commands)
     for _, cmd in ipairs(commands) do
         os.execute("/opt/homebrew/bin/yabai -m " .. cmd)
@@ -48,6 +34,7 @@ local hyper_key = {"cmd", "alt", "ctrl", "shift"}
 local hyper_bindings = {
     { key = 't', bundle_id = 'net.kovidgoyal.kitty' },
     { key = 'b', bundle_id = 'com.brave.Browser' },
+    { key = 'o', bundle_id = 'com.obsidian.Obsidian' },
     { key = 'c', app = 'Cursor' },
     { key = 'f12', fn = function()
         hs.reload()
@@ -77,6 +64,8 @@ local alt_bindings = {
     { key = 's', yabai = { "space --focus social" } },
     { key = 'left', yabai = { "window --focus stack.prev" } },
     { key = 'right', yabai = { "window --focus stack.next" } },
+    { key = '[', yabai = { "display --focus 1" }},
+    { key = ']', yabai = { "display --focus 2" }}
 }
 
 -- Add alt+1-7 bindings to focus space
