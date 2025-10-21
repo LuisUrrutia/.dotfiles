@@ -35,6 +35,6 @@ yabai -m config                                 \
     mouse_action2                resize         \
     mouse_drop_action            swap
 
-# Toggle fullscreen windows (we don't want native fullscreen)
+# Run Yabai custom initialization script
 exec fish "$HOME/.config/yabai/init.fish"
 
