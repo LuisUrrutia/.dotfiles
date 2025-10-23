@@ -5,6 +5,8 @@
 set SPACE_ARRANGEMENTS $argv[1]
 set DISPLAY_INDEX $YABAI_DISPLAY_INDEX
 
+echo "[Display Added] Added Display $DISPLAY_INDEX"
+
 if test -z "$SPACE_ARRANGEMENTS"
     echo "[Display Added] No space arrangements provided, exiting."
     exit 0

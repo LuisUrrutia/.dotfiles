@@ -63,23 +63,24 @@ function ensure_space_exists
     end
 
     set space_exists (check_space_exists $space_label)
-
     if test "$space_exists" = false
+        echo "[Ensure Space Exists] Space $space_label doesnt exist... creating"
         yabai -m space --create
 
         # Get the index of the space we just created
         # This is kinda a hack, because we look for the last unlabeled empty space
         set -l new_space_index (yabai -m query --spaces | jq '[.[] | select(.label == "" and (.windows | length == 0))] | last | .index')
+        echo "[Ensure Space Exists] new space index is $new_space_index"
 
         yabai -m space "$new_space_index" --label "$space_label"
         yabai -m space "$space_label" --layout "$layout"
-        echo "created"
-        return 0
+        return 201
     else
-        echo "exists"
+        echo "[Ensure Space Exists] Space $space_label already exists"
         return 0
     end
 end
+
 
 function destroy_empty_spaces
     echo "Destroying empty spaces..."
@@ -87,20 +88,28 @@ function destroy_empty_spaces
     set where_removed false
     set displays (yabai -m query --displays | jq '.[] | .index')
     for display in $displays
-        set spaces_on_display (yabai -m query --spaces | jq "[.[] | select(.display == $display)] | length")
+        set spaces_on_display_count (yabai -m query --spaces | jq "[.[] | select(.display == $display)] | length")
+        set unlabeled_spaces_to_delete (yabai -m query --spaces | jq -r "[.[] | select(.display == $display and .label == "" and (.windows | length == 0))] | .[] | .id")
+        for space_id in $unlabeled_spaces_to_delete
+            echo "[Destroy Empty Spaces] Destroying empty unlabeled space: $space_id on display $display"
+            yabai -m space "$space_id" --destroy
+
+            set spaces_on_display_count (math $spaces_on_display_count - 1)
+        end
+
         set spaces_to_delete (yabai -m query --spaces | jq -r "[.[] | select(.display == $display and (.windows | length == 0))] | .[] | .label")
-
-        echo "For $display we should delete spaces: $spaces_to_delete"
-
         set spaces_to_delete_count (count $spaces_to_delete)
 
+        echo "[Destroy Empty Spaces] Spaces in display $display: $spaces_on_display_count. Empty Spaces are: $spaces_to_delete ($spaces_to_delete_count)"
+
         # If all spaces on this display are empty, keep one. MacOS requires at least one space per display.
-        if test $spaces_to_delete_count -eq $spaces_on_display
+        if test $spaces_to_delete_count -eq $spaces_on_display_count
+            echo "[Destroy Empty Spaces] We should ensure there is at least 1 space"
             set spaces_to_delete $spaces_to_delete[1..-2]
         end
 
         for space_label in $spaces_to_delete
-            echo "Destroying empty space: $space_label on display $display"
+            echo "[Destroy Empty Spaces] Destroying empty space: $space_label on display $display"
             yabai -m space "$space_label" --destroy
 
             set where_removed true
@@ -108,7 +117,8 @@ function destroy_empty_spaces
     end
 
     if test "$where_removed" = true
-        echo "Applying yabai rules after space destruction..."
+        echo "[Destroy Empty Spaces] Applying yabai rules after space destruction..."
+        sleep 1
         yabai -m rule --apply
     end
 end

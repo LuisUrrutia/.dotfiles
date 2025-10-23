@@ -17,14 +17,18 @@ if test -z "$SPACE_LABEL"
     exit 1
 end
 
-set code (ensure_space_exists "$SPACE_LABEL" "$LAYOUT")
-if test $status -eq 1
+echo "[On Window Created] Ensure space $SPACE_LABEL exists"
+
+ensure_space_exists "$SPACE_LABEL" "$LAYOUT"
+set ensure_space_exists_code $status
+if test $ensure_space_exists_code -eq 1
     echo "Error: Failed to ensure space exists" >&2
     exit 1
 end
 
 # If space was created, move it to preferred display
-if test "$code" = "created"
+if test $ensure_space_exists_code -eq 201
+    echo "[On Window Created] Space $SPACE_LABEL created, moving to display $PREFERRED_DISPLAY"
     move_space_to_display "$SPACE_LABEL" "$PREFERRED_DISPLAY"
 end
 

@@ -18,15 +18,3 @@ function apply_sticky_rules
         yabai -m rule --add app="$app" manage=off sticky=on sub-layer=above
     end
 end
-
-# Apply title-based rules
-# Usage: apply_title_rule <app> <title_pattern> <manage> <sticky> <sub_layer>
-function apply_title_rule
-    set app $argv[1]
-    set title $argv[2]
-    set manage $argv[3]
-    set sticky $argv[4]
-    set sublayer $argv[5]
-
-    yabai -m rule --add app="$app" title="$title" manage=$manage sticky=$sticky sub-layer=$sublayer
-end
