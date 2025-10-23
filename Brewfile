@@ -1,16 +1,19 @@
 # Core System Tools
 brew "coreutils"  # Install GNU core utilities (those that come with macOS are outdated).
 brew "stow"       # Manages symlinks for dotfiles and configurations
-brew "fish"       # Shell
 brew "fisher"     # Fish plugin manager
+brew "fish"       # Shell
 brew "cmake"      # Manages project builds and generating makefiles
 brew "pkg-config" # Manages compile and link flags for libraries
 brew "gnupg"      # GNU Privacy Guard (GPG) for secure communication
 brew "moreutils"  # Collection of additional Unix utilities (like sponge)
 brew "findutils"  # GNU find, xargs, and locate, utilities for finding files
 brew "gnu-sed"    # macOS uses the BSD version. I prefer the GNU one.
+brew "gnu-tar"    # macOS uses the BSD version. I prefer the GNU one.
 brew "grep"       # macOS uses the BSD version. I prefer the GNU one.
 brew "blueutil"   # Command-line utility for managing Bluetooth devices
+brew "zstd"       # Fast real-time compression algorithm
+
 brew "koekeishiya/formulae/yabai" # Window manager
 
 # Development Tools
@@ -103,8 +106,7 @@ cask "gcloud-cli" # Google Cloud command-line interface
 cask "apparency" # Inspect and manipulate app bundle
 
 # Development Tools
-cask "cursor"                 # Code editor
-cask "postman"                # API development environment
+cask "yaak"                   # API development environment
 cask "http-toolkit"           # HTTP debugging proxy
 cask "android-platform-tools" # Android SDK Platform-Tools
 cask "kitty"                  # Terminal emulator
@@ -152,7 +154,7 @@ cask "iterm2"            # Terminal emulator
 cask "itermai"           # iTerm Artificial Intelligence
 cask "keyboardcleantool" # Keyboard cleaning tool
 cask "hyperkey"          # Remap caps lock to hyper key
-cask "bartender"         # Bartender for managing menu bar apps
+cask "jordanbaird-ice"   # ICE for managing menu bar apps
 
 # Audio Tools
 cask "focusrite-control-2" # Audio interface
