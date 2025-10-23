@@ -70,6 +70,7 @@ destroy_empty_spaces
 yabai -m signal --add event=display_added action="fish $YABAI_EVENTS_DIR/display_added.fish $space_arrangements"
 yabai -m signal --add event=display_removed action="fish $YABAI_EVENTS_DIR/display_removed.fish"
 yabai -m signal --add event=window_destroyed action="fish $YABAI_EVENTS_DIR/on_window_destroyed.fish"
+yabai -m signal --add event=system_woke action="fish $YABAI_EVENTS_DIR/on_system_woke.fish"
 
 echo "Configuring non-managed apps..."
 
@@ -96,6 +97,7 @@ apply_unmanaged_rules \
     Raycast \
     VeraCrypt
 
+yabai -m rule --add app='^Arc$' manage=on # IDK why but Arc needs this to be managed
 yabai -m rule --add app='^Brave Browser$' title="(MetaMask|Phantom Wallet)" sub-layer=above manage=off sticky=on
 yabai -m rule --add app='^Brave Browser$' title="Sign In" manage=off sub-layer=above sticky=on
 

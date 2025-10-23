@@ -12,7 +12,6 @@ set space_label $parts[1]
 set window_count $parts[2]
 
 if test -z "$space_label"
-    # Clean up empty spaces
     destroy_empty_spaces
     exit 0
 end
