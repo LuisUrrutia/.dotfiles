@@ -12,13 +12,13 @@ if test -z "$SPACE_ARRANGEMENTS"
     exit 0
 end
 
-set spaces (echo $SPACE_ARRANGEMENTS | string split ",")
+set spaces (string split "," $SPACE_ARRANGEMENTS)
 for space in $spaces
     if test -z "$space"
         continue
     end
 
-    set parts (string split '|' $space)
+    set parts (string split '/' $space)
     set space_label $parts[1]
     set preferred_display $parts[2]
 
