@@ -13,21 +13,21 @@ source "$YABAI_LIB_DIR/rules.fish"
 # SPACE CONFIGURATION
 # =============================================================================
 
-# Define space mappings: space_name|layout|preferred display|apps...
+# Define space mappings: space_name/layout/preferred display/apps...
 # Layout can be: bsp (default), stack, float
 set -l space_configs \
-    'terminal|bsp|1|^iTerm$,^kitty$' \
-    'code|stack|1|^Cursor$,^Zed$,^Code$,^Postman$' \
-    'web|stack|1|^Brave Browser$,^Arc$' \
-    'work|bsp|2|^Fantastical$,^Slack$,^Zoom$' \
-    'social|bsp|2|^Telegram$,^Discord$,WhatsApp' \
-    'notes|bsp|2|Obsidian' \
-    'other|bsp|2|^Music$,^Spotify$,Claude'
+    'terminal/bsp/1/^(iTerm|kitty)$' \
+    'code/stack/1/^(Cursor|Zed|Code)$,^(Postman|Yaak)$' \
+    'web/stack/1/^(Brave Browser|Arc)$' \
+    'work/bsp/2/^Fantastical$,^Slack$,^Zoom$' \
+    'social/bsp/2/^(Telegram|Discord)$,WhatsApp$' \
+    'notes/bsp/2/^Obsidian$' \
+    'other/bsp/2/^(Music|Spotify)$,Claude$'
 
 # Extract space names from configurations
 set -l spaces
 for config in $space_configs
-    set -l parts (string split '|' $config)
+    set -l parts (string split '/' $config)
     set -a spaces $parts[1]
 end
 
@@ -39,7 +39,7 @@ setup_spaces_with_labels $spaces
 
 #set space_arrangements ""
 for config in $space_configs
-    set -l parts (string split '|' $config)
+    set -l parts (string split '/' $config)
     set -l space_name $parts[1]
     set -l layout $parts[2]
     set -l preferred_display $parts[3]
@@ -50,7 +50,7 @@ for config in $space_configs
 
     # Move space to preferred display if not the default (1)
     if test "$preferred_display" != "1"
-        #set space_arrangements "$space_arrangements$space_name|$preferred_display,"
+        #set space_arrangements "$space_arrangements$space_name/$preferred_display,"
 
         move_space_to_display $space_name $preferred_display
     end
