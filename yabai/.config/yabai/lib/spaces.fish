@@ -87,17 +87,33 @@ function destroy_empty_spaces
 
     set where_removed false
     set displays (yabai -m query --displays | jq '.[] | .index')
+
+    # Get windows with non-empty role (real windows)
+    set real_window_spaces (yabai -m query --windows | jq -r '[.[] | select(.role != "")] | .[].space' | sort -u)
+
     for display in $displays
         set spaces_on_display_count (yabai -m query --spaces | jq "[.[] | select(.display == $display)] | length")
-        set unlabeled_spaces_to_delete (yabai -m query --spaces | jq -r "[.[] | select(.display == $display and .label == "" and (.windows | length == 0))] | .[] | .id")
-        for space_id in $unlabeled_spaces_to_delete
-            echo "[Destroy Empty Spaces] Destroying empty unlabeled space: $space_id on display $display"
-            yabai -m space "$space_id" --destroy
 
-            set spaces_on_display_count (math $spaces_on_display_count - 1)
+        # Get unlabeled spaces with no real windows
+        set unlabeled_spaces_to_delete (yabai -m query --spaces | jq -r "[.[] | select(.display == $display and .label == \"\")] | .[].index")
+        for space_index in $unlabeled_spaces_to_delete
+            if not contains $space_index $real_window_spaces
+                echo "[Destroy Empty Spaces] Destroying empty unlabeled space: $space_index on display $display"
+                yabai -m space "$space_index" --destroy
+                set spaces_on_display_count (math $spaces_on_display_count - 1)
+            end
         end
 
-        set spaces_to_delete (yabai -m query --spaces | jq -r "[.[] | select(.display == $display and (.windows | length == 0))] | .[] | .label")
+        # Get labeled spaces with no real windows
+        set spaces_to_delete
+        set all_spaces_on_display (yabai -m query --spaces | jq -r "[.[] | select(.display == $display and .label != \"\")] | .[] | \"\(.index):\(.label)\"")
+        for space_info in $all_spaces_on_display
+            set space_index (string split ':' $space_info)[1]
+            set space_label (string split ':' $space_info)[2]
+            if not contains $space_index $real_window_spaces
+                set -a spaces_to_delete $space_label
+            end
+        end
         set spaces_to_delete_count (count $spaces_to_delete)
 
         echo "[Destroy Empty Spaces] Spaces in display $display: $spaces_on_display_count. Empty Spaces are: $spaces_to_delete ($spaces_to_delete_count)"
