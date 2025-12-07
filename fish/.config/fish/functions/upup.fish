@@ -1,4 +1,5 @@
 function upup -d "updates different tools"
-    brewup
+    brew update && brew upgrade && brew autoremove && brew cleanup --prune=all && brew doctor
     pnpm self-update
+    /opt/homebrew/bin/fish -C "fisher update"
 end
