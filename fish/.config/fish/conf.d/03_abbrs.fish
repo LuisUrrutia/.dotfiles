@@ -76,11 +76,6 @@ abbr -a -- gwmv 'git worktree move'
 abbr -a -- gwlock 'git worktree lock'
 abbr -a -- gwunlock 'git worktree unlock'
 
-function gwnb
-    echo "git worktree add ../$argv[1] -b $argv[1]"
-end
-abbr -a gwnb --position command --function gwnb
-
 abbr -a -- amend 'git commit --amend'
 abbr -a -- unstage 'git reset HEAD'
 abbr -a -- uncommit 'git reset --soft HEAD^'
