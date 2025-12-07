@@ -27,10 +27,10 @@ brew "shfmt"     # Shell script formatter
 # Network and Security
 brew "wget"    # Internet file retriever
 brew "openssh" # Secure shell (ssh) and secure file transfer (sftp)
-brew "autossh" # Automatically restart SSH sessions and tunnels
 brew "ykman"   # YubiKey Manager CLI
-brew "rclone"  # Rsync for cloud storage
-brew "mosh"    # Remote terminal application
+# brew "autossh" # Automatically restart SSH sessions and tunnels
+# brew "rclone"  # Rsync for cloud storage
+# brew "MisterTea/et/et"    # Remote terminal application. Add steps to launch deamon if enabled
 
 # Terminal Enhancement
 brew "tmux"      # Terminal multiplexer
@@ -101,11 +101,13 @@ brew "font-sf-pro" # SF Pro font
 brew "solidity"    # Ethereum smart contract language
 brew "ethereum"    # Installs Ethereum and related tools
 brew "stellar-cli" # Stellar CLI
+brew "foundry"     # Ethereum development framework
 
 cask "gcloud-cli" # Google Cloud command-line interface
-cask "apparency" # Inspect and manipulate app bundle
+cask "apparency"  # Inspect and manipulate app bundle
 
 # Development Tools
+cask "zed"                    # Code editor
 cask "yaak"                   # API development environment
 cask "http-toolkit"           # HTTP debugging proxy
 cask "android-platform-tools" # Android SDK Platform-Tools
@@ -124,7 +126,7 @@ cask "discord"     # Messaging app
 cask "whatsapp"    # Messaging app
 cask "slack"       # Work Messaging app
 cask "zoom"        # Work video conferencing
-cask "teamviewer"  # Remote desktop software
+# cask "teamviewer"  # Remote desktop software
 cask "camo-studio" # iPhone as webcam software
 
 # Web Browsers
@@ -146,13 +148,11 @@ cask "raycast" # Command palette for MacOS (replace to Alfred or Spotlight)
 cask "notion"  # Note-taking app
 cask "fliqlo"  # Clock screensavers
 cask "claude"  # AI assistant
-cask "fantastical"   # Calendar and task manager
+cask "claude-code"
+cask "busycal"   # Calendar and task manager
 cask "hammerspoon"   # Automation software
 
 # Terminal and System
-cask "iterm2"            # Terminal emulator
-cask "itermai"           # iTerm Artificial Intelligence
-cask "keyboardcleantool" # Keyboard cleaning tool
 cask "hyperkey"          # Remap caps lock to hyper key
 cask "jordanbaird-ice"   # ICE for managing menu bar apps
 
@@ -170,7 +170,7 @@ cask "font-monaspace" # Monospaced font with programming ligatures
 
 # Entertainment
 cask "spotify" # Music streaming service
-cask "steam"   # Gaming platform
+# cask "steam"   # Gaming platform
 
 # Hardware Support
 cask "displaylink" # DisplayLink Manager for USB monitors
@@ -181,44 +181,3 @@ cask "the-unarchiver" # Unpacks archive files
 
 mas "PDFgear", id: 6469021132
 mas "Xcode", id: 497799835
-
-vscode "aaron-bond.better-comments"
-vscode "alefragnani.bookmarks"
-vscode "anthropic.claude-code"
-# vscode "astro-build.astro-vscode"
-# vscode "bradlc.vscode-tailwindcss"
-vscode "catppuccin.catppuccin-vsc"
-vscode "davidanson.vscode-markdownlint"
-vscode "dbaeumer.vscode-eslint"
-vscode "eamodio.gitlens"
-vscode "editorconfig.editorconfig"
-vscode "esbenp.prettier-vscode"
-# vscode "foxundermoon.shell-format"
-vscode "github.vscode-github-actions"
-vscode "github.vscode-pull-request-github"
-# vscode "golang.go"
-# vscode "james-yu.latex-workshop"
-# vscode "juanblanco.solidity"
-vscode "ms-azuretools.vscode-docker"
-# vscode "ms-python.debugpy"
-# vscode "ms-python.python"
-# vscode "ms-python.vscode-pylance"
-# vscode "ms-vscode-remote.remote-containers"
-# vscode "ms-vscode.makefile-tools"
-vscode "MS-vsliveshare.vsliveshare"
-# vscode "orta.vscode-jest"
-vscode "redhat.vscode-xml"
-vscode "ritwickdey.liveserver"
-# vscode "rust-lang.rust-analyzer"
-# vscode "samverschueren.linter-xo"
-vscode "streetsidesoftware.code-spell-checker"
-vscode "streetsidesoftware.code-spell-checker-spanish"
-# vscode "svelte.svelte-vscode"
-vscode "tamasfe.even-better-toml"
-vscode "Catppuccin.catppuccin-vsc-icons"
-vscode "usernamehw.errorlens"
-# vscode "vadimcn.vscode-lldb"
-vscode "vscodevim.vim"
-vscode "wix.vscode-import-cost"
-vscode "yoavbls.pretty-ts-errors"
-vscode "yzhang.markdown-all-in-one"
