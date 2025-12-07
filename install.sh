@@ -150,7 +150,7 @@ echo "-> Configure Clock Screensaver"
 echo "-> Configure Hyperkey"
 echo "-> Finish Docker Installation"
 echo "-> Configure SoundSource and Loopback Licenses"
-echo "-> Configure Fantastical"
+echo "-> Configure BusyCal"
 echo "-> Configure OBS"
 echo "-> Add bluetooth permissions to Hammerspoon"
 
