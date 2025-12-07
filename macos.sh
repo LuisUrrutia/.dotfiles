@@ -247,10 +247,10 @@ for item in "${TO_REMOVE_FROM_DOCK[@]}"; do
 done
 
 # Add frequently used applications to the Dock
-/opt/homebrew/bin/dockutil --add "/Applications/iTerm.app" --after "com.apple.Notes" --no-restart
-/opt/homebrew/bin/dockutil --add "/Applications/Cursor.app" --after "com.apple.Notes" --no-restart
+/opt/homebrew/bin/dockutil --add "/Applications/kitty.app" --after "com.apple.Notes" --no-restart
+/opt/homebrew/bin/dockutil --add "/Applications/Zed.app" --after "com.apple.Notes" --no-restart
 /opt/homebrew/bin/dockutil --add "/Applications/Brave Browser.app" --after "com.apple.Notes" --no-restart
-/opt/homebrew/bin/dockutil --add "/Applications/Fantastical.app" --after "com.apple.MobileSMS"
+/opt/homebrew/bin/dockutil --add "/Applications/BusyCal.app" --after "com.apple.MobileSMS"
 
 ###############################################################################
 # Apply Changes & Restart Services                                            #
