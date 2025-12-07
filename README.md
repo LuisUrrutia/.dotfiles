@@ -15,6 +15,8 @@ A comprehensive macOS development environment setup with a focus on modern tools
 - **⚡ Performance Optimizations**: Fast terminal, optimized git settings, efficient completions
 - **🔧 Development Tools**: Complete setup for multiple programming languages
 - **🖥️ macOS Tweaks**: System optimizations and security enhancements
+- **🪟 yabai**: Tiling window manager with automatic space management
+- **🔨 Hammerspoon**: Automation for Bluetooth, sleep management, and location-aware settings
 
 ## 🚀 Quick Install
 
@@ -35,29 +37,33 @@ cd $HOME && git clone https://github.com/LuisUrrutia/.dotfiles.git && cd .dotfil
 
 - **Git**: Version control with delta diff viewer and advanced aliases
 - **Neovim**: Modern Vim editor
-- **Cursor**: AI editor
+- **Zed**: Fast, collaborative code editor
+- **Claude Code**: AI-powered coding assistant
 - **GitHub CLI**: Command-line GitHub integration
 - **Language Support**: Python (uv), Node.js (fnm), Go, Rust, Bun
+- **Blockchain**: Foundry (forge, cast, anvil)
 - **Cloud Tools**: AWS CLI, Google Cloud CLI
 
 ### 🔧 Command Line Tools
 
 - **Terminal Enhancers**: tmux, starship, btop, bat, eza, procs
 - **Search & Navigation**: ripgrep, fzf, fd, zoxide
-- **File Management**: rename, p7zip, exiftool
-- **Network Tools**: wget, openssh, autossh, mosh, rclone
+- **File Management**: rename, p7zip, exiftool, dust
+- **Network Tools**: wget, openssh, autossh, mosh, rclone, aria2
 - **Media Processing**: ffmpeg, yt-dlp, imagemagick
+- **Monitoring**: tailspin (log viewer), fswatch, hyperfine (benchmarking)
 
 ### 🎨 Applications (via Homebrew Cask)
 
-- **Development**: Cursor, Postman, Docker Desktop, Android Platform Tools
+- **Development**: Zed, Yaak, Docker Desktop, Android Platform Tools
 - **Browsers**: Brave Browser
 - **Security**: 1Password, NordVPN, VeraCrypt
 - **Communication**: Telegram, Discord, WhatsApp, Slack, Zoom
 - **Media & Design**: Figma, OBS, CleanShot, Adobe Creative Cloud
-- **Productivity**: Raycast, Notion, Fantastical
-- **Terminal**: iTerm2 with AI integration
+- **Productivity**: Raycast, Notion, BusyCal, Ice (menu bar organizer)
+- **Terminal**: kitty
 - **Audio**: Focusrite Control, Loopback, SoundSource
+- **System**: Hyperkey, DisplayLink, MacFUSE
 
 ### ⚙️ Configuration Files
 
@@ -65,9 +71,40 @@ cd $HOME && git clone https://github.com/LuisUrrutia/.dotfiles.git && cd .dotfil
 |------|---------------|-------------|
 | Fish | `~/.config/fish/config.fish` | Shell configuration with Catppuccin theme |
 | Git | `~/.gitconfig` | Advanced git aliases, delta integration, GPG signing |
-| Cursor | `~/Library/Application Support/Cursor/User/settings.json` | Code editor with Monaspace font and Catppuccin theme |
+| Zed | `~/.config/zed/settings.json` | Code editor settings |
+| kitty | `~/.config/kitty/kitty.conf` | Terminal configuration |
 | Starship | `~/.config/starship.toml` | Shell prompt configuration |
-| iTerm2 | `com.googlecode.iterm2.plist` | Terminal preferences and color schemes |
+| yabai | `~/.config/yabai/` | Tiling window manager configuration |
+| Hammerspoon | `~/.hammerspoon/` | macOS automation scripts |
+
+## 🐟 Fish Shell Productivity
+
+### Custom Functions
+
+- **`gwclone`**: Git clone with worktree support and auto-detected default branch
+- **`gwnb`**: Create and switch to new git worktree branches
+- **`upup`**: One-command update for Homebrew, pnpm, and Fisher
+- **`nuke`**: Kill resource-heavy background processes (Adobe, Logitech, etc.)
+- **`awss`**: AWS profile switcher
+- **`mkd`**: Create directory and cd into it
+
+### Abbreviations
+
+50+ shell abbreviations for common operations:
+- **Git**: `gst`, `gco`, `gcm`, `gp`, `gl`, `grb`, `amend`, `uncommit`, worktree ops (`gwl`, `gwa`, `gwrm`)
+- **Docker**: `dps`, `dexec`, `dc`, `dcu`, `dcd`
+- **System**: `brewup`, `localip`, `clean-js`
+
+## 🔨 Hammerspoon Automation
+
+### Bluetooth Sleep Manager
+- Disconnects Bluetooth devices on sleep, reconnects on wake
+- Prevents battery drain on sleeping machines
+
+### Location-Aware Settings
+- Detects home WiFi networks
+- Prevents system sleep when on home network
+- Enables stricter security settings when away
 
 ## 🔐 Private Configuration (Optional)
 
@@ -148,7 +185,7 @@ After running the installer, complete these manual steps:
 - [ ] **CleanShot**: Configure screenshot automation
 - [ ] **Clock Screensaver**: Set up custom screensaver
 - [ ] **Hyperkey**: Configure caps lock key remapping
-- [ ] **Fantastical**: Set up calendar integration
+- [ ] **BusyCal**: Set up calendar integration
 - [ ] **OBS**: Configure streaming/recording setup
 
 ### Audio/Video Setup
