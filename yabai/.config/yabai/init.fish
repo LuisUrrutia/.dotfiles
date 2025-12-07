@@ -19,7 +19,7 @@ set -l space_configs \
     'terminal/bsp/1/^(iTerm|kitty)$' \
     'code/stack/1/^(Cursor|Zed|Code)$,^(Postman|Yaak)$' \
     'web/stack/1/^(Brave Browser|Arc)$' \
-    'work/bsp/2/^Fantastical$,^Slack$,^Zoom$' \
+    'work/bsp/2/^(Fantastical|BusyCal)$,^Slack$,^Zoom$' \
     'social/bsp/2/^(Telegram|Discord)$,WhatsApp$' \
     'notes/bsp/2/^Obsidian$' \
     'other/bsp/2/^(Music|Spotify)$,Claude$'
@@ -54,7 +54,7 @@ for config in $space_configs
 
         move_space_to_display $space_name $preferred_display
     end
-    
+
     # Register signals to dynamically create space when apps open
     register_signal_to_create_space_on_app_open $space_name $layout $preferred_display $apps
 
@@ -104,4 +104,5 @@ yabai -m rule --add app='^Brave Browser$' title="Sign In" manage=off sub-layer=a
 borders \
     "active_color=gradient(top_left=0xee33ccff,bottom_right=0xee00ff99)" \
     "inactive_color=0xaa595959" \
+    blacklist="krisp"    \
     width=2 &
