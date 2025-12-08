@@ -65,11 +65,21 @@ function ensure_space_exists
     set space_exists (check_space_exists $space_label)
     if test "$space_exists" = false
         echo "[Ensure Space Exists] Space $space_label doesnt exist... creating"
+
+        # Get all space indices before creating
+        set -l spaces_before (yabai -m query --spaces | jq -r '.[].index')
+
         yabai -m space --create
 
-        # Get the index of the space we just created
-        # This is kinda a hack, because we look for the last unlabeled empty space
-        set -l new_space_index (yabai -m query --spaces | jq '[.[] | select(.label == "" and (.windows | length == 0))] | last | .index')
+        # Get all space indices after creating, find the new one
+        set -l spaces_after (yabai -m query --spaces | jq -r '.[].index')
+        set -l new_space_index
+        for space in $spaces_after
+            if not contains $space $spaces_before
+                set new_space_index $space
+                break
+            end
+        end
         echo "[Ensure Space Exists] new space index is $new_space_index"
 
         yabai -m space "$new_space_index" --label "$space_label"
@@ -88,29 +98,30 @@ function destroy_empty_spaces
     set where_removed false
     set displays (yabai -m query --displays | jq '.[] | .index')
 
-    # Get windows with non-empty role (real windows)
-    set real_window_spaces (yabai -m query --windows | jq -r '[.[] | select(.role != "")] | .[].space' | sort -u)
+    # Use windows query as source of truth for which spaces have windows
+    # The spaces query .windows array can be out of sync
+    set occupied_spaces (yabai -m query --windows | jq -r '[.[] | select(.role != "")] | .[].space' | sort -u)
 
     for display in $displays
         set spaces_on_display_count (yabai -m query --spaces | jq "[.[] | select(.display == $display)] | length")
 
-        # Get unlabeled spaces with no real windows
+        # Get unlabeled spaces that have no windows according to windows query
         set unlabeled_spaces_to_delete (yabai -m query --spaces | jq -r "[.[] | select(.display == $display and .label == \"\")] | .[].index")
         for space_index in $unlabeled_spaces_to_delete
-            if not contains $space_index $real_window_spaces
+            if not contains $space_index $occupied_spaces
                 echo "[Destroy Empty Spaces] Destroying empty unlabeled space: $space_index on display $display"
                 yabai -m space "$space_index" --destroy
                 set spaces_on_display_count (math $spaces_on_display_count - 1)
             end
         end
 
-        # Get labeled spaces with no real windows
+        # Get labeled spaces that have no windows according to windows query
         set spaces_to_delete
         set all_spaces_on_display (yabai -m query --spaces | jq -r "[.[] | select(.display == $display and .label != \"\")] | .[] | \"\(.index):\(.label)\"")
         for space_info in $all_spaces_on_display
             set space_index (string split ':' $space_info)[1]
             set space_label (string split ':' $space_info)[2]
-            if not contains $space_index $real_window_spaces
+            if not contains $space_index $occupied_spaces
                 set -a spaces_to_delete $space_label
             end
         end
