@@ -67,8 +67,8 @@ yabai -m rule --apply
 # Clean up any empty spaces left over
 destroy_empty_spaces
 
-yabai -m signal --add event=display_added action="fish $YABAI_EVENTS_DIR/display_added.fish $space_arrangements"
-yabai -m signal --add event=display_removed action="fish $YABAI_EVENTS_DIR/display_removed.fish"
+yabai -m signal --add event=display_added action="fish $YABAI_EVENTS_DIR/on_display_added.fish $space_arrangements"
+yabai -m signal --add event=display_removed action="fish $YABAI_EVENTS_DIR/on_display_removed.fish"
 yabai -m signal --add event=window_destroyed action="fish $YABAI_EVENTS_DIR/on_window_destroyed.fish"
 yabai -m signal --add event=system_woke action="fish $YABAI_EVENTS_DIR/on_system_woke.fish"
 

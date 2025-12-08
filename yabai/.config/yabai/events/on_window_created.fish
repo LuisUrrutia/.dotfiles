@@ -35,4 +35,4 @@ end
 move_windows_id_to_space "$WINDOW_ID" "$SPACE_LABEL"
 
 # Focus the newly created window
-yabai -m window --focus "$WINDOW_ID"
+yabai -m window --focus "$WINDOW_ID" 2>/dev/null; or true
