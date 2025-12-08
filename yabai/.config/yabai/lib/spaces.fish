@@ -80,6 +80,10 @@ function ensure_space_exists
                 break
             end
         end
+        if test -z "$new_space_index"
+            echo "Error: Failed to create new space" >&2
+            return 1
+        end
         echo "[Ensure Space Exists] new space index is $new_space_index"
 
         yabai -m space "$new_space_index" --label "$space_label"
