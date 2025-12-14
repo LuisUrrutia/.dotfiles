@@ -64,6 +64,10 @@ end
 # Force move all existing windows to their assigned spaces
 yabai -m rule --apply
 
+# Wait for rules to finish applying before cleanup
+# rule --apply is async, windows need time to move to assigned spaces
+sleep 1
+
 # Clean up any empty spaces left over
 destroy_empty_spaces
 
