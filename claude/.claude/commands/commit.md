@@ -12,9 +12,9 @@ description: Create a conventional commit message and commit after user confirma
 1. If the current branch it's the main branch, confirm with the user before proceeding.
   - If the user confirms, proceed with the commit process.
   - If the user denies, suggest a branch name and confirm with the user the creation of it (`git switch -c <branch_name>`)
-2. If there are untracked files, ask the user to add them first
-  - Only the user can add untracked files
-3. If the tracked files has modifications that were not added, ask the user if he wants to add them
+2. If there are no staged files, ask the user to add them first
+  - Only the user can add files to the staging area
+3. If some of the staged files has modifications that were not added, ask the user if he wants to add them
 4. Review the current changes
 5. Create the commit message and show it to the user to confirm
   - Get the difference between the current state and the previous commit
