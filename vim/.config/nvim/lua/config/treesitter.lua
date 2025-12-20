@@ -1,0 +1,19 @@
+require 'nvim-treesitter'.install {
+    'lua',
+    'python',
+    'rust',
+    'javascript',
+    'tsx',
+    'typescript',
+    'vimdoc',
+    'vim',
+    'markdown',
+    'diff',
+    'css',
+    'dockerfile',
+    'fish',
+    'json',
+    'yaml',
+    'astro',
+    'bash'
+}

@@ -18,11 +18,14 @@ brew "koekeishiya/formulae/yabai" # Window manager
 
 # Development Tools
 brew "neovim"    # Vim-fork focused on extensibility and usability
+brew "tree-sitter-cli"
 brew "git"       # Distributed version control system
 brew "git-lfs"   # Git extension for versioning large files
 brew "gh"        # GitHub CLI
 brew "git-delta" # Syntax-highlighting pager for git and diff output
 brew "shfmt"     # Shell script formatter
+brew "markdownlint-cli2"
+brew "yamlfmt"
 
 # Network and Security
 brew "wget"    # Internet file retriever
