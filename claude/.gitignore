@@ -1,0 +1,4 @@
+.claude/*
+!.claude/plans/
+!.claude/agents/
+!.claude/commands/

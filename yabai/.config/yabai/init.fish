@@ -64,6 +64,10 @@ end
 # Force move all existing windows to their assigned spaces
 yabai -m rule --apply
 
+# Wait for rules to finish applying before cleanup
+# rule --apply is async, windows need time to move to assigned spaces
+sleep 1
+
 # Clean up any empty spaces left over
 destroy_empty_spaces
 
@@ -71,6 +75,10 @@ yabai -m signal --add event=display_added action="fish $YABAI_EVENTS_DIR/on_disp
 yabai -m signal --add event=display_removed action="fish $YABAI_EVENTS_DIR/on_display_removed.fish"
 yabai -m signal --add event=window_destroyed action="fish $YABAI_EVENTS_DIR/on_window_destroyed.fish"
 yabai -m signal --add event=system_woke action="fish $YABAI_EVENTS_DIR/on_system_woke.fish"
+
+# BusyCal/Slack resize signals - resize BusyCal when both apps are on work space
+yabai -m signal --add event=window_created app="^BusyCal\$" action="fish \$HOME/.config/yabai/events/on_busycal_slack_created.fish"
+yabai -m signal --add event=window_created app="^Slack\$" action="fish \$HOME/.config/yabai/events/on_busycal_slack_created.fish"
 
 echo "Configuring non-managed apps..."
 
