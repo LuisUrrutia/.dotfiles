@@ -1,7 +1,7 @@
 [user]
-	signingkey = ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINE6i8g88hWDLjvuF8toQLJ9nCs8hZojlzBCswr9dg3F
-	name = Luis Urrutia
-	email = luis@urrutia.me
+  signingkey = ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINE6i8g88hWDLjvuF8toQLJ9nCs8hZojlzBCswr9dg3F
+  name = Luis Urrutia
+  email = luis@urrutia.me
 [core]
   autocrlf = false
   editor = vim
@@ -17,16 +17,12 @@
 [core.commitGraph]
   enabled = true
 [init]
-	defaultBranch = main
+  defaultBranch = main
 [alias]
   authors = !git log --pretty=format:'%an <%ae>' "." | sort | uniq -c | sort -nr
 
   # add
-  chunkyadd = add --patch           # stage commits chunk by chunk
-
-  # via https://web.archive.org/web/20190406040140/http://blog.apiaxle.com/post/handy-git-tips-to-stop-you-getting-fired/
-  snapshot = !git stash save --all \""snapshot: $(date)"\" && git stash apply "stash@{0}"
-  snapshots = !git stash list --grep snapshot
+  chunkyadd = add --patch # stage commits chunk by chunk
 
   # via https://www.youtube.com/watch?v=aolI_Rz0ZqY&t=2391s
   staash = stash --all
@@ -102,7 +98,7 @@
   renames = true
   indentHeuristic = true
 [diff "exif"]
-	textconv = exiftool
+  textconv = exiftool
 [log]
   date = iso-local
   follow = true
@@ -119,7 +115,7 @@
 [gc]
   writeCommitGraph = true
 [maintenance]
-	auto = true
+  auto = true
   strategy = incremental
 [pack]
   threads = 0
@@ -131,18 +127,18 @@
 [transfer]
   fsckObjects = true
 [tag]
-  sort = version:refname
+  sort = -version:refname
   gpgsign = true
   forceSignAnnotated = true
 [gpg]
-	format = ssh
+  format = ssh
 [gpg "ssh"]
-	program = /Applications/1Password.app/Contents/MacOS/op-ssh-sign
+  program = /Applications/1Password.app/Contents/MacOS/op-ssh-sign
 [filter "lfs"]
-	process = git-lfs filter-process
-	required = true
-	clean = git-lfs clean -- %f
-	smudge = git-lfs smudge -- %f
+  process = git-lfs filter-process
+  required = true
+  clean = git-lfs clean -- %f
+  smudge = git-lfs smudge -- %f
 [rerere]
   # Remember my merges
   # http://gitfu.wordpress.com/2008/04/20/git-rerere-rereremember-what-you-did-last-time/
