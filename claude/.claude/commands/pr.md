@@ -5,16 +5,24 @@ description: Create a pull request for the current branch
 
 ## Context
 - Branch status: !`git branch -vv`
-- All commits of the current branch: !`git log <target-branch>..HEAD --oneline`
-- Change statistics: !`git diff <target-branch>...HEAD --stat`
-- Detailed changes: !`git diff <target-branch>...HEAD`
+- All commits of the current branch: !`git log origin/main..HEAD --oneline`
+- Change statistics: !`git diff origin/main...HEAD --stat`
+- Detailed changes: !`git diff origin/main...HEAD`
 
-2. Analyze the full set of changes in the current branch
-3. Check the branch status:
+1. Check the branch status:
   - If the branch has not been pushed (ahead N), push it first `git push -u origin <current-branch>`
   - If the branch is behind the target branch (behind N), rebase it `git pull --rebase origin <target-branch>`
-5. Create the PR using the template
-  - Fill in all sections according to @.github/PULL_REQUEST_TEMPLATE.md (if exists)
+2. Analyze the full set of changes in the current branch
+3. Present a PR title and content using the template
+  - Fill in all required sections according to @.github/PULL_REQUEST_TEMPLATE.md (if exists)
+  - Format:
+  ```
+  Title: <PR Title>
+  
+  Description:
+  <PR Description>
+  ```
+4. Confirm with the user if the PR is ready to be created or if he wants to modify the title or description
   - Use `gh pr create` to create the PR
   
 **NOTES**:
