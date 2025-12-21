@@ -2,8 +2,8 @@
 
 # Only runs in macOS
 if [ "$(uname)" != "Darwin" ]; then
-	echo "Invalid OS!"
-	exit 1
+  echo "Invalid OS!"
+  exit 1
 fi
 
 STOW_FOLDERS="fish,wget,git,vim,tmux,starship,bat,btop,linearmouse,cspell,kitty,hammerspoon,yabai"
@@ -14,21 +14,16 @@ DOTFILES="${HOME}/.dotfiles"
 
 # Add exit handlers.
 at_exit() {
-	AT_EXIT+="${AT_EXIT:+$'\n'}"
-	AT_EXIT+="${*?}"
-	# shellcheck disable=SC2064
-	trap "${AT_EXIT}" EXIT
+  AT_EXIT+="${AT_EXIT:+$'\n'}"
+  AT_EXIT+="${*?}"
+  # shellcheck disable=SC2064
+  trap "${AT_EXIT}" EXIT
 }
-
-at_exit "
-	printf '\e[0;31mDeleting SUDO_ASKPASS script …\e[0m\n'
-	/bin/rm -f '${SUDO_ASKPASS}'
-"
 
 # Ask for superuser password, and temporarily add it to the Keychain.
 (
-	builtin read -r -s -p "Password: "
-	builtin echo "add-generic-password -U -s 'dotfiles' -a '${USER}' -w '${REPLY}'"
+  builtin read -r -s -p "Password: "
+  builtin echo "add-generic-password -U -s 'dotfiles' -a '${USER}' -w '${REPLY}'"
 ) | /usr/bin/security -i
 printf "\n"
 
@@ -42,8 +37,8 @@ at_exit "
 "
 
 {
-	echo "#!/bin/sh"
-	echo "/usr/bin/security find-generic-password -s 'dotfiles' -a '${USER}' -w"
+  echo "#!/bin/sh"
+  echo "/usr/bin/security find-generic-password -s 'dotfiles' -a '${USER}' -w"
 } >"${SUDO_ASKPASS}"
 
 /bin/chmod +x "${SUDO_ASKPASS}"
@@ -51,19 +46,19 @@ at_exit "
 export SUDO_ASKPASS
 
 if ! /usr/bin/sudo -A -kv 2>/dev/null; then
-	printf '\e[0;31mIncorrect password.\e[0m\n' 1>&2
-	exit 1
+  printf '\e[0;31mIncorrect password.\e[0m\n' 1>&2
+  exit 1
 fi
 
 # Check if brew is installed, otherwise install it
 which -s brew
 if [[ $? != 0 ]]; then
-	echo "Installing Homebrew..."
-	NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+  echo "Installing Homebrew..."
+  NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 else
-	echo "Updating Homebrew..."
-	brew update -q
-	brew upgrade -q
+  echo "Updating Homebrew..."
+  brew update -q
+  brew upgrade -q
 fi
 
 # Load homebrew
@@ -98,9 +93,9 @@ echo "Installing fzf..."
 $HOMEBREW_PREFIX/opt/fzf/install --all --no-bash --no-zsh --no-fish --no-update-rc --key-bindings --completion
 
 for folder in $(echo $STOW_FOLDERS | sed "s/,/ /g"); do
-	echo "stow $folder"
-	stow -D $folder
-	stow --adopt $folder -t $HOME
+  echo "stow $folder"
+  stow -D $folder
+  stow --adopt $folder -t $HOME
 done
 
 # Stow adopt could override some files, so we need to restore them
@@ -108,10 +103,12 @@ git checkout .
 
 bat cache --build
 
-
 # echo "Configuring iTerm2..."
 # defaults write com.googlecode.iterm2.plist PrefsCustomFolder -string "$DOTFILES/iterm"
 # defaults write com.googlecode.iterm2.plist LoadPrefsFromCustomFolder -bool true
+
+# Restore Ice menu bar settings
+defaults import com.jordanbaird.Ice "$DOTFILES/Ice.plist"
 
 # Create Projects folder
 mkdir -p ~/Projects
@@ -120,7 +117,7 @@ mkdir -p ~/Projects
 sh macos.sh
 
 # Restore Cursor settings
-sh cursor.sh
+# sh cursor.sh
 
 # Set zsh if not already default shell
 # if [[ "$SHELL" != "/bin/zsh" ]]; then
