@@ -6,7 +6,7 @@ if [ "$(uname)" != "Darwin" ]; then
   exit 1
 fi
 
-STOW_FOLDERS="fish,wget,git,vim,tmux,starship,bat,btop,linearmouse,cspell,kitty,hammerspoon,yabai"
+STOW_FOLDERS="fish,wget,git,vim,tmux,starship,bat,btop,linearmouse,cspell,kitty,hammerspoon,yabai,claude,skhd"
 DOTFILES="${HOME}/.dotfiles"
 
 # Prevent system sleep.
