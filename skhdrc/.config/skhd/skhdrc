@@ -1,0 +1,48 @@
+# Define window management mode for warp/stack operations
+# Use anybar to indicate the mode: https://github.com/tonsky/AnyBar
+:: winmode @ : echo -n "red" | nc -4u -w0 localhost 1738
+:: default : echo -n "hollow" | nc -4u -w0 localhost 1738
+
+# Enter window mode with meh + m (shift + alt + ctrl + m)
+hyper - w ; winmode
+winmode < escape ; default
+winmode < hyper - w ; default
+
+# Focus operations - basic hjkl for focus
+winmode < h : yabai -m window --focus west || yabai -m display --focus west
+winmode < j : yabai -m window --focus south || yabai -m display --focus south
+winmode < k : yabai -m window --focus north || yabai -m display --focus north
+winmode < l : yabai -m window --focus east || yabai -m display --focus east
+
+# Move operations - shift + hjkl for moving
+winmode < shift - h : yabai -m window --move rel:-80:0
+winmode < shift - j : yabai -m window --move rel:0:80
+winmode < shift - k : yabai -m window --move rel:0:-80
+winmode < shift - l : yabai -m window --move rel:80:0
+
+# Warp operations - alt + shift + hjkl for warping
+winmode < alt + shift - h : yabai -m window --warp west
+winmode < alt + shift - j : yabai -m window --warp south
+winmode < alt + shift - k : yabai -m window --warp north
+winmode < alt + shift - l : yabai -m window --warp east
+
+# Stack operations - ctrl + shift + hjkl for stacking
+winmode < ctrl + shift - h : yabai -m window --stack west
+winmode < ctrl + shift - j : yabai -m window --stack south
+winmode < ctrl + shift - k : yabai -m window --stack north
+winmode < ctrl + shift - l : yabai -m window --stack east
+
+# Stack management shortcuts
+winmode < s : yabai -m window --insert stack  # Toggle stack mode
+winmode < u : yabai -m window --toggle float; yabai -m window --toggle float  # Unstack window
+winmode < n : yabai -m window --focus stack.next  # Navigate stack next
+winmode < p : yabai -m window --focus stack.prev  # Navigate stack prev
+
+# Resize submode
+winmode < r ; resize
+:: resize @ : echo -n "orange" | nc -4u -w0 localhost 1738
+resize < h : yabai -m window --resize left:-20:0
+resize < j : yabai -m window --resize bottom:0:20
+resize < k : yabai -m window --resize top:0:-20
+resize < l : yabai -m window --resize right:20:0
+resize < escape ; winmode

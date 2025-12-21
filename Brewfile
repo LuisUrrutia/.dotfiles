@@ -15,6 +15,7 @@ brew "blueutil"   # Command-line utility for managing Bluetooth devices
 brew "zstd"       # Fast real-time compression algorithm
 
 brew "koekeishiya/formulae/yabai" # Window manager
+brew "jackielii/tap/skhd-zig" # Hotkey daemon for macOS
 
 # Development Tools
 brew "neovim"    # Vim-fork focused on extensibility and usability
@@ -181,6 +182,8 @@ cask "linearmouse" # Mouse handler
 
 # File Management
 cask "the-unarchiver" # Unpacks archive files
+
+cask "anybar" # Status indicator for macOS
 
 mas "PDFgear", id: 6469021132
 mas "Xcode", id: 497799835
