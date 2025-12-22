@@ -1,0 +1,110 @@
+# ------------------------------------------------------------------------------
+# Audio
+# ------------------------------------------------------------------------------
+cask "focusrite-control-2" # Audio interface control
+cask "loopback"            # Audio routing
+cask "soundsource"         # Audio control
+
+# ------------------------------------------------------------------------------
+# Communication
+# ------------------------------------------------------------------------------
+cask "telegram"    # Messaging
+cask "discord"     # Messaging
+cask "slack"       # Work messaging
+
+# ------------------------------------------------------------------------------
+# Design
+# ------------------------------------------------------------------------------
+cask "figma"                       # Interface design
+cask "adobe-creative-cloud"        # Adobe suite
+
+
+# ------------------------------------------------------------------------------
+# Development Tools
+# ------------------------------------------------------------------------------
+cask "zed"                    # Code editor
+cask "docker-desktop"         # Container platform
+cask "yaak"                   # API development environment
+cask "http-toolkit"           # HTTP debugging proxy
+cask "android-platform-tools" # Android SDK tools
+cask "apparency"              # App bundle inspector
+brew "neovim"                 # Vim-fork focused on extensibility
+brew "tree-sitter-cli"        # Parser generator tool
+
+# ==============================================================================
+# Code formatting and linting
+# ==============================================================================
+brew "shfmt"             # Shell script formatter
+brew "markdownlint-cli2" # Markdown linter
+brew "yamlfmt"           # YAML formatter
+brew "latexindent" # LaTeX document formatter
+
+# ==============================================================================
+# Programming Languages and Runtimes
+# ==============================================================================
+brew "python"          # Python
+brew "uv"              # Python package manager
+brew "go"              # Go
+brew "oven-sh/bun/bun" # Bun (JavaScript runtime)
+brew "fnm"             # Fast Node Manager
+brew "rustup"          # Rust toolchain manager
+brew "openjdk"         # Java Development Kit
+brew "luarocks"        # Lua package manager
+brew "perl"            # Perl
+brew "cpanm"           # Perl module installer
+
+# ==============================================================================
+# Web3 and Blockchain Development
+# ==============================================================================
+brew "solidity"    # Ethereum smart contract language
+brew "ethereum"    # Ethereum tools
+brew "stellar-cli" # Stellar CLI
+brew "foundry"     # Ethereum development framework
+
+# ==============================================================================
+# Cloud Tools
+# ==============================================================================
+brew "awscli"       # AWS CLI
+brew "aws-sam-cli"  # AWS SAM CLI
+cask "gcloud-cli"   # Google Cloud CLI
+
+# ==============================================================================
+# Image Processing and Libraries
+# ==============================================================================
+brew "imagemagick" # Image manipulation tools
+brew "libvips"     # Image processing library
+brew "libmagic"    # File type identification
+brew "libavif"     # AVIF image format
+brew "webp"        # WebP image format
+brew "cairo"       # 2D graphics library
+brew "pango"       # Text rendering library
+brew "jpeg"        # JPEG library
+brew "giflib"      # GIF library
+brew "librsvg"     # SVG rendering library
+
+# ==============================================================================
+# Font Tools
+# ==============================================================================
+brew "sfnt2woff"   # TrueType to WOFF converter
+brew "woff2"       # WOFF 2.0 compression
+
+# ==============================================================================
+# Productivity Tools
+# ==============================================================================
+cask "busycal"      # Calendar and tasks
+cask "claude"       # AI assistant
+cask "claude-code"  # AI coding assistant
+
+# ==============================================================================
+# Streaming Tools
+# ==============================================================================
+cask "camo-studio"                 # iPhone as webcam
+cask "obs"                         # Streaming/recording
+cask "obs-advanced-scene-switcher" # OBS scene automation
+
+# ==============================================================================
+# Window Management and related Tools
+# ==============================================================================
+brew "koekeishiya/formulae/yabai" # Tiling window manager
+brew "jackielii/tap/skhd-zig"     # Hotkey daemon
+cask "anybar"                     # Status indicator
