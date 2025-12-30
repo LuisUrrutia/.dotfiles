@@ -41,6 +41,9 @@ defaults write NSGlobalDomain AppleKeyboardUIMode -int 2
 # Screen & Display                                                            #
 ###############################################################################
 
+# Do not show desktop icons
+defaults write com.apple.finder CreateDesktop -bool false
+
 # Enable subpixel font rendering on non-Apple LCDs
 # This improves the readability of text on non-Retina displays
 defaults write NSGlobalDomain AppleFontSmoothing -int 2
@@ -82,6 +85,25 @@ chflags nohidden ~/Library
 
 # Remove old trash items after 30 days
 defaults write com.apple.finder FXRemoveOldTrashItems -bool true
+
+# Do not show removable media on desktop
+defaults write com.apple.finder ShowRemovableMediaOnDesktop -bool false
+
+# Show home directory as default
+defaults write com.apple.finder NewWindowTarget -string "PfHm"
+
+# Sort folders first in Finder
+defaults write com.apple.finder _FXSortFoldersFirst -bool true
+
+# Show list view by default
+defaults write com.apple.finder FXPreferredViewStyle -string "Nlsv"
+
+# Search current folder by default
+defaults write com.apple.finder FXDefaultSearchScope -string "SCcf"
+
+# Show path bar at bottom of Finder windows
+defaults write com.apple.finder ShowPathbar -bool true
+
 
 ###############################################################################
 # Dock & Menu Bar                                                             #
