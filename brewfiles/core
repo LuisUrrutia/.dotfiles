@@ -20,7 +20,7 @@ brew "pkg-config" # Compile and link flags manager
 # ==============================================================================
 # Shell and Terminal
 # ==============================================================================
-cask "kitty"                  # Terminal emulator
+cask "ghostty"   # Terminal emulator
 brew "fish"      # Shell
 brew "fisher"    # Fish plugin manager
 brew "tmux"      # Terminal multiplexer
@@ -35,6 +35,7 @@ brew "tailspin"  # Modern log file viewer
 brew "figlet"    # ASCII banner generator
 brew "hyperfine" # Command-line benchmarking tool
 brew "lolcrab"   # Rainbow text output
+brew "tldr"      # Simplified man pages with examples
 
 # ==============================================================================
 # File Management and Search
@@ -130,8 +131,12 @@ cask "font-fira-code"           # Monospaced with ligatures
 cask "font-fira-code-nerd-font" # Fira Code + icons
 cask "font-monaspace"           # Monospaced with ligatures
 cask "font-monaspace-nerd-font" # Monaspace + icons
-cask "font-hack-nerd-font"      # Hack + icons
-brew "font-sf-pro"              # Apple SF Pro font
+cask "font-hack-nerd-font"           # Hack + icons
+cask "font-jetbrains-mono"           # JetBrains Mono
+cask "font-jetbrains-mono-nerd-font" # JetBrains Mono + icons
+cask "font-geist-mono"               # Geist Mono
+cask "font-geist-mono-nerd-font"     # Geist Mono + icons
+brew "font-sf-pro"                   # Apple SF Pro font
 
 # ==============================================================================
 # Mac App Store
