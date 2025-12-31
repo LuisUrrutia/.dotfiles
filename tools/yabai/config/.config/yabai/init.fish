@@ -16,7 +16,7 @@ source "$YABAI_LIB_DIR/rules.fish"
 # Define space mappings: space_name/layout/preferred display/apps...
 # Layout can be: bsp (default), stack, float
 set -l space_configs \
-    'terminal/bsp/1/^(iTerm|kitty)$' \
+    'terminal/stack/1/^(iTerm|kitty|Ghostty)$' \
     'code/stack/1/^(Cursor|Zed|Code)$,^(Postman|Yaak)$' \
     'web/stack/1/^(Brave Browser|Arc)$' \
     'work/bsp/2/^(Fantastical|BusyCal)$,^Slack$,^Zoom$' \
