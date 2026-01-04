@@ -19,7 +19,7 @@ description: Create conventional commit after user confirmation
    - Simple changes → 1 Line commit message
    - Complex changes → Add body to commit message
 5. Confirm with user:
-   - Main branch → warn, confirm proceed or suggest new branch `git switch -c <name>`
+   - Main branch → warn, confirm proceed or suggest new branch name `git switch -c <name>`
    - User approves message → commit
 
 ## Notes
