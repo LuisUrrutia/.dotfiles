@@ -74,6 +74,10 @@ brew "yt-dlp"   # YouTube downloader
 brew "exiftool" # Metadata reader/writer
 cask "iina"     # Media player
 
+# Image optimization
+brew "pngquant" # PNG compressor with lossy compression
+brew "mozjpeg"  # Improved JPEG encoder
+
 # ==============================================================================
 # Archive and Compression
 # ==============================================================================

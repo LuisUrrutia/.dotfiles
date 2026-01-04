@@ -1,0 +1,11 @@
+config/.config/fish/functions/_*
+config/.config/fish/functions/fisher.fish
+config/.config/fish/functions/zoxide.fish
+config/.config/fish/functions/fzf_configure_bindings.fish
+config/.config/fish/conf.d/puffer_fish_key_bindings.fish
+config/.config/fish/conf.d/zoxide.fish
+config/.config/fish/conf.d/autopair.fish
+config/.config/fish/conf.d/fzf.fish
+config/.config/fish/completions/fisher.fish
+config/.config/fish/completions/fzf_configure_bindings.fish
+config/.config/fish/completions/zoxide.fish
