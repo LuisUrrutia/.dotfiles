@@ -75,10 +75,13 @@ yabai -m signal --add event=display_added action="fish $YABAI_EVENTS_DIR/on_disp
 yabai -m signal --add event=display_removed action="fish $YABAI_EVENTS_DIR/on_display_removed.fish"
 yabai -m signal --add event=window_destroyed action="fish $YABAI_EVENTS_DIR/on_window_destroyed.fish"
 yabai -m signal --add event=system_woke action="fish $YABAI_EVENTS_DIR/on_system_woke.fish"
+yabai -m signal --add event=space_changed action="fish $YABAI_EVENTS_DIR/on_space_changed.fish"
 
 # BusyCal/Slack resize signals - resize BusyCal when both apps are on work space
 yabai -m signal --add event=window_created app="^BusyCal\$" action="fish \$HOME/.config/yabai/events/on_busycal_slack_created.fish"
 yabai -m signal --add event=window_created app="^Slack\$" action="fish \$HOME/.config/yabai/events/on_busycal_slack_created.fish"
+
+
 
 echo "Configuring non-managed apps..."
 
