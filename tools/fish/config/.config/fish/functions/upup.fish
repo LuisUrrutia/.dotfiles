@@ -7,6 +7,8 @@ function upup -d "updates different tools"
     pnpm -g update
     nvim --headless "+Lazy! sync" +qa
 
+    mo clean
+
     # Fish update should be at the end of the function
     /opt/homebrew/bin/fish -C "fisher update"
 end
