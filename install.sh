@@ -77,15 +77,14 @@ else
   echo "A generic version is available that excludes some really personal settings."
   read -r -p "Install the full version anyway? [Y/n] " response
   case "$response" in
-    [nN][oO]|[nN])
-      FULL_INSTALL=false
-      ;;
-    *)
-      FULL_INSTALL=true
-      ;;
+  [nN][oO] | [nN])
+    FULL_INSTALL=false
+    ;;
+  *)
+    FULL_INSTALL=true
+    ;;
   esac
 fi
-
 
 echo "Installing packages from Brewfile..."
 brew bundle install --file "$DOTFILES/brewfiles/core"
@@ -94,21 +93,21 @@ brew cleanup
 
 source "$DOTFILES/tools/lib.sh"
 
-# Core tools (always installed)
-CORE_TOOLS="xcode fzf git wget vim tmux starship bat btop linearmouse cspell kitty hammerspoon macos dockutil"
+# Run all tool install scripts
+# Each script uses require_* functions for graceful dependency handling
+for tool_dir in "$DOTFILES/tools"/*; do
+  if [[ -d "$tool_dir" ]]; then
+    tool_name="$(basename "$tool_dir")"
 
-# Full install tools (owner or user opted-in)
-FULL_TOOLS="fnm uv rustup luarocks openjdk ice yabai claude skhd"
+    # Skip lib.sh (not a tool directory)
+    [[ "$tool_name" == "lib.sh" ]] && continue
 
-for tool in $CORE_TOOLS; do
-  run_tool "$tool"
+    # Skip fish until the end (changes default shell)
+    [[ "$tool_name" == "fish" ]] && continue
+
+    run_tool "$tool_name"
+  fi
 done
-
-if $FULL_INSTALL; then
-  for tool in $FULL_TOOLS; do
-    run_tool "$tool"
-  done
-fi
 
 # Stow adopt could override some files, so we need to restore them
 git -C "$DOTFILES" checkout .
