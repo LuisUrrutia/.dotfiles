@@ -2,9 +2,9 @@
 
 # ~/.macos — https://mths.be/macos
 
-# Close any open System Preferences panes, to prevent them from overriding
+# Close any open System Settings panes, to prevent them from overriding
 # settings we're about to change
-osascript -e 'tell application "System Preferences" to quit'
+osascript -e 'tell application "System Settings" to quit' 2>/dev/null || true
 
 ###############################################################################
 # Keyboard & Input                                                            #
@@ -54,7 +54,7 @@ defaults write com.apple.screensaver askForPassword -int 1
 defaults write com.apple.screensaver askForPasswordDelay -int 0
 
 # Saves screenshots into its own folder
-mkdir -p ${HOME}/Pictures/Screenshots
+mkdir -p "${HOME}/Pictures/Screenshots"
 defaults write com.apple.screencapture location -string "${HOME}/Pictures/Screenshots"
 
 # Set screen saver to start before display sleep to avoid warning
@@ -74,10 +74,6 @@ defaults write NSGlobalDomain AppleShowAllExtensions -bool true
 
 # Disable the warning when changing a file extension
 defaults write com.apple.finder FXEnableExtensionChangeWarning -bool false
-
-# Empty Trash securely by default
-# Takes longer but adds security by making files harder to recover
-defaults write com.apple.finder EmptyTrashSecurely -bool true
 
 # Show the ~/Library folder
 # Makes it easier to access application support files and configurations
@@ -103,7 +99,6 @@ defaults write com.apple.finder FXDefaultSearchScope -string "SCcf"
 
 # Show path bar at bottom of Finder windows
 defaults write com.apple.finder ShowPathbar -bool true
-
 
 ###############################################################################
 # Dock & Menu Bar                                                             #
@@ -156,9 +151,11 @@ defaults write com.apple.commerce AutoUpdate -bool true
 # Enable firewall with sensible defaults
 sudo /usr/libexec/ApplicationFirewall/socketfilterfw --setblockall off --setallowsigned off --setallowsignedapp off --setstealthmode on --setglobalstate on
 
-# Enable FileVault disk encryption
+# Enable FileVault disk encryption if not already enabled
 # Improves security by encrypting the entire disk
-sudo fdesetup enable -user $(whoami)
+if ! fdesetup status | grep -q "FileVault is On"; then
+  sudo fdesetup enable -user "$(whoami)"
+fi
 
 ###############################################################################
 # Power Management                                                            #
