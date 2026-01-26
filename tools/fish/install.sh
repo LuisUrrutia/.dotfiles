@@ -8,7 +8,7 @@ fish="$bin_path"
 stow -d "$DOTFILES/tools/fish" -t "$HOME" config
 
 # Add fish to shells if not already present
-grep -qxF "$fish" /etc/shells || sudo sh -c "echo $fish >> /etc/shells"
+grep -qxF "$fish" /etc/shells || sudo sh -c "echo \"$fish\" >> /etc/shells"
 
 # Set fish as default shell
 chsh -s "$fish"
