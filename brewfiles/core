@@ -10,12 +10,27 @@ brew "grep"       # GNU grep (macOS uses BSD version)
 brew "stow"       # Symlink manager for dotfiles
 brew "blueutil"   # Bluetooth device management CLI
 brew "zstd"       # Fast real-time compression algorithm
+brew "fastfetch"  # Fast system information tool
 
 # ==============================================================================
 # Development Build Tools
 # ==============================================================================
 brew "cmake"      # Build system generator
 brew "pkg-config" # Compile and link flags manager
+
+# ==============================================================================
+# Development Tools
+# ==============================================================================
+cask "zed"            # Code editor
+brew "neovim"         # Vim-fork focused on extensibility
+brew "tree-sitter-cli" # Parser generator tool
+
+# ==============================================================================
+# Programming Languages and Runtimes
+# ==============================================================================
+brew "python"          # Python
+brew "fnm"             # Fast Node Manager
+brew "pnpm"            # Fast, disk space efficient package manager
 
 # ==============================================================================
 # Shell and Terminal

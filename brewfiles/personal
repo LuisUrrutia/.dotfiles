@@ -22,14 +22,11 @@ cask "adobe-creative-cloud"        # Adobe suite
 # ------------------------------------------------------------------------------
 # Development Tools
 # ------------------------------------------------------------------------------
-cask "zed"                    # Code editor
 cask "docker-desktop"         # Container platform
 cask "yaak"                   # API development environment
 cask "http-toolkit"           # HTTP debugging proxy
 cask "android-platform-tools" # Android SDK tools
 cask "apparency"              # App bundle inspector
-brew "neovim"                 # Vim-fork focused on extensibility
-brew "tree-sitter-cli"        # Parser generator tool
 
 # ==============================================================================
 # Code formatting and linting
@@ -37,16 +34,14 @@ brew "tree-sitter-cli"        # Parser generator tool
 brew "shfmt"             # Shell script formatter
 brew "markdownlint-cli2" # Markdown linter
 brew "yamlfmt"           # YAML formatter
-brew "latexindent" # LaTeX document formatter
+brew "latexindent"       # LaTeX document formatter
 
 # ==============================================================================
 # Programming Languages and Runtimes
 # ==============================================================================
-brew "python"          # Python
 brew "uv"              # Python package manager
 brew "go"              # Go
 brew "oven-sh/bun/bun" # Bun (JavaScript runtime)
-brew "fnm"             # Fast Node Manager
 brew "rustup"          # Rust toolchain manager
 brew "openjdk"         # Java Development Kit
 brew "luarocks"        # Lua package manager
