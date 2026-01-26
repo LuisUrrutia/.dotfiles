@@ -1,3 +1,8 @@
+--[[
+Caffeinate at Home Module for Hammerspoon
+Prevents sleep and disables screensaver password when on home WiFi networks
+--]]
+
 local mod = {}
 
 local log = hs.logger.new('caffeinate_at_home')
@@ -62,8 +67,10 @@ end
 -- Stop the caffeinate at home mod
 -- @return nil
 function mod.stop()
-    wifi_watcher:stop()
-    wifi_watcher = nil
+    if wifi_watcher then
+        wifi_watcher:stop()
+        wifi_watcher = nil
+    end
 
     home_SSIDs = {}
 end
