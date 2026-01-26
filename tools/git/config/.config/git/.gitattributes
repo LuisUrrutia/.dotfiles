@@ -5,4 +5,3 @@
 *.ico diff=exif
 *.eps diff=exif
 *.bmp diff=exif
-*.gif diff=exif
