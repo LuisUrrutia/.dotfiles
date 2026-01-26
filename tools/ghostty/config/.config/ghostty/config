@@ -26,3 +26,7 @@ macos-option-as-alt = true
 confirm-close-surface = false
 copy-on-select = clipboard
 macos-icon = custom
+window-save-state = always
+
+# Keybindings
+keybind = global:cmd+grave_accent=toggle_quick_terminal

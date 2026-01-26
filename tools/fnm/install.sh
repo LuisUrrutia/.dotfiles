@@ -7,7 +7,7 @@ fnm="$bin_path"
 
 "$fnm" install --lts
 "$fnm" default lts-latest
-"$fnm" env --use-on-cd --shell fish | source
+eval "$("$fnm" env --shell bash)"
 
 # Install pnpm
 corepack enable pnpm
