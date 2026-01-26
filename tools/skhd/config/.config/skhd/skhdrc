@@ -10,7 +10,7 @@ yabaimode < hyper - y ; default
 
 # Window toggle operations
 yabaimode < f : yabai -m window --toggle zoom-fullscreen
-yabaimode < 0x32 : yabai -m space --balance
+yabaimode < 0x32 : yabai -m space --balance  # 0x32 = backtick/grave key (`)
 
 # Move operations - shift + hjkl for moving
 yabaimode < shift - h : yabai -m window --move rel:-80:0
@@ -27,8 +27,8 @@ yabairesize < k : yabai -m window --resize top:0:-20
 yabairesize < l : yabai -m window --resize right:20:0
 yabairesize < escape ; yabaimode
 
-# Application launchers (from Hammerspoon)
-hyper - 0x32 : open -a Ghostty
+# Application launchers
+hyper - 0x32 : open -a Ghostty  # 0x32 = backtick/grave key (`)
 
 # Named space focus
 alt - t : yabai -m space --focus terminal
@@ -39,8 +39,8 @@ alt - o : yabai -m space --focus other
 alt - s : yabai -m space --focus social
 
 # Move space to display
-shift + alt - 1 : yabai -m space --display 1
-shift + alt - 2 : yabai -m space --display 2
+alt + shift - 1 : yabai -m space --display 1
+alt + shift - 2 : yabai -m space --display 2
 
 # Change window focus
 alt - j : yabai -m window --focus stack.next || yabai -m window --focus next || yabai -m window --focus first
