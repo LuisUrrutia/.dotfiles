@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+set -euo pipefail
+
 # Prevent running as root
 if [[ $EUID -eq 0 ]]; then
   echo "This script should not be run as root"
@@ -7,7 +9,7 @@ if [[ $EUID -eq 0 ]]; then
 fi
 
 # Only runs in macOS
-if [ "$(uname)" != "Darwin" ]; then
+if [[ "$(uname)" != "Darwin" ]]; then
   echo "Invalid OS!"
   exit 1
 fi
@@ -34,7 +36,7 @@ printf "\n"
 
 # Create SUDO_ASKPASS script (scripts that output the password for sudo)
 SUDO_ASKPASS="$(/usr/bin/mktemp)"
-printf "SUDO_ASKPASS: $SUDO_ASKPASS\n"
+printf "SUDO_ASKPASS: %s\n" "$SUDO_ASKPASS"
 
 at_exit "
 	printf '\e[0;31mDeleting SUDO_ASKPASS script …\e[0m\n'
@@ -98,9 +100,6 @@ source "$DOTFILES/tools/lib.sh"
 for tool_dir in "$DOTFILES/tools"/*; do
   if [[ -d "$tool_dir" ]]; then
     tool_name="$(basename "$tool_dir")"
-
-    # Skip lib.sh (not a tool directory)
-    [[ "$tool_name" == "lib.sh" ]] && continue
 
     # Skip fish until the end (changes default shell)
     [[ "$tool_name" == "fish" ]] && continue
