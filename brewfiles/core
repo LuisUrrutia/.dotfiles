@@ -103,6 +103,7 @@ brew "p7zip" # 7-Zip file archiver
 # ==============================================================================
 brew "mas"      # Mac App Store CLI
 brew "dockutil" # Dock item management
+brew "mole"     # Deep clean and optimize your Mac
 
 # ------------------------------------------------------------------------------
 # Security and Privacy
