@@ -159,10 +159,6 @@
   statusHints = false
   detachedHead = false
   resolveConflict = false
-[url "git@github.com:"]
-  insteadOf = https://github.com/
-[url "git@gitlab.com:"]
-  insteadOf = https://gitlab.com/
 [protocol]
   version = 2
 [web]

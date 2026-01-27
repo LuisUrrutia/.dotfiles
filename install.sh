@@ -101,6 +101,9 @@ brew cleanup
 
 source "$DOTFILES/tools/lib.sh"
 
+# Create .config directory if it doesn't exist
+mkdir -p "$HOME/.config"
+
 # Run all tool install scripts
 # Each script uses require_* functions for graceful dependency handling
 for tool_dir in "$DOTFILES/tools"/*; do

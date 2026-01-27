@@ -22,15 +22,24 @@ TO_REMOVE_FROM_DOCK=(
   "com.apple.iWork.Pages"
 )
 for item in "${TO_REMOVE_FROM_DOCK[@]}"; do
-  "$dockutil" --remove "$item" --no-restart
+  # Ignore errors if item doesn't exist
+  "$dockutil" --remove "$item" --no-restart || true
 done
 
+# Add app to dock if it exists and isn't already there
+add_to_dock() {
+  local app="$1"
+  local after="$2"
+  app_exists "$app" && ! "$dockutil" --find "$app" &>/dev/null &&
+    "$dockutil" --add "/Applications/${app}.app" --after "$after" --no-restart
+}
+
 # Add frequently used applications to the Dock
-app_exists Ghostty && "$dockutil" --add "/Applications/Ghostty.app" --after "com.apple.Notes" --no-restart
-app_exists Zed && "$dockutil" --add "/Applications/Zed.app" --after "com.apple.Notes" --no-restart
-app_exists Cursor && "$dockutil" --add "/Applications/Cursor.app" --after "com.apple.Notes" --no-restart
-app_exists "Brave Browser" && "$dockutil" --add "/Applications/Brave Browser.app" --after "com.apple.Notes" --no-restart
-app_exists BusyCal && "$dockutil" --add "/Applications/BusyCal.app" --after "com.apple.MobileSMS" --no-restart
+add_to_dock "Ghostty" "com.apple.Notes"
+add_to_dock "Zed" "com.apple.Notes"
+add_to_dock "Cursor" "com.apple.Notes"
+add_to_dock "Brave Browser" "com.apple.Notes"
+add_to_dock "BusyCal" "com.apple.MobileSMS"
 
 # Restart affected services to apply changes immediately
 killall -9 SystemUIServer
