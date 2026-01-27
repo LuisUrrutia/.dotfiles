@@ -31,7 +31,7 @@ add_to_dock() {
   local app="$1"
   local after="$2"
   app_exists "$app" && ! "$dockutil" --find "$app" &>/dev/null &&
-    "$dockutil" --add "/Applications/${app}.app" --after "$after" --no-restart
+    "$dockutil" --add "/Applications/${app}.app" --after "$after" --no-restart || true
 }
 
 # Add frequently used applications to the Dock

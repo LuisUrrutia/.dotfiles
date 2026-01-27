@@ -46,7 +46,7 @@ defaults write com.apple.finder CreateDesktop -bool false
 
 # Turn off font smoothing
 # See here for why https://tonsky.me/blog/monitors/
-defaults write -currentHost -g AppleFontSmoothing -int 0
+defaults -currentHost write -g AppleFontSmoothing -int 0
 
 # Jump to spot that's clicked when clicking on scroll bars
 defaults write -g AppleScrollerPagingBehavior -int 1
@@ -189,8 +189,7 @@ defaults write com.apple.LaunchServices LSQuarantine -bool false
 defaults write com.apple.TimeMachine DoNotOfferNewDisksForBackup -bool true
 
 # Add a shortcut for deleting messages in Messages. Conversation > Delete Conversation is Opt+Cmd+9
-defaults write com.apple.universalaccess com.apple.custommenu.apps -array-add "com.apple.MobileSMS"
-defaults write com.apple.MobileSMS NSUserKeyEquivalents -dict-add "Delete Conversation..." -string "@~9"
+defaults write com.apple.MobileSMS NSUserKeyEquivalents -dict "Delete Conversation..." -string "@~9"
 
 # Don't display the annoying prompt when quitting iTerm
 defaults write com.googlecode.iterm2 PromptOnQuit -bool false
