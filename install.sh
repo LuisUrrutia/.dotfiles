@@ -123,6 +123,11 @@ git -C "$DOTFILES" checkout .
 # Create Projects folder
 mkdir -p ~/Projects
 
+# Remove personal git user config for non-owners
+if ! $IS_OWNER; then
+  /opt/homebrew/opt/gnu-sed/libexec/gnubin/sed -i '1,/^\[core\]/{ /^\[user\]/d; /^  signingkey/d; /^  name/d; /^  email/d; }' "$DOTFILES/tools/git/config/.gitconfig"
+fi
+
 # Configure fish shell (last, as it changes the default shell)
 run_tool "fish"
 
