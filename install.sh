@@ -16,6 +16,9 @@ fi
 
 export DOTFILES="${HOME}/.dotfiles"
 
+# Check if this script was already run before
+[[ -f "$DOTFILES/.installed" ]] && FIRST_RUN=false || FIRST_RUN=true
+
 # Prevent system sleep.
 /usr/bin/caffeinate -dimu -w $$ &
 
@@ -89,10 +92,12 @@ else
 fi
 
 # Install Xcode from Mac App Store (requires mas)
-echo "Installing Xcode..."
-brew install mas
-mas install 497799835 # Xcode
-sudo xcodebuild -license accept
+if $FIRST_RUN; then
+  echo "Installing Xcode..."
+  brew install mas
+  mas install 497799835 # Xcode
+  sudo xcodebuild -license accept
+fi
 
 echo "Installing packages from Brewfile..."
 brew bundle install --file "$DOTFILES/brewfiles/core"
@@ -117,19 +122,25 @@ for tool_dir in "$DOTFILES/tools"/*; do
   fi
 done
 
-# Stow adopt could override some files, so we need to restore them
-git -C "$DOTFILES" checkout .
+# First run only tasks
+if $FIRST_RUN; then
+  # Stow adopt could override some files, so we need to restore them
+  git -C "$DOTFILES" checkout .
 
-# Create Projects folder
-mkdir -p ~/Projects
+  # Create Projects folder
+  mkdir -p ~/Projects
 
-# Remove personal git user config for non-owners
-if ! $IS_OWNER; then
-  /opt/homebrew/opt/gnu-sed/libexec/gnubin/sed -i '1,/^\[core\]/{ /^\[user\]/d; /^  signingkey/d; /^  name/d; /^  email/d; }' "$DOTFILES/tools/git/config/.gitconfig"
+  # Remove personal git user config for non-owners
+  if ! $IS_OWNER; then
+    /opt/homebrew/opt/gnu-sed/libexec/gnubin/sed -i '1,/^\[core\]/{ /^\[user\]/d; /^  signingkey/d; /^  name/d; /^  email/d; }' "$DOTFILES/tools/git/config/.gitconfig"
+  fi
+
+  # Configure fish shell (last, as it changes the default shell)
+  run_tool "fish"
 fi
 
-# Configure fish shell (last, as it changes the default shell)
-run_tool "fish"
+# Mark installation as complete
+touch "$DOTFILES/.installed"
 
 echo "Installation complete!"
 echo "Please restart your terminal to apply changes."
