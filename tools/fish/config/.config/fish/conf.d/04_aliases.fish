@@ -3,6 +3,8 @@ alias ll 'ls --git -alhF'
 alias tree 'ls --tree'
 alias vim 'nvim'
 
+alias tldr 'tldr --config ~/.config/tlrc/config.toml'
+
 alias frida "uvx --from frida-tools frida"
 alias frida-ls "uvx --from frida-tools frida-ls"
 alias frida-trace "uvx --from frida-tools frida-trace"
