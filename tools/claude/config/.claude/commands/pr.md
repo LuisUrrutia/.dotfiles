@@ -6,8 +6,8 @@ description: Create a pull request for the current branch
 ## Context
 - Branch status: !`git branch -vv`
 - All commits of the current branch: !`git log origin/main..HEAD --oneline`
-- Change statistics: !`git diff origin/main...HEAD --stat`
-- Detailed changes: !`git diff origin/main...HEAD`
+- Change statistics: !`git diff origin/main...HEAD --stat -- ':!*lock.json' ':!*lock.yaml' ':!*.lockb' ':!*.lock' ':!.opencode' ':!.claude'`
+- Detailed changes: !`git diff origin/main...HEAD -- ':!*lock.json' ':!*lock.yaml' ':!*.lockb' ':!*.lock' ':!.opencode' ':!.claude'`
 
 1. Check the branch status:
   - If the branch has not been pushed (ahead N), push it first `git push -u origin <current-branch>`
@@ -26,6 +26,7 @@ description: Create a pull request for the current branch
   - Use `gh pr create` to create the PR
   
 **NOTES**:
+- Lock files and AI tool folders are excluded from diff/stats above
 - You must strictly follow the PR template format (if exists)
 - All required sections must be fully completed
 - If you need access to additional tools, ask the user to modify the command to include them
