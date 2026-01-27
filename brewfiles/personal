@@ -9,7 +9,6 @@ cask "soundsource"         # Audio control
 # Communication
 # ------------------------------------------------------------------------------
 cask "telegram"    # Messaging
-cask "discord"     # Messaging
 cask "slack"       # Work messaging
 
 # ------------------------------------------------------------------------------
@@ -39,11 +38,8 @@ brew "latexindent"       # LaTeX document formatter
 # ==============================================================================
 # Programming Languages and Runtimes
 # ==============================================================================
-brew "uv"              # Python package manager
 brew "go"              # Go
-brew "oven-sh/bun/bun" # Bun (JavaScript runtime)
 brew "rustup"          # Rust toolchain manager
-brew "openjdk"         # Java Development Kit
 brew "luarocks"        # Lua package manager
 brew "perl"            # Perl
 brew "cpanm"           # Perl module installer
@@ -87,8 +83,6 @@ brew "woff2"       # WOFF 2.0 compression
 # Productivity Tools
 # ==============================================================================
 cask "busycal"      # Calendar and tasks
-cask "claude"       # AI assistant
-cask "claude-code"  # AI coding assistant
 
 # ==============================================================================
 # Streaming Tools
