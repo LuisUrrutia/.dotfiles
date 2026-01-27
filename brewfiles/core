@@ -29,8 +29,11 @@ brew "tree-sitter-cli" # Parser generator tool
 # Programming Languages and Runtimes
 # ==============================================================================
 brew "python"          # Python
+brew "uv"              # Python package manager
 brew "fnm"             # Fast Node Manager
 brew "pnpm"            # Fast, disk space efficient package manager
+brew "oven-sh/bun/bun" # Bun (JavaScript runtime)
+brew "openjdk"         # Java Development Kit
 
 # ==============================================================================
 # Shell and Terminal
@@ -150,13 +153,24 @@ cask "spotify" # Music streaming
 cask "font-fira-code"           # Monospaced with ligatures
 cask "font-fira-code-nerd-font" # Fira Code + icons
 cask "font-monaspace"           # Monospaced with ligatures
-cask "font-monaspace-nerd-font" # Monaspace + icons
+cask "font-monaspice-nerd-font" # Monaspace + icons
 cask "font-hack-nerd-font"           # Hack + icons
 cask "font-jetbrains-mono"           # JetBrains Mono
 cask "font-jetbrains-mono-nerd-font" # JetBrains Mono + icons
+cask "font-geist"                    # Geist
 cask "font-geist-mono"               # Geist Mono
 cask "font-geist-mono-nerd-font"     # Geist Mono + icons
-brew "font-sf-pro"                   # Apple SF Pro font
+cask "font-inter"                    # Inter
+cask "font-lato"                     # Lato
+cask "font-montserrat"               # Montserrat
+cask "font-noto-sans"                # Noto Sans
+cask "font-open-sans"                # Open Sans
+cask "font-poppins"                  # Poppins
+cask "font-roboto"                   # Roboto
+cask "font-roboto-condensed"         # Roboto Condensed
+cask "font-roboto-flex"              # Roboto Flex
+cask "font-roboto-mono"              # Roboto Mono
+cask "font-source-code-pro"          # Source Code Pro
 
 # ==============================================================================
 # Mac App Store
@@ -166,5 +180,12 @@ mas "Xcode", id: 497799835
 # ------------------------------------------------------------------------------
 # Communication
 # ------------------------------------------------------------------------------
+cask "discord"     # Messaging
 cask "whatsapp"    # Messaging
 cask "zoom"        # Video conferencing
+
+# ------------------------------------------------------------------------------
+# AI Tools
+# ------------------------------------------------------------------------------
+cask "claude"      # AI assistant
+cask "claude-code" # AI coding assistant
