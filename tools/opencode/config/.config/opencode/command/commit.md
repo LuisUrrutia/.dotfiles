@@ -5,7 +5,7 @@ description: Create conventional commit after user confirmation
 ## Context
 - Current Branch: !`git branch --show-current`
 - Git Status: !`git status`
-- Git Diff staged: !`git diff --staged`
+- Git Diff staged: !`git diff --staged -- ':!*lock.json' ':!*lock.yaml' ':!*.lockb' ':!*.lock' ':!.opencode' ':!.claude'`
 
 ## Steps
 1. No staged files → ask user to stage

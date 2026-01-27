@@ -6,11 +6,11 @@ description: Create a conventional commit message and commit after user confirma
 ## Context
 - Current branch: !`git branch --show-current`
 - Current git status: !`git status`
-- Current git diff (only staged changes): !`git diff --staged`
+- Current git diff (only staged changes): !`git diff --staged -- ':!*lock.json' ':!*lock.yaml' ':!*.lockb' ':!*.lock' ':!.opencode' ':!.claude'`
 
 ## Execution steps
 1. If there are no staged files, ask the user to add them first
-  - Only the user can add files to the staging area
+   - Only the user can add files to the staging area
 2. If some of the staged files has modifications that were not added, ask the user if he wants to add them
 3. Review the current changes
 4. Create a possible commit message
