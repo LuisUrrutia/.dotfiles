@@ -88,6 +88,12 @@ else
   esac
 fi
 
+# Install Xcode from Mac App Store (requires mas)
+echo "Installing Xcode..."
+brew install mas
+mas install 497799835 # Xcode
+sudo xcodebuild -license accept
+
 echo "Installing packages from Brewfile..."
 brew bundle install --file "$DOTFILES/brewfiles/core"
 $FULL_INSTALL && brew bundle install --file "$DOTFILES/brewfiles/personal"
