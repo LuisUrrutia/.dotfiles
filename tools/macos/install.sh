@@ -44,9 +44,12 @@ defaults write NSGlobalDomain AppleKeyboardUIMode -int 2
 # Do not show desktop icons
 defaults write com.apple.finder CreateDesktop -bool false
 
-# Enable subpixel font rendering on non-Apple LCDs
-# This improves the readability of text on non-Retina displays
-defaults write NSGlobalDomain AppleFontSmoothing -int 2
+# Turn off font smoothing
+# See here for why https://tonsky.me/blog/monitors/
+defaults write -currentHost -g AppleFontSmoothing -int 0
+
+# Jump to spot that's clicked when clicking on scroll bars
+defaults write -g AppleScrollerPagingBehavior -int 1
 
 # Require password immediately after sleep or screen saver begins
 # Enhances security by requiring immediate authentication
@@ -185,8 +188,9 @@ defaults write com.apple.LaunchServices LSQuarantine -bool false
 # Prevent Time Machine from prompting to use new hard drives as backup volume
 defaults write com.apple.TimeMachine DoNotOfferNewDisksForBackup -bool true
 
-# Add a shortcut for deleting messages in Messages app
-defaults write com.apple.MobileSMS.plist NSUserKeyEquivalents -dict 'Delete Conversation...' '@\U007F'
+# Add a shortcut for deleting messages in Messages. Conversation > Delete Conversation is Opt+Cmd+9
+defaults write com.apple.universalaccess com.apple.custommenu.apps -array-add "com.apple.MobileSMS"
+defaults write com.apple.MobileSMS NSUserKeyEquivalents -dict-add "Delete Conversation..." -string "@~9"
 
 # Don't display the annoying prompt when quitting iTerm
 defaults write com.googlecode.iterm2 PromptOnQuit -bool false
