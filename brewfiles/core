@@ -53,7 +53,7 @@ brew "tailspin"  # Modern log file viewer
 brew "figlet"    # ASCII banner generator
 brew "hyperfine" # Command-line benchmarking tool
 brew "lolcrab"   # Rainbow text output
-brew "tldr"      # Simplified man pages with examples
+brew "tlrc"      # Simplified man pages with examples
 
 # ==============================================================================
 # File Management and Search
