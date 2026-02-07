@@ -1,3 +1,5 @@
+status is-interactive || exit
+
 alias ls 'eza --icons --color=auto --group-directories-first --octal-permissions'
 alias ll 'ls --git -alhF'
 alias tree 'ls --tree'
@@ -26,4 +28,3 @@ alias sha256sum "gsha256sum"
 alias sed "gsed"
 alias tar "gtar"
 alias grep "ggrep"
-alias cd "z"

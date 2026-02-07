@@ -1,4 +1,4 @@
-function gwnb -d "Git worktree new branch" 
+function gwnb -d "Git worktree new branch"
     if test (count $argv) -ne 1
         echo "Usage: gwnb <new-branch-name>"
         return 1

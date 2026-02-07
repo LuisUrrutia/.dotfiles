@@ -3,7 +3,6 @@
 source "${DOTFILES:-$HOME/.dotfiles}/tools/lib.sh"
 
 require_brew_bin uv
-uv="$bin_path"
 
-"$uv" python install
-"$uv" tool install pre-commit --with pre-commit-uv
+"$bin_path" python install
+"$bin_path" tool install pre-commit --with pre-commit-uv

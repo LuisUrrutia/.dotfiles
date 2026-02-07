@@ -63,7 +63,7 @@ abbr -a -- gclndfx 'git clean -dfx'
 abbr -a -- gt 'git tag'
 abbr -a -- gbg 'git bisect good'
 abbr -a -- gbb 'git bisect bad'
-abbr -a -- gst 'git staash'
+abbr -a -- gstaa 'git staash'
 abbr -a -- gbn 'git branch-name'
 abbr -a -- grbs 'git recent-branches'
 

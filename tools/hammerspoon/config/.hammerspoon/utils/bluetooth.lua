@@ -20,7 +20,7 @@ end
 -- @return table - Array of connected device objects
 function lib.connected_devices()
     local output, status = blueutil("--connected --format json")
-    return hs.json.decode(output)
+    return hs.json.decode(output) or {}
 end
 
 -- Check if specific device is connected

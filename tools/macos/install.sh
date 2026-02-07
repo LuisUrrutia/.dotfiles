@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+source "${DOTFILES:-$HOME/.dotfiles}/tools/lib.sh"
+
 # ~/.macos — https://mths.be/macos
 
 # Close any open System Settings panes, to prevent them from overriding
@@ -190,9 +192,6 @@ defaults write com.apple.TimeMachine DoNotOfferNewDisksForBackup -bool true
 
 # Add a shortcut for deleting messages in Messages. Conversation > Delete Conversation is Opt+Cmd+9
 defaults write com.apple.MobileSMS NSUserKeyEquivalents -dict "Delete Conversation..." -string "@~9"
-
-# Don't display the annoying prompt when quitting iTerm
-defaults write com.googlecode.iterm2 PromptOnQuit -bool false
 
 # Automatically quit printer app once the print jobs complete
 defaults write com.apple.print.PrintingPrefs "Quit When Finished" -bool true

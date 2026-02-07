@@ -3,15 +3,14 @@
 source "${DOTFILES:-$HOME/.dotfiles}/tools/lib.sh"
 
 require_brew_bin fish
-fish="$bin_path"
 
-stow -d "$DOTFILES/tools/fish" -t "$HOME" config
+stow_config fish
 
 # Add fish to shells if not already present
-grep -qxF "$fish" /etc/shells || sudo sh -c "echo \"$fish\" >> /etc/shells"
+grep -qxF "$bin_path" /etc/shells || sudo sh -c "echo \"$bin_path\" >> /etc/shells"
 
 # Set fish as default shell
-chsh -s "$fish"
+chsh -s "$bin_path"
 
 # Install fish plugins
-"$fish" -C "fisher update"
+"$bin_path" -C "fisher update"

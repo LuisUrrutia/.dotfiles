@@ -31,7 +31,6 @@ brew "tree-sitter-cli" # Parser generator tool
 brew "python"          # Python
 brew "uv"              # Python package manager
 brew "fnm"             # Fast Node Manager
-brew "pnpm"            # Fast, disk space efficient package manager
 brew "oven-sh/bun/bun" # Bun (JavaScript runtime)
 brew "openjdk"         # Java Development Kit
 
@@ -73,7 +72,8 @@ brew "dust"    # Intuitive disk usage (du replacement)
 brew "git"       # Distributed version control
 brew "git-lfs"   # Git extension for large files
 brew "gh"        # GitHub CLI
-brew "git-delta" # Syntax-highlighting pager for git
+brew "git-delta"  # Syntax-highlighting pager for git
+brew "actionlint" # GitHub Actions workflow linter
 
 # ==============================================================================
 # Network and Security
