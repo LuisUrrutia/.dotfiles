@@ -44,7 +44,7 @@ function loadenv
 
     set lineNumber 0
 
-    for line in (cat $dotenv_file)
+    while read -l line
         set lineNumber (math $lineNumber + 1)
 
         # Skip empty lines and comment lines
@@ -86,6 +86,6 @@ function loadenv
             case unload
                 set -e $key
         end
-    end
+    end < "$dotenv_file"
 
 end

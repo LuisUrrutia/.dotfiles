@@ -1,11 +1,14 @@
 function mkd -d "Create a directory and set CWD"
-    command mkdir $argv
+    command mkdir -- $argv
     if test $status = 0
-        switch $argv[(count $argv)]
+        set -l target $argv[(count $argv)]
+        switch "$target"
             case '-*'
-
+                return
             case '*'
-                cd $argv[(count $argv)]
+                if test -d "$target"
+                    cd "$target"
+                end
                 return
         end
     end

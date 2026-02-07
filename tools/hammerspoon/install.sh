@@ -4,4 +4,4 @@ source "${DOTFILES:-$HOME/.dotfiles}/tools/lib.sh"
 
 require_app Hammerspoon
 
-stow -d "$DOTFILES/tools/hammerspoon" -t "$HOME" config
+stow_config hammerspoon

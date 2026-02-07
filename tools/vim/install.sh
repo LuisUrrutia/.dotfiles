@@ -3,8 +3,7 @@
 source "${DOTFILES:-$HOME/.dotfiles}/tools/lib.sh"
 
 require_brew_bin nvim
-nvim="$bin_path"
 
-stow -d "$DOTFILES/tools/vim" -t "$HOME" config
+stow_config vim
 
-"$nvim" --headless "+Lazy! sync" +qa
+"$bin_path" --headless "+Lazy! sync" +qa

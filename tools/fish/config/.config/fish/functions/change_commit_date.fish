@@ -9,7 +9,7 @@ function change_commit_date -d "Change the date of the most recent commit"
 
     set date_string $argv[1]
     set git_date (gdate -d"$date_string" --rfc-email)
-    
+
     if test $status -ne 0
         echo "Error: Invalid date format '$date_string'"
         return 1
@@ -20,7 +20,7 @@ function change_commit_date -d "Change the date of the most recent commit"
 
     echo "Changing date to $git_date"
     git commit --amend --no-edit --date "$git_date"
-    
+
     # Clean up environment variables
     set -e GIT_AUTHOR_DATE
     set -e GIT_COMMITTER_DATE

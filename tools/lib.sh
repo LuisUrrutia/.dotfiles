@@ -51,6 +51,14 @@ app_exists() {
   [[ -d "/Applications/${name}.app" ]]
 }
 
+# Stow a tool's config directory into $HOME with --restow for idempotency
+# Usage: stow_config <tool_name>
+stow_config() {
+  local tool="$1"
+  stow --restow -d "$DOTFILES/tools/$tool" -t "$HOME" config
+  echo "Stowed $tool config"
+}
+
 # Run a tool's install script
 # Usage: run_tool <tool_name>
 run_tool() {

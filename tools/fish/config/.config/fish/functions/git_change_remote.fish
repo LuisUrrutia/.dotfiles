@@ -3,44 +3,63 @@ function git_change_remote -d "Change git remote between SSH and HTTPS protocols
     # Default behavior: toggles between ssh and https
 
     # Get current remote URL
-    set url (git remote get-url origin 2>/dev/null)
+    set -l url (git remote get-url origin 2>/dev/null)
     if test -z "$url"
         echo "Error: Could not retrieve remote URL. Are you inside a Git repository?"
         return 1
     end
 
-    # Determine current protocol and set target protocol
-    if test "$argv[1]" = "ssh"; or test "$argv[1]" = "https"
-        set target_proto $argv[1]
+    # Parse current URL into protocol, host and repo path.
+    set -l current_proto
+    set -l host
+    set -l repo_path
+
+    if string match -qr '^https://[^/]+/.+' -- "$url"
+        set current_proto https
+        set host (string replace -r '^https://([^/]+)/(.+)$' '$1' -- "$url")
+        set repo_path (string replace -r '^https://([^/]+)/(.+)$' '$2' -- "$url")
+    else if string match -qr '^git@[^:]+:.+' -- "$url"
+        set current_proto ssh
+        set host (string replace -r '^git@([^:]+):(.+)$' '$1' -- "$url")
+        set repo_path (string replace -r '^git@([^:]+):(.+)$' '$2' -- "$url")
+    else if string match -qr '^ssh://git@[^/]+/.+' -- "$url"
+        set current_proto ssh
+        set host (string replace -r '^ssh://git@([^/]+)/(.+)$' '$1' -- "$url")
+        set repo_path (string replace -r '^ssh://git@([^/]+)/(.+)$' '$2' -- "$url")
     else
-        # Extract protocol from URL
-        switch "$url"
-            case "https://*"
-                set current_proto "https"
-                set target_proto "ssh"
-            case "git@*"
-                set current_proto "ssh"
-                set target_proto "https"
-            case "*"
-                echo "Error: Unknown URL format: $url"
+        echo "Error: Unsupported remote URL format: $url"
+        return 1
+    end
+
+    # Determine target protocol.
+    set -l target_proto
+    if test (count $argv) -gt 0
+        switch "$argv[1]"
+            case ssh https
+                set target_proto "$argv[1]"
+            case '*'
+                echo "Usage: git_change_remote [ssh|https]"
                 return 1
+        end
+    else
+        if test "$current_proto" = ssh
+            set target_proto https
+        else
+            set target_proto ssh
         end
     end
 
-    # Check if already using the target protocol
-    switch "$url"
-        case "$target_proto*"
-            echo "Already using $target_proto protocol."
-            return 0
+    if test "$current_proto" = "$target_proto"
+        echo "Already using $target_proto protocol."
+        return 0
     end
 
-    # Convert the URL to the target protocol
+    # Build new URL in the requested protocol.
+    set -l new_url
     if test "$target_proto" = "ssh"
-        # Convert HTTPS to SSH
-        set new_url (printf '%s\n' "$url" | sed -E 's#https://([^/]+)/(.+)#git@\1:\2#')
+        set new_url "git@$host:$repo_path"
     else
-        # Convert SSH to HTTPS
-        set new_url (printf '%s\n' "$url" | sed -E 's#git@([^:]+):(.+)#https://\1/\2#')
+        set new_url "https://$host/$repo_path"
     end
 
     # Set the new remote URL

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
 
-DOTFILES="${DOTFILES:-$HOME/.dotfiles}"
+source "${DOTFILES:-$HOME/.dotfiles}/tools/lib.sh"
 
-stow -d "$DOTFILES/tools/cspell" -t "$HOME" config
+stow_config cspell

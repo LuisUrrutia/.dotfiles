@@ -3,7 +3,6 @@
 source "${DOTFILES:-$HOME/.dotfiles}/tools/lib.sh"
 
 require_brew_bin dockutil
-dockutil="$bin_path"
 
 # Set up dock: remove default apps and add preferred ones
 TO_REMOVE_FROM_DOCK=(
@@ -23,15 +22,16 @@ TO_REMOVE_FROM_DOCK=(
 )
 for item in "${TO_REMOVE_FROM_DOCK[@]}"; do
   # Ignore errors if item doesn't exist
-  "$dockutil" --remove "$item" --no-restart || true
+  "$bin_path" --remove "$item" --no-restart || true
 done
 
 # Add app to dock if it exists and isn't already there
 add_to_dock() {
   local app="$1"
   local after="$2"
-  app_exists "$app" && ! "$dockutil" --find "$app" &>/dev/null &&
-    "$dockutil" --add "/Applications/${app}.app" --after "$after" --no-restart || true
+  if app_exists "$app" && ! "$bin_path" --find "$app" &>/dev/null; then
+    "$bin_path" --add "/Applications/${app}.app" --after "$after" --no-restart
+  fi
 }
 
 # Add frequently used applications to the Dock
