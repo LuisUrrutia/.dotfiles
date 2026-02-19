@@ -33,6 +33,22 @@
           "vertical" : true
         }
       }
+    },
+    {
+      "if" : {
+        "device" : {
+          "category" : "mouse",
+          "productID" : "0xc095",
+          "productName" : "G502 X PLUS",
+          "serialNumber" : "662EA5F1",
+          "vendorID" : "0x46d"
+        }
+      },
+      "scrolling" : {
+        "reverse" : {
+          "vertical" : true
+        }
+      }
     }
   ]
 }

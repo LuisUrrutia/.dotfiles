@@ -9,6 +9,7 @@ brew "gnu-tar"    # GNU tar (macOS uses BSD version)
 brew "grep"       # GNU grep (macOS uses BSD version)
 brew "stow"       # Symlink manager for dotfiles
 brew "blueutil"   # Bluetooth device management CLI
+brew "steipete/tap/remindctl" # Apple Reminders CLI
 brew "zstd"       # Fast real-time compression algorithm
 brew "fastfetch"  # Fast system information tool
 
@@ -114,6 +115,7 @@ brew "mole"     # Deep clean and optimize your Mac
 cask "1password"     # Password manager
 cask "1password-cli" # 1Password CLI
 cask "nordvpn"       # VPN client
+cask "tailscale-app" # Mesh VPN client
 cask "veracrypt"     # Disk encryption
 cask "macfuse"       # File system integration
 

@@ -37,6 +37,11 @@ at_exit() {
 ) | /usr/bin/security -i
 printf "\n"
 
+at_exit "
+	printf '\e[0;31mRemoving dotfiles keychain entry ...\e[0m\n'
+	/usr/bin/security delete-generic-password -s 'dotfiles' -a '${USER}' >/dev/null 2>&1 || true
+"
+
 # Create SUDO_ASKPASS script (scripts that output the password for sudo)
 SUDO_ASKPASS="$(/usr/bin/mktemp)"
 printf "SUDO_ASKPASS: %s\n" "$SUDO_ASKPASS"
@@ -124,9 +129,6 @@ done
 
 # First run only tasks
 if $FIRST_RUN; then
-  # Stow adopt could override some files, so we need to restore them
-  git -C "$DOTFILES" checkout .
-
   # Create Projects folder
   mkdir -p ~/Projects
 

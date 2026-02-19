@@ -62,7 +62,10 @@ Available helper functions in `lib.sh`:
 - Configure Raycast (HyperKey in Settings > Advanced)
 - Set up 1Password SSH agent
 - Complete Docker Desktop setup
-- Add Bluetooth permissions to Hammerspoon
+- Add Bluetooth permissions to Hammerspoon (System Settings > Privacy & Security > Bluetooth)
+- Allow Ghostty under Developer Tools (System Settings > Privacy & Security > Developer Tools)
+- Set Fliqlo manually as the active screensaver in System Settings
+- Run `remindctl authorize` to grant Reminders access
 
 ## License
 
