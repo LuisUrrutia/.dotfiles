@@ -7,6 +7,7 @@ brew "findutils"  # GNU find, xargs, and locate
 brew "gnu-sed"    # GNU sed (macOS uses BSD version)
 brew "gnu-tar"    # GNU tar (macOS uses BSD version)
 brew "grep"       # GNU grep (macOS uses BSD version)
+brew "jq"         # JSON processor
 brew "stow"       # Symlink manager for dotfiles
 brew "blueutil"   # Bluetooth device management CLI
 brew "steipete/tap/remindctl" # Apple Reminders CLI
