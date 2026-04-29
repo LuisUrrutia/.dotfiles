@@ -66,18 +66,7 @@ brew "imagemagick" # Image manipulation tools
 brew "libvips"     # Image processing library
 brew "libmagic"    # File type identification
 brew "libavif"     # AVIF image format
-brew "webp"        # WebP image format
-brew "cairo"       # 2D graphics library
-brew "pango"       # Text rendering library
 brew "jpeg"        # JPEG library
-brew "giflib"      # GIF library
-brew "librsvg"     # SVG rendering library
-
-# ==============================================================================
-# Font Tools
-# ==============================================================================
-brew "sfnt2woff"   # TrueType to WOFF converter
-brew "woff2"       # WOFF 2.0 compression
 
 # ==============================================================================
 # Productivity Tools
@@ -94,6 +83,7 @@ cask "obs-advanced-scene-switcher" # OBS scene automation
 # ==============================================================================
 # Window Management and related Tools
 # ==============================================================================
-brew "koekeishiya/formulae/yabai" # Tiling window manager
+brew "asmvik/formulae/yabai" # Tiling window manager
+brew "FelixKratz/formulae/borders"
 brew "jackielii/tap/skhd-zig"     # Hotkey daemon
 cask "anybar"                     # Status indicator
