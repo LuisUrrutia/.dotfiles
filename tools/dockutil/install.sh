@@ -19,27 +19,41 @@ TO_REMOVE_FROM_DOCK=(
   "com.apple.iWork.Keynote"
   "com.apple.iWork.Numbers"
   "com.apple.iWork.Pages"
+  "Brave Browser"
+  "com.brave.Browser"
 )
 for item in "${TO_REMOVE_FROM_DOCK[@]}"; do
   # Ignore errors if item doesn't exist
   "$bin_path" --remove "$item" --no-restart || true
 done
 
-# Add app to dock if it exists and isn't already there
-add_to_dock() {
+# Add app to dock if it exists, or move it into the preferred order if present
+place_in_dock() {
   local app="$1"
   local after="$2"
-  if app_exists "$app" && ! "$bin_path" --find "$app" &>/dev/null; then
+
+  if ! app_exists "$app"; then
+    return 1
+  fi
+
+  if "$bin_path" --find "$app" &>/dev/null; then
+    "$bin_path" --move "$app" --after "$after" --no-restart
+  else
     "$bin_path" --add "/Applications/${app}.app" --after "$after" --no-restart
   fi
 }
 
 # Add frequently used applications to the Dock
-add_to_dock "Ghostty" "com.apple.Notes"
-add_to_dock "Zed" "com.apple.Notes"
-add_to_dock "Cursor" "com.apple.Notes"
-add_to_dock "Brave Browser" "com.apple.Notes"
-add_to_dock "BusyCal" "com.apple.MobileSMS"
+anchor="com.apple.Notes"
+for app in "Ghostty" "cmux" "Zed" "Cursor" "Arc"; do
+  if place_in_dock "$app" "$anchor"; then
+    anchor="$app"
+  fi
+done
+
+if app_exists "BusyCal"; then
+  place_in_dock "BusyCal" "com.apple.MobileSMS"
+fi
 
 # Restart affected services to apply changes immediately
 killall -9 SystemUIServer
