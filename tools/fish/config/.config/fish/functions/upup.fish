@@ -10,14 +10,8 @@ function upup -d "updates different tools"
     end
 
     if command -q fnm
-        fnm install --lts
-        set -l lts_line (fnm list | string match -r '.*lts-latest.*')
-        if test -n "$lts_line"
-            set -l lts_version (string match -r 'v[0-9.]+' -- "$lts_line")
-            if test -n "$lts_version"
-                fnm default "$lts_version"
-            end
-        end
+        fnm install --lts --use --corepack-enabled
+        fnm default lts-latest
     else
         echo "[upup] fnm not found, skipping"
     end
