@@ -2,6 +2,15 @@
 # hyper = shift + ctrl + alt + cmd
 # meh = ctrl + alt + shift
 
+.define focus_space : yabai -m space --focus {{1}}
+.define move_space_to_display : yabai -m space --display {{1}}
+.define move_window_to_space : yabai -m window --space {{1}}
+.define open_terminal : open -a cmux || open -a Ghostty
+.define focus_stack_next : yabai -m window --focus stack.next || yabai -m window --focus next || yabai -m window --focus first
+.define focus_stack_prev : yabai -m window --focus stack.prev || yabai -m window --focus prev || yabai -m window --focus last
+.define focus_or_display : yabai -m window --focus {{1}} || yabai -m display --focus {{1}}
+.define swap_window : yabai -m window --swap {{1}} || yabai -m window --swap {{2}}
+
 # Define window management mode for warp/stack operations
 # Use anybar to indicate the mode: https://github.com/tonsky/AnyBar
 :: yabaimode @ : echo -n "red" | nc -4u -w0 localhost 1738
@@ -14,7 +23,7 @@ yabaimode < hyper - y ; default
 
 # Window toggle operations
 yabaimode < f : yabai -m window --toggle zoom-fullscreen
-yabaimode < 0x32 : yabai -m space --balance  # 0x32 = backtick/grave key (`)
+yabaimode < backtick : yabai -m space --balance
 
 # Move operations - shift + hjkl for moving
 yabaimode < shift - h : yabai -m window --move rel:-80:0
@@ -32,36 +41,36 @@ yabairesize < l : yabai -m window --resize right:20:0
 yabairesize < escape ; yabaimode
 
 # Application launchers
-hyper - 0x32 : open -a Ghostty  # 0x32 = backtick/grave key (`)
+hyper - backtick : @open_terminal
 f13 : open -a Slack
 f15 : open -a "Brave Browser"
 f16 : open -a WhatsApp
 f17 : open -a Zed
-f18 : open -a Ghostty; osascript -e 'tell application "Ghostty" to activate'
+f18 : @open_terminal
 
 # Named space focus
-alt - t : yabai -m space --focus terminal
-alt - c : yabai -m space --focus code
-alt - b : yabai -m space --focus web
-alt - w : yabai -m space --focus work
-alt - o : yabai -m space --focus other
-alt - s : yabai -m space --focus social
+alt - t : @focus_space("terminal")
+alt - c : @focus_space("code")
+alt - b : @focus_space("web")
+alt - w : @focus_space("work")
+alt - o : @focus_space("other")
+alt - s : @focus_space("social")
 
 # Move space to display
-hyper - q : yabai -m space --display 1
-hyper - w : yabai -m space --display 2
+hyper - q : @move_space_to_display("1")
+hyper - w : @move_space_to_display("2")
 
 # Quick space focus
-hyper - 1 : yabai -m space --focus terminal
-hyper - 2 : yabai -m space --focus code
-hyper - 3 : yabai -m space --focus web
-hyper - 4 : yabai -m space --focus work
+hyper - 1 : @focus_space("terminal")
+hyper - 2 : @focus_space("code")
+hyper - 3 : @focus_space("web")
+hyper - 4 : @focus_space("work")
 
-# Send window to space (meh = ctrl + alt + shift)
-ctrl + alt + shift - 1 : yabai -m window --space terminal
-ctrl + alt + shift - 2 : yabai -m window --space code
-ctrl + alt + shift - 3 : yabai -m window --space web
-ctrl + alt + shift - 4 : yabai -m window --space work
+# Send window to space
+meh - 1 : @move_window_to_space("terminal")
+meh - 2 : @move_window_to_space("code")
+meh - 3 : @move_window_to_space("web")
+meh - 4 : @move_window_to_space("work")
 
 # Toggle recent space
 hyper - tab : yabai -m space --focus recent
@@ -71,15 +80,15 @@ hyper - f : yabai -m window --toggle float
 hyper - c : yabai -m window --toggle float; yabai -m window --grid 6:6:1:1:4:4
 
 # Change window focus
-alt - j : yabai -m window --focus stack.next || yabai -m window --focus next || yabai -m window --focus first
-alt - k : yabai -m window --focus stack.prev || yabai -m window --focus prev || yabai -m window --focus last
-alt - h : yabai -m window --focus west || yabai -m display --focus west
-alt - l : yabai -m window --focus east || yabai -m display --focus east
+alt - j : @focus_stack_next
+alt - k : @focus_stack_prev
+alt - h : @focus_or_display("west")
+alt - l : @focus_or_display("east")
 
 # Stack window navigation (left-hand)
-hyper - a : yabai -m window --focus stack.prev || yabai -m window --focus prev || yabai -m window --focus last
-hyper - s : yabai -m window --focus stack.next || yabai -m window --focus next || yabai -m window --focus first
+hyper - a : @focus_stack_prev
+hyper - s : @focus_stack_next
 
-# Window swapping (meh = ctrl + alt + shift)
-ctrl + alt + shift - j : yabai -m window --swap south || yabai -m window --swap next
-ctrl + alt + shift - k : yabai -m window --swap north || yabai -m window --swap prev
+# Window swapping
+meh - j : @swap_window("south", "next")
+meh - k : @swap_window("north", "prev")
