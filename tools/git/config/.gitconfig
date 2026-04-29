@@ -11,7 +11,7 @@
   commitGraph = true
   # via https://youtu.be/aolI_Rz0ZqY?si=SXHJdhyfSkDQ81ry&t=1714
   # Enable only if working on large
-  fsmonitor = false
+  fsmonitor = true
   pager = delta
   preloadIndex = true
   untrackedCache = true
@@ -107,6 +107,7 @@
   pretty = format:%C(blue)%ad%Creset %C(yellow)%h%C(green)%d%Creset %C(blue)%s %C(magenta) [%an]%Creset
 [status]
   aheadBehind = true
+  compareBranches = @{upstream} @{push}
   showUntrackedFiles = normal
 [column]
   # via https://youtu.be/aolI_Rz0ZqY?si=9lzCkyrLCay3TiCR&t=1004
@@ -117,7 +118,7 @@
   writeCommitGraph = true
 [maintenance]
   auto = true
-  strategy = incremental
+  strategy = geometric
 [pack]
   threads = 0
 [index]
@@ -151,6 +152,9 @@
   whitespace = nowarn
 [http]
   version = HTTP/2
+  maxRetries = 3
+  retryAfter = 2
+  maxRetryTime = 60
 [advice]
   statusHints = false
   detachedHead = false

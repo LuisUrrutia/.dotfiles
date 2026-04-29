@@ -1,0 +1,141 @@
+#!/usr/bin/env swift
+// @version: 1.0.1
+
+import Cocoa
+
+let cliVersion = "1.0.1"
+let responseNotificationName = "com.reincubate.macos.cam.response"
+let notificationName = "com.reincubate.macos.cam.command"
+let appBundleID = "com.reincubate.macos.cam"
+
+let usageText = """
+
+Usage: camo-studio <command> [subcommand]
+
+Recording:
+  record start         Start recording
+  record stop          Stop recording
+  record toggle        Toggle recording state
+  snapshot             Take a snapshot
+
+Scenes:
+  scene <name>         Switch to specified scene
+  next-scene           Switch to next scene
+  previous-scene       Switch to previous scene
+
+Scene Collections:
+  collection <name>    Switch to specified scene collection
+  next-collection      Switch to next scene collection
+  previous-collection  Switch to previous scene collection
+
+Video Feed:
+  feed resume          Resume video feed
+  feed pause           Pause video feed
+  feed toggle          Toggle video feed
+
+Profile:
+  profile <name>       Switch to specified profile
+
+Other:
+  update-thumbnail     Update current thumbnail
+  settings <tab>       Open settings to specified tab
+                       Tabs: video, audio, layers
+
+Examples:
+  camo-studio scene "Meeting & Presenting"
+  camo-studio record start
+  camo-studio collection "Work Setup"
+  camo-studio profile "FHD"
+
+Options:
+-h, --help         Show this help message
+"""
+
+func isAppRunning() -> Bool {
+    NSWorkspace.shared.runningApplications.contains {
+        $0.bundleIdentifier == appBundleID
+    }
+}
+
+func launchApp() {
+    let workspace = NSWorkspace.shared
+    guard let appURL = workspace.urlForApplication(withBundleIdentifier: appBundleID) else {
+        print("Error: Cannot find application")
+        exit(1)
+    }
+
+    let config = NSWorkspace.OpenConfiguration()
+    config.activates = false
+    workspace.openApplication(at: appURL, configuration: config, completionHandler: nil)
+    
+    // Wait a bit for app to launch
+    Thread.sleep(forTimeInterval: 3.0)
+}
+
+// Show help if requested or if no arguments provided
+if CommandLine.arguments.count == 1 || CommandLine.arguments.contains("-h") || CommandLine.arguments.contains("--help") {
+    print(usageText)
+    exit(0)
+}
+
+// Show version if requested
+if CommandLine.arguments.contains("-v") || CommandLine.arguments.contains("--version") {
+    print("camo-studio CLI version \(cliVersion)")
+    exit(0)
+}
+
+// Launch app if not running
+if !isAppRunning() {
+    launchApp()
+}
+
+var commandSuccess = false
+var errorMessage: String?
+var responseReceived = false
+
+let runLoop = CFRunLoopGetCurrent()
+
+let timeoutTimer = Timer(timeInterval: 5.0, repeats: false) { _ in
+    responseReceived = false
+    CFRunLoopStop(runLoop)
+}
+
+// Set up response observer
+DistributedNotificationCenter.default().addObserver(
+    forName: NSNotification.Name(responseNotificationName),
+    object: nil,
+    queue: .main
+) { notification in
+
+    if let success = notification.userInfo?["success"] as? Bool {
+        commandSuccess = success
+        errorMessage = notification.userInfo?["error"] as? String
+    }
+    responseReceived = true
+    CFRunLoopStop(runLoop)
+}
+
+// Send command to app
+DistributedNotificationCenter.default().postNotificationName(
+    NSNotification.Name(notificationName),
+    object: nil,
+    userInfo: [
+        "arguments": Array(CommandLine.arguments.dropFirst())
+    ],
+    deliverImmediately: true
+)
+
+CFRunLoopRun()
+
+if !responseReceived {
+    print("Error: Command timed out waiting for response")
+    exit(1)
+}
+
+// Handle response
+if !commandSuccess {
+    print("Error: \(errorMessage ?? "Command failed")")
+    exit(1)
+}
+
+exit(0)
