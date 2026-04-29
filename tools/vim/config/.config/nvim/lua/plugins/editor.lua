@@ -2,10 +2,12 @@ return {
     {
         -- `gc` and `gb` to comment/uncomment
         'numToStr/Comment.nvim',
+        keys = { 'gc', 'gb' },
         opts = {}
     },
     {
         'echasnovski/mini.surround',
+        event = 'VeryLazy',
         version = '*'
     },
     {
@@ -49,7 +51,7 @@ return {
     },
     {
         'lewis6991/gitsigns.nvim',
-        lazy = false,
+        event = { 'BufReadPre', 'BufNewFile' },
         opts = {
             current_line_blame = true,
             current_line_blame_opts = {

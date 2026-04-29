@@ -1,4 +1,6 @@
-local parsers = {
+local M = {}
+
+M.parsers = {
     'lua',
     'python',
     'rust',
@@ -18,7 +20,10 @@ local parsers = {
     'bash'
 }
 
-require 'nvim-treesitter'.install(parsers)
+function M.install()
+    require("lazy").load({ plugins = { "nvim-treesitter" } })
+    vim.cmd("TSInstallSync " .. table.concat(M.parsers, " "))
+end
 
 vim.api.nvim_create_autocmd('FileType', {
     pattern = {
@@ -51,3 +56,5 @@ vim.api.nvim_create_autocmd('FileType', {
         vim.wo.foldexpr = 'v:lua.vim.treesitter.foldexpr()'
     end,
 })
+
+return M

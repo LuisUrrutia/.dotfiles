@@ -1,9 +1,10 @@
 return {
-    { "neovim/nvim-lspconfig", },
-    { "mason-org/mason.nvim",  opts = {} },
+    { "neovim/nvim-lspconfig" },
+    { "mason-org/mason.nvim", opts = {} },
     {
         "mason-org/mason-lspconfig.nvim",
         opts = {
+            automatic_enable = true,
             ensure_installed = {
                 "rust_analyzer",
                 "lua_ls",
@@ -21,17 +22,16 @@ return {
         config = function(_, opts)
             local capabilities = require("cmp_nvim_lsp").default_capabilities()
 
-            for _, server in ipairs(opts.ensure_installed) do
-                vim.lsp.config(server, {
-                    capabilities = capabilities,
-                })
-            end
+            vim.lsp.config("*", {
+                capabilities = capabilities,
+            })
 
             require("mason-lspconfig").setup(opts)
         end,
     },
     {
         "hrsh7th/nvim-cmp",
+        event = "InsertEnter",
         dependencies = {
             'neovim/nvim-lspconfig',
             'hrsh7th/cmp-nvim-lsp',

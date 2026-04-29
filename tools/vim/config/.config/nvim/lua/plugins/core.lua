@@ -1,19 +1,22 @@
 return {
     {
         "nvim-treesitter/nvim-treesitter",
-        lazy = false,
+        event = { "BufReadPre", "BufNewFile" },
         build = ":TSUpdate"
     },
     {
         "nvim-treesitter/nvim-treesitter-context",
         dependencies = { "nvim-treesitter/nvim-treesitter" },
+        event = { "BufReadPre", "BufNewFile" },
     },
     {
         'nvim-telescope/telescope-fzf-native.nvim',
+        lazy = true,
         build = 'cmake -S. -Bbuild -DCMAKE_BUILD_TYPE=Release && cmake --build build --config Release --target install'
     },
     {
         'nvim-telescope/telescope-frecency.nvim',
+        lazy = true,
         version = "*",
     },
     {
@@ -69,23 +72,24 @@ return {
             })
             require('telescope').load_extension('fzf')
             require('telescope').load_extension('frecency')
-            require("telescope").load_extension("fidget")
-
-            local builtin = require('telescope.builtin')
-            vim.keymap.set('n', '<C-p>', builtin.git_files, { desc = 'Search git files' })
-            vim.keymap.set('n', '<leader>sf', ':Telescope frecency workspace=CWD<CR>', { desc = '[S]earch [F]iles' })
-            vim.keymap.set('n', '<leader>sg', builtin.live_grep, { desc = '[S]earch by [G]rep' })
-            vim.keymap.set('n', '<leader>ss', builtin.grep_string, { desc = '[S]earch by [S]tring' })
-            vim.keymap.set('n', '<leader>sh', builtin.help_tags, { desc = '[S]earch [H]elp' })
-        end
+        end,
+        keys = {
+            { '<C-p>', function() require('telescope.builtin').git_files() end, desc = 'Search git files' },
+            { '<leader>sf', '<cmd>Telescope frecency workspace=CWD<cr>', desc = '[S]earch [F]iles' },
+            { '<leader>sg', function() require('telescope.builtin').live_grep() end, desc = '[S]earch by [G]rep' },
+            { '<leader>ss', function() require('telescope.builtin').grep_string() end, desc = '[S]earch by [S]tring' },
+            { '<leader>sh', function() require('telescope.builtin').help_tags() end, desc = '[S]earch [H]elp' },
+        },
     },
     {
         -- Use :Git
         'tpope/vim-fugitive',
+        cmd = { 'Git' },
+        keys = {
+            { '<leader>gs', '<cmd>Git<cr>', desc = 'Git status' },
+        },
         config = function()
             -- Config stolen from https://github.com/ThePrimeagen/init.lua/blob/master/lua/theprimeagen/lazy/fugitive.lua
-            vim.keymap.set("n", "<leader>gs", vim.cmd.Git)
-
             local ThePrimeagen_Fugitive = vim.api.nvim_create_augroup("ThePrimeagen_Fugitive", {})
 
             local autocmd = vim.api.nvim_create_autocmd
@@ -114,14 +118,11 @@ return {
                     vim.keymap.set("n", "<leader>t", ":Git push -u origin ", opts);
                 end,
             })
-
-
-            vim.keymap.set("n", "gu", "<cmd>diffget //2<CR>")
-            vim.keymap.set("n", "gh", "<cmd>diffget //3<CR>")
         end
     },
     {
         "j-hui/fidget.nvim",
+        event = "LspAttach",
         opts = {
             -- options
         },

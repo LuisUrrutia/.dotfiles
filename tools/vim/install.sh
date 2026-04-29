@@ -7,3 +7,4 @@ require_brew_bin nvim
 stow_config vim
 
 "$bin_path" --headless "+Lazy! sync" +qa
+"$bin_path" --headless "+lua require('config.treesitter').install()" +qa
