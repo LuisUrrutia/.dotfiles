@@ -3,7 +3,7 @@ status is-interactive; or return
 alias ls 'eza --icons --color=auto --group-directories-first --octal-permissions'
 alias ll 'ls --git -alhF'
 alias tree 'ls --tree'
-alias vim 'nvim'
+alias vim nvim
 
 alias tldr 'tldr --config ~/.config/tlrc/config.toml'
 
@@ -24,7 +24,7 @@ alias clean-rust "cd $TMPDIR/../C/ && rm -rf com.Facepunch-Studios-LTD.Rust/"
 alias cursor 'open $argv -a "Cursor"'
 alias ip 'dig +short myip.opendns.com @resolver1.opendns.com || \curl https://checkip.amazonaws.com'
 
-alias sha256sum "gsha256sum"
-alias sed "gsed"
-alias tar "gtar"
-alias grep "ggrep"
+alias sha256sum gsha256sum
+alias sed gsed
+alias tar gtar
+alias grep ggrep

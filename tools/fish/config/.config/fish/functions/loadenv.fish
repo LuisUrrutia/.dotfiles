@@ -86,6 +86,6 @@ function loadenv
             case unload
                 set -e $key
         end
-    end < "$dotenv_file"
+    end <"$dotenv_file"
 
 end

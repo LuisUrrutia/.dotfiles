@@ -13,4 +13,4 @@ grep -qxF "$bin_path" /etc/shells || sudo sh -c "echo \"$bin_path\" >> /etc/shel
 chsh -s "$bin_path"
 
 # Install fish plugins
-"$bin_path" -C "fisher update"
+"$bin_path" --command "source \"$HOME/.config/fish/config.fish\"; fisher update"

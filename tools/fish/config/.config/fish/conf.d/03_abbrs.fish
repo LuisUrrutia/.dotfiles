@@ -1,7 +1,7 @@
 status is-interactive; or return
 
-abbr -a -- find 'fd'
-abbr -a -- top 'btop'
+abbr -a -- find fd
+abbr -a -- top btop
 
 # brew
 abbr -a -- brewup 'brew update && brew upgrade && brew autoremove && brew cleanup --prune=all && brew doctor'
@@ -73,14 +73,6 @@ abbr -a -- gbb 'git bisect bad'
 abbr -a -- gstaa 'git stash'
 abbr -a -- gbn 'git branch-name'
 abbr -a -- grbs 'git recent-branches'
-
-abbr -a -- gwl 'git worktree list'
-abbr -a -- gwrm 'git worktree remove'
-abbr -a -- gwp 'git worktree prune'
-abbr -a -- gwa 'git worktree add'
-abbr -a -- gwmv 'git worktree move'
-abbr -a -- gwlock 'git worktree lock'
-abbr -a -- gwunlock 'git worktree unlock'
 
 abbr -a -- amend 'git commit --amend'
 abbr -a -- unstage 'git reset HEAD'

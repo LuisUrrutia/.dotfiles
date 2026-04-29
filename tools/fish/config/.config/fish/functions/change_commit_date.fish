@@ -7,8 +7,14 @@ function change_commit_date -d "Change the date of the most recent commit"
         return 1
     end
 
-    command -q git; or begin; echo "Error: git not found."; return 1; end
-    command -q gdate; or begin; echo "Error: gdate not found. Install coreutils."; return 1; end
+    command -q git; or begin
+        echo "Error: git not found."
+        return 1
+    end
+    command -q gdate; or begin
+        echo "Error: gdate not found. Install coreutils."
+        return 1
+    end
 
     git rev-parse --is-inside-work-tree >/dev/null 2>/dev/null; or begin
         echo "Error: not inside a Git repository."

@@ -61,7 +61,7 @@ function git_change_remote -d "Change git remote between SSH and HTTPS protocols
 
     # Build new URL in the requested protocol.
     set -l new_url
-    if test "$target_proto" = "ssh"
+    if test "$target_proto" = ssh
         set new_url "git@$host:$repo_path"
     else
         set new_url "https://$host/$repo_path"
