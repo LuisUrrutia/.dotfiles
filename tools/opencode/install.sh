@@ -4,6 +4,15 @@ source "${DOTFILES:-$HOME/.dotfiles}/tools/lib.sh"
 
 OPENCODE_CONFIG_DIR="$HOME/.config/opencode"
 
+OPENCODE_SKILLS=(
+  "https://github.com/zed-industries/zed humanizer"
+  "https://github.com/anthropics/skills skill-creator"
+  "https://github.com/vercel-labs/agent-skills vercel-composition-patterns"
+  "https://github.com/nextlevelbuilder/ui-ux-pro-max-skill ui-ux-pro-max"
+  "LuisUrrutia/skills commit"
+  "LuisUrrutia/skills pr"
+)
+
 install_oh_my_opencode() {
   if [[ -f "$OPENCODE_CONFIG_DIR/oh-my-openagent.json" || -f "$OPENCODE_CONFIG_DIR/oh-my-openagent.jsonc" ]]; then
     echo "Oh My OpenAgent already configured"
@@ -23,6 +32,26 @@ install_oh_my_opencode() {
   "${omo_command[@]}" install --no-tui --skip-auth
 }
 
+install_opencode_skills() {
+  if ! command -v npx >/dev/null 2>&1; then
+    echo "Warning: npx not found, skipping OpenCode skills" >&2
+    return
+  fi
+
+  local skill_source skill_name
+  for skill in "${OPENCODE_SKILLS[@]}"; do
+    skill_source="${skill% *}"
+    skill_name="${skill##* }"
+
+    if [[ -d "$OPENCODE_CONFIG_DIR/skills/$skill_name" ]]; then
+      echo "OpenCode skill $skill_name already installed"
+      continue
+    fi
+
+    npx skills add "$skill_source" --skill "$skill_name" -g -y
+  done
+}
+
 # Install OpenCode via curl because brew one is throttling it to 10 releases
 if [[ ! -x "$HOME/.opencode/bin/opencode" ]]; then
   curl -fsSL https://opencode.ai/install | bash
@@ -32,3 +61,4 @@ export PATH="$HOME/.opencode/bin:$PATH"
 
 stow_config opencode
 install_oh_my_opencode
+install_opencode_skills
