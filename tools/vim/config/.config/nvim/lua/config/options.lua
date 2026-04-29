@@ -1,17 +1,32 @@
 vim.g.mapleader = ' '
 vim.g.maplocalleader = ' '
 
+vim.opt.termguicolors = true
 vim.opt.background = "dark"       -- used for highlight colors
+vim.opt.signcolumn = "yes"
 vim.opt.ignorecase = true         -- ignore case in search patterns
 vim.opt.inccommand = 'split'      -- Live preview of substitution
+vim.opt.completeopt = { "menu", "menuone", "noselect" }
 vim.opt.sidescroll = 1            -- minimum number of columns to scroll horizontal
 vim.opt.sidescrolloff = 15        -- min. nr. of columns to left and right of cursor
 vim.opt.scrolloff = 8             -- minimum nr. of lines above and below cursor
+vim.opt.updatetime = 200
+vim.opt.timeoutlen = 300
+vim.opt.confirm = true
 vim.opt.showmatch = true          -- briefly jump to matching bracket if insert one
 vim.opt.showmode = true           -- message on status line to show current mode
 vim.opt.smartcase = true          -- no ignore case when pattern has uppercase
 vim.opt.visualbell = true         -- use visual bell instead of beeping
 vim.opt.wildmode = "list:longest" -- mode for 'wildchar' command-line expansion
+
+vim.api.nvim_create_autocmd("UIEnter", {
+    callback = function()
+        if vim.fn.has("clipboard") == 1 then
+            vim.opt.clipboard = "unnamedplus"
+        end
+    end,
+    once = true,
+})
 
 -- files matching these patterns are not completed
 vim.opt.wildignore:append({

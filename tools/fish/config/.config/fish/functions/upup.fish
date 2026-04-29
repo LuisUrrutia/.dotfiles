@@ -31,6 +31,7 @@ function upup -d "updates different tools"
 
     if command -q nvim
         nvim --headless "+Lazy! sync" +qa
+        nvim --headless "+lua require('config.treesitter').install()" +qa
     else
         echo "[upup] nvim not found, skipping"
     end
