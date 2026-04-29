@@ -1,4 +1,4 @@
-status is-interactive || exit
+status is-interactive; or return
 
 abbr -a -- find 'fd'
 abbr -a -- top 'btop'
@@ -22,7 +22,6 @@ abbr -a -- gds 'git diff --staged -w'
 abbr -a -- gsta 'git stash'
 abbr -a -- gsw 'git switch'
 abbr -a -- gsh 'git show'
-abbr -a -- gshw 'git show'
 abbr -a -- gc 'git commit'
 abbr -a -- gcm 'git commit -m'
 abbr -a -- gco 'git checkout'
@@ -43,17 +42,25 @@ abbr -a -- gfap 'git fetch --all --prune'
 abbr -a -- gb 'git branch -v'
 abbr -a -- gpl 'git pull'
 
-function gpll
-    echo "git pull origin $(git rev-parse --abbrev-ref HEAD)"
+function __abbr_git_current_branch -d "Print the current Git branch for abbreviations"
+    set -l branch (git branch --show-current 2>/dev/null)
+    test -n "$branch"; or return 1
+    echo $branch
 end
-abbr -a gpll --position command --function gpll
+
+function __abbr_gpll -d "Expand to pull current branch from origin"
+    set -l branch (__abbr_git_current_branch); or return 1
+    echo "git pull origin $branch"
+end
+abbr -a gpll --position command --function __abbr_gpll
 abbr -a -- gplr 'git pull --rebase'
 abbr -a -- gps 'git push'
 
-function gpsh
-    echo "git push -u origin $(git rev-parse --abbrev-ref HEAD)"
+function __abbr_gpsh -d "Expand to push current branch to origin"
+    set -l branch (__abbr_git_current_branch); or return 1
+    echo "git push -u origin $branch"
 end
-abbr -a gpsh --position command --function gpsh
+abbr -a gpsh --position command --function __abbr_gpsh
 abbr -a -- gpshf 'git push --force-with-lease --force-if-includes'
 abbr -a -- grs 'git reset'
 abbr -a -- grsh 'git reset --hard'
@@ -63,7 +70,7 @@ abbr -a -- gclndfx 'git clean -dfx'
 abbr -a -- gt 'git tag'
 abbr -a -- gbg 'git bisect good'
 abbr -a -- gbb 'git bisect bad'
-abbr -a -- gstaa 'git staash'
+abbr -a -- gstaa 'git stash'
 abbr -a -- gbn 'git branch-name'
 abbr -a -- grbs 'git recent-branches'
 

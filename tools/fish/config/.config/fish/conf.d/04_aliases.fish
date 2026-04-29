@@ -1,4 +1,4 @@
-status is-interactive || exit
+status is-interactive; or return
 
 alias ls 'eza --icons --color=auto --group-directories-first --octal-permissions'
 alias ll 'ls --git -alhF'

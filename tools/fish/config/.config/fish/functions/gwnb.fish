@@ -4,13 +4,14 @@ function gwnb -d "Git worktree new branch"
         return 1
     end
 
+    command -q git; or begin; echo "Error: git not found."; return 1; end
+
     set -l branch_name $argv[1]
-    set -l folder_name (basename $branch_name)
+    set -l folder_name (path basename -- "$branch_name")
     set -l worktree_path "../$folder_name"
 
-    git worktree add $worktree_path -b $branch_name
+    git worktree add "$worktree_path" -b "$branch_name"
     and echo "git worktree add $worktree_path -b $branch_name"
     and echo "Created new worktree at $worktree_path for branch '$branch_name'"
-    and cd $worktree_path
+    and cd -- "$worktree_path"
 end
-

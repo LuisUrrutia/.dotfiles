@@ -41,9 +41,9 @@ function upup -d "updates different tools"
         echo "[upup] mo not found, skipping"
     end
 
-    # Fish update should be at the end of the function.
+    # Fish plugin update should be at the end of the function.
     if command -q fish
-        command fish -C "fisher update"
+        command fish -ic "fisher update"
     else
         echo "[upup] fish not found, skipping fisher update"
     end

@@ -1,6 +1,10 @@
-function random_phrase
-    # Define arrays of phrases
-    set short_phrases \
+function random_phrase -d "Print a random motivational phrase"
+    command -q figlet; or return 0
+    command -q lolcrab; or return 0
+    command -q shuf; or return 0
+    command -q tput; or return 0
+
+    set -l short_phrases \
         "Change is the only constant" \
         "Stay hungry, stay foolish" \
         "Failure teaches success" \
@@ -10,7 +14,7 @@ function random_phrase
         "Knowledge is power" \
         "Grow 1% every day"
 
-    set long_phrases \
+    set -l long_phrases \
         "Be productive early. Do not fuck around all day" \
         "Be fucking practical. Success is not a theory" \
         "Stop bullshitting. It is fucking embarrassing" \
@@ -23,16 +27,14 @@ function random_phrase
         "Actions speak louder than words" \
         "Fail by action, not inaction"
 
-    set cols (tput cols)
+    set -l cols (tput cols 2>/dev/null)
+    test -n "$cols"; or set cols 80
 
-    set phrases_to_use
-    if test $cols -lt 90
-        set phrases_to_use $short_phrases
-    else
+    set -l phrases_to_use $short_phrases
+    if test $cols -ge 90
         set phrases_to_use $short_phrases $long_phrases
     end
 
-    set random_phrase (printf "%s\n" $phrases_to_use | shuf -n 1)
-
-    figlet -w $cols "$random_phrase" | lolcrab -g cool
+    set -l phrase (printf "%s\n" $phrases_to_use | shuf -n 1)
+    figlet -w $cols "$phrase" | lolcrab -g cool
 end
