@@ -39,6 +39,7 @@ brew "openjdk"         # Java Development Kit
 # Shell and Terminal
 # ==============================================================================
 cask "ghostty"   # Terminal emulator
+cask "cmux"      # Terminal for AI coding agents
 brew "fish"      # Shell
 brew "fisher"    # Fish plugin manager
 brew "tmux"      # Terminal multiplexer
@@ -122,7 +123,7 @@ cask "macfuse"       # File system integration
 # ------------------------------------------------------------------------------
 # Web Browsers
 # ------------------------------------------------------------------------------
-cask "brave-browser" # Privacy-focused browser
+cask "arc" # Chromium-based browser
 
 # ------------------------------------------------------------------------------
 # Productivity
