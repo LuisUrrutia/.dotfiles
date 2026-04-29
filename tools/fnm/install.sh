@@ -4,33 +4,34 @@ source "${DOTFILES:-$HOME/.dotfiles}/tools/lib.sh"
 
 require_brew_bin fnm
 
-eval "$("$bin_path" env --shell bash)"
+eval "$("$bin_path" env --use-on-cd --version-file-strategy=recursive --corepack-enabled --shell bash)"
 
-# Install Node LTS if not already installed
-if ! "$bin_path" list | grep -q "lts-latest"; then
-  "$bin_path" install --lts
-  echo "Installed Node LTS"
-fi
+# Install and use the latest Node LTS.
+"$bin_path" install --lts --use --corepack-enabled
 
-# Set LTS as default if not already
-current_default=$("$bin_path" default 2>/dev/null || true)
-if [[ "$current_default" != *"lts-latest"* ]]; then
-  "$bin_path" default lts-latest
-  echo "Set lts-latest as default Node version"
-fi
+# Keep the latest LTS as the default Node version.
+"$bin_path" default lts-latest
 
-# Install pnpm via corepack if not already enabled
-if ! command -v pnpm &>/dev/null; then
-  corepack enable pnpm
-  echo "Enabled pnpm via corepack"
+# Install pnpm via corepack if available from the active Node version.
+if command -v corepack &>/dev/null; then
+  corepack enable
+  corepack prepare pnpm@latest --activate
+else
+  echo "Warning: corepack not found, skipping pnpm setup" >&2
+  exit 0
 fi
 
 # Set up pnpm environment
 export PNPM_HOME="$HOME/Library/pnpm"
 export PATH="$PNPM_HOME:$PATH"
 
+if ! command -v pnpm &>/dev/null; then
+  echo "Warning: pnpm not found, skipping global package setup" >&2
+  exit 0
+fi
+
 # Install global packages if not already installed
-if ! pnpm list -g agent-browser &>/dev/null; then
+if ! command -v agent-browser &>/dev/null; then
   pnpm install -g agent-browser
   echo "Installed agent-browser globally"
 fi
