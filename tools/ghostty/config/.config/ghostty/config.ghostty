@@ -1,5 +1,5 @@
 # Theme
-theme = catppuccin-mocha
+theme = dark:catppuccin-mocha,light:catppuccin-latte
 
 # Font - Monaspace Neon Nerd Font
 font-family = "MonaspiceNe Nerd Font Mono"
@@ -18,8 +18,8 @@ cursor-style = block
 cursor-style-blink = false
 
 # Shell
-shell-integration = fish
-shell-integration-features = cursor,sudo,title
+shell-integration = detect
+shell-integration-features = cursor,sudo,title,ssh-terminfo,ssh-env
 
 # macOS
 macos-option-as-alt = true
@@ -29,4 +29,4 @@ macos-icon = custom
 window-save-state = always
 
 # Keybindings
-keybind = global:cmd+grave_accent=toggle_quick_terminal
+keybind = global:super+backquote=toggle_quick_terminal
