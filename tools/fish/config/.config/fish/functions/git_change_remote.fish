@@ -2,6 +2,11 @@ function git_change_remote -d "Change git remote between SSH and HTTPS protocols
     # Usage: git_change_remote [ssh|https]
     # Default behavior: toggles between ssh and https
 
+    if test (count $argv) -gt 1
+        echo "Usage: git_change_remote [ssh|https]"
+        return 1
+    end
+
     # Get current remote URL
     set -l url (git remote get-url origin 2>/dev/null)
     if test -z "$url"
@@ -33,7 +38,7 @@ function git_change_remote -d "Change git remote between SSH and HTTPS protocols
 
     # Determine target protocol.
     set -l target_proto
-    if test (count $argv) -gt 0
+    if test (count $argv) -eq 1
         switch "$argv[1]"
             case ssh https
                 set target_proto "$argv[1]"
