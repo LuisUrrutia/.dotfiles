@@ -3,7 +3,7 @@
 # Git proxy script that disables paging when running in AI agents
 # Checks for agent environment variables and adjusts git behavior accordingly
 
-if [[ "$CURSOR_AGENT" = "1" ]] || [[ "$CLAUDECODE" = "1" ]]; then
+if [[ "${CURSOR_AGENT:-}" = "1" ]] || [[ "${CLAUDECODE:-}" = "1" ]]; then
   # When running in AI agents, disable pager to prevent issues with output
   /opt/homebrew/bin/git -c core.pager=cat "$@"
 else
