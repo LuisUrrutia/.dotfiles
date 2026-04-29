@@ -21,8 +21,7 @@ vim.opt.wildignore:append({
 })
 
 vim.opt.foldenable = false                           -- set to display all folds open
-vim.opt.foldmethod = "expr"                          -- folding type
-vim.opt.foldexpr = "v:lua.vim.treesitter.foldexpr()" -- use treesitter folding
+vim.opt.foldmethod = "manual"                        -- enable smarter folding per filetype
 vim.opt.foldlevelstart = 99                          -- Start with all folds open
 vim.opt.linebreak = true                             -- wrap long lines at a blank
 vim.opt.number = true                                -- print the line number in front of each line

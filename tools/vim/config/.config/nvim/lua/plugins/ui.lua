@@ -18,7 +18,7 @@ return {
     {
         'nvimdev/dashboard-nvim',
         event = 'VimEnter',
-        config = {
+        opts = {
             hide = {
                 statusline = false
             },

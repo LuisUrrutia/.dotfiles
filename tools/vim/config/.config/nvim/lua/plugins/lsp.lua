@@ -16,7 +16,19 @@ return {
         dependencies = {
             "mason-org/mason.nvim",
             "neovim/nvim-lspconfig",
+            "hrsh7th/cmp-nvim-lsp",
         },
+        config = function(_, opts)
+            local capabilities = require("cmp_nvim_lsp").default_capabilities()
+
+            for _, server in ipairs(opts.ensure_installed) do
+                vim.lsp.config(server, {
+                    capabilities = capabilities,
+                })
+            end
+
+            require("mason-lspconfig").setup(opts)
+        end,
     },
     {
         "hrsh7th/nvim-cmp",
@@ -28,7 +40,6 @@ return {
             'hrsh7th/cmp-cmdline',
             "L3MON4D3/LuaSnip",
             "saadparwaiz1/cmp_luasnip",
-            "onsails/lspkind.nvim",
             "roobert/tailwindcss-colorizer-cmp.nvim",
         },
         config = function()
@@ -64,7 +75,6 @@ return {
                     { name = "nvim_lsp" },
                     { name = "buffer" },
                     { name = "path" },
-                    { name = "tailwindcss-colorizer-cmp" },
                     { name = "luasnip" },
                 }),
             })
