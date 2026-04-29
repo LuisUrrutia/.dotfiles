@@ -1,12 +1,12 @@
 function nuke -d "Kill unwanted background processes"
     # Define process patterns to kill
     set -l process_patterns \
-        "Adobe" \
-        "Creative" \
-        "FortiClient" \
-        "Logitech" \
-        "lghub" \
-        "toolbox-helper"
+        Adobe \
+        Creative \
+        FortiClient \
+        Logitech \
+        lghub \
+        toolbox-helper
 
     set -l total_killed 0
     set -l dry_run false
@@ -24,7 +24,7 @@ function nuke -d "Kill unwanted background processes"
         end
     end
 
-    if test "$dry_run" = "true"
+    if test "$dry_run" = true
         echo "DRY RUN - Processes that would be killed:"
         echo "=========================================="
     end
@@ -36,7 +36,7 @@ function nuke -d "Kill unwanted background processes"
         set -l pids (pgrep -f "$pattern" 2>/dev/null | string match -v -- "$current_pid")
 
         if test (count $pids) -gt 0
-            if test "$dry_run" = "true"
+            if test "$dry_run" = true
                 echo "Pattern '$pattern':"
                 set -l pid_list (string join , $pids)
                 ps -p "$pid_list" -o pid,ppid,comm,args 2>/dev/null | string collect
@@ -56,13 +56,13 @@ function nuke -d "Kill unwanted background processes"
                 end
             end
         else
-            if test "$dry_run" = "true"
+            if test "$dry_run" = true
                 echo "Pattern '$pattern': No processes found"
             end
         end
     end
 
-    if test "$dry_run" = "false"
+    if test "$dry_run" = false
         if test $total_killed -gt 0
             echo ""
             echo "Successfully killed $total_killed process(es)"
