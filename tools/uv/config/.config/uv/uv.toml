@@ -1,0 +1,4 @@
+# User-level uv defaults for dotfiles-managed machines.
+native-tls = true
+python-preference = "managed"
+compile-bytecode = true
