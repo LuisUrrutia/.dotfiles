@@ -62,6 +62,12 @@ defaults write com.apple.screensaver askForPasswordDelay -int 0
 mkdir -p "${HOME}/Pictures/Screenshots"
 defaults write com.apple.screencapture location -string "${HOME}/Pictures/Screenshots"
 
+# Save screenshots as PNG for lossless output and broad tooling support
+defaults write com.apple.screencapture type -string "png"
+
+# Disable window shadows in screenshots for cleaner documentation images
+defaults write com.apple.screencapture disable-shadow -bool true
+
 # Set screen saver to start before display sleep to avoid warning
 # Default screen saver start time: 15 minutes (900 seconds)
 defaults -currentHost write com.apple.screensaver idleTime -int 900
@@ -76,6 +82,9 @@ defaults write com.apple.finder QuitMenuItem -bool true
 # Show all filename extensions in Finder
 # Makes file types more visible, which is helpful for developers
 defaults write NSGlobalDomain AppleShowAllExtensions -bool true
+
+# Show hidden files in Finder for dotfiles and development directories
+defaults write com.apple.finder AppleShowAllFiles -bool true
 
 # Disable the warning when changing a file extension
 defaults write com.apple.finder FXEnableExtensionChangeWarning -bool false
@@ -104,6 +113,18 @@ defaults write com.apple.finder FXDefaultSearchScope -string "SCcf"
 
 # Show path bar at bottom of Finder windows
 defaults write com.apple.finder ShowPathbar -bool true
+
+# Show Finder status bar with item counts and free space
+defaults write com.apple.finder ShowStatusBar -bool true
+
+# Show full POSIX path in Finder window titles
+defaults write com.apple.finder _FXShowPosixPathInTitle -bool true
+
+# Avoid writing .DS_Store files to network volumes
+defaults write com.apple.desktopservices DSDontWriteNetworkStores -bool true
+
+# Avoid writing .DS_Store files to USB volumes
+defaults write com.apple.desktopservices DSDontWriteUSBStores -bool true
 
 ###############################################################################
 # Dock & Menu Bar                                                             #
@@ -187,11 +208,36 @@ sudo pmset -b sleep 15
 # Removes confirmation for applications downloaded from the internet
 defaults write com.apple.LaunchServices LSQuarantine -bool false
 
+# Expand save panels by default to expose paths and advanced options
+defaults write NSGlobalDomain NSNavPanelExpandedStateForSaveMode -bool true
+defaults write NSGlobalDomain NSNavPanelExpandedStateForSaveMode2 -bool true
+
+# Expand print panels by default to expose advanced options
+defaults write NSGlobalDomain PMPrintingExpandedStateForPrint -bool true
+defaults write NSGlobalDomain PMPrintingExpandedStateForPrint2 -bool true
+
+# Use plain text by default in TextEdit
+defaults write com.apple.TextEdit RichText -int 0
+
+# Use UTF-8 for TextEdit open and save operations
+defaults write com.apple.TextEdit PlainTextEncoding -int 4
+defaults write com.apple.TextEdit PlainTextEncodingForWrite -int 4
+
+# Enable Safari developer tools
+defaults write com.apple.Safari IncludeDevelopMenu -bool true
+defaults write com.apple.Safari WebKitDeveloperExtrasEnabledPreferenceKey -bool true
+
+# Enable WebKit developer extras in supported web views
+defaults write NSGlobalDomain WebKitDeveloperExtras -bool true
+
+# Show developer-focused crash reporter dialogs
+defaults write com.apple.CrashReporter DialogType -string "developer"
+
 # Prevent Time Machine from prompting to use new hard drives as backup volume
 defaults write com.apple.TimeMachine DoNotOfferNewDisksForBackup -bool true
 
 # Add a shortcut for deleting messages in Messages. Conversation > Delete Conversation is Opt+Cmd+9
-defaults write com.apple.MobileSMS NSUserKeyEquivalents -dict "Delete Conversation..." -string "@~9"
+# defaults write com.apple.MobileSMS NSUserKeyEquivalents -dict "Delete Conversation..." -string "@~9"
 
 # Automatically quit printer app once the print jobs complete
 defaults write com.apple.print.PrintingPrefs "Quit When Finished" -bool true
