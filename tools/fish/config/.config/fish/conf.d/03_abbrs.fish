@@ -30,6 +30,7 @@ abbr -a -- du 'du -h -d 2'
 abbr -a -- df 'df -h'
 
 # git
+abbr -a -- gs 'git status'
 abbr -a -- gd 'git diff'
 abbr -a -- gdc 'git diff --cached -w'
 abbr -a -- gds 'git diff --staged -w'
@@ -41,6 +42,7 @@ abbr -a -- gc 'git commit'
 abbr -a -- gcm 'git commit -m'
 abbr -a -- gco 'git checkout'
 abbr -a -- gnb 'git switch -c'
+abbr -a -- ga 'git add'
 abbr -a -- gm 'git merge'
 abbr -a -- gms 'git merge --squash'
 abbr -a -- grv 'git remote -v'
@@ -55,6 +57,7 @@ abbr -a -- gfp 'git fetch --prune'
 abbr -a -- gfa 'git fetch --all'
 abbr -a -- gfap 'git fetch --all --prune'
 abbr -a -- gb 'git branch -v'
+abbr -a -- gpl 'git pull'
 
 function __abbr_git_current_branch -d "Print the current Git branch for abbreviations"
     set -l branch (git branch --show-current 2>/dev/null)
@@ -70,6 +73,11 @@ abbr -a gpll --position command --function __abbr_gpll
 abbr -a -- gplr 'git pull --rebase'
 abbr -a -- gps 'git push'
 
+function __abbr_gpsh -d "Expand to push current branch to origin"
+    set -l branch (__abbr_git_current_branch); or return 1
+    echo "git push -u origin $branch"
+end
+abbr -a gpsh --position command --function __abbr_gpsh
 abbr -a -- gpshf 'git push --force-with-lease --force-if-includes'
 abbr -a -- grs 'git reset'
 abbr -a -- grsh 'git reset --hard'
