@@ -45,6 +45,7 @@ brew "fish"      # Shell
 brew "fisher"    # Fish plugin manager
 brew "tmux"      # Terminal multiplexer
 brew "starship"  # Shell prompt
+brew "direnv"    # Directory-scoped environment loader
 
 # Terminal enhancements
 brew "bat"       # Cat clone with syntax highlighting
