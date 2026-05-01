@@ -4,6 +4,7 @@ alias ls 'eza --icons --color=auto --group-directories-first --octal-permissions
 alias ll 'ls --git -alhF'
 alias tree 'ls --tree'
 alias vim nvim
+alias f 'open -a Finder ./'
 
 alias tldr 'tldr --config ~/.config/tlrc/config.toml'
 
@@ -23,6 +24,10 @@ alias clean-rust "cd $TMPDIR/../C/ && rm -rf com.Facepunch-Studios-LTD.Rust/"
 
 alias cursor 'open $argv -a "Cursor"'
 alias ip 'dig +short myip.opendns.com @resolver1.opendns.com || \curl https://checkip.amazonaws.com'
+alias ports 'lsof -i -P | grep LISTEN'
+alias netcons 'lsof -i'
+alias flushdns 'dscacheutil -flushcache && sudo killall -HUP mDNSResponder'
+alias tailscale '/Applications/Tailscale.app/Contents/MacOS/Tailscale'
 
 alias sha256sum gsha256sum
 alias sed gsed
