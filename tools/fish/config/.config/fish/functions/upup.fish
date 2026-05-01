@@ -42,6 +42,11 @@ function upup -d "updates different tools"
         echo "[upup] mo not found, skipping"
     end
 
+    if test -d "$HOME/.cache/opencode"
+        echo "[upup] removing OpenCode cache"
+        rm -rf "$HOME/.cache/opencode"
+    end
+
     # Fish plugin update should be at the end of the function.
     if command -q fish
         command fish -ic "fisher update"
