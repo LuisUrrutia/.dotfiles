@@ -22,6 +22,7 @@ function help-aliases -d "Show useful shell aliases and abbreviations"
     printf '  %-12s %s\n' dc "docker compose"
     printf '  %-12s %s\n' dps/dpsa "docker ps / docker ps -a"
     printf '  %-12s %s\n' dcu/dcd "docker compose up / down"
+    printf '  %-12s %s\n' dprune "prune stopped Docker resources"
     printf '  %-12s %s\n' tf terraform
 
     printf '\n%s\n' Terminal
@@ -35,6 +36,7 @@ function help-aliases -d "Show useful shell aliases and abbreviations"
     printf '  %-12s %s\n' localip "show en0 local IP"
     printf '  %-12s %s\n' myip/ip "show public IP"
     printf '  %-12s %s\n' ports "list listening ports"
+    printf '  %-12s %s\n' killport "confirm before killing a port listener"
     printf '  %-12s %s\n' netcons "list network connections"
     printf '  %-12s %s\n' flushdns "flush macOS DNS cache"
     printf '  %-12s %s\n' tailscale "run Tailscale CLI"
@@ -46,6 +48,7 @@ function help-aliases -d "Show useful shell aliases and abbreviations"
     printf '  %-12s %s\n' top btop
     printf '  %-12s %s\n' today "date YYYY/MM/DD"
     printf '  %-12s %s\n' timestamp "date YYYYMMDDHHMMSS"
+    printf '  %-12s %s\n' epoch "Unix epoch timestamp"
     printf '  %-12s %s\n' upd "update tools"
     printf '  %-12s %s\n' weather "curl wttr.in"
     printf '  %-12s %s\n' halp/cheat "show this cheatsheet"
