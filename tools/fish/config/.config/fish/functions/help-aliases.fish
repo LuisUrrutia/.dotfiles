@@ -14,8 +14,13 @@ function help-aliases -d "Show useful shell aliases and abbreviations"
     printf '  %-12s %s\n' gc/gcm "git commit / git commit -m"
     printf '  %-12s %s\n' gsta/gstp "git stash / git stash pop"
     printf '  %-12s %s\n' gl/glog "git log graph views"
+    printf '  %-12s %s\n' glogf "pick and show a commit with fzf"
+    printf '  %-12s %s\n' prs "show current GitHub PR status"
+    printf '  %-12s %s\n' wtpr "open a PR in a WorkTrunk worktree"
     printf '  %-12s %s\n' gps "git push"
     printf '  %-12s %s\n' gpll "pull current branch"
+    printf '  %-12s %s\n' "git dm" "delete merged local branches"
+    printf '  %-12s %s\n' "git top" "show top commit authors"
 
     printf '\n%s\n' "Docker and infra"
     printf '  %-12s %s\n' d docker
@@ -31,6 +36,10 @@ function help-aliases -d "Show useful shell aliases and abbreviations"
     printf '  %-12s %s\n' j "jobs -l"
     printf '  %-12s %s\n' path "print PATH entries"
     printf '  %-12s %s\n' chmodx "chmod +x"
+
+    printf '\n%s\n' Disk
+    printf '  %-12s %s\n' du "summarize disk usage two levels deep"
+    printf '  %-12s %s\n' df "show disk free space with duf"
 
     printf '\n%s\n' Network
     printf '  %-12s %s\n' localip "show en0 local IP"
@@ -51,5 +60,5 @@ function help-aliases -d "Show useful shell aliases and abbreviations"
     printf '  %-12s %s\n' epoch "Unix epoch timestamp"
     printf '  %-12s %s\n' upd "update tools"
     printf '  %-12s %s\n' weather "curl wttr.in"
-    printf '  %-12s %s\n' halp/cheat "show this cheatsheet"
+    printf '  %-12s %s\n' halp/cheat "show local command notes"
 end
