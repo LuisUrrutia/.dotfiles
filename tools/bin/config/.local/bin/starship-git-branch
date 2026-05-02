@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if command -v /opt/homebrew/bin/git >/dev/null 2>&1; then
+  git_bin=/opt/homebrew/bin/git
+else
+  git_bin=git
+fi
+
+branch="$($git_bin branch --show-current 2>/dev/null || true)"
+[[ -n "$branch" ]] || exit 1
+
+current_dir="${PWD##*/}"
+normalize() {
+  printf '%s' "$1" | tr '/[:upper:]' '-[:lower:]'
+}
+
+branch_hyphen="$(normalize "$branch")"
+branch_underscore="${branch_hyphen//-/_}"
+dir_normalized="$(normalize "$current_dir")"
+dir_underscore="${dir_normalized//-/_}"
+
+if [[ "$dir_normalized" == "$branch_hyphen" ]] || [[ "$dir_normalized" == "$branch_underscore" ]] || [[ "$dir_underscore" == "$branch_underscore" ]]; then
+  exit 1
+fi
+
+printf ' %s' "$branch"
