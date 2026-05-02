@@ -1,0 +1,43 @@
+auto_sync = true
+sync_frequency = "10m"
+search_mode = "fuzzy"
+filter_mode = "global"
+filter_mode_shell_up_key_binding = "directory"
+search_mode_shell_up_key_binding = "fuzzy"
+workspaces = true
+style = "compact"
+enter_accept = true
+secrets_filter = true
+show_preview = true
+
+history_filter = [
+  "^secret",
+  "^token",
+  "^op item get",
+  "--password",
+  "--token",
+]
+
+[stats]
+common_subcommands = [
+  "aws",
+  "bun",
+  "cargo",
+  "docker",
+  "git",
+  "gh",
+  "go",
+  "kubectl",
+  "npm",
+  "opencode",
+  "pnpm",
+  "tmux",
+  "uv",
+  "yarn",
+]
+
+common_prefix = ["sudo"]
+ignored_commands = ["cd", "clear", "ls", "pwd"]
+
+[sync]
+records = true
