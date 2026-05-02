@@ -19,6 +19,8 @@
   defaultBranch = main
 [alias]
   authors = !git log --pretty=format:'%an <%ae>' "." | sort | uniq -c | sort -nr
+  contributors = shortlog --summary --numbered --all
+  top = !git log --format=format:%an | sort | uniq -c | sort -rn | head -n 20
 
   # add
   chunkyadd = add --patch # stage commits chunk by chunk
@@ -31,6 +33,7 @@
 
   # branch
   branch-name = !git rev-parse --abbrev-ref HEAD | tr -d '\n' | tr -d ' '
+  dm = "!f() { target=${1:-HEAD}; git branch --merged \"$target\" | sed 's/^[* ]*//' | grep -Ev '^(main|master|develop|dev)$' | while IFS= read -r branch; do [ -n \"$branch\" ] && git branch -d \"$branch\"; done; }; f"
 
   # commit
   amend = commit --amend            # amend your last commit
@@ -75,6 +78,7 @@
   rebase = true
 [rebase]
   autoStash = true
+  autoSquash = true
   forkPoint = true
   updateRefs = true
   missingCommitsCheck = warn
