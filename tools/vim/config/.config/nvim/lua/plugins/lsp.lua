@@ -17,10 +17,10 @@ return {
         dependencies = {
             "mason-org/mason.nvim",
             "neovim/nvim-lspconfig",
-            "hrsh7th/cmp-nvim-lsp",
+            "saghen/blink.cmp",
         },
         config = function(_, opts)
-            local capabilities = require("cmp_nvim_lsp").default_capabilities()
+            local capabilities = require("blink.cmp").get_lsp_capabilities()
 
             vim.lsp.config("*", {
                 capabilities = capabilities,
@@ -30,70 +30,72 @@ return {
         end,
     },
     {
-        "hrsh7th/nvim-cmp",
+        "saghen/blink.cmp",
         event = "InsertEnter",
         dependencies = {
-            'neovim/nvim-lspconfig',
-            'hrsh7th/cmp-nvim-lsp',
-            'hrsh7th/cmp-buffer',
-            'hrsh7th/cmp-path',
-            'hrsh7th/cmp-cmdline',
+            "saghen/blink.lib",
+            "neovim/nvim-lspconfig",
             "L3MON4D3/LuaSnip",
-            "saadparwaiz1/cmp_luasnip",
-            "roobert/tailwindcss-colorizer-cmp.nvim",
         },
-        config = function()
-            local cmp = require("cmp")
-            local luasnip = require("luasnip")
-            local colorizer = require("tailwindcss-colorizer-cmp").formatter
+        build = function(plugin)
+            local lib = require("blink.lib").native
+            local platform = lib.platform()
+            local commit_result = vim.system({ "git", "rev-parse", "HEAD" }, { cwd = plugin.dir }):wait()
 
-            cmp.setup({
-                formatting = {
-                    format = colorizer
-                    -- format = lspkind.cmp_format({
-                    --         maxwidth = 30,
-                    --         ellipsis_char = "...",
-                    --         before = require("tailwindcss-colorizer-cmp").formatter
-                    -- }),
-                    -- format = require("tailwindcss-colorizer-cmp").formatter
-                },
-                snippet = {
-                    expand = function(args)
-                        luasnip.lsp_expand(args.body)
-                    end,
-                },
-                mapping = cmp.mapping.preset.insert({
-                    ["<C-n>"] = cmp.mapping.select_next_item(),
-                    ["<C-p>"] = cmp.mapping.select_prev_item(),
-                    ["<C-d>"] = cmp.mapping.scroll_docs(-4),
-                    ["<C-f>"] = cmp.mapping.scroll_docs(4),
-                    ["<C-Space>"] = cmp.mapping.complete(),
-                    ["<C-e>"] = cmp.mapping.abort(),
-                    ["<CR>"] = cmp.mapping.confirm({ select = true }),
-                }),
-                sources = cmp.config.sources({
-                    { name = "nvim_lsp" },
-                    { name = "buffer" },
-                    { name = "path" },
-                    { name = "luasnip" },
-                }),
-            })
+            if commit_result.code ~= 0 then
+                error(commit_result.stderr)
+            end
 
-            cmp.setup.cmdline("/", {
-                sources = cmp.config.sources({
-                    { name = "nvim_lsp_document_symbol" },
-                }, {
-                    { name = "buffer" },
-                }),
-            })
+            local build_result = vim.system({ "cargo", "build", "--release" }, { cwd = plugin.dir }):wait()
 
-            cmp.setup.cmdline(":", {
-                sources = cmp.config.sources({
-                    { name = "path" },
-                }, {
-                    { name = "cmdline" },
-                }),
-            })
+            if build_result.code ~= 0 then
+                error(build_result.stderr)
+            end
+
+            local commit = vim.trim(commit_result.stdout)
+            local source = plugin.dir .. "/target/release/libblink_cmp_fuzzy" .. platform.lib_extension
+            local destination = lib.library_path("blink_cmp_fuzzy", commit)
+            local fallback_destination = lib.library_path("blink_cmp_fuzzy")
+
+            lib.mkdirp(vim.fs.dirname(fallback_destination))
+
+            if vim.uv.fs_stat(fallback_destination) then
+                vim.uv.fs_unlink(fallback_destination)
+            end
+
+            local copied, copy_error = vim.uv.fs_copyfile(source, fallback_destination)
+
+            if not copied then
+                error(copy_error)
+            end
+
+            lib.mv(source, destination)
         end,
+        opts = {
+            keymap = {
+                preset = "default",
+                ["<C-n>"] = { "select_next", "fallback" },
+                ["<C-p>"] = { "select_prev", "fallback" },
+                ["<C-d>"] = { "scroll_documentation_up", "fallback" },
+                ["<C-f>"] = { "scroll_documentation_down", "fallback" },
+                ["<C-Space>"] = { "show", "show_documentation", "hide_documentation" },
+                ["<C-e>"] = { "hide", "fallback" },
+                ["<CR>"] = { "accept", "fallback" },
+            },
+            snippets = {
+                preset = "luasnip",
+            },
+            sources = {
+                default = { "lsp", "buffer", "path", "snippets" },
+            },
+            completion = {
+                documentation = {
+                    auto_show = true,
+                },
+            },
+            cmdline = {
+                enabled = true,
+            },
+        },
     },
 }

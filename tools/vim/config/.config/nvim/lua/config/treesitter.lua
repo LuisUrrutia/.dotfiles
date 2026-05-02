@@ -22,7 +22,7 @@ M.parsers = {
 
 function M.install()
     require("lazy").load({ plugins = { "nvim-treesitter" } })
-    vim.cmd("TSInstallSync " .. table.concat(M.parsers, " "))
+    require("nvim-treesitter").install(M.parsers):wait(300000)
 end
 
 vim.api.nvim_create_autocmd('FileType', {
