@@ -2,6 +2,6 @@
 
 source "${DOTFILES:-$HOME/.dotfiles}/tools/lib.sh"
 
-require_brew_bin git
+mkdir -p "$HOME/.local/bin"
 
-stow_config git
+stow_config bin

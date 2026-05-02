@@ -1,0 +1,154 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+usage() {
+  cat <<'EOF'
+Usage: gha-pins audit [path...]
+       gha-pins latest owner/repo [tag]
+
+Audit GitHub Actions workflow `uses:` entries and resolve latest release pins.
+
+Commands:
+  audit   Require remote actions to be pinned to full commit SHAs with a version comment
+  latest  Print the latest, or requested, action tag as a pinned `uses:` line
+EOF
+}
+
+die() {
+  printf 'gha-pins: %s\n' "$1" >&2
+  exit 1
+}
+
+strip_quotes() {
+  local value="$1"
+  value="${value#\"}"
+  value="${value%\"}"
+  value="${value#\'}"
+  value="${value%\'}"
+  printf '%s' "$value"
+}
+
+audit_file() {
+  local file="$1"
+  local line_no=0
+  local line value ref status=0
+  local version_comment_re='#[[:space:]]*v[0-9]'
+
+  while IFS= read -r line || [[ -n "$line" ]]; do
+    line_no=$((line_no + 1))
+
+    if [[ "$line" =~ ^[[:space:]]*(-[[:space:]]*)?uses:[[:space:]]*([^[:space:]#]+) ]]; then
+      value="$(strip_quotes "${BASH_REMATCH[2]}")"
+
+      [[ "$value" == ./* ]] && continue
+      [[ "$value" == docker://* ]] && continue
+
+      if [[ "$value" != *@* ]]; then
+        printf '%s:%s: action is not pinned: %s\n' "$file" "$line_no" "$value" >&2
+        status=1
+        continue
+      fi
+
+      ref="${value##*@}"
+      if [[ ! "$ref" =~ ^[0-9a-f]{40}$ ]]; then
+        printf '%s:%s: action ref is not a full SHA: %s\n' "$file" "$line_no" "$value" >&2
+        status=1
+      fi
+
+      if [[ ! "$line" =~ $version_comment_re ]]; then
+        printf '%s:%s: pinned action is missing a version comment: %s\n' "$file" "$line_no" "$value" >&2
+        status=1
+      fi
+    fi
+  done < "$file"
+
+  return "$status"
+}
+
+run_audit() {
+  local status=0
+  local found=false
+  local path file
+
+  if [[ "$#" -eq 0 ]]; then
+    set -- .github/workflows
+  fi
+
+  for path in "$@"; do
+    if [[ -d "$path" ]]; then
+      while IFS= read -r -d '' file; do
+        found=true
+        audit_file "$file" || status=1
+      done < <(find "$path" -type f \( -name '*.yml' -o -name '*.yaml' \) -print0)
+    elif [[ -f "$path" ]]; then
+      found=true
+      audit_file "$path" || status=1
+    else
+      printf 'gha-pins: path not found: %s\n' "$path" >&2
+      status=1
+    fi
+  done
+
+  if [[ "$found" = false ]]; then
+    printf 'gha-pins: no workflow files found\n'
+    return "$status"
+  fi
+
+  if [[ "$status" -eq 0 ]]; then
+    printf 'gha-pins: all remote actions are SHA-pinned\n'
+  fi
+
+  return "$status"
+}
+
+resolve_tag_sha() {
+  local repo="$1"
+  local tag="$2"
+  local ref_info sha type
+
+  ref_info="$(gh api "repos/$repo/git/ref/tags/$tag" --jq '.object.sha + " " + .object.type')"
+  sha="${ref_info%% *}"
+  type="${ref_info##* }"
+
+  if [[ "$type" == tag ]]; then
+    sha="$(gh api "repos/$repo/git/tags/$sha" --jq '.object.sha')"
+  fi
+
+  printf '%s' "$sha"
+}
+
+run_latest() {
+  local repo="${1:-}"
+  local tag="${2:-}"
+  local sha
+
+  [[ -n "$repo" ]] || die 'latest requires owner/repo'
+  [[ "$repo" == */* ]] || die 'repository must be owner/repo'
+  command -v gh >/dev/null 2>&1 || die 'gh is required for latest'
+
+  if [[ -z "$tag" ]]; then
+    tag="$(gh api "repos/$repo/releases/latest" --jq '.tag_name')"
+  fi
+
+  sha="$(resolve_tag_sha "$repo" "$tag")"
+  printf 'uses: %s@%s # %s\n' "$repo" "$sha" "$tag"
+}
+
+case "${1:-}" in
+  audit)
+    shift
+    run_audit "$@"
+    ;;
+  latest)
+    shift
+    run_latest "$@"
+    ;;
+  -h|--help|help)
+    usage
+    ;;
+  *)
+    usage >&2
+    exit 2
+    ;;
+esac
