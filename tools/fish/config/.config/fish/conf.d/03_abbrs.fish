@@ -121,6 +121,7 @@ abbr -a -- myip 'curl -s https://api.ipify.org && echo'
 # utilities
 abbr -a -- today 'date +"%Y/%m/%d"'
 abbr -a -- timestamp 'date +"%Y%m%d%H%M%S"'
+abbr -a -- epoch 'date +%s'
 abbr -a -- weather 'curl https://wttr.in/'
 
 # fisher
