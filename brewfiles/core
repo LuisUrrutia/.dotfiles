@@ -23,9 +23,14 @@ brew "pkg-config" # Compile and link flags manager
 # ==============================================================================
 # Development Tools
 # ==============================================================================
+cask "cursor"         # AI code editor
 cask "zed"            # Code editor
 brew "neovim"         # Vim-fork focused on extensibility
 brew "tree-sitter-cli" # Parser generator tool
+
+# Editor Extensions
+vscode "catppuccin.catppuccin-vsc" # Catppuccin themes
+vscode "vscodevim.vim"             # Vim emulation
 
 # ==============================================================================
 # Programming Languages and Runtimes
@@ -35,6 +40,7 @@ brew "uv"              # Python package manager
 brew "fnm"             # Fast Node Manager
 brew "oven-sh/bun/bun" # Bun (JavaScript runtime)
 brew "openjdk"         # Java Development Kit
+brew "lua-language-server" # Lua language server
 
 # ==============================================================================
 # Shell and Terminal
@@ -72,6 +78,7 @@ brew "fswatch" # Directory change monitor
 brew "watch"   # Execute program periodically
 brew "watchman" # File watching service
 brew "dust"    # Intuitive disk usage (du replacement)
+brew "duf"     # Modern disk free utility (df replacement)
 brew "rsync"   # File synchronization
 
 # ==============================================================================
