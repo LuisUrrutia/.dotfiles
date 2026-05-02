@@ -27,6 +27,9 @@ defaults write NSGlobalDomain NSAutomaticQuoteSubstitutionEnabled -bool false
 # Disable auto-correct
 defaults write NSGlobalDomain NSAutomaticSpellingCorrectionEnabled -bool false
 
+# Show ASCII control characters in standard text views using caret notation
+defaults write NSGlobalDomain NSTextShowsControlCharacters -bool true
+
 # Set a blazingly fast keyboard repeat rate
 defaults write NSGlobalDomain KeyRepeat -int 1
 defaults write NSGlobalDomain InitialKeyRepeat -int 15
@@ -208,6 +211,9 @@ sudo pmset -b sleep 15
 # Removes confirmation for applications downloaded from the internet
 defaults write com.apple.LaunchServices LSQuarantine -bool false
 
+# Increase window resize speed for Cocoa applications
+defaults write NSGlobalDomain NSWindowResizeTime -float 0.001
+
 # Expand save panels by default to expose paths and advanced options
 defaults write NSGlobalDomain NSNavPanelExpandedStateForSaveMode -bool true
 defaults write NSGlobalDomain NSNavPanelExpandedStateForSaveMode2 -bool true
@@ -241,6 +247,16 @@ defaults write com.apple.TimeMachine DoNotOfferNewDisksForBackup -bool true
 
 # Automatically quit printer app once the print jobs complete
 defaults write com.apple.print.PrintingPrefs "Quit When Finished" -bool true
+
+# Disable send and reply animations in Mail.app
+defaults write com.apple.mail DisableReplyAnimations -bool true
+defaults write com.apple.mail DisableSendAnimations -bool true
+
+# Copy email addresses as plain addresses in Mail.app
+defaults write com.apple.mail AddressesIncludeNameOnPasteboard -bool false
+
+# Disable inline attachment previews in Mail.app
+defaults write com.apple.mail DisableInlineAttachmentViewing -bool true
 
 # Disabling password hints on the lock screen (security improvement)
 defaults write com.apple.loginwindow RetriesUntilHint -int 0
