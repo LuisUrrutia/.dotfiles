@@ -124,7 +124,8 @@ blindly overwrite home-directory config unless you know which version you want.
 - Shell and terminal: Fish, Starship, Ghostty, tmux, fzf, zoxide, cmux
 - CLI and search: bat, eza, ripgrep, fd, btop, dust, procs, tailspin, tlrc,
   hyperfine, jq, watch, fswatch, rename
-- Development: Neovim, Zed, Git with delta, Git LFS, GitHub CLI, actionlint, cspell
+- Development: Neovim, Zed, Git with delta, Git LFS, GitHub CLI, actionlint,
+  ShellCheck, gitleaks, cspell
 - Languages: Node via fnm, Python and uv, Bun, OpenJDK, plus Rust, Go,
   LuaRocks, Perl in full installs
 - macOS/system: GNU core tools, dockutil, mas, mole, Linearmouse, Ice,

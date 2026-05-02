@@ -1,0 +1,74 @@
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    name: Smoke test dotfiles
+    runs-on: macos-15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+
+      - name: Install validation tools
+        run: brew install actionlint fish gitleaks shellcheck stow
+
+      - name: Lint workflows
+        run: actionlint .github/workflows/ci.yml
+
+      - name: Audit action pins
+        run: tools/bin/config/.local/bin/gha-pins audit .github/workflows
+
+      - name: Check shell scripts
+        run: |
+          set -euo pipefail
+
+          scripts=()
+          for script in install.sh private-install.sh tools/lib.sh tools/*/install.sh tools/bin/config/.local/bin/* tools/macos/prefs-diff.sh; do
+            [[ -f "$script" ]] && scripts+=("$script")
+          done
+
+          for script in "${scripts[@]}"; do
+            bash -n "$script"
+          done
+
+          shellcheck "${scripts[@]}"
+
+      - name: Check Fish scripts
+        run: |
+          set -euo pipefail
+
+          while IFS= read -r -d '' script; do
+            fish --no-execute "$script"
+          done < <(find tools/fish -type f -name '*.fish' -print0)
+
+      - name: Scan for secrets
+        run: gitleaks detect --source . --no-git --redact --no-banner
+
+      - name: Check Brewfiles
+        run: |
+          set -euo pipefail
+
+          ruby -c brewfiles/core
+          ruby -c brewfiles/personal
+
+      - name: Check Stow packages
+        run: |
+          set -euo pipefail
+
+          tmp_home="$(mktemp -d)"
+          trap 'rm -rf "$tmp_home"' EXIT
+
+          for tool_dir in tools/*; do
+            [[ -d "$tool_dir/config" ]] || continue
+            stow --no-folding --restow -d "$tool_dir" -t "$tmp_home" config
+          done
