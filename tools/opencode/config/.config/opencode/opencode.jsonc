@@ -1,0 +1,17 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "autoupdate": true,
+  "share": "disabled",
+  "plugin": [
+    "opencode-anthropic-auth",
+    "file:///Users/luisurrutia/LuisUrrutia/opencode-cmux/dist/index.js",
+    "oh-my-openagent@latest",
+    "cc-safety-net"
+  ],
+  "mcp": {
+    "Figma Desktop": {
+      "type": "remote",
+      "url": "http://127.0.0.1:3845/mcp"
+    }
+  }
+}
