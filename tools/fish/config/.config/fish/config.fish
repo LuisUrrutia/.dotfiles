@@ -16,4 +16,12 @@ if status is-interactive
 
     set -g fzf_diff_highlighter delta --paging=never --width=20
     set -g fzf_history_time_format %d-%m-%y
+
+    if command -q bat
+        set -g fzf_preview_file_cmd 'bat --style=numbers,changes --color=always --line-range :200'
+    end
+
+    if command -q eza
+        set -g fzf_preview_dir_cmd 'eza --tree --level=2 --group-directories-first --icons=auto --color=always'
+    end
 end
