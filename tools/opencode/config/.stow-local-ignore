@@ -1,0 +1,8 @@
+^/\.config/opencode/\.gitignore
+^/\.config/opencode/node_modules
+^/\.config/opencode/package\.json
+^/\.config/opencode/package-lock\.json
+^/\.config/opencode/bun\.lock
+^/\.config/opencode/oh-my-openagent.*
+^/\.config/opencode/oh-my-opencode.*
+^/\.config/opencode/skills
