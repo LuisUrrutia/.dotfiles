@@ -29,6 +29,24 @@ function upd -d "updates different tools"
         echo "[upd] pnpm not found, skipping"
     end
 
+    if command -q rustup
+        rustup update
+    else
+        echo "[upd] rustup not found, skipping"
+    end
+
+    if command -q gh
+        gh extension upgrade --all
+    else
+        echo "[upd] gh not found, skipping extension updates"
+    end
+
+    if command -q mas
+        mas upgrade
+    else
+        echo "[upd] mas not found, skipping App Store updates"
+    end
+
     if command -q nvim
         nvim --headless "+Lazy! sync" +qa
         nvim --headless "+lua require('config.treesitter').install()" +qa
