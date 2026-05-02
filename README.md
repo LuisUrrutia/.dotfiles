@@ -122,8 +122,8 @@ blindly overwrite home-directory config unless you know which version you want.
 ## What's included
 
 - Shell and terminal: Fish, Starship, Ghostty, tmux, fzf, zoxide, cmux
-- CLI and search: bat, eza, ripgrep, fd, btop, dust, procs, tailspin, tlrc,
-  hyperfine, jq, watch, fswatch, rename
+- CLI and search: bat, eza, ripgrep, fd, btop, dust, duf, procs, tailspin,
+  tlrc, hyperfine, jq, watch, fswatch, rename
 - Development: Neovim, Zed, Git with delta, Git LFS, GitHub CLI, actionlint,
   ShellCheck, gitleaks, cspell
 - Languages: Node via fnm, Python and uv, Bun, OpenJDK, plus Rust, Go,
@@ -145,7 +145,8 @@ This list is intentionally grouped. The exact package list lives in
 ## Notable workflows
 
 - Fish has abbreviations for Git, Docker, Brew, common cleanup,
-  iCloud/Obsidian paths, and WorkTrunk shell integration.
+  iCloud/Obsidian paths, and WorkTrunk shell integration. `halp` and `cheat`
+  show local command notes inspired by ChristianLempa's cheat-sheets.
 - Ghostty uses Catppuccin, Monaspice Nerd Font, shell integration, and a
   global quick-terminal toggle on `super+backquote`.
 - Starship shows Git, runtimes, Docker, AWS, Google Cloud, duration, status,
@@ -158,12 +159,15 @@ This list is intentionally grouped. The exact package list lives in
   logic, and hotkeys.
 - yabai creates named spaces, routes apps to displays/spaces, applies
   sticky/unmanaged rules, and has Ghostty-specific window fixes.
+- Raycast exports are tracked as `.rayconfig` backups with `raycast-config`
+  helpers for status, listing, backup, restore, and scriptable latest-path lookup.
 - Catppuccin is used across Fish/FZF, Starship, Ghostty, bat, btop, and editor tooling.
 
 ## Post-install checklist
 
 - Restart the terminal after install.
-- Configure Raycast and HyperKey in Settings > Advanced.
+- Restore Raycast with `raycast-config restore`, then configure HyperKey in
+  Raycast Settings > Advanced.
 - Set up 1Password, save the recovery key, and enable the SSH agent.
 - Complete CleanShot setup.
 - Finish Docker Desktop setup for full installs.
