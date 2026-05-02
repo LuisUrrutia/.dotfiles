@@ -1,11 +1,26 @@
 {
   "$schema": "https://raw.githubusercontent.com/manaflow-ai/cmux/main/web/data/cmux-settings.schema.json",
   "schemaVersion": 1,
-
+  "app": {
+    "warnBeforeQuit": false,
+    "sendAnonymousTelemetry": false
+  },
   "browser": {
     "interceptTerminalOpenCommandInCmuxBrowser": false,
     "openTerminalLinksInCmuxBrowser": false
   },
+  "sidebarAppearance": {
+    "matchTerminalBackground": true
+  },
+  "sidebar": {
+    "openPortLinksInCmuxBrowser": false,
+    "openPullRequestLinksInCmuxBrowser": false
+  },
+  "workspaceColors": {
+    "indicatorStyle": "leftRail",
+    "selectionColor": "#45475a",
+    "notificationBadgeColor": "#f38ba8"
+  }
 
   // This file uses JSON with comments (JSONC).
   // Uncomment and edit any setting to make it file-managed.
@@ -97,14 +112,14 @@
 
   //   "customCommands" : {
   //     "trustedDirectories" : [
-  // 
+  //
   //     ]
   //   },
 
   //   "browser" : {
   //     "defaultSearchEngine" : "google",
   //     "hostsToOpenInEmbeddedBrowser" : [
-  // 
+  //
   //     ],
   //     "insecureHttpHostsAllowedInEmbeddedBrowser" : [
   //       "localhost",
@@ -120,7 +135,7 @@
   //     "showSearchSuggestions" : true,
   //     "theme" : "system",
   //     "urlsToAlwaysOpenExternally" : [
-  // 
+  //
   //     ]
   //   },
 
