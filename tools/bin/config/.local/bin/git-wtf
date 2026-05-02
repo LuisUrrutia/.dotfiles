@@ -1,0 +1,161 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+usage() {
+  cat <<'EOF'
+Usage: git wtf [--all] [-h|--help]
+
+Summarize the current Git branch without changing repository state.
+
+Options:
+  --all       Show all unpushed and unpulled commits
+  -h, --help  Show this help
+EOF
+}
+
+show_all=false
+
+while [[ "$#" -gt 0 ]]; do
+  case "$1" in
+    --all)
+      show_all=true
+      ;;
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    *)
+      usage >&2
+      exit 2
+      ;;
+  esac
+
+  shift
+done
+
+if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+  echo "git-wtf: not inside a Git repository" >&2
+  exit 1
+fi
+
+git_dir="$(git rev-parse --git-dir)"
+branch_name="$(git branch --show-current)"
+is_detached=false
+
+if [[ -z "$branch_name" ]]; then
+  is_detached=true
+  branch_name="HEAD detached at $(git rev-parse --short HEAD)"
+fi
+
+upstream="$(git rev-parse --abbrev-ref --symbolic-full-name '@{upstream}' 2>/dev/null || true)"
+ahead_count="0"
+behind_count="0"
+
+if [[ -n "$upstream" ]]; then
+  counts="$(git rev-list --left-right --count HEAD..."$upstream")"
+  ahead_count="${counts%%$'\t'*}"
+  behind_count="${counts##*$'\t'}"
+fi
+
+state="clean"
+if [[ "$is_detached" = true ]]; then
+  state="detached"
+elif [[ -z "$upstream" ]]; then
+  state="no upstream"
+elif [[ "$ahead_count" -gt 0 ]] && [[ "$behind_count" -gt 0 ]]; then
+  state="diverged"
+elif [[ "$ahead_count" -gt 0 ]]; then
+  state="needs push"
+elif [[ "$behind_count" -gt 0 ]]; then
+  state="needs pull"
+fi
+
+operation="none"
+if [[ -d "$git_dir/rebase-merge" ]] || [[ -d "$git_dir/rebase-apply" ]]; then
+  operation="rebase"
+elif [[ -f "$git_dir/MERGE_HEAD" ]]; then
+  operation="merge"
+elif [[ -f "$git_dir/CHERRY_PICK_HEAD" ]]; then
+  operation="cherry-pick"
+elif [[ -d "$git_dir/BISECT_LOG" ]] || [[ -f "$git_dir/BISECT_LOG" ]]; then
+  operation="bisect"
+fi
+
+staged_count="0"
+unstaged_count="0"
+untracked_count="0"
+
+while IFS= read -r status_line; do
+  [[ -z "$status_line" ]] && continue
+
+  index_status="${status_line:0:1}"
+  worktree_status="${status_line:1:1}"
+
+  if [[ "$index_status" = "?" ]] && [[ "$worktree_status" = "?" ]]; then
+    untracked_count="$((untracked_count + 1))"
+    continue
+  fi
+
+  if [[ "$index_status" != " " ]]; then
+    staged_count="$((staged_count + 1))"
+  fi
+
+  if [[ "$worktree_status" != " " ]]; then
+    unstaged_count="$((unstaged_count + 1))"
+  fi
+done < <(git status --porcelain)
+
+print_commit_list() {
+  local title="$1"
+  local count="$2"
+  local range="$3"
+  local limit=10
+  local shown_count
+  local remaining_count
+
+  if [[ "$count" -eq 0 ]]; then
+    echo "$title: none"
+    return
+  fi
+
+  echo "$title:"
+
+  if [[ "$show_all" = true ]]; then
+    git log --oneline "$range"
+    return
+  fi
+
+  git log --oneline -n "$limit" "$range"
+
+  shown_count="$count"
+  if [[ "$shown_count" -gt "$limit" ]]; then
+    shown_count="$limit"
+  fi
+
+  remaining_count="$((count - shown_count))"
+  if [[ "$remaining_count" -gt 0 ]]; then
+    echo "... and $remaining_count more"
+  fi
+}
+
+echo "Branch: $branch_name"
+echo "State: $state"
+echo "Operation: $operation"
+
+if [[ -n "$upstream" ]]; then
+  echo "Upstream: $upstream"
+  echo "Divergence: ahead $ahead_count, behind $behind_count"
+  print_commit_list "Unpushed commits" "$ahead_count" "$upstream..HEAD"
+  print_commit_list "Unpulled commits" "$behind_count" "HEAD..$upstream"
+else
+  echo "Upstream: none"
+  echo "Divergence: no upstream configured"
+  if [[ "$is_detached" = false ]]; then
+    echo "Suggested upstream: git push -u origin $branch_name"
+  fi
+  echo "Unpushed commits: unknown"
+  echo "Unpulled commits: unknown"
+fi
+
+echo "Working tree: staged $staged_count, unstaged $unstaged_count, untracked $untracked_count"
