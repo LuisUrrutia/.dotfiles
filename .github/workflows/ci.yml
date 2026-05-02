@@ -20,7 +20,7 @@ jobs:
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
       - name: Install validation tools
-        run: brew install actionlint fish gitleaks shellcheck stow
+        run: brew install actionlint fish gitleaks lua shellcheck stow
 
       - name: Lint workflows
         run: actionlint .github/workflows/ci.yml
@@ -33,7 +33,7 @@ jobs:
           set -euo pipefail
 
           scripts=()
-          for script in install.sh private-install.sh tools/lib.sh tools/*/install.sh tools/bin/config/.local/bin/* tools/macos/prefs-diff.sh; do
+          for script in install.sh private-install.sh tools/lib.sh tools/*/install.sh tools/*/config/.local/bin/* tools/macos/prefs-diff.sh; do
             [[ -f "$script" ]] && scripts+=("$script")
           done
 
@@ -42,6 +42,9 @@ jobs:
           done
 
           shellcheck "${scripts[@]}"
+
+      - name: Check Hammerspoon tests
+        run: bash tools/hammerspoon/tests/run.sh
 
       - name: Check Fish scripts
         run: |
