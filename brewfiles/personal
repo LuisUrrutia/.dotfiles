@@ -22,6 +22,7 @@ cask "adobe-creative-cloud"        # Adobe suite
 # Development Tools
 # ------------------------------------------------------------------------------
 cask "docker-desktop"         # Container platform
+brew "dive"                   # Docker image layer inspector
 cask "yaak"                   # API development environment
 cask "http-toolkit"           # HTTP debugging proxy
 cask "android-platform-tools" # Android SDK tools
@@ -34,6 +35,7 @@ brew "shfmt"             # Shell script formatter
 brew "markdownlint-cli2" # Markdown linter
 brew "yamlfmt"           # YAML formatter
 brew "latexindent"       # LaTeX document formatter
+brew "biome"             # Web formatter and linter
 
 # ==============================================================================
 # Programming Languages and Runtimes
@@ -57,6 +59,8 @@ brew "foundry"     # Ethereum development framework
 # ==============================================================================
 brew "awscli"       # AWS CLI
 brew "aws-sam-cli"  # AWS SAM CLI
+brew "cosign"       # Container signing and verification
+brew "terraform"    # Infrastructure as code
 cask "gcloud-cli"   # Google Cloud CLI
 
 # ==============================================================================

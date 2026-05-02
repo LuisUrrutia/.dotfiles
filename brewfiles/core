@@ -43,6 +43,7 @@ cask "ghostty"   # Terminal emulator
 cask "cmux"      # Terminal for AI coding agents
 brew "fish"      # Shell
 brew "fisher"    # Fish plugin manager
+brew "atuin"     # Shell history manager
 brew "tmux"      # Terminal multiplexer
 brew "starship"  # Shell prompt
 brew "direnv"    # Directory-scoped environment loader
@@ -50,6 +51,7 @@ brew "direnv"    # Directory-scoped environment loader
 # Terminal enhancements
 brew "bat"       # Cat clone with syntax highlighting
 brew "eza"       # Modern replacement for ls
+brew "less"      # Pager
 brew "procs"     # Modern replacement for ps
 brew "btop"      # Resource monitor
 brew "tailspin"  # Modern log file viewer
@@ -68,7 +70,9 @@ brew "zoxide"  # Smarter cd command
 brew "rename"  # Batch file renaming
 brew "fswatch" # Directory change monitor
 brew "watch"   # Execute program periodically
+brew "watchman" # File watching service
 brew "dust"    # Intuitive disk usage (du replacement)
+brew "rsync"   # File synchronization
 
 # ==============================================================================
 # Version Control
@@ -78,13 +82,17 @@ brew "git-lfs"   # Git extension for large files
 brew "gh"        # GitHub CLI
 brew "git-delta"  # Syntax-highlighting pager for git
 brew "actionlint" # GitHub Actions workflow linter
+brew "shellcheck" # Shell script linter
 
 # ==============================================================================
 # Network and Security
 # ==============================================================================
 brew "wget"    # File retriever
+brew "curl"    # Data transfer tool
+brew "httpie"  # User-friendly HTTP client
 brew "openssh" # Secure shell
 brew "gnupg"   # GNU Privacy Guard
+brew "gitleaks" # Secret scanner
 brew "ykman"   # YubiKey Manager CLI
 brew "aria2"   # Multi-protocol download utility
 
@@ -99,6 +107,7 @@ cask "iina"     # Media player
 # Image optimization
 brew "pngquant" # PNG compressor with lossy compression
 brew "mozjpeg"  # Improved JPEG encoder
+brew "resvg"    # SVG rendering tool
 
 # ==============================================================================
 # Archive and Compression
@@ -140,6 +149,7 @@ cask "hammerspoon"  # Automation
 # ------------------------------------------------------------------------------
 cask "jordanbaird-ice" # Menu bar management
 cask "the-unarchiver"  # Archive extraction
+cask "qlmarkdown"      # Quick Look previews for Markdown files
 
 # ------------------------------------------------------------------------------
 # Hardware Support
@@ -189,3 +199,4 @@ cask "zoom"        # Video conferencing
 # ------------------------------------------------------------------------------
 cask "claude"      # AI assistant
 cask "claude-code" # AI coding assistant
+brew "ollama"      # Local AI model runner
