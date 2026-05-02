@@ -17,17 +17,12 @@ return {
         }
     },
     {
-        'nvimdev/dashboard-nvim',
-        event = 'VimEnter',
+        'folke/snacks.nvim',
+        lazy = false,
+        priority = 1000,
         opts = {
-            hide = {
-                statusline = false
-            },
-            config = {
-                shortcut = {},
-                footer = {}
-            }
+            dashboard = { enabled = true },
+            input = { enabled = true },
         },
-        dependencies = { { 'nvim-tree/nvim-web-devicons' } }
     }
 }
