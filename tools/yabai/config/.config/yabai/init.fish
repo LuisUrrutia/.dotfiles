@@ -20,7 +20,7 @@ set -l space_configs_json '[
     "name": "terminal",
     "layout": "stack",
     "preferred_display": 1,
-    "apps": ["^Ghostty$"]
+    "apps": ["^(Ghostty|cmux)$"]
   },
   {
     "name": "code",
@@ -80,7 +80,7 @@ for config in (printf '%s\n' "$space_configs_json" | jq -c '.[]')
     configure_space_layout_and_rules $space_name $layout $apps
 
     # Move space to preferred display if not the default (1)
-    if test "$preferred_display" != "1"
+    if test "$preferred_display" != 1
         set space_arrangements "$space_arrangements$space_name/$preferred_display,"
         move_space_to_display $space_name $preferred_display
     end
@@ -88,7 +88,7 @@ for config in (printf '%s\n' "$space_configs_json" | jq -c '.[]')
     # Register signals to dynamically create space when apps open
     register_signal_to_create_space_on_app_open $space_name $layout $preferred_display $apps
 
-    echo "--------------------------------------------------------"
+    echo --------------------------------------------------------
 end
 
 # Force move all existing windows to their assigned spaces
@@ -144,14 +144,15 @@ apply_unmanaged_rules \
 yabai -m rule --add app='^Ghostty$' subrole='AXFloatingWindow' manage=off
 yabai -m rule --add app='^Brave Browser$' title="(MetaMask|Phantom Wallet)" sub-layer=above manage=off sticky=on
 yabai -m rule --add app='^Brave Browser$' title="Sign In" manage=off sub-layer=above sticky=on
+yabai -m rule --add app='^BusyCal$' title="General" manage=off sub-layer=above sticky=on
 
 # Save expected display count for smart wake detection (yabai#259).
 # on_system_woke.fish compares this against actual count to decide if a full
 # restart is needed, avoiding unnecessary restarts on brief lock/unlock.
-yabai -m query --displays | jq 'length' > /tmp/yabai_expected_displays
+yabai -m query --displays | jq length >/tmp/yabai_expected_displays
 
 borders \
     "active_color=gradient(top_left=0xee33ccff,bottom_right=0xee00ff99)" \
     "inactive_color=0xaa595959" \
-    blacklist="krisp"    \
+    blacklist="krisp" \
     width=2 &
