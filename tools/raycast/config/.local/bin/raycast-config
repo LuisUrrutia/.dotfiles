@@ -1,0 +1,349 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+DOTFILES="${DOTFILES:-$HOME/.dotfiles}"
+BACKUP_DIR="${RAYCAST_BACKUP_DIR:-$DOTFILES/tools/raycast/backups}"
+EXPORT_DIR="${RAYCAST_EXPORT_DIR:-$HOME/Downloads}"
+EXPORT_DEEPLINK="raycast://extensions/raycast/raycast/export-settings-data"
+DEFAULT_TIMEOUT_SECONDS=300
+
+usage() {
+	cat <<'USAGE'
+Usage: raycast-config <command> [args]
+
+Commands:
+  status                 Show backup directory, count, and newest backup
+  list                   List Raycast backups newest first
+  path [latest|file]     Print the absolute path for a backup
+  backup [options] [file] Launch Raycast export or copy an exported .rayconfig
+  restore [latest|file]  Open a backup in Raycast for manual import
+  help                   Show this help
+
+Environment:
+  RAYCAST_BACKUP_DIR       Override backup directory
+  RAYCAST_EXPORT_DIR       Override directory watched for Raycast exports
+  RAYCAST_CONFIG_DRY_RUN   Print targets without opening Raycast
+
+Raycast exports may include private app settings. Keep sensitive backups in
+your private dotfiles layer if needed.
+
+Backup options:
+  --export-dir <dir>   Directory where Raycast writes exports
+  --timeout <seconds>  Seconds to wait for a new export (default: 300)
+  --no-open            Do not open Raycast, only wait for a new export
+  --manual             Open export flow but do not press buttons
+  --force              Replace an existing stored backup with the same name
+USAGE
+}
+
+die() {
+	printf 'raycast-config: %s\n' "$*" >&2
+	exit 1
+}
+
+ensure_backup_dir() {
+	mkdir -p "$BACKUP_DIR"
+}
+
+raycast_files() {
+	ensure_backup_dir
+	find "$BACKUP_DIR" -maxdepth 1 -type f -name '*.rayconfig' -exec stat -f '%m %N' {} + 2>/dev/null |
+		sort -rn
+}
+
+newest_export() {
+	[[ -d "$EXPORT_DIR" ]] || die "export directory not found: $EXPORT_DIR"
+
+	find "$EXPORT_DIR" -maxdepth 1 -type f -name 'Raycast*.rayconfig' -exec stat -f '%m %N' {} + 2>/dev/null |
+		sort -rn |
+		sed -n '1s/^[0-9]* //p'
+}
+
+newest_export_since() {
+	local start_time="$1"
+	local newest_path=""
+	local newest_modified=0
+	local file modified
+
+	[[ -d "$EXPORT_DIR" ]] || die "export directory not found: $EXPORT_DIR"
+
+	while IFS= read -r -d '' file; do
+		modified="$(stat -f '%m' "$file")"
+		if ((modified >= start_time && modified > newest_modified)); then
+			newest_modified="$modified"
+			newest_path="$file"
+		fi
+	done < <(find "$EXPORT_DIR" -maxdepth 1 -type f -name 'Raycast*.rayconfig' -print0)
+
+	printf '%s\n' "$newest_path"
+}
+
+file_is_stable() {
+	local file="$1"
+	local size_before modified_before size_after modified_after
+
+	[[ -f "$file" ]] || return 1
+	size_before="$(stat -f '%z' "$file")"
+	modified_before="$(stat -f '%m' "$file")"
+	sleep 1
+	[[ -f "$file" ]] || return 1
+	size_after="$(stat -f '%z' "$file")"
+	modified_after="$(stat -f '%m' "$file")"
+
+	[[ "$size_before" == "$size_after" && "$modified_before" == "$modified_after" ]]
+}
+
+wait_for_new_export() {
+	local start_time="$1"
+	local timeout_seconds="$2"
+	local deadline candidate
+
+	deadline="$((start_time + timeout_seconds))"
+
+	while (($(date +%s) <= deadline)); do
+		candidate="$(newest_export_since "$start_time")"
+		if [[ -n "$candidate" ]] && file_is_stable "$candidate"; then
+			printf '%s\n' "$candidate"
+			return
+		fi
+		sleep 1
+	done
+
+	die "timed out waiting for a new Raycast export in $EXPORT_DIR"
+}
+
+copy_backup() {
+	local source_file="$1"
+	local force="$2"
+
+	[[ -f "$source_file" ]] || die "file not found: $source_file"
+	[[ "$source_file" == *.rayconfig ]] || die "file must end with .rayconfig"
+
+	ensure_backup_dir
+
+	local dest
+	dest="$BACKUP_DIR/$(basename "$source_file")"
+
+	if [[ -e "$dest" && "$force" != true ]]; then
+		die "backup already exists: $dest"
+	fi
+
+	cp "$source_file" "$dest"
+	printf 'Copied backup: %s\n' "$dest"
+}
+
+automate_export_flow() {
+	local export_dir="$1"
+
+	osascript - "$export_dir" <<'APPLESCRIPT'
+on run argv
+  set exportDir to item 1 of argv
+
+  tell application "Raycast" to activate
+  delay 0.2
+
+  tell application "System Events"
+    if not (exists process "Raycast") then error "Raycast process was not found"
+
+    tell process "Raycast"
+      set frontmost to true
+      delay 0.15
+
+      -- Confirmation dialog: "Run Command" / "Always Run Command".
+      key code 36
+      delay 0.15
+
+      -- Export Settings & Data screen: press the focused/default Export button.
+      key code 36
+      delay 0.3
+    end tell
+
+    -- Save panel: choose the export directory explicitly, then confirm Export.
+    keystroke "g" using {command down, shift down}
+    delay 0.2
+    keystroke exportDir
+    key code 36
+    delay 0.2
+    key code 36
+  end tell
+end run
+APPLESCRIPT
+}
+
+newest_backup() {
+	raycast_files | sed -n '1s/^[0-9]* //p'
+}
+
+resolve_backup() {
+	local selector="${1:-latest}"
+
+	case "$selector" in
+	latest | "")
+		local latest
+		latest="$(newest_backup)"
+		[[ -n "$latest" ]] || die "no .rayconfig backups found in $BACKUP_DIR"
+		printf '%s\n' "$latest"
+		;;
+	*/*)
+		[[ -f "$selector" ]] || die "backup not found: $selector"
+		printf '%s\n' "$selector"
+		;;
+	*)
+		local candidate="$BACKUP_DIR/$selector"
+		[[ -f "$candidate" ]] || die "backup not found: $selector"
+		printf '%s\n' "$candidate"
+		;;
+	esac
+}
+
+cmd_status() {
+	ensure_backup_dir
+
+	local count latest age now modified
+	count="$(find "$BACKUP_DIR" -maxdepth 1 -type f -name '*.rayconfig' | wc -l | tr -d ' ')"
+	latest="$(newest_backup || true)"
+
+	printf 'Backup directory: %s\n' "$BACKUP_DIR"
+	printf 'Backups: %s\n' "$count"
+
+	if [[ -n "$latest" ]]; then
+		now="$(date +%s)"
+		modified="$(stat -f '%m' "$latest")"
+		age="$(((now - modified) / 86400))"
+		printf 'Newest: %s\n' "$(basename "$latest")"
+		printf 'Age: %s day(s)\n' "$age"
+	else
+		printf 'Newest: none\n'
+	fi
+}
+
+cmd_list() {
+	local files
+	files="$(raycast_files)"
+	[[ -n "$files" ]] || die "no .rayconfig backups found in $BACKUP_DIR"
+	printf '%s\n' "$files" | while IFS= read -r line; do
+		printf '%s\n' "${line#* }"
+	done
+}
+
+cmd_path() {
+	resolve_backup "${1:-latest}"
+}
+
+cmd_backup() {
+	local source_file=""
+	local timeout_seconds="$DEFAULT_TIMEOUT_SECONDS"
+	local open_raycast=true
+	local automate=true
+	local force=false
+
+	while [[ $# -gt 0 ]]; do
+		case "$1" in
+		--export-dir)
+			[[ -n "${2:-}" ]] || die "--export-dir requires a directory"
+			EXPORT_DIR="$2"
+			shift 2
+			;;
+		--timeout)
+			[[ -n "${2:-}" ]] || die "--timeout requires seconds"
+			[[ "$2" =~ ^[0-9]+$ ]] || die "--timeout must be a number"
+			timeout_seconds="$2"
+			shift 2
+			;;
+		--no-open)
+			open_raycast=false
+			automate=false
+			shift
+			;;
+		--manual)
+			automate=false
+			shift
+			;;
+		--force)
+			force=true
+			shift
+			;;
+		-h | --help)
+			usage
+			return
+			;;
+		--*)
+			die "unknown backup option: $1"
+			;;
+		*)
+			[[ -z "$source_file" ]] || die "backup accepts only one file"
+			source_file="$1"
+			shift
+			;;
+		esac
+	done
+
+	if [[ -n "$source_file" ]]; then
+		copy_backup "$source_file" "$force"
+		return
+	fi
+
+	[[ -d "$EXPORT_DIR" ]] || die "export directory not found: $EXPORT_DIR"
+
+	local start_time
+	start_time="$(date +%s)"
+
+	if [[ "$open_raycast" == true ]]; then
+		if [[ "${RAYCAST_CONFIG_DRY_RUN:-}" == 1 ]]; then
+			printf 'Would open: %s\n' "$EXPORT_DEEPLINK"
+			printf 'Would wait for a new Raycast export in: %s\n' "$EXPORT_DIR"
+			return
+		fi
+
+		open "$EXPORT_DEEPLINK"
+		printf 'Opened Raycast export flow.\n'
+
+		if [[ "$automate" == true ]]; then
+			printf 'Pressing Raycast export buttons with AppleScript...\n'
+			automate_export_flow "$EXPORT_DIR"
+		else
+			printf 'Complete the Raycast export manually.\n'
+		fi
+	fi
+
+	printf 'Waiting up to %s seconds for a new Raycast export in %s...\n' "$timeout_seconds" "$EXPORT_DIR"
+	source_file="$(wait_for_new_export "$start_time" "$timeout_seconds")"
+	copy_backup "$source_file" "$force"
+}
+
+cmd_restore() {
+	local backup
+	backup="$(resolve_backup "${1:-latest}")"
+
+	[[ "$backup" == *.rayconfig ]] || die "backup must end with .rayconfig"
+
+	if [[ "${RAYCAST_CONFIG_DRY_RUN:-}" == 1 ]]; then
+		printf 'Would open: %s\n' "$backup"
+		return
+	fi
+
+	open "$backup"
+	printf 'Opened Raycast import: %s\n' "$backup"
+	printf 'Confirm the import manually in Raycast.\n'
+}
+
+main() {
+	local command="${1:-help}"
+	shift || true
+
+	case "$command" in
+	status) cmd_status "$@" ;;
+	list) cmd_list "$@" ;;
+	path) cmd_path "$@" ;;
+	backup) cmd_backup "$@" ;;
+	restore) cmd_restore "$@" ;;
+	help | -h | --help) usage ;;
+	*)
+		usage >&2
+		die "unknown command: $command"
+		;;
+	esac
+}
+
+main "$@"
