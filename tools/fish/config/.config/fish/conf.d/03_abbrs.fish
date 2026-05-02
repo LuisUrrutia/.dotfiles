@@ -27,7 +27,7 @@ abbr -a -- psg 'ps aux | grep'
 
 # du and df
 abbr -a -- du 'du -h -d 2'
-abbr -a -- df 'df -h'
+abbr -a -- df duf
 
 # git
 abbr -a -- gs 'git status'
@@ -52,6 +52,7 @@ abbr -a -- grbc 'git rebase --continue'
 abbr -a -- grbi 'git rebase --interactive'
 abbr -a -- gl 'git log --graph --date=short'
 abbr -a -- glog 'git log --graph --pretty=oneline --abbrev-commit --decorate'
+abbr -a -- wtpr wtpr
 abbr -a -- gf 'git fetch'
 abbr -a -- gfp 'git fetch --prune'
 abbr -a -- gfa 'git fetch --all'
