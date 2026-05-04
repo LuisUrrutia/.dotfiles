@@ -1,4 +1,5 @@
 config/.config/fish/fish_variables
+config/.config/fish/fish_plugins
 config/.config/fish/functions/_*
 config/.config/fish/functions/fisher.fish
 config/.config/fish/functions/zoxide.fish
