@@ -153,7 +153,7 @@ This list is intentionally grouped. The exact package list lives in
   jobs, and time with a Catppuccin palette.
 - Neovim is modular, with Lazy, Treesitter, Telescope/frecency, LSP,
   completion, formatting, Fugitive, and diff helpers.
-- tmux pins TPM and validates the config in an isolated server before
+- tmux uses TPack for plugins and validates the config in an isolated server before
   installing plugins.
 - Hammerspoon handles Bluetooth sleep/reconnect behavior, caffeinate-at-home
   logic, and hotkeys.

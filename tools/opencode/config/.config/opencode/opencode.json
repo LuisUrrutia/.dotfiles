@@ -5,8 +5,9 @@
   "plugin": [
     "opencode-anthropic-auth",
     "file:///Users/luisurrutia/LuisUrrutia/opencode-cmux/dist/index.js",
-    "oh-my-openagent@latest",
-    "cc-safety-net"
+    "cc-safety-net",
+    "opencode-mem",
+    "oh-my-openagent@latest"
   ],
   "mcp": {
     "Figma Desktop": {

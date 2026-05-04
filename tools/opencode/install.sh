@@ -14,22 +14,17 @@ OPENCODE_SKILLS=(
 )
 
 install_oh_my_opencode() {
-  if [[ -f "$OPENCODE_CONFIG_DIR/oh-my-openagent.json" || -f "$OPENCODE_CONFIG_DIR/oh-my-openagent.jsonc" ]]; then
-    echo "Oh My OpenAgent already configured"
-    return
-  fi
-
   local -a omo_command
   if command -v bunx >/dev/null 2>&1; then
-    omo_command=(bunx oh-my-opencode)
+    omo_command=(bunx oh-my-openagent)
   elif command -v npx >/dev/null 2>&1; then
-    omo_command=(npx oh-my-opencode)
+    omo_command=(npx oh-my-openagent)
   else
     echo "Warning: bunx or npx not found, skipping Oh My OpenAgent" >&2
     return
   fi
 
-  "${omo_command[@]}" install --no-tui --skip-auth
+  "${omo_command[@]}" install --no-tui --skip-auth --claude=no --gemini=no --copilot=no
 }
 
 install_opencode_skills() {
