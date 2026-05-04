@@ -51,6 +51,7 @@ brew "fish"      # Shell
 brew "fisher"    # Fish plugin manager
 brew "atuin"     # Shell history manager
 brew "tmux"      # Terminal multiplexer
+brew "tmuxpack/tpack/tpack"     # tmux plugin manager
 brew "starship"  # Shell prompt
 brew "direnv"    # Directory-scoped environment loader
 

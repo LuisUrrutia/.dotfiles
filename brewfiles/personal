@@ -33,6 +33,7 @@ cask "apparency"              # App bundle inspector
 # ==============================================================================
 brew "shfmt"             # Shell script formatter
 brew "markdownlint-cli2" # Markdown linter
+brew "stylua"            # Lua formatter
 brew "yamlfmt"           # YAML formatter
 brew "latexindent"       # LaTeX document formatter
 brew "biome"             # Web formatter and linter
@@ -41,6 +42,7 @@ brew "biome"             # Web formatter and linter
 # Programming Languages and Runtimes
 # ==============================================================================
 brew "go"              # Go
+brew "lua"             # Lua
 brew "rustup"          # Rust toolchain manager
 brew "luarocks"        # Lua package manager
 brew "perl"            # Perl
@@ -60,7 +62,7 @@ brew "foundry"     # Ethereum development framework
 brew "awscli"       # AWS CLI
 brew "aws-sam-cli"  # AWS SAM CLI
 brew "cosign"       # Container signing and verification
-brew "terraform"    # Infrastructure as code
+brew "hashicorp/tap/terraform"    # Infrastructure as code
 cask "gcloud-cli"   # Google Cloud CLI
 
 # ==============================================================================
