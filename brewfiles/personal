@@ -63,7 +63,6 @@ brew "awscli"       # AWS CLI
 brew "aws-sam-cli"  # AWS SAM CLI
 brew "cosign"       # Container signing and verification
 brew "hashicorp/tap/terraform"    # Infrastructure as code
-cask "gcloud-cli"   # Google Cloud CLI
 
 # ==============================================================================
 # Image Processing and Libraries

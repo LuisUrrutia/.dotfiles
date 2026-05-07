@@ -5,7 +5,7 @@ source "${DOTFILES:-$HOME/.dotfiles}/tools/lib.sh"
 require_brew_bin mise
 
 # Activate mise
-eval "$bin_path" activate fish | source
+eval "$("$bin_path" activate bash)"
 
 # Install UV
 "$bin_path" use -g uv@latest

@@ -111,9 +111,6 @@ $FULL_INSTALL && brew bundle install --file "$DOTFILES/brewfiles/personal"
 echo "Previewing Brewfile cleanup..."
 bash "$DOTFILES/cleanup.sh" || true
 
-echo "Previewing Homebrew cleanup..."
-brew cleanup --dry-run --prune=all
-
 read -r -p "Clean up Homebrew dependencies and cache? [y/N] " response
 case "$response" in
 [yY][eE][sS] | [yY])
