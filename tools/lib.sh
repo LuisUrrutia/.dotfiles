@@ -55,7 +55,14 @@ app_exists() {
 # Usage: stow_config <tool_name>
 stow_config() {
   local tool="$1"
-  stow --restow -d "$DOTFILES/tools/$tool" -t "$HOME" config
+  local tool_dir="$DOTFILES/tools/$tool"
+
+  if [[ ! -d "$tool_dir/config" ]]; then
+    echo "Error: missing Stow package: $tool_dir/config" >&2
+    exit 1
+  fi
+
+  stow -v --restow -d "$tool_dir" -t "$HOME" config
   echo "Stowed $tool config"
 }
 
