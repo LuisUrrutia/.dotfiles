@@ -2,19 +2,9 @@
 
 source "${DOTFILES:-$HOME/.dotfiles}/tools/lib.sh"
 
-require_brew_opt openjdk
+require_brew_bin mise
 
-src="${opt_path}/libexec/openjdk.jdk"
-dest="/Library/Java/JavaVirtualMachines/openjdk.jdk"
+eval "$bin_path" activate fish | source
 
-# Check if already correctly linked
-if [[ -L "$dest" && "$(readlink "$dest")" == "$src" ]]; then
-  echo "openjdk already linked at $dest"
-  exit 0
-fi
-
-# Create parent directory if needed
-sudo mkdir -p "$(dirname "$dest")"
-
-sudo ln -sfn "$src" "$dest"
-echo "Created symlink: $dest -> $src"
+# Install latest lts
+"$bin_path" use -g java@lts
