@@ -8,7 +8,7 @@ stow_config node
 
 require_brew_bin mise
 
-eval "$bin_path" activate fish | source
+eval "$("$bin_path" activate bash)"
 
 # Install and use the latest Node LTS.
 "$bin_path" use -g node@lts
