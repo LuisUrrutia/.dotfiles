@@ -8,9 +8,19 @@ OPENCODE_SKILLS=(
   "https://github.com/zed-industries/zed humanizer"
   "https://github.com/anthropics/skills skill-creator"
   "https://github.com/vercel-labs/agent-skills vercel-composition-patterns"
-  "https://github.com/nextlevelbuilder/ui-ux-pro-max-skill ui-ux-pro-max"
-  "LuisUrrutia/skills commit"
-  "LuisUrrutia/skills pr"
+  "https://github.com/nextlevelbuilder/ui-uopenx-pro-max-skill ui-ux-pro-max"
+  "mattpocock/skills diagnose"
+  "mattpocock/skills grill-with-docs"
+  "mattpocock/skills improve-codebase-architecture"
+  "mattpocock/skills prototype"
+  "mattpocock/skills tdd"
+  "mattpocock/skills to-issues"
+  "mattpocock/skills to-prd"
+  "mattpocock/skills triage"
+  "mattpocock/skills write-a-skill"
+  "mattpocock/skills zoom-out"
+  "vercel-labs/agent-browser"
+  "LuisUrrutia/skills"
 )
 
 install_oh_my_opencode() {
@@ -43,7 +53,7 @@ install_opencode_skills() {
       continue
     fi
 
-    npx skills add "$skill_source" --skill "$skill_name" -g -y
+    npx skills@latest add "$skill_source" --skill "$skill_name" -g -y
   done
 }
 
