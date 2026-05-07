@@ -19,8 +19,11 @@ OPENCODE_SKILLS=(
   "mattpocock/skills triage"
   "mattpocock/skills write-a-skill"
   "mattpocock/skills zoom-out"
-  "vercel-labs/agent-browser"
-  "LuisUrrutia/skills"
+  "vercel-labs/agent-browser agent-browser"
+  "LuisUrrutia/skills commit"
+  "LuisUrrutia/skills pr"
+  "LuisUrrutia/skills daily-meeting-update"
+  "LuisUrrutia/skills github-actions"
 )
 
 install_oh_my_opencode() {
