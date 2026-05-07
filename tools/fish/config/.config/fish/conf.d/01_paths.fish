@@ -9,7 +9,6 @@ fish_add_path --append --path --move \
     "$HOME/Library/pnpm" \
     "$HOME/.rvm/bin" \
     "$HOME/.foundry/bin" \
-    "$HOMEBREW_PREFIX/opt/openjdk/bin" \
     "$HOME/.opencode/bin"
 
 set -gx RIPGREP_CONFIG_PATH "$HOME/.config/ripgrep/ripgreprc"
