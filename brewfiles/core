@@ -19,6 +19,7 @@ brew "fastfetch"  # Fast system information tool
 # ==============================================================================
 brew "cmake"      # Build system generator
 brew "pkg-config" # Compile and link flags manager
+brew "cocoapods"  # Dependency manager for Cocoa projects
 
 # ==============================================================================
 # Development Tools
@@ -36,8 +37,7 @@ vscode "vscodevim.vim"             # Vim emulation
 # Programming Languages and Runtimes
 # ==============================================================================
 brew "python"          # Python
-brew "uv"              # Python package manager
-brew "fnm"             # Fast Node Manager
+brew "mise"             # Multiple package manager
 brew "oven-sh/bun/bun" # Bun (JavaScript runtime)
 brew "openjdk"         # Java Development Kit
 brew "lua-language-server" # Lua language server
@@ -88,6 +88,7 @@ brew "rsync"   # File synchronization
 brew "git"       # Distributed version control
 brew "git-lfs"   # Git extension for large files
 brew "gh"        # GitHub CLI
+brew "worktrunk" # Git worktree manager
 brew "git-delta"  # Syntax-highlighting pager for git
 brew "actionlint" # GitHub Actions workflow linter
 brew "shellcheck" # Shell script linter
@@ -148,6 +149,7 @@ cask "arc" # Chromium-based browser
 # Productivity
 # ------------------------------------------------------------------------------
 cask "raycast"      # Command palette (Spotlight replacement)
+cask "obsidian"     # Markdown knowledge base
 cask "fliqlo"       # Clock screensaver
 cask "cleanshot"                   # Screen capture
 cask "hammerspoon"  # Automation
@@ -207,4 +209,5 @@ cask "zoom"        # Video conferencing
 # ------------------------------------------------------------------------------
 cask "claude"      # AI assistant
 cask "claude-code" # AI coding assistant
+cask "codexbar"    # Menu bar usage monitor for AI coding tools
 brew "ollama"      # Local AI model runner
