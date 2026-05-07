@@ -8,6 +8,7 @@ OPENCODE_SKILLS=(
   "https://github.com/zed-industries/zed humanizer"
   "https://github.com/anthropics/skills skill-creator"
   "https://github.com/vercel-labs/agent-skills vercel-composition-patterns"
+  "https://github.com/nextlevelbuilder/ui-ux-pro-max-skill ui-ux-pro-max"
   "mattpocock/skills diagnose"
   "mattpocock/skills grill-with-docs"
   "mattpocock/skills improve-codebase-architecture"
