@@ -43,7 +43,7 @@ yabairesize < escape ; yabaimode
 # Application launchers
 hyper - backtick : @open_terminal
 f13 : open -a Slack
-f15 : open -a Arc
+f15 : open -a Dia
 f16 : open -a WhatsApp
 f17 : open -a Zed
 f18 : @open_terminal
