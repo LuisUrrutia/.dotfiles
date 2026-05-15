@@ -19,8 +19,6 @@ TO_REMOVE_FROM_DOCK=(
   "com.apple.iWork.Keynote"
   "com.apple.iWork.Numbers"
   "com.apple.iWork.Pages"
-  "Brave Browser"
-  "com.brave.Browser"
 )
 for item in "${TO_REMOVE_FROM_DOCK[@]}"; do
   # Ignore errors if item doesn't exist
@@ -45,7 +43,7 @@ place_in_dock() {
 
 # Add frequently used applications to the Dock
 anchor="com.apple.Notes"
-for app in "Ghostty" "cmux" "Zed" "Cursor" "Arc"; do
+for app in "Ghostty" "cmux" "Zed" "Cursor" "Dia"; do
   if place_in_dock "$app" "$anchor"; then
     anchor="$app"
   fi
