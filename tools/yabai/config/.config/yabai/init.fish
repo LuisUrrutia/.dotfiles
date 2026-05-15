@@ -32,7 +32,7 @@ set -l space_configs_json '[
     "name": "web",
     "layout": "stack",
     "preferred_display": 1,
-    "apps": ["^Brave Browser$"]
+    "apps": ["^Dia$"]
   },
   {
     "name": "work",
@@ -142,8 +142,8 @@ apply_unmanaged_rules \
     VeraCrypt
 
 yabai -m rule --add app='^Ghostty$' subrole='AXFloatingWindow' manage=off
-yabai -m rule --add app='^Brave Browser$' title="(MetaMask|Phantom Wallet)" sub-layer=above manage=off sticky=on
-yabai -m rule --add app='^Brave Browser$' title="Sign In" manage=off sub-layer=above sticky=on
+yabai -m rule --add app='^Dia$' title="(MetaMask|Phantom Wallet)" sub-layer=above manage=off sticky=on
+yabai -m rule --add app='^Dia$' title="Sign In" manage=off sub-layer=above sticky=on
 yabai -m rule --add app='^BusyCal$' title="General" manage=off sub-layer=above sticky=on
 
 # Save expected display count for smart wake detection (yabai#259).

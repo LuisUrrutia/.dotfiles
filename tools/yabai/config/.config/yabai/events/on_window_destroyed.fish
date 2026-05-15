@@ -61,7 +61,7 @@ if test "$actual_window_count" -le 1
     end
 else if test "$space_focused" = "true"
     # Space still has windows and is the focused space — refocus a remaining window.
-    # When native tab apps (Ghostty, Brave) absorb a transient window into a tab group,
+    # When native tab apps (Ghostty, Dia) absorb a transient window into a tab group,
     # the transient window was briefly focused by yabai. Its destruction leaves no focused
     # window, causing yabai to drift focus to another display (e.g. Zed on display 1).
     # Explicitly focusing a remaining window on this space prevents the drift.

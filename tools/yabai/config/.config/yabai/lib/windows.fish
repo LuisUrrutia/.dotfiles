@@ -4,14 +4,14 @@
 # Apps that use native macOS tabs and may report an empty role to yabai (yabai#68).
 # These must be explicitly included when counting "real" windows, otherwise closing
 # a tab can falsely make a space appear empty and trigger space destruction.
-# Brave Browser is included because dragging tabs to new windows triggers rapid
+# Dia is included because dragging tabs to new windows triggers rapid
 # window_created/window_destroyed events that cause layout chaos (yabai#2599, #2717).
-set -g NATIVE_TAB_APPS ghostty "brave browser"
+set -g NATIVE_TAB_APPS ghostty "dia"
 
 # jq filter fragment: selects windows that are "real" — either they have a role
 # (standard yabai-managed windows) or they are a known native-tab app.
 # Usage: jq "[.[] | select($JQ_REAL_WINDOW_FILTER)] | length"
-set -g JQ_REAL_WINDOW_FILTER '.role != "" or (.app | ascii_downcase) as $a | ["ghostty", "brave browser"] | any(. == $a)'
+set -g JQ_REAL_WINDOW_FILTER '.role != "" or (.app | ascii_downcase) as $a | ["ghostty", "dia"] | any(. == $a)'
 
 # Count real windows on a given space using pre-fetched windows JSON.
 # Accounts for apps using native macOS tabs that may report empty roles (yabai#68).
