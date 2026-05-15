@@ -131,7 +131,7 @@ blindly overwrite home-directory config unless you know which version you want.
 - macOS/system: GNU core tools, dockutil, mas, mole, Linearmouse, Ice,
   DisplayLink, The Unarchiver
 - Automation and windows: Hammerspoon, yabai, skhd, borders
-- Apps: Arc, Raycast, 1Password, Ghostty, CleanShot, Fliqlo, IINA, Spotify,
+- Apps: Dia, Raycast, 1Password, Ghostty, CleanShot, Fliqlo, IINA, Spotify,
   Discord, WhatsApp, Zoom
 - Security/networking: 1Password CLI, OpenSSH, GnuPG, YubiKey Manager,
   NordVPN, Tailscale, VeraCrypt
