@@ -114,7 +114,7 @@ abbr -a -- dcs 'docker compose stop'
 abbr -a -- tf terraform
 
 # clean
-abbr -a -- clean-js 'fd -I -t d "^(node_modules|build|dist)$" -x rm -rf {}'
+abbr -a -- clean-js "fd -I -t d '^(node_modules|build|dist)\$' -x rm -rf {}"
 
 # ip
 abbr -a -- localip 'ipconfig getifaddr en0'
