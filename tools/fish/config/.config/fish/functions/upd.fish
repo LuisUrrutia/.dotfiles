@@ -9,6 +9,13 @@ function upd -d "updates different tools"
         echo "[upd] brew not found, skipping"
     end
 
+    if command -q mise
+        mise upgrade --yes
+        and mise prune --yes
+    else
+        echo "[upd] mise not found, skipping"
+    end
+
     if command -q fnm
         fnm install --lts --use --corepack-enabled
         fnm default lts-latest
@@ -66,9 +73,12 @@ function upd -d "updates different tools"
     end
 
     # Fish plugin update should be at the end of the function.
-    if command -q fish
-        command fish -ic "fisher update"
+    if type -q fisher; and test -f "$__fish_config_dir/fish_plugins"
+        fisher update
+    else if type -q fisher
+        echo "[upd] fish_plugins not found, installing default plugins"
+        fisher install jorgebucaran/fisher icezyclon/zoxide.fish jorgebucaran/autopair.fish patrickf1/fzf.fish
     else
-        echo "[upd] fish not found, skipping fisher update"
+        echo "[upd] fisher not found, skipping fisher update"
     end
 end
