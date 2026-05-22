@@ -201,6 +201,8 @@ The repository uses **Catppuccin** theme consistently across tools:
 4. **Owner detection**: `install.sh` checks if user is `luisurrutia` for full install
 5. **Two-tier install**: Core tools always installed, personal tools optional
 6. **Fish is default shell**: Configured last in install.sh
+7. **Domain docs**: Read `CONTEXT.md` before architecture, diagnosis, TDD, or issue-writing work
+8. **Glossary ownership**: Keep domain language in `CONTEXT.md`; do not duplicate the glossary here
 
 ## Available Helper Functions (lib.sh)
 
@@ -211,3 +213,17 @@ The repository uses **Catppuccin** theme consistently across tools:
 | `require_app <name>` | Check /Applications app exists | `$app_path` |
 | `app_exists <name>` | Check app exists (returns 0/1) | - |
 | `run_tool <name>` | Execute tool's install.sh | - |
+
+## Agent skills
+
+### Issue tracker
+
+Issues and PRDs are tracked in GitHub Issues for `LuisUrrutia/.dotfiles`. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+The triage vocabulary uses the default mattpocock/skills labels. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+This is a single-context repo using root `CONTEXT.md` and root `docs/adr/`. See `docs/agents/domain.md`.
