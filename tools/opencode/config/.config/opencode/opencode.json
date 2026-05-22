@@ -1,13 +1,14 @@
 {
   "$schema": "https://opencode.ai/config.json",
   "autoupdate": true,
+  "formatter": true,
+  "lsp": true,
   "share": "disabled",
   "plugin": [
-    "opencode-anthropic-auth",
-    "file:///Users/luisurrutia/LuisUrrutia/opencode-cmux/dist/index.js",
+    "file:///Users/luisurrutia/Projects/LuisUrrutia/opencode-cmux/dist/index.js",
     "cc-safety-net",
     "opencode-mem",
-    "oh-my-openagent@latest"
+    "oh-my-openagent"
   ],
   "mcp": {
     "Figma Desktop": {
