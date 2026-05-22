@@ -15,3 +15,6 @@ tools/opencode/config/.config/opencode/oh-my-openagent.jsonc.bak.*
 tools/opencode/config/.config/opencode/oh-my-openagent.json.migrations.json
 tools/opencode/config/.config/opencode/oh-my-opencode.json*
 tools/opencode/config/.config/opencode/skills/*
+
+# Claude generated state
+tools/claude/config/.claude/skills/*
