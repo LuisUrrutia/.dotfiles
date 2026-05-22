@@ -126,7 +126,7 @@ blindly overwrite home-directory config unless you know which version you want.
   tlrc, hyperfine, jq, watch, fswatch, rename
 - Development: Neovim, Zed, Git with delta, Git LFS, GitHub CLI, actionlint,
   ShellCheck, gitleaks, cspell
-- Languages: Node via fnm, Python and uv, Bun, OpenJDK, plus Rust, Go,
+- Languages: Node via mise, Python and uv, Bun, OpenJDK, plus Rust, Go,
   LuaRocks, Perl in full installs
 - macOS/system: GNU core tools, dockutil, mas, mole, Linearmouse, Ice,
   DisplayLink, The Unarchiver
