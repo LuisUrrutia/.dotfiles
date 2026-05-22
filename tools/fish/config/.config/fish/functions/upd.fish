@@ -16,21 +16,10 @@ function upd -d "updates different tools"
         echo "[upd] mise not found, skipping"
     end
 
-    if command -q fnm
-        fnm install --lts --use --corepack-enabled
-        fnm default lts-latest
-    else
-        echo "[upd] fnm not found, skipping"
-    end
-
-    if command -q corepack
-        corepack enable
-        corepack prepare pnpm@latest --activate
-    else
-        echo "[upd] corepack not found, skipping"
-    end
-
     if command -q pnpm
+        set -q PNPM_HOME; or set -gx PNPM_HOME "$HOME/Library/pnpm"
+        mkdir -p "$PNPM_HOME"
+        fish_add_path --append --path --move "$PNPM_HOME"
         pnpm -g update
     else
         echo "[upd] pnpm not found, skipping"
@@ -72,12 +61,21 @@ function upd -d "updates different tools"
         rm -rf "$HOME/.cache/opencode"
     end
 
+    if command -q bunx
+        if bunx skills list -g
+            bunx skills update
+        else
+            echo "[upd] unable to list skills, skipping skills update"
+        end
+    else
+        echo "[upd] bunx not found, skipping skills update"
+    end
+
     # Fish plugin update should be at the end of the function.
     if type -q fisher; and test -f "$__fish_config_dir/fish_plugins"
         fisher update
     else if type -q fisher
-        echo "[upd] fish_plugins not found, installing default plugins"
-        fisher install jorgebucaran/fisher icezyclon/zoxide.fish jorgebucaran/autopair.fish patrickf1/fzf.fish
+        echo "[upd] fish_plugins not found, skipping fisher update"
     else
         echo "[upd] fisher not found, skipping fisher update"
     end
