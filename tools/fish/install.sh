@@ -14,4 +14,5 @@ grep -qxF "$bin_path" /etc/shells || sudo sh -c "echo \"$bin_path\" >> /etc/shel
 chsh -s "$bin_path"
 
 # Install fish plugins
-"$bin_path" --command "source \"$opt_path/share/fish/vendor_functions.d/fisher.fish\"; fisher install jorgebucaran/fisher icezyclon/zoxide.fish jorgebucaran/autopair.fish patrickf1/fzf.fish"
+fish_plugins_path="$HOME/.config/fish/fish_plugins"
+"$bin_path" --command "source \"$opt_path/share/fish/vendor_functions.d/fisher.fish\"; and test -f \"$fish_plugins_path\"; and fisher update"
