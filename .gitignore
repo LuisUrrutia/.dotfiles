@@ -1,6 +1,9 @@
 .DS_Store
 __pycache__/
 docs/superpowers/
+.omo/
+.sisyphus/
+*.bak
 
 # OpenCode generated state
 tools/opencode/config/.config/opencode/.gitignore
