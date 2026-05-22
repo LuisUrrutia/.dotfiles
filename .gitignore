@@ -15,9 +15,3 @@ tools/opencode/config/.config/opencode/oh-my-openagent.jsonc.bak.*
 tools/opencode/config/.config/opencode/oh-my-openagent.json.migrations.json
 tools/opencode/config/.config/opencode/oh-my-opencode.json*
 tools/opencode/config/.config/opencode/skills/*
-!tools/opencode/config/.config/opencode/skills/article-processing/
-!tools/opencode/config/.config/opencode/skills/article-processing/SKILL.md
-!tools/opencode/config/.config/opencode/skills/article-processing/REFERENCE.md
-!tools/opencode/config/.config/opencode/skills/article-processing/TEMPLATES.md
-!tools/opencode/config/.config/opencode/skills/article-processing/QA.md
-tools/opencode/config/.config/opencode/skills/article-processing/.omo/
