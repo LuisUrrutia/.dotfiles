@@ -90,5 +90,5 @@ cask "obs-advanced-scene-switcher" # OBS scene automation
 # ==============================================================================
 brew "asmvik/formulae/yabai" # Tiling window manager
 brew "FelixKratz/formulae/borders"
-brew "jackielii/tap/skhd-zig"     # Hotkey daemon
+brew "asmvik/formulae/skhd"       # Hotkey daemon
 cask "anybar"                     # Status indicator
