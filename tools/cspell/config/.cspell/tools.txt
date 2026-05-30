@@ -23,5 +23,4 @@ sketchybar
 socketfilterfw
 softwareupdate
 venv
-yabai
 zodvex
