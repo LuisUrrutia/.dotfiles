@@ -1,6 +1,8 @@
 # ==============================================================================
 # Core System Tools
 # ==============================================================================
+tap "muxy-app/tap" # Muxy terminal multiplexer cask
+
 brew "coreutils"  # GNU core utilities (those that come with macOS are outdated)
 brew "moreutils"  # Collection of additional Unix utilities (like sponge)
 brew "findutils"  # GNU find, xargs, and locate
@@ -53,7 +55,7 @@ brew "lua-language-server" # Lua language server
 # Shell and Terminal
 # ==============================================================================
 cask "ghostty"   # Terminal emulator
-cask "cmux"      # Terminal for AI coding agents
+cask "muxy"      # Terminal multiplexer for macOS
 brew "fish"      # Shell
 brew "fisher"    # Fish plugin manager
 brew "atuin"     # Shell history manager
@@ -153,6 +155,11 @@ cask "macfuse"       # File system integration
 cask "thebrowsercompany-dia" # AI browser
 
 # ------------------------------------------------------------------------------
+# Design
+# ------------------------------------------------------------------------------
+cask "figma" # Interface design
+
+# ------------------------------------------------------------------------------
 # Productivity
 # ------------------------------------------------------------------------------
 cask "raycast"      # Command palette (Spotlight replacement)
@@ -208,6 +215,8 @@ cask "font-source-code-pro"          # Source Code Pro
 # Communication
 # ------------------------------------------------------------------------------
 cask "discord"     # Messaging
+cask "telegram"    # Messaging
+cask "slack"       # Work messaging
 cask "whatsapp"    # Messaging
 cask "zoom"        # Video conferencing
 
