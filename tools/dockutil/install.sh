@@ -43,7 +43,7 @@ place_in_dock() {
 
 # Add frequently used applications to the Dock
 anchor="com.apple.Notes"
-for app in "Ghostty" "cmux" "Zed" "Cursor" "Dia"; do
+for app in "Ghostty" "Muxy" "Zed" "Cursor" "Dia"; do
   if place_in_dock "$app" "$anchor"; then
     anchor="$app"
   fi
