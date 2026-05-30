@@ -6,25 +6,11 @@ cask "loopback"            # Audio routing
 cask "soundsource"         # Audio control
 
 # ------------------------------------------------------------------------------
-# Communication
-# ------------------------------------------------------------------------------
-cask "telegram"    # Messaging
-cask "slack"       # Work messaging
-
-# ------------------------------------------------------------------------------
-# Design
-# ------------------------------------------------------------------------------
-cask "figma"                       # Interface design
-cask "adobe-creative-cloud"        # Adobe suite
-
-
-# ------------------------------------------------------------------------------
 # Development Tools
 # ------------------------------------------------------------------------------
 cask "docker-desktop"         # Container platform
 brew "dive"                   # Docker image layer inspector
 cask "yaak"                   # API development environment
-cask "http-toolkit"           # HTTP debugging proxy
 cask "android-platform-tools" # Android SDK tools
 cask "apparency"              # App bundle inspector
 
@@ -88,7 +74,4 @@ cask "obs-advanced-scene-switcher" # OBS scene automation
 # ==============================================================================
 # Window Management and related Tools
 # ==============================================================================
-brew "asmvik/formulae/yabai" # Tiling window manager
-brew "FelixKratz/formulae/borders"
 brew "asmvik/formulae/skhd"       # Hotkey daemon
-cask "anybar"                     # Status indicator
