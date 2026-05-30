@@ -58,7 +58,7 @@ function help-aliases -d "Show useful shell aliases and abbreviations"
     printf '  %-12s %s\n' today "date YYYY/MM/DD"
     printf '  %-12s %s\n' timestamp "date YYYYMMDDHHMMSS"
     printf '  %-12s %s\n' epoch "Unix epoch timestamp"
-    printf '  %-12s %s\n' upd "update tools"
+    printf '  %-12s %s\n' upd "update tools (use --force to bypass daily/weekly gates)"
     printf '  %-12s %s\n' weather "curl wttr.in"
     printf '  %-12s %s\n' halp/cheat "show local command notes"
 end

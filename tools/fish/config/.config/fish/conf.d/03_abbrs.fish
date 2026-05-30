@@ -11,6 +11,7 @@ abbr -a -- desk 'cd ~/Desktop'
 abbr -a -- c clear
 abbr -a -- h history
 abbr -a -- j 'jobs -l'
+abbr -a -- oc opencode
 abbr -a -- path 'printf "%s\n" $PATH'
 abbr -a -- chmodx 'chmod +x'
 
