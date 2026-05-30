@@ -5,12 +5,15 @@
   "lsp": true,
   "share": "disabled",
   "plugin": [
-    "file:///Users/luisurrutia/Projects/LuisUrrutia/opencode-cmux/dist/index.js",
     "cc-safety-net",
-    "opencode-mem",
-    "oh-my-openagent"
+    "@tarquinen/opencode-dcp@latest",
+    "oh-my-openagent@latest"
   ],
   "mcp": {
+    "Expo": {
+      "type": "remote",
+      "url": "https://mcp.expo.dev/mcp"
+    },
     "Figma Desktop": {
       "type": "remote",
       "url": "http://127.0.0.1:3845/mcp"

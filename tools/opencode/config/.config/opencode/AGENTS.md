@@ -22,8 +22,6 @@ Never commit or push on your own.
 
 Before committing, inspect status and diff. Commit only files related to the request.
 
-Use the Humanizer skill for all commit messages and pull request titles/bodies.
-
 Use WorkTrunk (`wt`) instead of raw `git worktree` commands when creating or switching worktrees.
 
 - Create a new worktree and branch with `wt switch --create <name>`.
