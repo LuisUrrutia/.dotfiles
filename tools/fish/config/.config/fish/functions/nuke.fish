@@ -1,8 +1,6 @@
 function nuke -d "Kill unwanted background processes"
     # Define process patterns to kill
     set -l process_patterns \
-        Adobe \
-        Creative \
         FortiClient \
         Logitech \
         lghub \
