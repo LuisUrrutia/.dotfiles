@@ -5,7 +5,7 @@
 > rewires shell/editor defaults. Read this before running it on a machine you
 > care about.
 
-Fish shell, Starship, Ghostty, Neovim, Hammerspoon, yabai, Catppuccin, and a
+Fish shell, Starship, Ghostty, Neovim, Hammerspoon, Catppuccin, and a
 pile of modern CLI tools. The repo uses GNU Stow so tool configs stay versioned
 here and symlink into `$HOME`.
 
@@ -51,8 +51,8 @@ personal Brewfile.
 - writes `.installed` so first-run work does not repeat
 
 Several tool installers have real side effects: macOS defaults, shell
-registration, tmux plugin setup, yabai sudoers config, service starts,
-generated completions, language toolchains, and app-specific config.
+registration, tmux plugin setup, service starts, generated completions,
+language toolchains, and app-specific config.
 
 ## Install modes
 
@@ -121,7 +121,7 @@ blindly overwrite home-directory config unless you know which version you want.
 
 ## What's included
 
-- Shell and terminal: Fish, Starship, Ghostty, tmux, fzf, zoxide, cmux
+- Shell and terminal: Fish, Starship, Ghostty, tmux, fzf, zoxide, Muxy
 - CLI and search: bat, eza, ripgrep, fd, btop, dust, duf, procs, tailspin,
   tlrc, hyperfine, jq, watch, fswatch, rename
 - Development: Neovim, Zed, Git with delta, Git LFS, GitHub CLI, actionlint,
@@ -130,14 +130,14 @@ blindly overwrite home-directory config unless you know which version you want.
   LuaRocks, Perl in full installs
 - macOS/system: GNU core tools, dockutil, mas, mole, Linearmouse, Ice,
   DisplayLink, The Unarchiver
-- Automation and windows: Hammerspoon, yabai, skhd, borders
+- Automation and hotkeys: Hammerspoon, skhd
 - Apps: Dia, Raycast, 1Password, Ghostty, CleanShot, Fliqlo, IINA, Spotify,
-  Discord, WhatsApp, Zoom
+  Discord, WhatsApp, Telegram, Slack, Figma, Zoom
 - Security/networking: 1Password CLI, OpenSSH, GnuPG, YubiKey Manager,
   NordVPN, Tailscale, VeraCrypt
 - AI tools: Claude, Claude Code, OpenCode config, Claude agent profiles
-- Full-install extras: Docker Desktop, Yaak, HTTP Toolkit, Android platform
-  tools, AWS, Google Cloud, web3 tools, audio/streaming/design apps
+- Full-install extras: Docker Desktop, Yaak, Android platform tools, AWS,
+  Google Cloud, web3 tools, audio/streaming apps
 
 This list is intentionally grouped. The exact package list lives in
 `brewfiles/core` and `brewfiles/personal`.
@@ -157,8 +157,6 @@ This list is intentionally grouped. The exact package list lives in
   installing plugins.
 - Hammerspoon handles Bluetooth sleep/reconnect behavior, caffeinate-at-home
   logic, and hotkeys.
-- yabai creates named spaces, routes apps to displays/spaces, applies
-  sticky/unmanaged rules, and has Ghostty-specific window fixes.
 - Raycast exports are tracked as `.rayconfig` backups with `raycast-config`
   helpers for status, listing, backup, restore, and scriptable latest-path lookup.
 - Catppuccin is used across Fish/FZF, Starship, Ghostty, bat, btop, and editor tooling.
@@ -196,8 +194,7 @@ personal credentials here.
 - Missing optional dependency: most `require_*` checks warn and skip that tool.
 - Fish did not become the shell: re-run `./tools/fish/install.sh` after
   Homebrew Fish is installed.
-- yabai/skhd issues: check permissions, scripting additions, and the sudoers
-  setup created by the installer.
+- skhd issues: check that Accessibility permissions are granted.
 - Homebrew package drift: compare against `brewfiles/core` and
   `brewfiles/personal`, then re-run `brew bundle install --file <file>`.
 

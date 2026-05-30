@@ -49,7 +49,7 @@ Interactive shell configuration, functions, abbreviations, paths, and environmen
 _Avoid_: Bash profile, terminal theme
 
 **macOS Automation Config**:
-Hammerspoon, yabai, skhd, borders, and related settings that control windows, spaces, hotkeys, and system behavior.
+Hammerspoon, skhd, and related settings that control hotkeys and system behavior.
 _Avoid_: App preferences, desktop theme
 
 **Safe Bootstrap Convention**:
