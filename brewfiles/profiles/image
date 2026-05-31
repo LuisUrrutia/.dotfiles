@@ -1,0 +1,5 @@
+brew "imagemagick" # Image manipulation tools
+brew "libvips"     # Image processing library
+brew "libmagic"    # File type identification
+brew "libavif"     # AVIF image format
+brew "jpeg"        # JPEG library

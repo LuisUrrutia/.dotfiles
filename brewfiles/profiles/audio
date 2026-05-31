@@ -1,0 +1,3 @@
+cask "focusrite-control-2" # Audio interface control
+cask "loopback"            # Audio routing
+cask "soundsource"         # Audio control
