@@ -31,7 +31,8 @@ function help-aliases -d "Show useful shell aliases and abbreviations"
     printf '  %-12s %s\n' tf terraform
 
     printf '\n%s\n' Terminal
-    printf '  %-12s %s\n' c clear
+    printf '  %-12s %s\n' c opencode
+    printf '  %-12s %s\n' cc claude
     printf '  %-12s %s\n' h history
     printf '  %-12s %s\n' j "jobs -l"
     printf '  %-12s %s\n' path "print PATH entries"
@@ -41,10 +42,16 @@ function help-aliases -d "Show useful shell aliases and abbreviations"
     printf '  %-12s %s\n' du "summarize disk usage two levels deep"
     printf '  %-12s %s\n' df "show disk free space with duf"
 
+    printf '\n%s\n' Images
+    printf '  %-12s %s\n' img2jpg "convert to JPG; use --medium/--small for presets"
+    printf '  %-12s %s\n' img2png "convert to optimized PNG; use --quantize for pngquant"
+    printf '  %-12s %s\n' imgoptimize "resize and optimize images in the current tree"
+
     printf '\n%s\n' Network
     printf '  %-12s %s\n' localip "show en0 local IP"
     printf '  %-12s %s\n' myip/ip "show public IP"
     printf '  %-12s %s\n' ports "list listening ports"
+    printf '  %-12s %s\n' fip "forward localhost ports over SSH; use --list to inspect"
     printf '  %-12s %s\n' killport "confirm before killing a port listener"
     printf '  %-12s %s\n' netcons "list network connections"
     printf '  %-12s %s\n' flushdns "flush macOS DNS cache"

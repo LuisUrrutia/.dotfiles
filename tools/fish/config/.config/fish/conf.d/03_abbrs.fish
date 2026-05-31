@@ -8,7 +8,8 @@ abbr -a -- dl 'cd ~/Downloads'
 abbr -a -- desk 'cd ~/Desktop'
 
 # terminal
-abbr -a -- c clear
+abbr -a -- c opencode
+abbr -a -- cc claude
 abbr -a -- h history
 abbr -a -- j 'jobs -l'
 abbr -a -- oc opencode
