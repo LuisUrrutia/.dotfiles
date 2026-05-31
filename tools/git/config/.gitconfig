@@ -1,7 +1,3 @@
-[user]
-  signingkey = ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINE6i8g88hWDLjvuF8toQLJ9nCs8hZojlzBCswr9dg3F
-  name = Luis Urrutia
-  email = luis@urrutia.me
 [core]
   autocrlf = false
   editor = vim
@@ -65,7 +61,6 @@
   workers = 0
 [commit]
   template = ~/.config/git/default-commit-message
-  gpgsign = true
 [branch]
   # via https://youtu.be/aolI_Rz0ZqY?si=RjnOM_oAobpR_mDG&t=1021
   sort = -committerdate
@@ -135,12 +130,6 @@
   fsckObjects = true
 [tag]
   sort = -version:refname
-  gpgsign = true
-  forceSignAnnotated = true
-[gpg]
-  format = ssh
-[gpg "ssh"]
-  program = /Applications/1Password.app/Contents/MacOS/op-ssh-sign
 [filter "lfs"]
   process = git-lfs filter-process
   required = true
@@ -168,4 +157,5 @@
 [web]
   browser = open
 [include]
+  path = ~/.config/git/local.gitconfig
   path = ~/.config/git/delta.gitconfig
