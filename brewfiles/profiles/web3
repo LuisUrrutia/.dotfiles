@@ -1,0 +1,4 @@
+brew "solidity"    # Ethereum smart contract language
+brew "ethereum"    # Ethereum tools
+brew "stellar-cli" # Stellar CLI
+brew "foundry"     # Ethereum development framework

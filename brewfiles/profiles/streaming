@@ -1,0 +1,3 @@
+cask "camo-studio"                 # iPhone as webcam
+cask "obs"                         # Streaming/recording
+cask "obs-advanced-scene-switcher" # OBS scene automation

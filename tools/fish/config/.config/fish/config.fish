@@ -2,6 +2,7 @@ set -gx LANG en_US.UTF-8
 set -gx PAGER less
 set -gx XDG_CONFIG_HOME "$HOME/.config"
 set -gx PNPM_HOME "$HOME/Library/pnpm"
+test -f ~/secrets.fish; and source ~/secrets.fish
 
 if status is-interactive
     set -gx GPG_TTY (tty)
@@ -31,6 +32,6 @@ if status is-interactive
     end
 else
     if command -q mise
-        mise activate fish --shims | source
+        mise activate fish --shims 2>/dev/null | source
     end
 end

@@ -4,13 +4,13 @@ This document provides context and guidelines for AI agents working in this macO
 
 ## Repository Overview
 
-Personal macOS dotfiles repository managing system configuration, shell environment, development tools, and application settings. Uses **GNU Stow** for symlink management.
+Shareable macOS dotfiles repository managing system configuration, shell environment, development tools, and application settings. Uses **GNU Stow** for symlink management.
 
 ### Directory Structure
 
 ```
 .dotfiles/
-├── brewfiles/           # Homebrew bundle files (core, personal)
+├── brewfiles/           # Homebrew bundle files (core, profiles)
 ├── tools/               # Tool-specific configurations
 │   ├── lib.sh           # Shared Bash helper functions
 │   └── <tool>/          # Per-tool directories
@@ -18,7 +18,7 @@ Personal macOS dotfiles repository managing system configuration, shell environm
 │       └── config/      # Config files (symlinked via Stow)
 ├── archived/            # Deprecated tools
 ├── install.sh           # Main installer
-└── private-install.sh   # Private/personal install script
+└── private-install.sh   # Owner-only private install script
 ```
 
 ### Languages Used
@@ -33,9 +33,9 @@ Personal macOS dotfiles repository managing system configuration, shell environm
 
 ## Build/Install Commands
 
-### Full Installation
+### Interactive Installation
 ```bash
-./install.sh              # Interactive install (asks for full/core)
+./install.sh              # Interactive install (asks which profiles to install)
 ```
 
 ### Individual Tool Installation
@@ -46,7 +46,7 @@ Personal macOS dotfiles repository managing system configuration, shell environm
 ### Homebrew Package Management
 ```bash
 brew bundle install --file brewfiles/core      # Core packages only
-brew bundle install --file brewfiles/personal  # Personal/dev packages
+brew bundle install --file brewfiles/profiles/web3  # One optional profile
 ```
 
 ## Code Style Guidelines
@@ -198,8 +198,8 @@ The repository uses **Catppuccin** theme consistently across tools:
 1. **No CI/CD**: Changes cannot be automatically validated
 2. **macOS only**: Scripts assume macOS and Homebrew
 3. **Stow-based**: Config files live in `config/` subdirectories and are symlinked
-4. **Owner detection**: `install.sh` checks if user is `luisurrutia` for full install
-5. **Two-tier install**: Core tools always installed, personal tools optional
+4. **Owner detection**: `install.sh` may default owner prompts differently, but install behavior is profile-based
+5. **Profile installs**: Core tools always installed, optional tools come from `brewfiles/profiles/`
 6. **Fish is default shell**: Configured last in install.sh
 7. **Domain docs**: Read `CONTEXT.md` before architecture, diagnosis, TDD, or issue-writing work
 8. **Glossary ownership**: Keep domain language in `CONTEXT.md`; do not duplicate the glossary here

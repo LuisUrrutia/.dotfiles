@@ -11,11 +11,12 @@ branch="$($git_bin branch --show-current 2>/dev/null || true)"
 [[ -n "$branch" ]] || exit 1
 
 current_dir="${PWD##*/}"
+branch_name="${branch##*/}"
 normalize() {
   printf '%s' "$1" | tr '/[:upper:]' '-[:lower:]'
 }
 
-branch_hyphen="$(normalize "$branch")"
+branch_hyphen="$(normalize "$branch_name")"
 branch_underscore="${branch_hyphen//-/_}"
 dir_normalized="$(normalize "$current_dir")"
 dir_underscore="${dir_normalized//-/_}"

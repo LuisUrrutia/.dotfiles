@@ -81,8 +81,6 @@ noisy_domains = {
     "com.Breakpad.crash_report_sender",
     "com.Facepunch-Studios-LTD.Rust",
     "com.luisurrutia.dotfiles",
-    "com.adobe.crashreporter",
-    "com.adobe.dunamis",
     "com.apple.Accessibility.Assets",
     "com.apple.AccessibilityHearingNearby",
     "com.apple.AccessibilityUIServer",

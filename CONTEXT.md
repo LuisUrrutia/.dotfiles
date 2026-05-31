@@ -1,11 +1,11 @@
 # macOS Dotfiles Context
 
-This context defines the domain language for this personal macOS dotfiles repository. It helps agents discuss bootstrap behavior, tool configuration, and safe setup changes without mixing them with unrelated knowledge workflows.
+This context defines the domain language for this shareable macOS dotfiles repository. It helps agents discuss bootstrap behavior, tool configuration, and safe setup changes without mixing them with unrelated knowledge workflows.
 
 ## Language
 
 **Dotfiles Repository**:
-A personal macOS setup repo that manages system preferences, shell environment, developer tools, apps, and application settings.
+A shareable macOS setup repo that manages system preferences, shell environment, developer tools, apps, and application settings.
 _Avoid_: Generic config repo, package list
 
 **Bootstrapper**:
@@ -32,9 +32,9 @@ _Avoid_: Dependency manifest, manual install list
 The safer install path that applies base packages and configs without owner-only extras.
 _Avoid_: Minimal mode, demo install
 
-**Full Install**:
-The owner-oriented install path that includes personal packages and broader setup.
-_Avoid_: Default install, production install
+**Profile Install**:
+An optional install path assembled from selected Brewfiles under `brewfiles/profiles/`, driven by answers in `install.sh` or explicit `--profile` flags.
+_Avoid_: Owner install, monolithic extras install
 
 **Private Setup**:
 Owner-only setup driven by `private-install.sh`, which pulls private configuration outside the public repo before running its installer.
@@ -49,7 +49,7 @@ Interactive shell configuration, functions, abbreviations, paths, and environmen
 _Avoid_: Bash profile, terminal theme
 
 **macOS Automation Config**:
-Hammerspoon, yabai, skhd, borders, and related settings that control windows, spaces, hotkeys, and system behavior.
+Hammerspoon, skhd, and related settings that control hotkeys and system behavior.
 _Avoid_: App preferences, desktop theme
 
 **Safe Bootstrap Convention**:
@@ -58,11 +58,11 @@ _Avoid_: Defensive coding, error suppression
 
 ## Relationships
 
-- The **Dotfiles Repository** is meant to bootstrap and maintain a personal macOS environment.
+- The **Dotfiles Repository** is meant to bootstrap and maintain a shareable macOS environment.
 - The **Bootstrapper** installs Homebrew packages from **Brewfiles**, runs **Tool Installers**, and stows **Stowed Config** into `$HOME`.
 - Each **Tool Directory** owns its own **Tool Installer** and any **Stowed Config** for that tool.
 - **Shared Installer Helpers** keep Bash installer behavior consistent across **Tool Installers**.
-- **Core Install** is available to non-owners; **Full Install** adds personal packages and setup for the repo owner.
+- **Core Install** is always available; **Profile Install** adds optional packages based on the user's answers.
 - **Private Setup** belongs outside the public repository and must not leak credentials or machine-local secrets.
 - **Fish Shell Config** is installed late because it can change the default shell.
 - **macOS Automation Config** can have system-level side effects, so it should follow **Safe Bootstrap Convention**.
@@ -88,5 +88,5 @@ _Avoid_: Defensive coding, error suppression
 
 - "Install" can mean full bootstrap or one tool reinstall. Prefer **Bootstrapper** for `./install.sh` and **Tool Installer** for `tools/<tool>/install.sh`.
 - "Config" can mean tracked files or live files in `$HOME`. Prefer **Stowed Config** for tracked files linked into place by GNU Stow.
-- "Personal" can mean public preferences or private secrets. Public preferences may live in this repo; **Private Setup** and secrets must stay outside it.
+- Use **Profile Install** for public optional packages and **Private Setup** for owner-only or secret material.
 - "Package drift" means Homebrew state differs from **Brewfiles**. Resolve it by updating the Brewfile or re-running `brew bundle install --file <file>`.

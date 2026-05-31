@@ -1,6 +1,8 @@
 # ==============================================================================
 # Core System Tools
 # ==============================================================================
+tap "muxy-app/tap" # Muxy terminal multiplexer cask
+
 brew "coreutils"  # GNU core utilities (those that come with macOS are outdated)
 brew "moreutils"  # Collection of additional Unix utilities (like sponge)
 brew "findutils"  # GNU find, xargs, and locate
@@ -20,13 +22,6 @@ brew "fastfetch"  # Fast system information tool
 brew "cmake"      # Build system generator
 brew "pkg-config" # Compile and link flags manager
 brew "cocoapods"  # Dependency manager for Cocoa projects
-
-# ==============================================================================
-# Cloud and Container Tools
-# ==============================================================================
-brew "kubernetes-cli" # Kubernetes CLI (kubectl)
-brew "helm"           # Kubernetes package manager
-cask "gcloud-cli"     # Google Cloud CLI
 
 # ==============================================================================
 # Development Tools
@@ -53,7 +48,7 @@ brew "lua-language-server" # Lua language server
 # Shell and Terminal
 # ==============================================================================
 cask "ghostty"   # Terminal emulator
-cask "cmux"      # Terminal for AI coding agents
+cask "muxy"      # Terminal multiplexer for macOS
 brew "fish"      # Shell
 brew "fisher"    # Fish plugin manager
 brew "atuin"     # Shell history manager
@@ -153,6 +148,11 @@ cask "macfuse"       # File system integration
 cask "thebrowsercompany-dia" # AI browser
 
 # ------------------------------------------------------------------------------
+# Design
+# ------------------------------------------------------------------------------
+cask "figma" # Interface design
+
+# ------------------------------------------------------------------------------
 # Productivity
 # ------------------------------------------------------------------------------
 cask "raycast"      # Command palette (Spotlight replacement)
@@ -208,6 +208,8 @@ cask "font-source-code-pro"          # Source Code Pro
 # Communication
 # ------------------------------------------------------------------------------
 cask "discord"     # Messaging
+cask "telegram"    # Messaging
+cask "slack"       # Work messaging
 cask "whatsapp"    # Messaging
 cask "zoom"        # Video conferencing
 
