@@ -1,0 +1,6 @@
+brew "shfmt"             # Shell script formatter
+brew "markdownlint-cli2" # Markdown linter
+brew "stylua"            # Lua formatter
+brew "yamlfmt"           # YAML formatter
+brew "latexindent"       # LaTeX document formatter
+brew "biome"             # Web formatter and linter

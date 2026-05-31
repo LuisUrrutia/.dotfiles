@@ -1,0 +1,5 @@
+cask "docker-desktop"         # Container platform
+brew "dive"                   # Docker image layer inspector
+cask "yaak"                   # API development environment
+cask "android-platform-tools" # Android SDK tools
+cask "apparency"              # App bundle inspector
