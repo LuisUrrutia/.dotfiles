@@ -154,14 +154,12 @@ blindly overwrite home-directory config unless you know which version you want.
 ├── brewfiles/
 │   ├── core              # Base packages and apps
 │   └── profiles/         # Selectable profile Brewfiles
-├── cursor/               # Cursor settings
 ├── tools/
 │   ├── lib.sh            # Shared installer helpers
 │   └── <tool>/
 │       ├── install.sh    # Tool-specific setup
 │       └── config/       # Files stowed into $HOME
 ├── archived/             # Old configs kept for reference
-├── cursor.sh             # Cursor helper
 ├── private-install.sh    # Owner-only private setup
 └── install.sh            # Main bootstrapper
 ```
