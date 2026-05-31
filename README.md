@@ -1,7 +1,7 @@
 # LuisUrrutia's macOS dotfiles
 
 > [!CAUTION]
-> Personal macOS setup. It changes system preferences, installs apps, and
+> macOS setup. It changes system preferences, installs apps, and
 > rewires shell/editor defaults. Read this before running it on a machine you
 > care about.
 
@@ -19,9 +19,14 @@ here and symlink into `$HOME`.
 
 ## Quick install
 
-This is meant for bootstrapping a new personal Mac. It installs Homebrew
-packages, may install Xcode on first run, runs per-tool setup scripts, stows
-configs into `$HOME`, and applies macOS defaults.
+This is meant for bootstrapping a new Mac, including shared installs for people
+who only want parts of the setup. Preview the plan first:
+
+```sh
+./install.sh --dry-run
+```
+
+Then run the installer when the prompts look right:
 
 ```sh
 cd "$HOME" \
@@ -30,24 +35,31 @@ cd "$HOME" \
   && ./install.sh
 ```
 
-Non-owners are warned and can choose a smaller install path that skips the
-personal Brewfile.
+Non-owners default to a smaller core install and can answer setup questions like
+"Are you working on Web3?", "Are you going to stream?", and "Do you have an
+audio interface?" so the installer selects the right optional tool groups.
 
 ## What the installer does
 
 `install.sh` is not just a symlink script. It:
 
 - refuses to run as root or outside macOS
+- supports `--dry-run` so you can inspect the plan before sudo, Homebrew,
+  cleanup, Stow, shell changes, directory creation, or `.installed` writes
+- asks plain-language questions, shows the packages/apps behind each yes, then
+  maps the answers to optional profile Brewfiles
 - prompts for your password, stores it temporarily in Keychain, and removes it
   on exit
 - installs Homebrew if missing, otherwise updates and upgrades it
 - installs Xcode on the first run
-- installs `brewfiles/core`, and `brewfiles/personal` for full installs
-- creates `$HOME/.config`
-- runs every `tools/<tool>/install.sh`, with Fish saved for last because it
+- installs `brewfiles/core` plus a temporary Brewfile assembled from
+  `brewfiles/profiles/<profile>` files based on your answers or `--profile`
+- creates `$HOME/.config` and `$HOME/Projects`
+- runs tool setup scripts after package install; each script applies config only
+  when its app or dependency is available, with Fish saved for last because it
   changes the default shell
-- removes the personal Git identity from tracked Git config for non-owners on
-  first run
+- can remove the repo owner's Git identity from tracked Git config for other
+  users on first run, but asks first
 - writes `.installed` so first-run work does not repeat
 
 Several tool installers have real side effects: macOS defaults, shell
@@ -56,11 +68,46 @@ language toolchains, and app-specific config.
 
 ## Install modes
 
-Full install:
+Preview the default interactive plan:
 
 ```sh
-./install.sh
+./install.sh --dry-run
 ```
+
+Core-only install:
+
+```sh
+./install.sh --core-only
+```
+
+Install all optional tool groups via flag:
+
+```sh
+./install.sh --all-profiles
+```
+
+Install selected optional tool groups directly:
+
+```sh
+./install.sh --profile web3,streaming,audio
+./install.sh --dry-run --profile blockchain,obs,focusrite
+```
+
+Available profile flags: `audio`, `dev`, `formatters`, `languages`, `web3`,
+`cloud`, `image`, `productivity`, `streaming`, and `window`. These are the
+scriptable names for the same question-driven tool groups.
+
+`brewfiles/profiles/` is the installer's optional-package source of truth, one
+Brewfile per profile. The installer joins the files selected by answers or
+`--profile` into a temporary Brewfile.
+
+The interactive language question behaves like a lightweight checkbox list:
+Go, Lua, Rust, and Perl are all enabled by default, and you can answer `n` for
+any language toolchain you do not want.
+
+Other optional questions work the same way: say yes to the need, then the
+installer immediately asks about each package/app with every item enabled by
+default.
 
 Install or re-run one tool config:
 
@@ -106,7 +153,7 @@ blindly overwrite home-directory config unless you know which version you want.
 .dotfiles/
 ├── brewfiles/
 │   ├── core              # Base packages and apps
-│   └── personal          # Full-install extras
+│   └── profiles/         # Selectable profile Brewfiles
 ├── cursor/               # Cursor settings
 ├── tools/
 │   ├── lib.sh            # Shared installer helpers
@@ -126,8 +173,8 @@ blindly overwrite home-directory config unless you know which version you want.
   tlrc, hyperfine, jq, watch, fswatch, rename
 - Development: Neovim, Zed, Git with delta, Git LFS, GitHub CLI, actionlint,
   ShellCheck, gitleaks, cspell
-- Languages: Node via mise, Python and uv, Bun, OpenJDK, plus Rust, Go,
-  LuaRocks, Perl in full installs
+- Languages: Node via mise, Python and uv, Bun, OpenJDK, plus optional Rust,
+  Go, LuaRocks, and Perl profiles
 - macOS/system: GNU core tools, dockutil, mas, mole, Linearmouse, Ice,
   DisplayLink, The Unarchiver
 - Automation and hotkeys: Hammerspoon, skhd
@@ -136,11 +183,11 @@ blindly overwrite home-directory config unless you know which version you want.
 - Security/networking: 1Password CLI, OpenSSH, GnuPG, YubiKey Manager,
   NordVPN, Tailscale, VeraCrypt
 - AI tools: Claude, Claude Code, OpenCode config, Claude agent profiles
-- Full-install extras: Docker Desktop, Yaak, Android platform tools, AWS,
+- Optional tool groups: Docker Desktop, Yaak, Android platform tools, AWS,
   Google Cloud, web3 tools, audio/streaming apps
 
 This list is intentionally grouped. The exact package list lives in
-`brewfiles/core` and `brewfiles/personal`.
+`brewfiles/core` and `brewfiles/profiles/`.
 
 ## Notable workflows
 
@@ -168,15 +215,15 @@ This list is intentionally grouped. The exact package list lives in
   Raycast Settings > Advanced.
 - Set up 1Password, save the recovery key, and enable the SSH agent.
 - Complete CleanShot setup.
-- Finish Docker Desktop setup for full installs.
+- Finish Docker Desktop setup if the `dev` profile was selected.
 - Add Bluetooth permission for Hammerspoon in System Settings > Privacy &
   Security > Bluetooth.
 - Allow Ghostty under System Settings > Privacy & Security > Developer Tools.
 - Set Fliqlo manually as the active screensaver.
 - Run `remindctl authorize` to grant Reminders access.
 - Install or configure Insta360 Link Controller if needed.
-- Configure SoundSource and Loopback licenses for full installs.
-- Configure BusyCal and OBS for full installs.
+- Configure SoundSource and Loopback licenses if the `audio` profile was selected.
+- Configure BusyCal and OBS if their profiles were selected.
 
 ## Customizing
 
@@ -186,7 +233,7 @@ only by hand if they should exist on the next machine too.
 
 Machine-local or private settings belong outside the public repo. Use
 `private-install.sh` for owner-only setup instead of committing secrets or
-personal credentials here.
+private credentials here.
 
 ## Troubleshooting
 
@@ -196,8 +243,8 @@ personal credentials here.
   Homebrew Fish is installed.
 - skhd issues: check that Accessibility permissions are granted.
 - Homebrew package drift: compare against `brewfiles/core` and
-  `brewfiles/personal`, then re-run `brew bundle install --file <file>`.
+  `brewfiles/profiles/`, then re-run the installer with the matching profiles.
 
 ## License
 
-Personal configuration. Fork and adapt as needed.
+Public dotfiles configuration. Fork and adapt as needed.
