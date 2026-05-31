@@ -1,0 +1,6 @@
+brew "go"       # Go
+brew "lua"      # Lua
+brew "rustup"   # Rust toolchain manager
+brew "luarocks" # Lua package manager
+brew "perl"     # Perl
+brew "cpanm"    # Perl module installer
