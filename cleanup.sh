@@ -4,8 +4,10 @@ set -euo pipefail
 
 DOTFILES="${DOTFILES:-$HOME/.dotfiles}"
 BREWFILES_DIR="$DOTFILES/brewfiles"
+PROFILE_BREWFILES_DIR="$BREWFILES_DIR/profiles"
 MERGED_BREWFILE="$(mktemp)"
 BREW_BUNDLE_CLEANUP_ARGS=()
+BREWFILES=()
 
 case "${1:-}" in
 --force)
@@ -34,7 +36,16 @@ if [[ ! -d "$BREWFILES_DIR" ]]; then
   exit 1
 fi
 
-for brewfile in "$BREWFILES_DIR"/*; do
+BREWFILES+=("$BREWFILES_DIR/core")
+
+if [[ -d "$PROFILE_BREWFILES_DIR" ]]; then
+  for brewfile in "$PROFILE_BREWFILES_DIR"/*; do
+    [[ -f "$brewfile" ]] || continue
+    BREWFILES+=("$brewfile")
+  done
+fi
+
+for brewfile in "${BREWFILES[@]}"; do
   [[ -f "$brewfile" ]] || continue
   {
     printf '# %s\n' "$brewfile"
