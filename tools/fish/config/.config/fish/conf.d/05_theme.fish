@@ -1,4 +1,5 @@
 # Catppuccin Mocha theme, kept in authored config to avoid Fish 4.3 migration files.
+set --global fish_autosuggestion_enabled 1
 set --global fish_color_autosuggestion 6c7086
 set --global fish_color_cancel f38ba8
 set --global fish_color_command 89b4fa
