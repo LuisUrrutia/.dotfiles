@@ -1,0 +1,7 @@
+cask "gcloud-cli"              # Google Cloud CLI
+brew "awscli"                  # AWS CLI
+brew "aws-sam-cli"             # AWS SAM CLI
+brew "kubernetes-cli"          # Kubernetes CLI (kubectl)
+brew "helm"                    # Kubernetes package manager
+brew "cosign"                  # Container signing and verification
+brew "hashicorp/tap/terraform" # Infrastructure as code

@@ -24,13 +24,6 @@ brew "pkg-config" # Compile and link flags manager
 brew "cocoapods"  # Dependency manager for Cocoa projects
 
 # ==============================================================================
-# Cloud and Container Tools
-# ==============================================================================
-brew "kubernetes-cli" # Kubernetes CLI (kubectl)
-brew "helm"           # Kubernetes package manager
-cask "gcloud-cli"     # Google Cloud CLI
-
-# ==============================================================================
 # Development Tools
 # ==============================================================================
 cask "cursor"         # AI code editor
