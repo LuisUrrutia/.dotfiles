@@ -33,7 +33,7 @@ jobs:
           set -euo pipefail
 
           scripts=()
-          for script in install.sh private-install.sh tools/lib.sh tools/*/install.sh tools/*/config/.local/bin/* tools/macos/prefs-diff.sh; do
+          for script in install.sh private-install.sh tools/lib.sh tools/*/install.sh tools/*/migrate-config.sh tools/*/config/.local/bin/* tools/macos/prefs-diff.sh; do
             [[ -f "$script" ]] && scripts+=("$script")
           done
 
