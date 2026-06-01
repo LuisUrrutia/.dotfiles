@@ -4,6 +4,7 @@ docs/superpowers/
 .omo/
 .sisyphus/
 *.bak
+tools/git/config/.gitconfig
 
 # OpenCode generated state
 tools/opencode/config/.config/opencode/.gitignore

@@ -1,0 +1,160 @@
+[core]
+  autocrlf = false
+  editor = vim
+  ignorecase = false
+  excludesfile = ~/.config/git/ignore
+  attributesFile = ~/.config/git/.gitattributes
+  commitGraph = true
+  # via https://youtu.be/aolI_Rz0ZqY?si=SXHJdhyfSkDQ81ry&t=1714
+  # Enable only if working on large
+  fsmonitor = true
+  pager = delta
+  preloadIndex = true
+  untrackedCache = true
+[init]
+  defaultBranch = main
+[alias]
+  authors = !git log --pretty=format:'%an <%ae>' "." | sort | uniq -c | sort -nr
+  contributors = shortlog --summary --numbered --all
+  top = !git log --format=format:%an | sort | uniq -c | sort -rn | head -n 20
+
+  # add
+  chunkyadd = add --patch # stage commits chunk by chunk
+
+  # via https://www.youtube.com/watch?v=aolI_Rz0ZqY&t=2391s
+  staash = stash --all
+
+  #via https://stackoverflow.com/questions/5188320/how-can-i-get-a-list-of-git-branches-ordered-by-most-recent-commit
+  recent-branches = "!r() { refbranch=$1 count=$2; git for-each-ref --sort=-committerdate refs/heads --format='%(refname:short)|%(HEAD)%(color:yellow)%(refname:short)|%(color:bold green)%(committerdate:relative)|%(color:blue)%(subject)|%(color:magenta)%(authorname)%(color:reset)' --color=always --count=${count:-20} | while read line; do branch=$(echo \"$line\" | awk 'BEGIN { FS = \"|\" }; { print $1 }' | tr -d '*'); ahead=$(git rev-list --count \"${refbranch:-origin/main}..${branch}\"); behind=$(git rev-list --count \"${branch}..${refbranch:-origin/main}\"); colorline=$(echo \"$line\" | sed 's/^[^|]*|//'); echo \"$ahead|$behind|$colorline\" | awk -F'|' -vOFS='|' '{$5=substr($5,1,70)}1' ; done | ( echo \"ahead|behind|branch\n\" && cat) | column -ts'|';}; r"
+
+  # branch
+  branch-name = !git rev-parse --abbrev-ref HEAD | tr -d '\n' | tr -d ' '
+  dm = "!f() { target=${1:-HEAD}; git branch --merged \"$target\" | sed 's/^[* ]*//' | grep -Ev '^(main|master|develop|dev)$' | while IFS= read -r branch; do [ -n \"$branch\" ] && git branch -d \"$branch\"; done; }; f"
+
+  # commit
+  amend = commit --amend            # amend your last commit
+  last = diff HEAD^                 # diff last committed change
+
+  # log
+  changes = log --pretty=format:\"%h %cr %cn %Cgreen%s%Creset\" --name-status
+  short = log --pretty=format:\"%h %cr %cn %Cgreen%s%Creset\"
+  simple = log --pretty=format:\" * %s\"
+  shortnocolor = log --pretty=format:\"%h %cr %cn %s\"
+  # via https://www.youtube.com/watch?v=aolI_Rz0ZqY&t=2391s
+  search-string-changes = "!f() { git log -S \"$1\" -p; }; f"
+
+  # via https://youtu.be/aolI_Rz0ZqY?si=bUwxbIA23dM_K2Q2&t=1063
+  push-force = push --force-with-lease --force-if-includes # force push with lease and force if includes
+
+  # reset
+  unstage = reset HEAD              # remove files from index (tracking)
+  uncommit = reset --soft HEAD^     # go back before last commit, with files in uncommitted state
+  undo = reset --soft HEAD~1        # undo last commit, keeping changes staged
+  filelog = log -u                  # show changes to a file
+
+  # via https://youtu.be/aolI_Rz0ZqY?si=5W5D_Vpm0NVFBs6X&t=692
+  smart-blame = blame -w -M -C -C -C
+
+  rv = "!f() { sha=\"$1\"; shift; subj=$(git show -s --format=%s \"$sha\"); git revert --no-commit \"$sha\" \"$@\" && git commit -m \"revert: $subj\"; }; f"
+
+[checkout]
+  workers = 0
+[commit]
+  template = ~/.config/git/default-commit-message
+[branch]
+  # via https://youtu.be/aolI_Rz0ZqY?si=RjnOM_oAobpR_mDG&t=1021
+  sort = -committerdate
+  autosetupmerge = true
+[merge]
+  summary = true
+  verbosity = 1
+  conflictstyle = zdiff3
+[pull]
+  rebase = true
+[rebase]
+  autoStash = true
+  autoSquash = true
+  forkPoint = true
+  updateRefs = true
+  missingCommitsCheck = warn
+[push]
+  # 'git push' will push the current branch to its tracking branch
+  # the usual default is to push all branches
+  default = upstream
+  autoSetupRemote = true
+  followTags = true
+[fetch]
+  writeCommitGraph = true
+  prune = true
+  pruneTags = true
+  parallel = 0
+  fsckObjects = false
+[diff]
+  # Git diff will use (i) index, (w) work tree, (c) commit and (o) object
+  # instead of a/b/c/d as prefixes for patches
+  mnemonicprefix = true
+  colorMoved = default
+  algorithm = histogram
+  renames = true
+  indentHeuristic = true
+[diff "exif"]
+  textconv = exiftool
+[log]
+  date = iso-local
+  follow = true
+[format]
+  pretty = format:%C(blue)%ad%Creset %C(yellow)%h%C(green)%d%Creset %C(blue)%s %C(magenta) [%an]%Creset
+[status]
+  aheadBehind = true
+  compareBranches = @{upstream} @{push}
+  showUntrackedFiles = normal
+[column]
+  # via https://youtu.be/aolI_Rz0ZqY?si=9lzCkyrLCay3TiCR&t=1004
+  ui = auto
+[color]
+  ui = true
+[gc]
+  writeCommitGraph = true
+[maintenance]
+  auto = true
+  strategy = geometric
+[pack]
+  threads = 0
+[index]
+  threads = 0
+  version = 4
+[feature]
+  manyFiles = true
+  experimental = true
+[transfer]
+  fsckObjects = true
+[tag]
+  sort = -version:refname
+[filter "lfs"]
+  process = git-lfs filter-process
+  required = true
+  clean = git-lfs clean -- %f
+  smudge = git-lfs smudge -- %f
+[rerere]
+  # Remember my merges
+  # http://gitfu.wordpress.com/2008/04/20/git-rerere-rereremember-what-you-did-last-time/
+  # https://youtu.be/aolI_Rz0ZqY?si=StlHaCAzfCnogSF6&t=903
+  enabled = true
+  autoUpdate = true
+[apply]
+  whitespace = nowarn
+[http]
+  version = HTTP/2
+  maxRetries = 3
+  retryAfter = 2
+  maxRetryTime = 60
+[advice]
+  statusHints = false
+  detachedHead = false
+  resolveConflict = false
+[protocol]
+  version = 2
+[web]
+  browser = open
+[include]
+	path = ~/.config/git/delta.gitconfig
