@@ -2,20 +2,6 @@ function fip --description 'Forward localhost ports to remote host over SSH'
     argparse -n fip h/help l/list -- $argv
     or return
 
-    if set -q _flag_help
-        printf '%s\n' "Usage: fip <host> <port1> [port2] ..."
-        printf '%s\n' "       fip --list"
-        printf '%s\n' ""
-        printf '%s\n' "Forward localhost ports to a remote host over SSH."
-        printf '\n%s\n' Options
-        printf '  %-12s %s\n' --list "list active SSH local forwards"
-        printf '  %-12s %s\n' --help "show this help"
-        printf '\n%s\n' Examples
-        printf '  %s\n' "fip example.com 3000 5173"
-        printf '  %s\n' "fip --list"
-        return
-    end
-
     if set -q _flag_list
         if test (count $argv) -ne 0
             echo "Usage: fip --list"
@@ -27,8 +13,27 @@ function fip --description 'Forward localhost ports to remote host over SSH'
         return
     end
 
+    if set -q _flag_help
+        printf '%s\n' "Usage: fip <ssh-host> <port> [port...]"
+        printf '%s\n' "       fip --list"
+        printf '%s\n' ""
+        printf '%s\n' "Forward local localhost ports to the same localhost ports on an SSH host."
+        printf '\n%s\n' Arguments
+        printf '  %-12s %s\n' ssh-host "SSH destination: alias, hostname, or user@host"
+        printf '  %-12s %s\n' port "localhost port to forward, for example 3000"
+        printf '\n%s\n' Options
+        printf '  %-12s %s\n' --list "list active SSH local forwards"
+        printf '  %-12s %s\n' --help "show this help"
+        printf '\n%s\n' Examples
+        printf '  %-32s %s\n' "fip staging 3000" "open local 3000 to localhost:3000 on staging"
+        printf '  %-32s %s\n' "fip user@example.com 3000 5432" "forward both ports through user@example.com"
+        printf '  %-32s %s\n' "fip devbox 5173" "open a remote Vite app locally"
+        printf '  %-32s %s\n' "fip --list" "show active SSH local forwards"
+        return
+    end
+
     if test (count $argv) -lt 2
-        echo "Usage: fip <host> <port1> [port2] ..."
+        echo "Usage: fip <ssh-host> <port> [port...]"
         return 1
     end
 
