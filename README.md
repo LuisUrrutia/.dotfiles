@@ -111,6 +111,67 @@ Other optional questions work the same way: say yes to the need, then the
 installer immediately asks about each package/app with every item enabled by
 default.
 
+## Hardware profiles
+
+`hardware-profiles.sh` is the place to describe known laptops or desktops. It is
+tracked config, not an ignored private file, so fork users can edit it for their
+own machines and keep those choices versioned.
+
+Get this Mac's hardware hash after the Fish config is installed:
+
+```sh
+machash
+```
+
+Before install, run the helper directly from the repo:
+
+```sh
+fish -c 'source tools/fish/config/.config/fish/functions/machash.fish; machash'
+```
+
+Then add or update a record in `DOTFILES_HARDWARE_PROFILES`:
+
+```bash
+work_laptop="hash=<hardware-hash>"
+work_laptop+="|id=work-laptop"
+work_laptop+="|name=Work Laptop"
+work_laptop+="|hostname=work-laptop"
+work_laptop+="|install_mode=selected"
+work_laptop+="|profile_list=dev,languages"
+work_laptop+="|git_user_name=Your Name"
+work_laptop+="|git_user_email=you@example.com"
+
+DOTFILES_HARDWARE_PROFILES=(
+  "$work_laptop"
+)
+```
+
+Supported fields:
+
+- `hash`: required hardware hash from `machash`
+- `id` and `name`: labels shown in install output
+- `hostname`: optional macOS `HostName`, `LocalHostName`, and `ComputerName`
+- `install_mode`: `all`, `core`, or `selected`
+- `profile_list`: comma-separated profile flags when `install_mode=selected`
+- `git_user_name` and `git_user_email`: written to machine-local `~/.gitconfig`
+- `git_signing_key` and `git_signing_program`: optional SSH signing setup
+
+Add signing fields to the same record when you use SSH commit signing.
+
+Do not put passwords, private keys, tokens, or other secrets in
+`hardware-profiles.sh`. Public SSH signing keys and app paths are fine.
+
+## Local Git identity
+
+Shared Git defaults are stowed from
+`tools/git/config/.config/git/local.gitconfig` into
+`~/.config/git/local.gitconfig`. Personal identity and signing settings are
+written only to `~/.gitconfig` by `tools/git/install.sh`.
+
+The legacy `tools/git/config/.gitconfig` path is intentionally local-only and
+ignored by Git. Keep it on disk if you want a machine-specific file there, but do
+not track it as shared repo config.
+
 Install or re-run one tool config:
 
 ```sh
@@ -231,9 +292,9 @@ Edit the files under `tools/<tool>/config`, then re-run that tool's installer
 or restow manually. Add packages to the Brewfiles instead of installing them
 only by hand if they should exist on the next machine too.
 
-Machine-local or private settings belong outside the public repo. Use
-`private-install.sh` for owner-only setup instead of committing secrets or
-private credentials here.
+Secrets and private credentials belong outside the public repo. Use
+`private-install.sh` for owner-only setup instead of committing tokens,
+passwords, private keys, or license data here.
 
 ## Troubleshooting
 

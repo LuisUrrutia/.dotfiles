@@ -17,6 +17,7 @@ Shareable macOS dotfiles repository managing system configuration, shell environ
 │       ├── install.sh   # Tool-specific setup script
 │       └── config/      # Config files (symlinked via Stow)
 ├── archived/            # Deprecated tools
+├── hardware-profiles.sh # Tracked per-machine profile records
 ├── install.sh           # Main installer
 └── private-install.sh   # Owner-only private install script
 ```
@@ -195,14 +196,81 @@ The repository uses **Catppuccin** theme consistently across tools:
 
 ## Important Notes for Agents
 
-1. **No CI/CD**: Changes cannot be automatically validated
+1. **CI is lint-focused**: GitHub Actions runs shell/static checks; still run
+   narrow local validation before claiming success
 2. **macOS only**: Scripts assume macOS and Homebrew
 3. **Stow-based**: Config files live in `config/` subdirectories and are symlinked
-4. **Owner detection**: `install.sh` may default owner prompts differently, but install behavior is profile-based
-5. **Profile installs**: Core tools always installed, optional tools come from `brewfiles/profiles/`
-6. **Fish is default shell**: Configured last in install.sh
-7. **Domain docs**: Read `CONTEXT.md` before architecture, diagnosis, TDD, or issue-writing work
-8. **Glossary ownership**: Keep domain language in `CONTEXT.md`; do not duplicate the glossary here
+4. **Hardware profiles are tracked config**: `hardware-profiles.sh` is meant
+   for users to edit for their laptops/desktops; do not add it to `.gitignore`
+   or treat it as disposable private state
+5. **No secrets in tracked profiles**: Hardware profiles may contain public SSH
+   signing keys and local app paths, but never tokens, private keys, passwords,
+   or license data
+6. **Owner detection**: `install.sh` may default owner prompts differently, but
+   install behavior is profile-based
+7. **Profile installs**: Core tools always installed, optional tools come from
+   `brewfiles/profiles/`
+8. **Fish is default shell**: Configured last in install.sh
+9. **Git config split**: Shared Git defaults are tracked at
+   `tools/git/config/.config/git/local.gitconfig`; machine identity/signing is
+   written to `~/.gitconfig`
+10. **Local legacy Git config**: `tools/git/config/.gitconfig` is intentionally
+   ignored/local-only; do not delete the user's local copy when removing it from
+   Git tracking
+11. **Git migration safety**: `tools/git/migrate-config.sh` must not write
+   through non-managed `~/.gitconfig` or `~/.config/git` symlinks; preserve
+   manual migration errors
+12. **Domain docs**: Read `CONTEXT.md` before architecture, diagnosis, TDD, or
+   issue-writing work
+13. **Glossary ownership**: Keep domain language in `CONTEXT.md`; do not
+   duplicate the glossary here
+
+## Hardware Profile Rules
+
+`install.sh` loads `hardware-profiles.sh` only when the file is readable. Keep
+`DOTFILES_HARDWARE_PROFILES=()` as the default so public clones and test
+fixtures can run without records.
+
+Each record is a pipe-delimited `key=value` string. Supported keys are `hash`,
+`id`, `name`, `hostname`, `install_mode`, `profile_list`, `git_user_name`,
+`git_user_email`, `git_signing_key`, and `git_signing_program`.
+
+`install_mode` accepts `all`, `core`, or `selected`. When using `selected`,
+`profile_list` must contain comma-separated profile flags from `PROFILE_ORDER`.
+
+Hardware profile values are exported for tool installers through
+`DOTFILES_HARDWARE_*`, `DOTFILES_GIT_*`, and `DOTFILES_MANAGED_GIT_*` variables.
+When no hardware profile matches, preserve caller-provided `GIT_USER_NAME`,
+`GIT_USER_EMAIL`, `GIT_SIGNING_KEY`, and `GIT_SIGNING_PROGRAM` fallbacks.
+
+## Git Config Rules
+
+The Git tool has two layers:
+
+- Shared, stowed defaults: `tools/git/config/.config/git/local.gitconfig` ->
+  `~/.config/git/local.gitconfig`
+- Machine-local identity/signing: `~/.gitconfig`, created or updated by
+  `tools/git/install.sh`
+
+Do not reintroduce tracked identity into the shared Git config. Do not track
+`tools/git/config/.gitconfig`; it is ignored so users can keep a local file
+without publishing identity settings.
+
+`tools/git/migrate-config.sh` keeps the include for
+`~/.config/git/local.gitconfig` first in `~/.gitconfig`, backs up old non-symlink
+`~/.config/git/local.gitconfig` files, and refuses non-managed symlinks instead
+of mutating their targets.
+
+When editing this area, validate at minimum:
+
+```bash
+bash -n install.sh hardware-profiles.sh \
+  tools/git/install.sh tools/git/migrate-config.sh tools/macos/install.sh
+fish -n tools/fish/config/.config/fish/functions/machash.fish
+shellcheck install.sh hardware-profiles.sh \
+  tools/git/install.sh tools/git/migrate-config.sh tools/macos/install.sh
+git config --file tools/git/config/.config/git/local.gitconfig --list >/dev/null
+```
 
 ## Available Helper Functions (lib.sh)
 
