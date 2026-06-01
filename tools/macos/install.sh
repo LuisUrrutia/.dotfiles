@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 
+# shellcheck disable=SC1091
 source "${DOTFILES:-$HOME/.dotfiles}/tools/lib.sh"
 
 # ~/.macos — https://mths.be/macos
@@ -8,6 +9,34 @@ close_system_settings() {
   # Close any open System Settings panes, to prevent them from overriding
   # settings we're about to change
   osascript -e 'tell application "System Settings" to quit' 2>/dev/null || true
+}
+
+set_scutil_name() {
+  local key="$1"
+  local value="$2"
+  local current=""
+
+  current="$(/usr/sbin/scutil --get "$key" 2>/dev/null || true)"
+  if [[ "$current" == "$value" ]]; then
+    return
+  fi
+
+  sudo /usr/sbin/scutil --set "$key" "$value"
+}
+
+configure_hostname() {
+  local hostname="${DOTFILES_HARDWARE_HOSTNAME:-}"
+
+  [[ -n "$hostname" ]] || return
+
+  if [[ ! "$hostname" =~ ^[A-Za-z0-9-]+$ ]]; then
+    echo "Error: invalid hardware hostname: $hostname" >&2
+    exit 1
+  fi
+
+  set_scutil_name "HostName" "$hostname"
+  set_scutil_name "LocalHostName" "$hostname"
+  set_scutil_name "ComputerName" "$hostname"
 }
 
 configure_keyboard_input() {
@@ -343,6 +372,7 @@ restart_affected_services() {
 }
 
 close_system_settings
+configure_hostname
 configure_keyboard_input
 configure_screen_display
 configure_finder_files

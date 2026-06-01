@@ -5,12 +5,37 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 export DOTFILES="${DOTFILES:-$SCRIPT_DIR}"
 
+DOTFILES_HARDWARE_PROFILES=()
+# shellcheck source=hardware-profiles.sh
+if [[ -r "$DOTFILES/hardware-profiles.sh" ]]; then
+  source "$DOTFILES/hardware-profiles.sh"
+fi
+
 DRY_RUN=false
 ARG_ALL_PROFILES=false
 ARG_CORE_ONLY=false
 ARG_PROFILE_LIST=""
 FIRST_RUN=false
-IS_OWNER=false
+HAS_HARDWARE_PROFILE=false
+ACTIVE_HARDWARE_PROFILE_ID=""
+ACTIVE_HARDWARE_PROFILE_NAME=""
+ACTIVE_HARDWARE_PROFILE_HOSTNAME=""
+ACTIVE_HARDWARE_PROFILE_INSTALL_MODE=""
+ACTIVE_HARDWARE_PROFILE_PROFILES=""
+ACTIVE_HARDWARE_PROFILE_GIT_USER_NAME=""
+ACTIVE_HARDWARE_PROFILE_GIT_USER_EMAIL=""
+ACTIVE_HARDWARE_PROFILE_GIT_SIGNING_KEY=""
+ACTIVE_HARDWARE_PROFILE_GIT_SIGNING_PROGRAM=""
+HARDWARE_PROFILE_RECORD_HASH=""
+HARDWARE_PROFILE_RECORD_ID=""
+HARDWARE_PROFILE_RECORD_NAME=""
+HARDWARE_PROFILE_RECORD_HOSTNAME=""
+HARDWARE_PROFILE_RECORD_INSTALL_MODE=""
+HARDWARE_PROFILE_RECORD_PROFILE_LIST=""
+HARDWARE_PROFILE_RECORD_GIT_USER_NAME=""
+HARDWARE_PROFILE_RECORD_GIT_USER_EMAIL=""
+HARDWARE_PROFILE_RECORD_GIT_SIGNING_KEY=""
+HARDWARE_PROFILE_RECORD_GIT_SIGNING_PROGRAM=""
 ALL_PROFILES=false
 RUN_CLEANUP=false
 RUN_TOOL_INSTALLERS=true
@@ -59,6 +84,106 @@ EOF
 
 say() {
   printf '%s\n' "$*"
+}
+
+machash() {
+  local uuid=""
+
+  uuid="$(/usr/sbin/ioreg -rd1 -c IOPlatformExpertDevice | /usr/bin/awk -F '"' '/IOPlatformUUID/ { print $4; exit }')"
+  if [[ -z "$uuid" ]]; then
+    say "Error: unable to read IOPlatformUUID" >&2
+    return 1
+  fi
+
+  printf '%s' "$uuid" | /usr/bin/shasum -a 256 | /usr/bin/cut -c1-12
+}
+
+detected_hardware_hash() {
+  local override="${DOTFILES_HARDWARE_HASH_OVERRIDE:-}"
+
+  if [[ "$DRY_RUN" == true && -n "$override" ]]; then
+    printf '%s' "$override"
+    return 0
+  fi
+
+  machash
+}
+
+reset_hardware_profile_record() {
+  HARDWARE_PROFILE_RECORD_HASH=""
+  HARDWARE_PROFILE_RECORD_ID=""
+  HARDWARE_PROFILE_RECORD_NAME=""
+  HARDWARE_PROFILE_RECORD_HOSTNAME=""
+  HARDWARE_PROFILE_RECORD_INSTALL_MODE=""
+  HARDWARE_PROFILE_RECORD_PROFILE_LIST=""
+  HARDWARE_PROFILE_RECORD_GIT_USER_NAME=""
+  HARDWARE_PROFILE_RECORD_GIT_USER_EMAIL=""
+  HARDWARE_PROFILE_RECORD_GIT_SIGNING_KEY=""
+  HARDWARE_PROFILE_RECORD_GIT_SIGNING_PROGRAM=""
+}
+
+load_hardware_profile_record() {
+  local record="$1"
+  local fields=()
+  local field=""
+  local key=""
+  local value=""
+
+  reset_hardware_profile_record
+  IFS='|' read -r -a fields <<<"$record"
+
+  for field in "${fields[@]}"; do
+    key="${field%%=*}"
+    value="${field#*=}"
+
+    case "$key" in
+    hash) HARDWARE_PROFILE_RECORD_HASH="$value" ;;
+    id) HARDWARE_PROFILE_RECORD_ID="$value" ;;
+    name) HARDWARE_PROFILE_RECORD_NAME="$value" ;;
+    hostname) HARDWARE_PROFILE_RECORD_HOSTNAME="$value" ;;
+    install_mode) HARDWARE_PROFILE_RECORD_INSTALL_MODE="$value" ;;
+    profile_list) HARDWARE_PROFILE_RECORD_PROFILE_LIST="$value" ;;
+    git_user_name) HARDWARE_PROFILE_RECORD_GIT_USER_NAME="$value" ;;
+    git_user_email) HARDWARE_PROFILE_RECORD_GIT_USER_EMAIL="$value" ;;
+    git_signing_key) HARDWARE_PROFILE_RECORD_GIT_SIGNING_KEY="$value" ;;
+    git_signing_program) HARDWARE_PROFILE_RECORD_GIT_SIGNING_PROGRAM="$value" ;;
+    esac
+  done
+}
+
+load_hardware_profile() {
+  local hardware_hash="${1:-}"
+  local profile_record=""
+
+  HAS_HARDWARE_PROFILE=false
+  ACTIVE_HARDWARE_PROFILE_ID=""
+  ACTIVE_HARDWARE_PROFILE_NAME=""
+  ACTIVE_HARDWARE_PROFILE_HOSTNAME=""
+  ACTIVE_HARDWARE_PROFILE_INSTALL_MODE=""
+  ACTIVE_HARDWARE_PROFILE_PROFILES=""
+  ACTIVE_HARDWARE_PROFILE_GIT_USER_NAME=""
+  ACTIVE_HARDWARE_PROFILE_GIT_USER_EMAIL=""
+  ACTIVE_HARDWARE_PROFILE_GIT_SIGNING_KEY=""
+  ACTIVE_HARDWARE_PROFILE_GIT_SIGNING_PROGRAM=""
+
+  ((${#DOTFILES_HARDWARE_PROFILES[@]} > 0)) || return 0
+
+  for profile_record in "${DOTFILES_HARDWARE_PROFILES[@]}"; do
+    load_hardware_profile_record "$profile_record"
+    [[ "$HARDWARE_PROFILE_RECORD_HASH" == "$hardware_hash" ]] || continue
+
+    HAS_HARDWARE_PROFILE=true
+    ACTIVE_HARDWARE_PROFILE_ID="$HARDWARE_PROFILE_RECORD_ID"
+    ACTIVE_HARDWARE_PROFILE_NAME="$HARDWARE_PROFILE_RECORD_NAME"
+    ACTIVE_HARDWARE_PROFILE_HOSTNAME="$HARDWARE_PROFILE_RECORD_HOSTNAME"
+    ACTIVE_HARDWARE_PROFILE_INSTALL_MODE="$HARDWARE_PROFILE_RECORD_INSTALL_MODE"
+    ACTIVE_HARDWARE_PROFILE_PROFILES="$HARDWARE_PROFILE_RECORD_PROFILE_LIST"
+    ACTIVE_HARDWARE_PROFILE_GIT_USER_NAME="$HARDWARE_PROFILE_RECORD_GIT_USER_NAME"
+    ACTIVE_HARDWARE_PROFILE_GIT_USER_EMAIL="$HARDWARE_PROFILE_RECORD_GIT_USER_EMAIL"
+    ACTIVE_HARDWARE_PROFILE_GIT_SIGNING_KEY="$HARDWARE_PROFILE_RECORD_GIT_SIGNING_KEY"
+    ACTIVE_HARDWARE_PROFILE_GIT_SIGNING_PROGRAM="$HARDWARE_PROFILE_RECORD_GIT_SIGNING_PROGRAM"
+    return
+  done
 }
 
 blank() {
@@ -544,7 +669,7 @@ ask_language_questions() {
     blank
     subsection "$language_name tools"
     print_profile_packages "languages" "  " "${packages[@]}"
-    if ask_yes_no "Install $language_name tools?" "y"; then
+    if ask_yes_no "Install $language_name tools?" "$default"; then
       add_language "$language"
     fi
   done
@@ -555,8 +680,76 @@ ask_language_questions() {
 }
 
 detect_state() {
+  local hardware_hash=""
+
   [[ -f "$DOTFILES/.installed" ]] && FIRST_RUN=false || FIRST_RUN=true
-  [[ "$USER" == "luisurrutia" ]] && IS_OWNER=true || IS_OWNER=false
+  hardware_hash="$(detected_hardware_hash 2>/dev/null || true)"
+  load_hardware_profile "$hardware_hash"
+}
+
+configure_hardware_profile_environment() {
+  local i=0
+  local managed_identity_count=0
+  local name_var=""
+  local email_var=""
+  local signing_key_var=""
+  local signing_program_var=""
+  local profile_record=""
+
+  export DOTFILES_HAS_HARDWARE_PROFILE="$HAS_HARDWARE_PROFILE"
+  export DOTFILES_HARDWARE_PROFILE_ID="$ACTIVE_HARDWARE_PROFILE_ID"
+  export DOTFILES_HARDWARE_PROFILE_NAME="$ACTIVE_HARDWARE_PROFILE_NAME"
+  export DOTFILES_HARDWARE_HOSTNAME="$ACTIVE_HARDWARE_PROFILE_HOSTNAME"
+  export DOTFILES_GIT_USER_NAME="$ACTIVE_HARDWARE_PROFILE_GIT_USER_NAME"
+  export DOTFILES_GIT_USER_EMAIL="$ACTIVE_HARDWARE_PROFILE_GIT_USER_EMAIL"
+  export DOTFILES_GIT_SIGNING_KEY="$ACTIVE_HARDWARE_PROFILE_GIT_SIGNING_KEY"
+  export DOTFILES_GIT_SIGNING_PROGRAM="$ACTIVE_HARDWARE_PROFILE_GIT_SIGNING_PROGRAM"
+
+  for ((i = 1; i <= ${DOTFILES_MANAGED_GIT_IDENTITY_COUNT:-0}; i++)); do
+    unset "DOTFILES_MANAGED_GIT_USER_NAME_$i" "DOTFILES_MANAGED_GIT_USER_EMAIL_$i" "DOTFILES_MANAGED_GIT_SIGNING_KEY_$i" "DOTFILES_MANAGED_GIT_SIGNING_PROGRAM_$i"
+  done
+
+  if ((${#DOTFILES_HARDWARE_PROFILES[@]} > 0)); then
+    for profile_record in "${DOTFILES_HARDWARE_PROFILES[@]}"; do
+      load_hardware_profile_record "$profile_record"
+      if [[ -z "$HARDWARE_PROFILE_RECORD_GIT_USER_NAME" && -z "$HARDWARE_PROFILE_RECORD_GIT_USER_EMAIL" && -z "$HARDWARE_PROFILE_RECORD_GIT_SIGNING_KEY" && -z "$HARDWARE_PROFILE_RECORD_GIT_SIGNING_PROGRAM" ]]; then
+        continue
+      fi
+
+      managed_identity_count=$((managed_identity_count + 1))
+      name_var="DOTFILES_MANAGED_GIT_USER_NAME_$managed_identity_count"
+      email_var="DOTFILES_MANAGED_GIT_USER_EMAIL_$managed_identity_count"
+      signing_key_var="DOTFILES_MANAGED_GIT_SIGNING_KEY_$managed_identity_count"
+      signing_program_var="DOTFILES_MANAGED_GIT_SIGNING_PROGRAM_$managed_identity_count"
+
+      printf -v "$name_var" '%s' "$HARDWARE_PROFILE_RECORD_GIT_USER_NAME"
+      printf -v "$email_var" '%s' "$HARDWARE_PROFILE_RECORD_GIT_USER_EMAIL"
+      printf -v "$signing_key_var" '%s' "$HARDWARE_PROFILE_RECORD_GIT_SIGNING_KEY"
+      printf -v "$signing_program_var" '%s' "$HARDWARE_PROFILE_RECORD_GIT_SIGNING_PROGRAM"
+      export "${name_var?}" "${email_var?}" "${signing_key_var?}" "${signing_program_var?}"
+    done
+  fi
+
+  export DOTFILES_MANAGED_GIT_IDENTITY_COUNT="$managed_identity_count"
+
+  if [[ "$HAS_HARDWARE_PROFILE" != true ]]; then
+    return
+  fi
+
+  unset GIT_USER_NAME GIT_USER_EMAIL GIT_SIGNING_KEY GIT_SIGNING_PROGRAM
+
+  if [[ -n "$ACTIVE_HARDWARE_PROFILE_GIT_USER_NAME" ]]; then
+    export GIT_USER_NAME="$ACTIVE_HARDWARE_PROFILE_GIT_USER_NAME"
+  fi
+  if [[ -n "$ACTIVE_HARDWARE_PROFILE_GIT_USER_EMAIL" ]]; then
+    export GIT_USER_EMAIL="$ACTIVE_HARDWARE_PROFILE_GIT_USER_EMAIL"
+  fi
+  if [[ -n "$ACTIVE_HARDWARE_PROFILE_GIT_SIGNING_KEY" ]]; then
+    export GIT_SIGNING_KEY="$ACTIVE_HARDWARE_PROFILE_GIT_SIGNING_KEY"
+  fi
+  if [[ -n "$ACTIVE_HARDWARE_PROFILE_GIT_SIGNING_PROGRAM" ]]; then
+    export GIT_SIGNING_PROGRAM="$ACTIVE_HARDWARE_PROFILE_GIT_SIGNING_PROGRAM"
+  fi
 }
 
 configure_install_plan() {
@@ -576,13 +769,35 @@ configure_install_plan() {
     return
   fi
 
+  if [[ "$HAS_HARDWARE_PROFILE" == true ]]; then
+    case "$ACTIVE_HARDWARE_PROFILE_INSTALL_MODE" in
+    all)
+      ALL_PROFILES=true
+      return
+      ;;
+    core)
+      ALL_PROFILES=false
+      return
+      ;;
+    selected)
+      ALL_PROFILES=false
+      if [[ -z "$ACTIVE_HARDWARE_PROFILE_PROFILES" ]]; then
+        say "Error: selected install mode for hardware profile '$ACTIVE_HARDWARE_PROFILE_ID' requires explicit profiles" >&2
+        exit 1
+      fi
+      parse_profiles "$ACTIVE_HARDWARE_PROFILE_PROFILES"
+      return
+      ;;
+    *)
+      say "Error: invalid install mode for hardware profile '$ACTIVE_HARDWARE_PROFILE_ID': $ACTIVE_HARDWARE_PROFILE_INSTALL_MODE" >&2
+      exit 1
+      ;;
+    esac
+  fi
+
   section "Optional tool selection"
   say "Core packages are always installed. Review each group, then answer yes only where useful."
-  if [[ "$IS_OWNER" == true ]]; then
-    ask_profile_questions "y"
-  else
-    ask_profile_questions "n"
-  fi
+  ask_profile_questions "n"
 }
 
 configure_cleanup_plan() {
@@ -698,7 +913,14 @@ print_install_plan() {
   subsection "Run context"
   plan_value "Mode" "$mode"
   plan_value "Dotfiles" "$DOTFILES"
-  plan_value "Owner" "$IS_OWNER"
+  if [[ "$HAS_HARDWARE_PROFILE" == true ]]; then
+    plan_value "Hardware profile" "registered"
+  else
+    plan_value "Hardware profile" "unregistered"
+  fi
+  if [[ "$HAS_HARDWARE_PROFILE" == true ]]; then
+    plan_value "Hardware install mode" "$ACTIVE_HARDWARE_PROFILE_INSTALL_MODE"
+  fi
   plan_value "First run" "$FIRST_RUN"
 
   subsection "Brewfiles"
@@ -973,6 +1195,7 @@ main() {
   fi
 
   detect_state
+  configure_hardware_profile_environment
   configure_install_plan
   configure_cleanup_plan
   configure_system_plan
