@@ -58,8 +58,10 @@ audio interface?" so the installer selects the right optional tool groups.
 - runs tool setup scripts after package install; each script applies config only
   when its app or dependency is available, with Fish saved for last because it
   changes the default shell
-- can remove the repo owner's Git identity from tracked Git config for other
-  users on first run, but asks first
+- keeps shared Git defaults in the stowed XDG config and writes identity/signing
+  values only to machine-local `~/.gitconfig`
+- optionally reads `hardware-profiles.sh` machine records to choose an install
+  mode, hostname, and local Git identity without storing it in shared Git config
 - writes `.installed` so first-run work does not repeat
 
 Several tool installers have real side effects: macOS defaults, shell
