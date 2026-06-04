@@ -3,7 +3,78 @@
 # shellcheck disable=SC1091
 source "${DOTFILES:-$HOME/.dotfiles}/tools/lib.sh"
 
-# ~/.macos — https://mths.be/macos
+macos_error_count=0
+macos_step_failed=0
+macos_last_error=""
+macos_error_log="${DOTFILES_MACOS_ERROR_LOG:-${XDG_STATE_HOME:-$HOME/.local/state}/dotfiles/macos-install.log}"
+macos_failed_steps=()
+
+setup_macos_error_log() {
+  local log_dir
+
+  log_dir="$(dirname "$macos_error_log")"
+  if mkdir -p "$log_dir" && : >>"$macos_error_log"; then
+    printf '\n[%s] Starting macOS setup\n' "$(date '+%Y-%m-%d %H:%M:%S')" >>"$macos_error_log"
+    exec 3>&2
+    exec 2> >(tee -a "$macos_error_log" >&3)
+    echo "Logging macOS setup errors to $macos_error_log" >&2
+  else
+    echo "Warning: unable to write macOS setup error log at $macos_error_log" >&2
+    macos_error_log=""
+  fi
+}
+
+log_macos_command_error() {
+  local step_name="$1"
+  local status="$2"
+  local command="$3"
+  local message
+
+  command="${command//$'\n'/ }"
+  message="Warning: macOS setup step '$step_name' failed with exit $status: $command"
+
+  if [[ "$macos_last_error" == "$message" ]]; then
+    return 0
+  fi
+
+  macos_last_error="$message"
+  macos_step_failed=1
+  macos_error_count=$((macos_error_count + 1))
+  echo "$message" >&2
+}
+
+run_macos_step() {
+  local step_name="$1"
+  local step_status
+
+  macos_step_failed=0
+  macos_last_error=""
+
+  set +eE
+  set -E
+  trap 'log_macos_command_error "$step_name" "$?" "$BASH_COMMAND"' ERR
+  "$step_name"
+  step_status=$?
+  trap - ERR
+  set +E
+  set -e
+
+  if [[ "$macos_step_failed" -ne 0 || "$step_status" -ne 0 ]]; then
+    macos_failed_steps+=("$step_name")
+  fi
+}
+
+summarize_macos_errors() {
+  if [[ "$macos_error_count" -eq 0 ]]; then
+    return
+  fi
+
+  echo "Warning: macOS setup completed with $macos_error_count logged error(s)." >&2
+  echo "Failed macOS setup steps: ${macos_failed_steps[*]}" >&2
+  if [[ -n "$macos_error_log" ]]; then
+    echo "Review the macOS setup log: $macos_error_log" >&2
+  fi
+}
 
 close_system_settings() {
   # Close any open System Settings panes, to prevent them from overriding
@@ -31,7 +102,7 @@ configure_hostname() {
 
   if [[ ! "$hostname" =~ ^[A-Za-z0-9-]+$ ]]; then
     echo "Error: invalid hardware hostname: $hostname" >&2
-    exit 1
+    return 1
   fi
 
   set_scutil_name "HostName" "$hostname"
@@ -73,6 +144,10 @@ configure_keyboard_input() {
   # Enable full keyboard access for all controls
   # Improves usability by allowing keyboard shortcuts to be used for all controls
   defaults write NSGlobalDomain AppleKeyboardUIMode -int 2
+
+  defaults write com.apple.HIToolbox AppleFnUsageType -int 0
+
+  defaults write kCFPreferencesAnyApplication TSMLanguageIndicatorEnabled -bool false
 }
 
 configure_screen_display() {
@@ -144,6 +219,8 @@ configure_finder_files() {
   # Sort folders first in Finder
   defaults write com.apple.finder _FXSortFoldersFirst -bool true
 
+  defaults write com.apple.finder _FXEnableColumnAutoSizing -bool true
+
   # Show list view by default
   defaults write com.apple.finder FXPreferredViewStyle -string "Nlsv"
 
@@ -180,6 +257,8 @@ configure_dock_menu_bar() {
   # Don't rearrange Spaces based on usage
   # Keeps your workspace arrangement consistent
   defaults write com.apple.dock "mru-spaces" -bool false
+
+  defaults write com.apple.dock "expose-group-apps" -bool true
 
   # Show 24 hours clock instead of 12-hour format
   defaults write com.apple.menuextra.clock Show24Hour -int 1
@@ -276,24 +355,11 @@ configure_application_settings() {
   defaults write com.apple.TextEdit PlainTextEncoding -int 4
   defaults write com.apple.TextEdit PlainTextEncodingForWrite -int 4
 
-  # Enable Safari developer tools
-  defaults write com.apple.Safari IncludeDevelopMenu -bool true
-  defaults write com.apple.Safari WebKitDeveloperExtrasEnabledPreferenceKey -bool true
-
-  # Show full URLs in Safari's address bar
-  defaults write com.apple.Safari ShowFullURLInSmartSearchField -bool true
-
-  # Enable WebKit developer extras in supported web views
-  defaults write NSGlobalDomain WebKitDeveloperExtras -bool true
-
   # Show developer-focused crash reporter dialogs
   defaults write com.apple.CrashReporter DialogType -string "developer"
 
   # Prevent Time Machine from prompting to use new hard drives as backup volume
   defaults write com.apple.TimeMachine DoNotOfferNewDisksForBackup -bool true
-
-  # Add a shortcut for deleting messages in Messages. Conversation > Delete Conversation is Opt+Cmd+9
-  # defaults write com.apple.MobileSMS NSUserKeyEquivalents -dict "Delete Conversation..." -string "@~9"
 
   # Automatically quit printer app once the print jobs complete
   defaults write com.apple.print.PrintingPrefs "Quit When Finished" -bool true
@@ -371,15 +437,17 @@ restart_affected_services() {
   killall Finder
 }
 
-close_system_settings
-configure_hostname
-configure_keyboard_input
-configure_screen_display
-configure_finder_files
-configure_dock_menu_bar
-configure_updates_security
-configure_power_management
-configure_application_settings
-configure_keyboard_shortcuts
-configure_remote_access
-restart_affected_services
+setup_macos_error_log
+run_macos_step close_system_settings
+run_macos_step configure_hostname
+run_macos_step configure_keyboard_input
+run_macos_step configure_screen_display
+run_macos_step configure_finder_files
+run_macos_step configure_dock_menu_bar
+run_macos_step configure_updates_security
+run_macos_step configure_power_management
+run_macos_step configure_application_settings
+run_macos_step configure_keyboard_shortcuts
+run_macos_step configure_remote_access
+run_macos_step restart_affected_services
+summarize_macos_errors
