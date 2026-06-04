@@ -12,11 +12,35 @@
   "mcp": {
     "Expo": {
       "type": "remote",
-      "url": "https://mcp.expo.dev/mcp"
+      "url": "https://mcp.expo.dev/mcp",
+      "enabled": false
     },
     "Figma Desktop": {
       "type": "remote",
-      "url": "http://127.0.0.1:3845/mcp"
+      "url": "http://127.0.0.1:3845/mcp",
+      "enabled": false
+    },
+    "chrome-devtools": {
+      "type": "local",
+      "command": [
+        "npx",
+        "-y",
+        "chrome-devtools-mcp@latest",
+        "--user-data-dir",
+        "{env:HOME}/.local/state/opencode/chrome-devtools-mcp"
+      ],
+      "enabled": true
+    },
+    "playwright": {
+      "type": "local",
+      "command": [
+        "npx",
+        "-y",
+        "@playwright/mcp@latest",
+        "--user-data-dir",
+        "{env:HOME}/.local/state/opencode/playwright-mcp"
+      ],
+      "enabled": false
     }
   }
 }
