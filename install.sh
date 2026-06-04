@@ -51,6 +51,7 @@ SELECTED_PROFILE_PACKAGES=()
 AT_EXIT=""
 SUDO_ASKPASS=""
 SELECTED_PROFILE_BREWFILE=""
+BREW_BUNDLE_FAILURES=()
 
 usage() {
   cat <<'EOF'
@@ -938,7 +939,7 @@ print_install_plan() {
   plan_value "Tool configs/macOS settings" "$RUN_TOOL_INSTALLERS"
   plan_value "Fish setup" "$RUN_FISH_SETUP"
   plan_value "Projects directory" "$RUN_PROJECTS_SETUP"
-  plan_value "Mark install complete" "true"
+  plan_value "Mark install complete" "if no package failures"
 
   subsection "Tool config/setup scripts"
   list_tool_installers
@@ -1085,7 +1086,7 @@ install_homebrew() {
 
 install_packages() {
   section "Homebrew packages"
-  brew bundle install --file "$DOTFILES/brewfiles/core"
+  run_brew_bundle_install "core packages" "$DOTFILES/brewfiles/core"
 
   if [[ "$ALL_PROFILES" == true ]]; then
     SELECTED_PROFILE_BREWFILE="$(mktemp)"
@@ -1093,17 +1094,59 @@ install_packages() {
 /bin/rm -f '${SELECTED_PROFILE_BREWFILE}'
     "
     create_profile_brewfile "$SELECTED_PROFILE_BREWFILE" "${PROFILE_ORDER[@]}"
-    brew bundle install --file "$SELECTED_PROFILE_BREWFILE"
+    run_brew_bundle_install "optional profile packages" "$SELECTED_PROFILE_BREWFILE" "generated all-profiles Brewfile"
   elif ((${#SELECTED_PROFILES[@]} > 0)); then
     SELECTED_PROFILE_BREWFILE="$(mktemp)"
     at_exit "
 /bin/rm -f '${SELECTED_PROFILE_BREWFILE}'
     "
     create_profile_brewfile "$SELECTED_PROFILE_BREWFILE" "${SELECTED_PROFILES[@]}"
-    brew bundle install --file "$SELECTED_PROFILE_BREWFILE"
+    run_brew_bundle_install "selected profile packages" "$SELECTED_PROFILE_BREWFILE" "generated selected-profiles Brewfile"
   else
     say "Skipping optional profile Brewfiles."
   fi
+}
+
+brew_bundle_failed() {
+  ((${#BREW_BUNDLE_FAILURES[@]} > 0))
+}
+
+run_brew_bundle_install() {
+  local label="$1"
+  local brewfile="$2"
+  local source_label="${3:-$brewfile}"
+  local entry_brewfile=""
+  local line=""
+  local line_number=0
+
+  entry_brewfile="$(mktemp)"
+  while IFS= read -r line || [[ -n "$line" ]]; do
+    line_number=$((line_number + 1))
+    [[ "$line" =~ ^[[:space:]]*(brew|cask|tap|mas|vscode)[[:space:]] ]] || continue
+
+    printf '%s\n' "$line" >"$entry_brewfile"
+    if brew bundle install --file "$entry_brewfile"; then
+      continue
+    fi
+
+    BREW_BUNDLE_FAILURES+=("$label: $source_label:$line_number: $line")
+    note "Homebrew bundle failed for $label entry at $source_label:$line_number; continuing with remaining packages."
+  done <"$brewfile"
+
+  /bin/rm -f "$entry_brewfile"
+}
+
+print_brew_bundle_failures() {
+  local failure=""
+
+  brew_bundle_failed || return 0
+
+  section "Homebrew bundle failures"
+  say "Some Brewfile entries failed. The rest of the installer continued."
+  for failure in "${BREW_BUNDLE_FAILURES[@]}"; do
+    say "  - $failure"
+  done
+  say "Review the Homebrew output above, then rerun ./install.sh after fixing those packages."
 }
 
 run_cleanup() {
@@ -1158,8 +1201,13 @@ run_first_run_tasks() {
 }
 
 print_next_steps() {
+  if brew_bundle_failed; then
+    say "Installation finished with Homebrew package failures."
+  else
+    say "Installation complete!"
+  fi
+
   cat <<'EOF'
-Installation complete!
 Please restart your terminal to apply changes.
 
 Possible next steps:
@@ -1222,6 +1270,13 @@ main() {
   run_cleanup
   run_tool_installers
   run_first_run_tasks
+  print_brew_bundle_failures
+
+  if brew_bundle_failed; then
+    print_next_steps
+    exit 1
+  fi
+
   touch "$DOTFILES/.installed"
   print_next_steps
 }
