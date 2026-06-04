@@ -1,0 +1,544 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+PROGRAM_NAME="instagram-note"
+INSTAGRAM_URL="https://www.instagram.com/"
+GRAPHQL_URL="https://www.instagram.com/api/graphql"
+FRIENDLY_NAME="usePolarisCreateInboxTrayItemSubmitMutation"
+DEFAULT_USER_AGENT="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36"
+
+usage() {
+  cat <<'EOF'
+Usage: instagram-note <command> [options]
+
+Commands:
+  dry-run        Build a redacted Instagram Notes request without sending it
+  set            Send the Instagram Notes mutation; requires --send
+  cookies        Verify readable Instagram cookies without printing values
+  help           Show this help
+
+Options:
+  --note <text>              Note text to publish
+  --send                     Required for the set command to perform a live POST
+  --doc-id <id>              GraphQL doc_id for usePolarisCreateInboxTrayItemSubmitMutation
+  --actor-id <id>            Instagram actor/user ID; defaults to ds_user_id cookie
+  --audience <id>            Note audience value (default: 0)
+  --note-style <id>          Note style value (default: 0)
+  --browser <name>           Cookie browser: dia, chrome, arc, brave, chromium (default: dia)
+  --profile <selector>       Chromium profile name, dir, or Network/Cookies DB path
+  --cookie-header <header>   Use an explicit Cookie header instead of Sweet Cookie
+  --cookies-file <path>      Read inline cookies JSON/base64 via Sweet Cookie
+  --show-response            Print Instagram JSON response after --send
+  -h, --help                 Show this help
+
+Environment:
+  IG_NOTE_DOC_ID             Default --doc-id
+  IG_NOTE_ACTOR_ID           Default --actor-id
+  IG_NOTE_BROWSER            Default --browser
+  IG_NOTE_PROFILE            Default --profile
+  IG_NOTE_COOKIE_HEADER      Default --cookie-header
+  IG_NOTE_COOKIES_FILE       Default --cookies-file
+  IG_NOTE_USER_AGENT         Override request User-Agent
+
+Notes:
+  Cookies and tokens are kept in memory and never printed. The GraphQL doc_id is
+  private API metadata and can break when Instagram changes its web bundle.
+EOF
+}
+
+die() {
+  printf '%s: %s\n' "$PROGRAM_NAME" "$*" >&2
+  exit 1
+}
+
+require_command() {
+  command -v "$1" >/dev/null 2>&1 || die "$1 is required"
+}
+
+mask() {
+  local value="$1"
+  if [[ -z "$value" ]]; then
+    printf '<missing>'
+  else
+    printf '<redacted:%s>' "${#value}"
+  fi
+}
+
+cookie_value() {
+  local header="$1"
+  local name="$2"
+
+  node -e '
+const header = process.argv[1] || "";
+const name = process.argv[2] || "";
+for (const part of header.split(";")) {
+  const index = part.indexOf("=");
+  if (index === -1) continue;
+  const key = part.slice(0, index).trim();
+  if (key === name) {
+    process.stdout.write(part.slice(index + 1).trim());
+    process.exit(0);
+  }
+}
+' "$header" "$name"
+}
+
+sweet_cookie_header() {
+  local browser="$1"
+  local profile="$2"
+  local cookies_file="$3"
+  local chromium_browser="chrome"
+
+  require_command node
+  require_command npx
+
+  case "$browser" in
+    dia)
+      browser="chrome"
+      if [[ -z "$profile" ]]; then
+        profile="$HOME/Library/Application Support/Dia/User Data/Default"
+      fi
+      ;;
+    arc)
+      browser="chrome"
+      chromium_browser="arc"
+      ;;
+    brave)
+      browser="chrome"
+      chromium_browser="brave"
+      ;;
+    chrome|chromium)
+      chromium_browser="$browser"
+      browser="chrome"
+      ;;
+    *)
+      die "unsupported browser: $browser"
+      ;;
+  esac
+
+  BROWSER_SOURCE="$browser" \
+  CHROMIUM_BROWSER="$chromium_browser" \
+  COOKIE_PROFILE="$profile" \
+  COOKIES_FILE="$cookies_file" \
+  npx -y -p @steipete/sweet-cookie node --input-type=module - <<'NODE'
+import { getCookies, toCookieHeader } from '@steipete/sweet-cookie';
+
+const options = {
+  url: 'https://www.instagram.com/',
+  origins: ['https://instagram.com/'],
+  names: ['sessionid', 'csrftoken', 'ds_user_id', 'mid', 'ig_did', 'rur', 'ig_u_rur', 'datr'],
+  browsers: [process.env.BROWSER_SOURCE || 'chrome'],
+  mode: 'merge',
+  timeoutMs: 30000,
+};
+
+if (process.env.CHROMIUM_BROWSER) options.chromiumBrowser = process.env.CHROMIUM_BROWSER;
+if (process.env.COOKIE_PROFILE) options.chromeProfile = process.env.COOKIE_PROFILE;
+if (process.env.COOKIES_FILE) options.inlineCookiesFile = process.env.COOKIES_FILE;
+
+const result = await getCookies(options);
+const header = toCookieHeader(result.cookies, { dedupeByName: true });
+
+for (const warning of result.warnings ?? []) {
+  console.error(`sweet-cookie: ${warning}`);
+}
+
+if (!header) process.exit(2);
+process.stdout.write(header);
+NODE
+}
+
+read_cookie_header() {
+  local explicit_header="$1"
+  local browser="$2"
+  local profile="$3"
+  local cookies_file="$4"
+
+  if [[ -n "$explicit_header" ]]; then
+    printf '%s' "$explicit_header"
+    return
+  fi
+
+  sweet_cookie_header "$browser" "$profile" "$cookies_file"
+}
+
+fetch_instagram_bootstrap() {
+  local cookie_header="$1"
+  local user_agent="$2"
+
+  require_command curl
+
+  curl -fsSL --max-redirs 5 "$INSTAGRAM_URL" \
+    -H "Cookie: $cookie_header" \
+    -H "User-Agent: $user_agent" \
+    -H 'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8' \
+    -H 'Accept-Language: en-US,en;q=0.9' 2>/dev/null || true
+}
+
+extract_bootstrap_json() {
+  node <<'NODE'
+const fs = require('node:fs');
+const html = fs.readFileSync(0, 'utf8');
+
+function first(patterns) {
+  for (const pattern of patterns) {
+    const match = html.match(pattern);
+    if (match?.[1]) return match[1];
+  }
+  return '';
+}
+
+const result = {
+  lsd: first([
+    /"LSD",\s*\[\],\s*\{\s*"token"\s*:\s*"([^"]+)"/,
+    /"lsd"\s*:\s*"([^"]+)"/,
+    /name="lsd"\s+value="([^"]+)"/,
+  ]),
+  fbDtsg: first([
+    /"DTSGInitialData",\s*\[\],\s*\{\s*"token"\s*:\s*"([^"]+)"/,
+    /"DTSGInitData",\s*\[\],\s*\{\s*"token"\s*:\s*"([^"]+)"/,
+    /"fb_dtsg"\s*:\s*"([^"]+)"/,
+  ]),
+  spinR: first([/"__spin_r"\s*:\s*"?([0-9]+)"?/]),
+  spinB: first([/"__spin_b"\s*:\s*"([^"]+)"/]),
+  spinT: first([/"__spin_t"\s*:\s*"?([0-9]+)"?/]),
+  rev: first([/"__rev"\s*:\s*"?([0-9]+)"?/]),
+  hs: first([/"__hs"\s*:\s*"([^"]+)"/]),
+  hsi: first([/"hsi"\s*:\s*"([0-9]+)"/]),
+  docId: first([
+    /usePolarisCreateInboxTrayItemSubmitMutation[\s\S]{0,600}?"doc_id"\s*:\s*"?([0-9]+)"?/,
+    /"doc_id"\s*:\s*"?([0-9]+)"?[\s\S]{0,600}?usePolarisCreateInboxTrayItemSubmitMutation/,
+  ]),
+};
+
+process.stdout.write(JSON.stringify(result));
+NODE
+}
+
+build_request_json() {
+  local note="$1"
+  local actor_id="$2"
+  local doc_id="$3"
+  local audience="$4"
+  local note_style="$5"
+  local cookie_header="$6"
+  local bootstrap_json="$7"
+  local user_agent="$8"
+
+  NOTE_TEXT="$note" \
+  ACTOR_ID="$actor_id" \
+  DOC_ID="$doc_id" \
+  AUDIENCE="$audience" \
+  NOTE_STYLE="$note_style" \
+  COOKIE_HEADER="$cookie_header" \
+  BOOTSTRAP_JSON="$bootstrap_json" \
+  USER_AGENT="$user_agent" \
+  GRAPHQL_URL="$GRAPHQL_URL" \
+  FRIENDLY_NAME="$FRIENDLY_NAME" \
+  node <<'NODE'
+const bootstrap = JSON.parse(process.env.BOOTSTRAP_JSON || '{}');
+const cookieHeader = process.env.COOKIE_HEADER || '';
+const csrftoken = cookieHeader.split(';').map((part) => part.trim()).find((part) => part.startsWith('csrftoken='))?.slice('csrftoken='.length) || '';
+const actorId = process.env.ACTOR_ID || '';
+const docId = process.env.DOC_ID || bootstrap.docId || '';
+
+const variables = {
+  input: {
+    actor_id: actorId,
+    client_mutation_id: '1',
+    additional_params: {
+      note_create_params: {
+        note_style: Number(process.env.NOTE_STYLE || '0'),
+        text: process.env.NOTE_TEXT || '',
+      },
+    },
+    audience: Number(process.env.AUDIENCE || '0'),
+    inbox_tray_item_type: 'note',
+  },
+};
+
+const body = new URLSearchParams();
+body.set('av', actorId);
+body.set('__d', 'www');
+body.set('__user', actorId);
+body.set('__a', '1');
+body.set('__req', '1');
+if (bootstrap.hs) body.set('__hs', bootstrap.hs);
+body.set('dpr', '2');
+body.set('__ccg', 'EXCELLENT');
+if (bootstrap.rev) body.set('__rev', bootstrap.rev);
+if (bootstrap.hsi) body.set('__hsi', bootstrap.hsi);
+body.set('__comet_req', '7');
+if (bootstrap.fbDtsg) body.set('fb_dtsg', bootstrap.fbDtsg);
+if (bootstrap.lsd) body.set('lsd', bootstrap.lsd);
+if (bootstrap.lsd) body.set('jazoest', `2${[...bootstrap.lsd].map((char) => char.charCodeAt(0)).join('')}`);
+if (bootstrap.spinR) body.set('__spin_r', bootstrap.spinR);
+if (bootstrap.spinB) body.set('__spin_b', bootstrap.spinB);
+if (bootstrap.spinT) body.set('__spin_t', bootstrap.spinT);
+body.set('fb_api_caller_class', 'RelayModern');
+body.set('fb_api_req_friendly_name', process.env.FRIENDLY_NAME);
+body.set('server_timestamps', 'true');
+body.set('variables', JSON.stringify(variables));
+if (docId) body.set('doc_id', docId);
+
+const headers = {
+  'Accept': '*/*',
+  'Accept-Language': 'en-US,en;q=0.9',
+  'Content-Type': 'application/x-www-form-urlencoded',
+  'Cookie': cookieHeader,
+  'Origin': 'https://www.instagram.com',
+  'Referer': 'https://www.instagram.com/',
+  'User-Agent': process.env.USER_AGENT,
+  'X-ASBD-ID': '359341',
+  'X-CSRFToken': csrftoken,
+  'X-FB-Friendly-Name': process.env.FRIENDLY_NAME,
+  'X-FB-LSD': bootstrap.lsd || '',
+  'X-IG-App-ID': '936619743392459',
+  'X-IG-Max-Touch-Points': '0',
+};
+
+process.stdout.write(JSON.stringify({
+  url: process.env.GRAPHQL_URL,
+  method: 'POST',
+  headers,
+  body: body.toString(),
+  bodyKeys: [...body.keys()],
+  variables,
+  required: {
+    actorId: Boolean(actorId),
+    csrftoken: Boolean(csrftoken),
+    docId: Boolean(docId),
+    lsd: Boolean(bootstrap.lsd),
+  },
+}));
+NODE
+}
+
+print_redacted_request() {
+  local request_json="$1"
+
+  REQUEST_JSON="$request_json" node <<'NODE'
+const request = JSON.parse(process.env.REQUEST_JSON);
+const headerNames = Object.keys(request.headers).filter((name) => request.headers[name]);
+const redactedVariables = structuredClone(request.variables);
+redactedVariables.input.actor_id = request.variables.input.actor_id ? '<redacted>' : '<missing>';
+redactedVariables.input.additional_params.note_create_params.text = `<note:${request.variables.input.additional_params.note_create_params.text.length}>`;
+
+console.log(`Method: ${request.method}`);
+console.log(`URL: ${request.url}`);
+console.log(`Friendly name: ${request.headers['X-FB-Friendly-Name']}`);
+console.log(`Headers: ${headerNames.join(', ')}`);
+console.log(`Body keys: ${request.bodyKeys.join(', ')}`);
+console.log(`Variables: ${JSON.stringify(redactedVariables)}`);
+console.log(`Required fields: ${JSON.stringify(request.required)}`);
+NODE
+}
+
+send_request() {
+  local request_json="$1"
+  local show_response="$2"
+  local body_file response_file status_file
+
+  body_file="$(mktemp)"
+  response_file="$(mktemp)"
+  status_file="$(mktemp)"
+  trap 'rm -f "$body_file" "$response_file" "$status_file"' RETURN
+
+  REQUEST_JSON="$request_json" node <<'NODE' > "$body_file"
+const request = JSON.parse(process.env.REQUEST_JSON);
+process.stdout.write(request.body);
+NODE
+
+  REQUEST_JSON="$request_json" BODY_FILE="$body_file" RESPONSE_FILE="$response_file" STATUS_FILE="$status_file" node <<'NODE'
+const { spawnSync } = require('node:child_process');
+const fs = require('node:fs');
+const request = JSON.parse(process.env.REQUEST_JSON);
+const args = ['-sS', '-o', process.env.RESPONSE_FILE, '-w', '%{http_code}', '-X', request.method, request.url, '--data-binary', `@${process.env.BODY_FILE}`];
+
+for (const [name, value] of Object.entries(request.headers)) {
+  if (value) args.push('-H', `${name}: ${value}`);
+}
+
+const result = spawnSync('curl', args, { encoding: 'utf8' });
+if (result.status !== 0) {
+  process.stderr.write(result.stderr || 'curl failed\n');
+  process.exit(result.status || 1);
+}
+fs.writeFileSync(process.env.STATUS_FILE, result.stdout);
+NODE
+
+  local status
+  status="$(<"$status_file")"
+  if [[ "$status" != 2* ]]; then
+    printf '%s: Instagram returned HTTP %s\n' "$PROGRAM_NAME" "$status" >&2
+    if [[ "$show_response" = true ]]; then
+      cat "$response_file" >&2
+      printf '\n' >&2
+    fi
+    return 1
+  fi
+
+  if grep -q '"errors"' "$response_file"; then
+    printf '%s: Instagram returned a GraphQL error\n' "$PROGRAM_NAME" >&2
+    if [[ "$show_response" = true ]]; then
+      cat "$response_file" >&2
+      printf '\n' >&2
+    fi
+    return 1
+  fi
+
+  printf 'Instagram note mutation sent.\n'
+  if [[ "$show_response" = true ]]; then
+    cat "$response_file"
+    printf '\n'
+  fi
+}
+
+run_cookies() {
+  local cookie_header="$1"
+  local sessionid csrftoken ds_user_id
+
+  sessionid="$(cookie_value "$cookie_header" sessionid)"
+  csrftoken="$(cookie_value "$cookie_header" csrftoken)"
+  ds_user_id="$(cookie_value "$cookie_header" ds_user_id)"
+
+  printf 'sessionid: %s\n' "$(mask "$sessionid")"
+  printf 'csrftoken: %s\n' "$(mask "$csrftoken")"
+  printf 'ds_user_id: %s\n' "$(mask "$ds_user_id")"
+
+  [[ -n "$sessionid" ]] || die 'missing sessionid cookie'
+  [[ -n "$csrftoken" ]] || die 'missing csrftoken cookie'
+  [[ -n "$ds_user_id" ]] || die 'missing ds_user_id cookie'
+}
+
+command_name="${1:-help}"
+if [[ "$#" -gt 0 ]]; then
+  shift
+fi
+
+note=""
+send=false
+show_response=false
+doc_id="${IG_NOTE_DOC_ID:-}"
+actor_id="${IG_NOTE_ACTOR_ID:-}"
+audience="0"
+note_style="0"
+browser="${IG_NOTE_BROWSER:-dia}"
+profile="${IG_NOTE_PROFILE:-}"
+cookie_header="${IG_NOTE_COOKIE_HEADER:-}"
+cookies_file="${IG_NOTE_COOKIES_FILE:-}"
+user_agent="${IG_NOTE_USER_AGENT:-$DEFAULT_USER_AGENT}"
+
+while [[ "$#" -gt 0 ]]; do
+  case "$1" in
+    --note)
+      [[ "$#" -ge 2 ]] || die '--note requires a value'
+      note="$2"
+      shift 2
+      ;;
+    --send)
+      send=true
+      shift
+      ;;
+    --doc-id)
+      [[ "$#" -ge 2 ]] || die '--doc-id requires a value'
+      doc_id="$2"
+      shift 2
+      ;;
+    --actor-id)
+      [[ "$#" -ge 2 ]] || die '--actor-id requires a value'
+      actor_id="$2"
+      shift 2
+      ;;
+    --audience)
+      [[ "$#" -ge 2 ]] || die '--audience requires a value'
+      audience="$2"
+      shift 2
+      ;;
+    --note-style)
+      [[ "$#" -ge 2 ]] || die '--note-style requires a value'
+      note_style="$2"
+      shift 2
+      ;;
+    --browser)
+      [[ "$#" -ge 2 ]] || die '--browser requires a value'
+      browser="$2"
+      shift 2
+      ;;
+    --profile)
+      [[ "$#" -ge 2 ]] || die '--profile requires a value'
+      profile="$2"
+      shift 2
+      ;;
+    --cookie-header)
+      [[ "$#" -ge 2 ]] || die '--cookie-header requires a value'
+      cookie_header="$2"
+      shift 2
+      ;;
+    --cookies-file)
+      [[ "$#" -ge 2 ]] || die '--cookies-file requires a value'
+      cookies_file="$2"
+      shift 2
+      ;;
+    --show-response)
+      show_response=true
+      shift
+      ;;
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    *)
+      die "unknown option: $1"
+      ;;
+  esac
+done
+
+case "$command_name" in
+  help|-h|--help)
+    usage
+    ;;
+  cookies)
+    cookie_header="$(read_cookie_header "$cookie_header" "$browser" "$profile" "$cookies_file")"
+    run_cookies "$cookie_header"
+    ;;
+  dry-run|set)
+    [[ -n "$note" ]] || die "$command_name requires --note"
+    if [[ "$command_name" = set && "$send" != true ]]; then
+      die 'set requires --send to perform the live mutation'
+    fi
+
+    cookie_header="$(read_cookie_header "$cookie_header" "$browser" "$profile" "$cookies_file")"
+    [[ -n "$(cookie_value "$cookie_header" sessionid)" ]] || die 'missing sessionid cookie'
+    [[ -n "$(cookie_value "$cookie_header" csrftoken)" ]] || die 'missing csrftoken cookie'
+
+    if [[ -z "$actor_id" ]]; then
+      actor_id="$(cookie_value "$cookie_header" ds_user_id)"
+    fi
+
+    [[ -n "$actor_id" ]] || die 'missing actor ID; pass --actor-id or provide ds_user_id cookie'
+
+    bootstrap_json="$(fetch_instagram_bootstrap "$cookie_header" "$user_agent" | extract_bootstrap_json)"
+    request_json="$(build_request_json "$note" "$actor_id" "$doc_id" "$audience" "$note_style" "$cookie_header" "$bootstrap_json" "$user_agent")"
+
+    if [[ "$command_name" = dry-run ]]; then
+      print_redacted_request "$request_json"
+      exit 0
+    fi
+
+    missing_fields="$(REQUEST_JSON="$request_json" node <<'NODE'
+const request = JSON.parse(process.env.REQUEST_JSON);
+const missing = Object.entries(request.required).filter(([, ok]) => !ok).map(([key]) => key);
+process.stdout.write(missing.join(', '));
+NODE
+)"
+    [[ -z "$missing_fields" ]] || die "cannot send; missing required fields: $missing_fields"
+
+    send_request "$request_json" "$show_response"
+    ;;
+  *)
+    usage >&2
+    exit 2
+    ;;
+esac
