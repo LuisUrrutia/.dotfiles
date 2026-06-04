@@ -74,6 +74,7 @@ brew "tlrc"      # Simplified man pages with examples
 # ==============================================================================
 brew "fd"      # Fast alternative to find
 brew "ripgrep" # Fast text searching (grep replacement)
+brew "ast-grep" # Code searching, linting, rewriting
 brew "fzf"     # Command-line fuzzy finder
 brew "zoxide"  # Smarter cd command
 brew "rename"  # Batch file renaming
