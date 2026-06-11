@@ -129,12 +129,6 @@ function fish-doctor -d "Check Fish dotfiles health"
         __fish_doctor_warn "mise command not found"
     end
 
-    if env $fish_env fish -ic 'command -q direnv; and functions -q __direnv_export_eval' >/dev/null 2>&1
-        __fish_doctor_ok "direnv prompt hook is loaded"
-    else
-        __fish_doctor_warn "direnv prompt hook is not loaded"
-    end
-
     if test $failed -eq 0
         printf '\n%s\n' "fish-doctor: ok"
         return 0

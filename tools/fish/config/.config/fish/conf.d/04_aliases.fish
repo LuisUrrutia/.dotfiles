@@ -22,8 +22,7 @@ alias llama "uvx --from llama-stack llama"
 
 alias clean-rust "cd $TMPDIR/../C/ && rm -rf com.Facepunch-Studios-LTD.Rust/"
 
-alias cursor 'open $argv -a "Cursor"'
-alias ip 'dig +short myip.opendns.com @resolver1.opendns.com || \curl https://checkip.amazonaws.com'
+alias ip 'dig +short myip.opendns.com @resolver1.opendns.com || curl https://checkip.amazonaws.com'
 alias ports 'lsof -i -P | grep LISTEN'
 alias netcons 'lsof -i'
 alias flushdns 'dscacheutil -flushcache && sudo killall -HUP mDNSResponder'

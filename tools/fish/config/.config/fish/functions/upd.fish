@@ -12,14 +12,12 @@ function upd -d "updates different tools"
         return
     end
 
-    if command -q brew
-        set -l state_dir
-        if set -q XDG_STATE_HOME
-            set state_dir "$XDG_STATE_HOME/dotfiles/upd"
-        else
-            set state_dir "$HOME/.local/state/dotfiles/upd"
-        end
+    set -l state_dir "$HOME/.local/state/dotfiles/upd"
+    if set -q XDG_STATE_HOME
+        set state_dir "$XDG_STATE_HOME/dotfiles/upd"
+    end
 
+    if command -q brew
         set -l stamp_file "$state_dir/brew"
         set -l should_run_brew 1
 
@@ -90,13 +88,6 @@ function upd -d "updates different tools"
     end
 
     if command -q mo
-        set -l state_dir
-        if set -q XDG_STATE_HOME
-            set state_dir "$XDG_STATE_HOME/dotfiles/upd"
-        else
-            set state_dir "$HOME/.local/state/dotfiles/upd"
-        end
-
         set -l stamp_file "$state_dir/mo-clean"
         set -l should_run_clean 1
 

@@ -20,9 +20,6 @@ abbr -a -- chmodx 'chmod +x'
 abbr -a -- halp help-aliases
 abbr -a -- cheat help-aliases
 
-# brew
-abbr -a -- brewup 'brew update && brew upgrade && brew autoremove && brew cleanup --prune=all && brew doctor'
-
 # ps
 abbr -a -- psa 'ps aux'
 abbr -a -- psg 'ps aux | grep'
@@ -54,7 +51,6 @@ abbr -a -- grbc 'git rebase --continue'
 abbr -a -- grbi 'git rebase --interactive'
 abbr -a -- gl 'git log --graph --date=short'
 abbr -a -- glog 'git log --graph --pretty=oneline --abbrev-commit --decorate'
-abbr -a -- wtpr wtpr
 abbr -a -- gf 'git fetch'
 abbr -a -- gfp 'git fetch --prune'
 abbr -a -- gfa 'git fetch --all'

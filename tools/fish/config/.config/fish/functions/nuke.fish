@@ -29,9 +29,8 @@ function nuke -d "Kill unwanted background processes"
 
     # Kill processes for each pattern
     for pattern in $process_patterns
-        # Use pgrep for more reliable process matching
-        set -l current_pid %self
-        set -l pids (pgrep -f "$pattern" 2>/dev/null | string match -v -- "$current_pid")
+        # Use pgrep for more reliable process matching; never target this shell
+        set -l pids (pgrep -f "$pattern" 2>/dev/null | string match -v -- "$fish_pid")
 
         if test (count $pids) -gt 0
             if test "$dry_run" = true
@@ -43,7 +42,7 @@ function nuke -d "Kill unwanted background processes"
                 set killed_count (count $pids)
                 echo "Killing $killed_count process(es) matching '$pattern'..."
 
-                # Kill processes gracefully first (TERM), then forcefully (KILL) if needed
+                # Send TERM so each process can shut down gracefully
                 for pid in $pids
                     if kill $pid 2>/dev/null
                         echo "  Killed PID $pid"

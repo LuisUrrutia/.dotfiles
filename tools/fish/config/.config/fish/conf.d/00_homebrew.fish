@@ -2,9 +2,7 @@ set -gx HOMEBREW_PREFIX /opt/homebrew
 set -gx HOMEBREW_CELLAR "$HOMEBREW_PREFIX/Cellar"
 set -gx HOMEBREW_REPOSITORY "$HOMEBREW_PREFIX/homebrew"
 set -gx CPLUS_INCLUDE_PATH "$HOMEBREW_PREFIX/include"
-if test -z "$HOMEBREW_NO_ANALYTICS"
-    set -Ux HOMEBREW_NO_ANALYTICS 1
-end
+set -gx HOMEBREW_NO_ANALYTICS 1
 
 if not set -q MANPATH
     set MANPATH ''

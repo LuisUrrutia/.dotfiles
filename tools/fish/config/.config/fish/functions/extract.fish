@@ -11,69 +11,37 @@ function extract -d "Extract various archive formats"
         return 1
     end
 
+    set -l cmd
     switch "$file"
         case "*.tar.bz2" "*.tbz2"
-            command -q tar; or begin
-                echo "Error: tar not found."
-                return 1
-            end
-            tar -xvjf "$file"
+            set cmd tar -xvjf
         case "*.tar.gz" "*.tgz"
-            command -q tar; or begin
-                echo "Error: tar not found."
-                return 1
-            end
-            tar -xvzf "$file"
+            set cmd tar -xvzf
         case "*.tar.xz"
-            command -q tar; or begin
-                echo "Error: tar not found."
-                return 1
-            end
-            tar -xvJf "$file"
+            set cmd tar -xvJf
         case "*.tar"
-            command -q tar; or begin
-                echo "Error: tar not found."
-                return 1
-            end
-            tar -xvf "$file"
+            set cmd tar -xvf
         case "*.bz2"
-            command -q bunzip2; or begin
-                echo "Error: bunzip2 not found."
-                return 1
-            end
-            bunzip2 "$file"
+            set cmd bunzip2
         case "*.rar"
-            command -q rar; or begin
-                echo "Error: rar not found."
-                return 1
-            end
-            rar x "$file"
+            set cmd rar x
         case "*.gz"
-            command -q gunzip; or begin
-                echo "Error: gunzip not found."
-                return 1
-            end
-            gunzip "$file"
+            set cmd gunzip
         case "*.zip"
-            command -q unzip; or begin
-                echo "Error: unzip not found."
-                return 1
-            end
-            unzip "$file"
+            set cmd unzip
         case "*.Z"
-            command -q uncompress; or begin
-                echo "Error: uncompress not found."
-                return 1
-            end
-            uncompress "$file"
+            set cmd uncompress
         case "*.7z"
-            command -q 7z; or begin
-                echo "Error: 7z not found."
-                return 1
-            end
-            7z x "$file"
+            set cmd 7z x
         case "*"
             echo "Error: unsupported archive format: '$file'"
             return 1
     end
+
+    if not command -q $cmd[1]
+        echo "Error: $cmd[1] not found."
+        return 1
+    end
+
+    $cmd "$file"
 end

@@ -55,7 +55,6 @@ brew "atuin"     # Shell history manager
 brew "tmux"      # Terminal multiplexer
 brew "tmuxpack/tpack/tpack"     # tmux plugin manager
 brew "starship"  # Shell prompt
-brew "direnv"    # Directory-scoped environment loader
 
 # Terminal enhancements
 brew "bat"       # Cat clone with syntax highlighting

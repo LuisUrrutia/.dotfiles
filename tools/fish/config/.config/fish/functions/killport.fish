@@ -34,7 +34,7 @@ function killport -d "Kill process listening on a TCP port"
             return 1
         end
 
-        set -l selection (lsof -nP -iTCP -sTCP:LISTEN 2>/dev/null | awk 'NR > 1 { split($9, address, ":"); port = address[length(address)]; if (port ~ /^[0-9]+$/) printf "%s\t%-8s %-24s %8s  %s\n", port, port, $1, $2, $9 }' | sort -n -u | fzf --prompt='TCP port> ' --header='PORT     COMMAND                       PID  ADDRESS' --delimiter='\t' --with-nth=2.. --preview='set -l pids (lsof -nP -iTCP:{1} -sTCP:LISTEN -t 2>/dev/null | sort -u); if test (count $pids) -gt 0; ps -p (string join , $pids) -o pid,ppid,comm,args; else; echo "No process is listening on TCP port {1}"; end')
+        set -l selection (lsof -nP -iTCP -sTCP:LISTEN 2>/dev/null | awk 'NR > 1 { split($9, address, ":"); port = address[length(address)]; if (port ~ /^[0-9]+$/) printf "%s\t%-8s %-24s %8s  %s\n", port, port, $1, $2, $9 }' | sort -n -u | fzf --with-shell 'fish -c' --prompt='TCP port> ' --header='PORT     COMMAND                       PID  ADDRESS' --delimiter='\t' --with-nth=2.. --preview='set -l pids (lsof -nP -iTCP:{1} -sTCP:LISTEN -t 2>/dev/null | sort -u); if test (count $pids) -gt 0; ps -p (string join , $pids) -o pid,ppid,comm,args; else; echo "No process is listening on TCP port {1}"; end')
 
         if test -z "$selection"
             echo "Cancelled; no processes killed."

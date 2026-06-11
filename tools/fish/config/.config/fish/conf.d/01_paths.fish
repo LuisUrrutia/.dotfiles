@@ -7,6 +7,7 @@ fish_add_path --prepend --path --move \
 
 fish_add_path --append --path --move \
     "$HOME/Library/pnpm" \
+    "$HOME/.bun/bin" \
     "$HOME/.rvm/bin" \
     "$HOME/.foundry/bin" \
     "$HOME/.opencode/bin"
