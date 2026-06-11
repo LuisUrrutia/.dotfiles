@@ -15,6 +15,7 @@
 #    ci       (changes to CI configuration files and scripts)
 #    perf     (changes that improves performance)
 #    chore    (config updates, scripts, etc. no production code change)
+#    revert   (reverts a previous commit)
 # --------------------
 # Remember to
 #    Appends a ! after the type/scope if there are breaking changes
