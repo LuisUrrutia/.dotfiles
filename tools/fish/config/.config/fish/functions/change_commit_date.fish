@@ -2,8 +2,8 @@ function change_commit_date -d "Change the date of the most recent commit"
     if test (count $argv) -ne 1
         echo "Usage: change_commit_date <date>"
         echo "Example: change_commit_date '2023-12-25 10:30:00'"
-        echo "Example: change_commit_date '-2h'"
-        echo "Example: change_commit_date '-30m'"
+        echo "Example: change_commit_date '2 hours ago'"
+        echo "Example: change_commit_date '30 minutes ago'"
         return 1
     end
 
@@ -18,6 +18,11 @@ function change_commit_date -d "Change the date of the most recent commit"
 
     git rev-parse --is-inside-work-tree >/dev/null 2>/dev/null; or begin
         echo "Error: not inside a Git repository."
+        return 1
+    end
+
+    git diff --cached --quiet --exit-code; or begin
+        echo "Error: staged changes would be included in the amend. Unstage them first."
         return 1
     end
 

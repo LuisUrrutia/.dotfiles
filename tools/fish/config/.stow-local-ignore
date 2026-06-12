@@ -1,16 +1,18 @@
 ^/\.config/fish/fish_variables
 ^/\.config/fish/functions/_.*
 ^/\.config/fish/functions/fisher\.fish
-^/\.config/fish/functions/zoxide\.fish
 ^/\.config/fish/functions/fzf_configure_bindings\.fish
+^/\.config/fish/functions/sponge_filter_failed\.fish
+^/\.config/fish/functions/sponge_filter_matched\.fish
 ^/\.config/fish/conf\.d/fish_frozen_.*\.fish
 ^/\.config/fish/conf\.d/puffer_fish_key_bindings\.fish
-^/\.config/fish/conf\.d/zoxide\.fish
 ^/\.config/fish/conf\.d/autopair\.fish
 ^/\.config/fish/conf\.d/fzf\.fish
+^/\.config/fish/conf\.d/sponge\.fish
 ^/\.config/fish/completions/fisher\.fish
 ^/\.config/fish/completions/fzf_configure_bindings\.fish
-^/\.config/fish/completions/zoxide\.fish
+^/\.config/fish/completions/uv\.fish
+^/\.config/fish/completions/uvx\.fish
 ^/\.config/fish/themes/Catppuccin .*\.theme
 ^/\.config/fish/themes/catppuccin-.*\.theme
 ^/\.config/fish/themes/static/Catppuccin .*\.theme

@@ -62,7 +62,7 @@ function fish-doctor -d "Check Fish dotfiles health"
         __fish_doctor_ok "noninteractive startup is quiet"
     else
         __fish_doctor_fail "noninteractive startup printed output"
-        printf '%s\n' "$startup_output"
+        printf '%s\n' $startup_output
         set failed 1
     end
 

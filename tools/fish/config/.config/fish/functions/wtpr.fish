@@ -5,9 +5,22 @@ function wtpr -d "Open a GitHub PR in a WorkTrunk worktree"
     end
 
     if test (count $argv) -gt 0
-        set -l pr (string match -r '[0-9]+' -- $argv[1])
-        if test -z "$pr"
+        if test (count $argv) -ne 1
             echo "Error: pass a PR number or URL" >&2
+            return 1
+        end
+
+        set -l pr_input $argv[1]
+        set -l pr
+
+        if string match -qr '^[0-9]+$' -- "$pr_input"
+            set pr $pr_input
+        else
+            set pr (string replace -r '^https://github\.com/[^/]+/[^/]+/pull/([0-9]+)([/#?].*)?$' '$1' -- "$pr_input")
+        end
+
+        if test -z "$pr"; or not string match -qr '^[0-9]+$' -- "$pr"
+            echo "Error: pass a PR number or GitHub PR URL" >&2
             return 1
         end
 

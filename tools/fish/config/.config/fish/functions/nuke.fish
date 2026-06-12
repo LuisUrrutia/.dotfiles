@@ -1,70 +1,50 @@
 function nuke -d "Kill unwanted background processes"
-    # Define process patterns to kill
-    set -l process_patterns \
+    set -l process_names \
         FortiClient \
+        FortiClientAgent \
+        FortiTray \
         Logitech \
         lghub \
+        lghub_agent \
+        lghub_system_tray \
         toolbox-helper
 
     set -l total_killed 0
-    set -l dry_run false
 
-    # Parse arguments
     for arg in $argv
         switch $arg
-            case -n --dry-run
-                set dry_run true
             case -h --help
-                echo "Usage: nuke [options]"
-                echo "  -n, --dry-run    Show processes that would be killed without actually killing them"
+                echo "Usage: nuke [--help]"
                 echo "  -h, --help       Show this help message"
                 return 0
+            case '*'
+                echo "nuke: unknown option: $arg" >&2
+                return 1
         end
     end
 
-    if test "$dry_run" = true
-        echo "DRY RUN - Processes that would be killed:"
-        echo "=========================================="
-    end
-
-    # Kill processes for each pattern
-    for pattern in $process_patterns
-        # Use pgrep for more reliable process matching; never target this shell
-        set -l pids (pgrep -f "$pattern" 2>/dev/null | string match -v -- "$fish_pid")
+    for process_name in $process_names
+        set -l pids (pgrep -x "$process_name" 2>/dev/null | string match -v -- "$fish_pid")
 
         if test (count $pids) -gt 0
-            if test "$dry_run" = true
-                echo "Pattern '$pattern':"
-                set -l pid_list (string join , $pids)
-                ps -p "$pid_list" -o pid,ppid,comm,args 2>/dev/null | string collect
-                echo ""
-            else
-                set killed_count (count $pids)
-                echo "Killing $killed_count process(es) matching '$pattern'..."
+            set -l killed_count (count $pids)
+            echo "Killing $killed_count process(es) named '$process_name'..."
 
-                # Send TERM so each process can shut down gracefully
-                for pid in $pids
-                    if kill $pid 2>/dev/null
-                        echo "  Killed PID $pid"
-                        set total_killed (math $total_killed + 1)
-                    else
-                        echo "  Failed to kill PID $pid (may already be dead)"
-                    end
+            for pid in $pids
+                if kill $pid 2>/dev/null
+                    echo "  Killed PID $pid"
+                    set total_killed (math $total_killed + 1)
+                else
+                    echo "  Failed to kill PID $pid (may already be dead)"
                 end
-            end
-        else
-            if test "$dry_run" = true
-                echo "Pattern '$pattern': No processes found"
             end
         end
     end
 
-    if test "$dry_run" = false
-        if test $total_killed -gt 0
-            echo ""
-            echo "Successfully killed $total_killed process(es)"
-        else
-            echo "No matching processes found to kill"
-        end
+    if test $total_killed -gt 0
+        echo ""
+        echo "Successfully killed $total_killed process(es)"
+    else
+        echo "No matching processes found to kill"
     end
 end

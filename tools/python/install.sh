@@ -19,10 +19,15 @@ stow_config python
 uv tool install --force pre-commit --with pre-commit-uv
 
 # Add completions
-fish_completions_dir="$DOTFILES/tools/fish/config/.config/fish/completions"
+fish_config_dir="$HOME/.config/fish"
+fish_completions_dir="$fish_config_dir/completions"
 
-mkdir -p "$fish_completions_dir"
-uv generate-shell-completion fish >"$fish_completions_dir/uv.fish"
-uvx --generate-shell-completion fish >"$fish_completions_dir/uvx.fish"
+if [[ -L "$fish_config_dir" ]]; then
+  echo "Warning: $fish_config_dir is a symlink; run tools/fish/install.sh before generating uv Fish completions" >&2
+else
+  mkdir -p "$fish_completions_dir"
+  uv generate-shell-completion fish >"$fish_completions_dir/uv.fish"
+  uvx --generate-shell-completion fish >"$fish_completions_dir/uvx.fish"
+fi
 
 uv cache prune || echo "Warning: uv cache prune failed, continuing" >&2

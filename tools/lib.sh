@@ -62,7 +62,7 @@ stow_config() {
     exit 1
   fi
 
-  stow -v --restow -d "$tool_dir" -t "$HOME" config
+  stow -v --restow --no-folding -d "$tool_dir" -t "$HOME" config
   echo "Stowed $tool config"
 }
 

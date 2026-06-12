@@ -8,7 +8,7 @@ function fip --description 'Forward localhost ports to remote host over SSH'
             return 1
         end
 
-        pgrep -af "ssh.*-L (127[.]0[.]0[.]1:)?[0-9]+:localhost:[0-9]+"
+        pgrep -fl "ssh.*-L (127[.]0[.]0[.]1:)?[0-9]+:localhost:[0-9]+"
         or echo "No active forwards"
         return
     end

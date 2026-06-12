@@ -1,6 +1,6 @@
 status is-interactive; or return
 
-abbr -a -- find fd
+abbr -a -- fdf fd
 abbr -a -- top btop
 
 # navigation
@@ -9,11 +9,11 @@ abbr -a -- desk 'cd ~/Desktop'
 
 # terminal
 abbr -a -- c opencode
-abbr -a -- cc claude
+abbr -a -- cld claude
 abbr -a -- h history
 abbr -a -- j 'jobs -l'
 abbr -a -- oc opencode
-abbr -a -- path 'printf "%s\n" $PATH'
+abbr -a -- paths 'printf "%s\n" $PATH'
 abbr -a -- chmodx 'chmod +x'
 
 # cheatsheet
@@ -25,8 +25,8 @@ abbr -a -- psa 'ps aux'
 abbr -a -- psg 'ps aux | grep'
 
 # du and df
-abbr -a -- du 'du -h -d 2'
-abbr -a -- df duf
+abbr -a -- dus 'du -h -d 2'
+abbr -a -- dfu duf
 
 # git
 abbr -a -- gs 'git status'

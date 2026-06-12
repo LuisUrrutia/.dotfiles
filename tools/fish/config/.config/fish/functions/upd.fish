@@ -6,7 +6,7 @@ function upd -d "updates different tools"
         printf '%s\n' "Usage: upd [--force] [--help]"
         printf '%s\n' ""
         printf '%s\n' "Update tools and run daily/weekly maintenance."
-        printf '\n%s\n' "Options"
+        printf '\n%s\n' Options
         printf '  %-12s %s\n' --force "run gated tasks now, bypassing daily/weekly limits"
         printf '  %-12s %s\n' --help "show this help"
         return
@@ -39,7 +39,7 @@ function upd -d "updates different tools"
             and brew autoremove
             and brew cleanup --prune=all
             and brew doctor
-            command mkdir -p "$state_dir"
+            and command mkdir -p "$state_dir"
             and command touch "$stamp_file"
         end
     else

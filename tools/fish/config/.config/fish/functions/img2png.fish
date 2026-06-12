@@ -98,15 +98,21 @@ function img2png -d "Convert an image to an optimized PNG"
         pngquant --force --quality="$quality" --skip-if-larger --output "$tmp" -- "$output"
         set -l quant_status $status
 
-        if test -f "$tmp"
+        if test $quant_status -eq 98
+            rm -f "$tmp"
+        else if test $quant_status -ne 0
+            rm -f "$tmp"
+            return $quant_status
+        else if test -s "$tmp"
             mv "$tmp" "$output"
             or begin
                 rm -f "$tmp"
                 return 1
             end
-        else if test $quant_status -ne 98
+        else
             rm -f "$tmp"
-            return $quant_status
+            echo "img2png: pngquant produced an empty output" >&2
+            return 1
         end
     end
 

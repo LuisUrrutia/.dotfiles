@@ -43,5 +43,5 @@ function extract -d "Extract various archive formats"
         return 1
     end
 
-    $cmd "$file"
+    command $cmd "$file"
 end

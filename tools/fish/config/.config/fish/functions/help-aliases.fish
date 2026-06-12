@@ -32,15 +32,15 @@ function help-aliases -d "Show useful shell aliases and abbreviations"
 
     printf '\n%s\n' Terminal
     printf '  %-12s %s\n' c opencode
-    printf '  %-12s %s\n' cc claude
+    printf '  %-12s %s\n' cld claude
     printf '  %-12s %s\n' h history
     printf '  %-12s %s\n' j "jobs -l"
-    printf '  %-12s %s\n' path "print PATH entries"
+    printf '  %-12s %s\n' paths "print PATH entries"
     printf '  %-12s %s\n' chmodx "chmod +x"
 
     printf '\n%s\n' Disk
-    printf '  %-12s %s\n' du "summarize disk usage two levels deep"
-    printf '  %-12s %s\n' df "show disk free space with duf"
+    printf '  %-12s %s\n' dus "summarize disk usage two levels deep"
+    printf '  %-12s %s\n' dfu "show disk free space with duf"
 
     printf '\n%s\n' Images
     printf '  %-12s %s\n' img2jpg "convert to JPG; use --medium/--small for presets"
@@ -59,7 +59,7 @@ function help-aliases -d "Show useful shell aliases and abbreviations"
 
     printf '\n%s\n' Utilities
     printf '  %-12s %s\n' cx "cd and list"
-    printf '  %-12s %s\n' find fd
+    printf '  %-12s %s\n' fdf fd
     printf '  %-12s %s\n' mkd "make directory and cd into it"
     printf '  %-12s %s\n' top btop
     printf '  %-12s %s\n' today "date YYYY/MM/DD"
