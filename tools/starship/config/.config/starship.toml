@@ -7,6 +7,8 @@ follow_symlinks = false
 palette = "catppuccin_mocha"
 
 format = """
+$username\
+$hostname\
 $directory\
 ${custom.git_branch}\
 $git_commit\
@@ -62,6 +64,20 @@ surface0 = "#313244"
 base = "#1e1e2e"
 mantle = "#181825"
 crust = "#11111b"
+
+[username]
+disabled = false
+show_always = false
+format = "[$user]($style)@"
+style_user = "bold peach"
+style_root = "bold red"
+
+[hostname]
+disabled = false
+ssh_only = true
+format = "[$hostname]($style) "
+style = "bold green"
+trim_at = ".local"
 
 [directory]
 style = "bold sapphire"
