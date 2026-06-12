@@ -164,7 +164,7 @@ cask "hammerspoon"  # Automation
 # ------------------------------------------------------------------------------
 # System Utilities
 # ------------------------------------------------------------------------------
-cask "jordanbaird-ice" # Menu bar management
+cask "thaw"            # Menu bar management
 cask "the-unarchiver"  # Archive extraction
 cask "qlmarkdown"      # Quick Look previews for Markdown files
 
