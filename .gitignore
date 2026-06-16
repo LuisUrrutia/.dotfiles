@@ -22,3 +22,17 @@ tools/opencode/config/.config/opencode/skills/*
 
 # Claude generated state
 tools/claude/config/.claude/skills/*
+
+# cc-safety-net generated state
+tools/cc-safety-net/config/.cc-safety-net/cache/
+tools/cc-safety-net/config/.cc-safety-net/logs/
+tools/cc-safety-net/config/.cc-safety-net/rules/
+
+# Stray HOME/XDG/toolchain state accidentally captured into a stow package
+# (created when a process runs with HOME pointed at tools/*/config/).
+# Keep .local/bin (tracked) — ignore only generated XDG/toolchain dirs.
+tools/*/config/.cache/
+tools/*/config/.cargo/
+tools/*/config/.rustup/
+tools/*/config/.local/share/
+tools/*/config/.local/state/
