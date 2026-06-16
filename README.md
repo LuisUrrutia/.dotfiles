@@ -236,7 +236,7 @@ blindly overwrite home-directory config unless you know which version you want.
   ShellCheck, gitleaks, cspell
 - Languages: Node via mise, Python and uv, Bun, OpenJDK, plus optional Rust,
   Go, LuaRocks, and Perl profiles
-- macOS/system: GNU core tools, dockutil, mas, mole, Linearmouse, Ice,
+- macOS/system: GNU core tools, dockutil, mas, mole, Linearmouse, Thaw,
   DisplayLink, The Unarchiver
 - Automation and hotkeys: Hammerspoon, skhd
 - Apps: Dia, Raycast, 1Password, Ghostty, CleanShot, Fliqlo, IINA, Spotify,
@@ -267,6 +267,9 @@ This list is intentionally grouped. The exact package list lives in
   logic, and hotkeys.
 - Raycast exports are tracked as `.rayconfig` backups with `raycast-config`
   helpers for status, listing, backup, restore, and scriptable latest-path lookup.
+- Thaw preferences back up with `thaw-config backup`; `backup-configs` runs the
+  Thaw and Raycast backup helpers in parallel. Review app backups before
+  committing them because they can contain private app state.
 - Catppuccin is used across Fish/FZF, Starship, Ghostty, bat, btop, and editor tooling.
 
 ## Post-install checklist
