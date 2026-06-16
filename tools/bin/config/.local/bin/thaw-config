@@ -1,0 +1,71 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+DOTFILES="${DOTFILES:-$HOME/.dotfiles}"
+PREFERENCES_FILE="${THAW_PREFERENCES_FILE:-$HOME/Library/Preferences/com.stonerl.Thaw.plist}"
+BACKUP_DIR="${THAW_BACKUP_DIR:-$DOTFILES/tools/thaw/backups}"
+
+usage() {
+  cat <<'EOF'
+Usage: thaw-config <command>
+
+Commands:
+  backup          Back up Thaw preferences
+  help            Show this help
+
+Environment:
+  THAW_PREFERENCES_FILE  Override Thaw preferences plist path
+  THAW_BACKUP_DIR        Override backup directory
+EOF
+}
+
+die() {
+  printf 'thaw-config: %s\n' "$*" >&2
+  exit 1
+}
+
+cmd_backup() {
+  local timestamp=""
+  local backup_file=""
+  local suffix=1
+
+  if [[ ! -f "$PREFERENCES_FILE" ]]; then
+    printf 'No existing Thaw preferences found at %s; skipping backup.\n' "$PREFERENCES_FILE"
+    return 0
+  fi
+
+  mkdir -p "$BACKUP_DIR"
+
+  timestamp="$(date +%Y%m%d%H%M%S)"
+  backup_file="$BACKUP_DIR/Thaw.$timestamp.plist"
+
+  while [[ -e "$backup_file" ]]; do
+    backup_file="$BACKUP_DIR/Thaw.$timestamp.$suffix.plist"
+    suffix=$((suffix + 1))
+  done
+
+  cp "$PREFERENCES_FILE" "$backup_file"
+  printf 'Backed up Thaw preferences: %s\n' "$backup_file"
+}
+
+main() {
+  local command="${1:-help}"
+  shift || true
+
+  case "$command" in
+    backup)
+      [[ "$#" -eq 0 ]] || die "backup accepts no arguments"
+      cmd_backup
+      ;;
+    help | -h | --help)
+      usage
+      ;;
+    *)
+      usage >&2
+      die "unknown command: $command"
+      ;;
+  esac
+}
+
+main "$@"
