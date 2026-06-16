@@ -215,15 +215,18 @@ The repository uses **Catppuccin** theme consistently across tools:
    `tools/git/config/.config/git/local.gitconfig`; machine identity/signing is
    written to `~/.gitconfig`
 10. **Local legacy Git config**: `tools/git/config/.gitconfig` is intentionally
-   ignored/local-only; do not delete the user's local copy when removing it from
-   Git tracking
+    ignored/local-only; do not delete the user's local copy when removing it from
+    Git tracking
 11. **Git migration safety**: `tools/git/migrate-config.sh` must not write
-   through non-managed `~/.gitconfig` or `~/.config/git` symlinks; preserve
-   manual migration errors
-12. **Domain docs**: Read `CONTEXT.md` before architecture, diagnosis, TDD, or
-   issue-writing work
-13. **Glossary ownership**: Keep domain language in `CONTEXT.md`; do not
-   duplicate the glossary here
+    through non-managed `~/.gitconfig` or `~/.config/git` symlinks; preserve
+    manual migration errors
+12. **Tool installer boundaries**: A `tools/<tool>/install.sh` script must not
+    invoke another tool's installer. `install.sh` orchestrates all tools, so
+    cross-tool setup belongs in the owning tool or shared `tools/lib.sh` helpers
+13. **Domain docs**: Read `CONTEXT.md` before architecture, diagnosis, TDD, or
+    issue-writing work
+14. **Glossary ownership**: Keep domain language in `CONTEXT.md`; do not
+    duplicate the glossary here
 
 ## Hardware Profile Rules
 
