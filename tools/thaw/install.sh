@@ -3,7 +3,13 @@
 # shellcheck disable=SC1091
 source "${DOTFILES:-$HOME/.dotfiles}/tools/lib.sh"
 
-require_app Thaw
+main() {
+  require_app Thaw
 
-# Restore Thaw menu bar settings
-defaults import com.stonerl.Thaw "$DOTFILES/tools/thaw/Thaw.plist"
+  # Restore Thaw menu bar settings
+  defaults import com.stonerl.Thaw "$DOTFILES/tools/thaw/Thaw.plist"
+}
+
+if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
+  main "$@"
+fi
