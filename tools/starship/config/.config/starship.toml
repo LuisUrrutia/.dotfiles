@@ -66,14 +66,11 @@ mantle = "#181825"
 crust = "#11111b"
 
 [username]
-disabled = false
-show_always = false
 format = "[$user]($style)@"
 style_user = "bold peach"
 style_root = "bold red"
 
 [hostname]
-disabled = false
 ssh_only = true
 format = "[$hostname]($style) "
 style = "bold green"
@@ -88,10 +85,11 @@ truncate_to_repo = true
 
 [custom.git_branch]
 command = "starship-git-branch"
-description = "Show Git branch unless it matches the current worktree directory"
-format = "[$output]($style) "
+description = "Show Git branch unless the worktree directory is named after it"
+format = "([$output]($style) )"
 style = "bold mauve"
-when = "git rev-parse --is-inside-work-tree >/dev/null 2>&1"
+when = true
+require_repo = true
 
 [git_commit]
 style = "bold green"
