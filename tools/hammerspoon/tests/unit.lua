@@ -56,14 +56,17 @@ local function build_hs()
         },
         wifi = { watcher = {} },
         battery = { watcher = {} },
+        location = {},
         timer = {},
+        timers = {},
         hotkey = {},
         json = {},
+        bluetooth_powered_on = true,
     }
 
     function hs.logger.new(name, level)
         table.insert(hs.calls, { type = "logger", name = name, level = level })
-        return { d = function() end, i = function() end, w = function() end, e = function() end }
+        return { d = function(...) end, i = function(...) end, w = function(...) end, e = function(...) end }
     end
 
     function hs.caffeinate.set(kind, value, ac_and_battery)
@@ -108,7 +111,18 @@ local function build_hs()
         }
     end
 
+    function hs.location.authorizationStatus()
+        table.insert(hs.calls, { type = "location_status" })
+        return hs.location.status or "authorized"
+    end
+
+    function hs.location.get()
+        table.insert(hs.calls, { type = "location_get" })
+        return hs.location.current
+    end
+
     function hs.wifi.currentNetwork()
+        table.insert(hs.calls, { type = "wifi_current_network" })
         return hs.wifi.current
     end
 
@@ -128,19 +142,35 @@ local function build_hs()
     end
 
     function hs.timer.doAfter(delay, fn)
-        table.insert(hs.calls, { type = "timer", delay = delay })
-        fn()
-        return { stop = function() end }
+        local timer = {
+            stopped = false,
+            fire = function(self)
+                if not self.stopped then
+                    fn()
+                end
+            end,
+            stop = function(self)
+                self.stopped = true
+            end,
+        }
+
+        table.insert(hs.calls, { type = "timer", delay = delay, timer = timer })
+        table.insert(hs.timers, timer)
+        return timer
     end
 
     function hs.hotkey.bind(mods, key, fn)
         table.insert(hs.calls, { type = "hotkey", mods = mods, key = key, fn = fn })
     end
 
-    function hs.execute(command)
-        table.insert(hs.calls, { type = "execute", command = command })
+    function hs.execute(command, with_user_env)
+        table.insert(hs.calls, { type = "execute", command = command, with_user_env = with_user_env })
         if command:find(" %-p") then
-            return "1\n", true, "exit", 0
+            if hs.bluetooth_powered_on then
+                return "1\n", true, "exit", 0
+            end
+
+            return "0\n", true, "exit", 0
         end
 
         return "", true, "exit", 0
@@ -175,6 +205,7 @@ test("bluetooth manager uses system sleep events, dedupes devices, and delays re
     hs.caffeinate.callback(hs.caffeinate.watcher.screensDidSleep)
     hs.caffeinate.callback(hs.caffeinate.watcher.systemWillSleep)
     hs.caffeinate.callback(hs.caffeinate.watcher.systemDidWake)
+    hs.timers[1]:fire()
 
     local disconnects = 0
     local connects = 0
@@ -190,6 +221,36 @@ test("bluetooth manager uses system sleep events, dedupes devices, and delays re
     assert_equal(timers, 1, "wake reconnect should be delayed")
 end)
 
+test("bluetooth manager retries reconnect after Bluetooth is unavailable", function()
+    local hs = build_hs()
+    hs.json.next_value = {
+        { address = "aa-bb-cc-dd-ee-ff" },
+    }
+
+    local bluetooth_sleep_manager = load_module("modules.bluetooth_sleep_manager")
+    bluetooth_sleep_manager.start()
+
+    hs.caffeinate.callback(hs.caffeinate.watcher.systemWillSleep)
+
+    hs.bluetooth_powered_on = false
+    hs.caffeinate.callback(hs.caffeinate.watcher.systemDidWake)
+    hs.timers[1]:fire()
+
+    hs.bluetooth_powered_on = true
+    hs.caffeinate.callback(hs.caffeinate.watcher.systemDidWake)
+    hs.timers[2]:fire()
+
+    local connects = 0
+    local timers = 0
+    for _, call in ipairs(hs.calls) do
+        if call.type == "execute" and call.command:find("%s%-%-connect%s") then connects = connects + 1 end
+        if call.type == "timer" then timers = timers + 1 end
+    end
+
+    assert_equal(connects, 1, "later wake should reconnect the remembered device")
+    assert_equal(timers, 2, "failed reconnect should clear pending timer for a later wake")
+end)
+
 test("bluetooth manager start is idempotent", function()
     local hs = build_hs()
     local bluetooth_sleep_manager = load_module("modules.bluetooth_sleep_manager")
@@ -198,6 +259,25 @@ test("bluetooth manager start is idempotent", function()
     bluetooth_sleep_manager.start()
 
     assert_equal(hs.caffeinate.watch_count, 1, "start should create one watcher")
+end)
+
+test("bluetooth manager requests Bluetooth permission at startup", function()
+    local hs = build_hs()
+    local bluetooth_sleep_manager = load_module("modules.bluetooth_sleep_manager")
+
+    bluetooth_sleep_manager.start()
+
+    local probes = 0
+    local with_user_env = nil
+    for _, call in ipairs(hs.calls) do
+        if call.type == "execute" and call.command == "/opt/homebrew/bin/blueutil --paired" then
+            probes = probes + 1
+            with_user_env = call.with_user_env
+        end
+    end
+
+    assert_equal(probes, 1, "start should probe Bluetooth permission once")
+    assert_false(with_user_env, "blueutil permission probe should not use user shell env")
 end)
 
 test("caffeinate at home enables only on home wifi and AC power", function()
@@ -224,6 +304,30 @@ test("caffeinate at home enables only on home wifi and AC power", function()
     assert_equal(enabled, 2, "AC home wifi should prevent system and display idle")
     assert_equal(disabled, 2, "battery should allow system and display idle")
     assert_false(ac_arg_seen, "systemIdle/displayIdle should not pass acAndBattery")
+end)
+
+test("caffeinate at home requests location before checking wifi", function()
+    local hs = build_hs()
+    hs.battery.source = "AC Power"
+    hs.location.status = "undefined"
+    hs.wifi.current = nil
+    local caffeinate_at_home = load_module("modules.caffeinate_at_home")
+
+    caffeinate_at_home.start({ "Shadow" })
+
+    local location_get_index = nil
+    local wifi_lookup_index = nil
+    local disabled = 0
+    for index, call in ipairs(hs.calls) do
+        if call.type == "location_get" and not location_get_index then location_get_index = index end
+        if call.type == "wifi_current_network" and not wifi_lookup_index then wifi_lookup_index = index end
+        if call.type == "caffeinate_set" and not call.value then disabled = disabled + 1 end
+    end
+
+    assert_truthy(location_get_index, "start should activate Location Services")
+    assert_truthy(wifi_lookup_index, "start should check the current WiFi network")
+    assert_truthy(location_get_index < wifi_lookup_index, "Location Services should be requested before WiFi lookup")
+    assert_equal(disabled, 2, "unavailable SSID should allow system and display idle")
 end)
 
 test("caffeinate at home validates SSIDs and restores secure defaults on stop", function()

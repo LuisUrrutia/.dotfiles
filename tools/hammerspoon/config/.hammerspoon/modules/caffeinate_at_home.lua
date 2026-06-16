@@ -5,13 +5,13 @@ Prevents sleep and disables screensaver password when on home WiFi networks
 
 local mod = {}
 
+---@type { d: fun(message: string), i: fun(message: string), w: fun(message: string), e: fun(message: string) }
 local log = hs.logger.new('caffeinate_at_home')
 
 local screensaver = require('utils.screensaver')
 
 local wifi_watcher = nil
 local battery_watcher = nil
-local home_SSIDs = {}
 local home_SSID_set = {}
 
 local function set_caffeinate(enabled)
@@ -23,10 +23,20 @@ local function is_on_ac_power()
     return hs.battery.powerSource() == "AC Power"
 end
 
+local function request_location_services()
+    local status = hs.location.authorizationStatus()
+    if status ~= "authorized" then
+        log.w("Location Services status is " .. status .. "; macOS may hide the current WiFi SSID from Hammerspoon")
+    end
+
+    hs.location.get()
+end
+
 -- Handle WiFi change events
 -- @return nil
 local function on_wifi_change()
-    local current_SSID = hs.wifi.currentNetwork() or ""
+    local current_SSID = hs.wifi.currentNetwork()
+    local current_SSID_label = current_SSID or "<unavailable>"
 
     local is_home = home_SSID_set[current_SSID] == true
 
@@ -36,7 +46,11 @@ local function on_wifi_change()
         set_caffeinate(true)
         screensaver.set_require_password(false)
     else
-        log.i("Allow normal sleep. Current SSID: " .. current_SSID .. ", power: " .. hs.battery.powerSource())
+        if not current_SSID then
+            log.w("WiFi SSID unavailable. Check Hammerspoon Location Services permission.")
+        end
+
+        log.i("Allow normal sleep. Current SSID: " .. current_SSID_label .. ", power: " .. hs.battery.powerSource())
 
         set_caffeinate(false)
         screensaver.set_require_password(true)
@@ -76,7 +90,8 @@ function mod.start(SSIDs)
 
     log.i("Starting caffeinate at home mod with SSIDs: " .. table.concat(SSIDs, ", "))
 
-    home_SSIDs = SSIDs
+    request_location_services()
+
     home_SSID_set = SSID_set
     wifi_watcher = hs.wifi.watcher.new(on_wifi_change)
     wifi_watcher:start()
@@ -102,7 +117,6 @@ function mod.stop()
         battery_watcher = nil
     end
 
-    home_SSIDs = {}
     home_SSID_set = {}
     set_caffeinate(false)
     screensaver.set_require_password(true)

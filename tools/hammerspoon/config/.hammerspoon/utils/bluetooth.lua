@@ -8,6 +8,9 @@ local lib = {}
 -- Path to blueutil executable
 local blueutil_path = "/opt/homebrew/bin/blueutil"
 
+---@type fun(command: string, with_user_env?: boolean): string, boolean
+local execute = hs.execute
+
 local function valid_device_id(device_id)
     return type(device_id) == "string" and device_id:match("^%x%x[:-]%x%x[:-]%x%x[:-]%x%x[:-]%x%x[:-]%x%x$") ~= nil
 end
@@ -20,8 +23,15 @@ end
 -- @param command string - Command arguments to pass to blueutil
 -- @return string, boolean - Command output and success status
 local function blueutil(command)
-    local output, status = hs.execute(blueutil_path .. " " .. command, false)
+    local output, status = execute(blueutil_path .. " " .. command, false)
     return output, status
+end
+
+-- Trigger macOS Bluetooth permission for blueutil without changing device state
+-- @return boolean
+function lib.request_permission()
+    local _, status = blueutil("--paired")
+    return status == true
 end
 
 -- Get list of connected Bluetooth devices

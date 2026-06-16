@@ -26,7 +26,10 @@ local function has_previous_connected()
 end
 
 local function reconnect_previous()
+    reconnect_timer = nil
+
     if (not bluetooth.is_powered_on()) then
+        log.w("Machine woke up but Bluetooth is not powered on; reconnect deferred")
         return
     end
 
@@ -36,7 +39,6 @@ local function reconnect_previous()
     end
 
     previous_connected = {}
-    reconnect_timer = nil
 end
 
 local function watch(eventType)
@@ -78,6 +80,7 @@ function mod.start()
     end
 
     log.i("Starting Bluetooth sleep manager")
+    bluetooth.request_permission()
 
     caffeinate_watcher = hs.caffeinate.watcher.new(watch)
     caffeinate_watcher:start()
