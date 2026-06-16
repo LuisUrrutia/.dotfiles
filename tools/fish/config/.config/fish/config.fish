@@ -13,6 +13,11 @@ if status is-interactive
 
     if command -q starship
         starship init fish | source
+
+        function starship_transient_prompt_func
+            starship module character
+        end
+        enable_transience
     end
 
     set -gx FZF_DEFAULT_OPTS \
@@ -35,3 +40,10 @@ else
         mise activate fish --shims 2>/dev/null | source
     end
 end
+
+# pnpm
+set -gx PNPM_HOME "/Users/luisurrutia/Library/pnpm"
+if not string match -q -- "$PNPM_HOME/bin" $PATH
+  set -gx PATH "$PNPM_HOME/bin" $PATH
+end
+# pnpm end
