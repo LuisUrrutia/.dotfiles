@@ -44,6 +44,7 @@ jobs:
           shellcheck "${scripts[@]}"
 
           bash tools/bin/tests/thaw-config.sh
+          bash tools/git/tests/migrate-config.sh
 
       - name: Check Hammerspoon tests
         run: bash tools/hammerspoon/tests/run.sh
