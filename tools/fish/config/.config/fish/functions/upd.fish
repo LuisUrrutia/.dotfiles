@@ -129,7 +129,14 @@ function upd -d "updates different tools"
 
     # Fish plugin update should be at the end of the function.
     if type -q fisher; and test -f "$__fish_config_dir/fish_plugins"
-        fisher update
+        set -l fish_path (status fish-path)
+        set -l fisher_file "$__fish_config_dir/functions/fisher.fish"
+
+        if test -f "$fisher_file"
+            "$fish_path" --no-config --command "source \"$fisher_file\"; and fisher update"
+        else
+            "$fish_path" --command "fisher update"
+        end
     else if type -q fisher
         echo "[upd] fish_plugins not found, skipping fisher update"
     else
