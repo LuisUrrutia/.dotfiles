@@ -37,39 +37,8 @@ return {
             "neovim/nvim-lspconfig",
             "L3MON4D3/LuaSnip",
         },
-        build = function(plugin)
-            local lib = require("blink.lib").native
-            local platform = lib.platform()
-            local commit_result = vim.system({ "git", "rev-parse", "HEAD" }, { cwd = plugin.dir }):wait()
-
-            if commit_result.code ~= 0 then
-                error(commit_result.stderr)
-            end
-
-            local build_result = vim.system({ "cargo", "build", "--release" }, { cwd = plugin.dir }):wait()
-
-            if build_result.code ~= 0 then
-                error(build_result.stderr)
-            end
-
-            local commit = vim.trim(commit_result.stdout)
-            local source = plugin.dir .. "/target/release/libblink_cmp_fuzzy" .. platform.lib_extension
-            local destination = lib.library_path("blink_cmp_fuzzy", commit)
-            local fallback_destination = lib.library_path("blink_cmp_fuzzy")
-
-            lib.mkdirp(vim.fs.dirname(fallback_destination))
-
-            if vim.uv.fs_stat(fallback_destination) then
-                vim.uv.fs_unlink(fallback_destination)
-            end
-
-            local copied, copy_error = vim.uv.fs_copyfile(source, fallback_destination)
-
-            if not copied then
-                error(copy_error)
-            end
-
-            lib.mv(source, destination)
+        build = function()
+            require("blink.cmp").build():pwait()
         end,
         opts = {
             keymap = {
