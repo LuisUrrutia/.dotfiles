@@ -7,6 +7,7 @@ export DOTFILES="${DOTFILES:-$SCRIPT_DIR}"
 
 DOTFILES_HARDWARE_PROFILES=()
 # shellcheck source=hardware-profiles.sh
+# shellcheck disable=SC1091
 if [[ -r "$DOTFILES/hardware-profiles.sh" ]]; then
   source "$DOTFILES/hardware-profiles.sh"
 fi
@@ -50,6 +51,8 @@ SELECTED_LANGUAGES=()
 SELECTED_PROFILE_PACKAGES=()
 AT_EXIT=""
 SUDO_ASKPASS=""
+DOTFILES_USE_SUDO_ASKPASS=false
+SUDO_KEEPALIVE_PID=""
 SELECTED_PROFILE_BREWFILE=""
 BREW_BUNDLE_FAILURES=()
 
@@ -1038,6 +1041,59 @@ load_homebrew() {
   fi
 }
 
+trust_homebrew_taps() {
+  local brewfile=""
+  local line=""
+  local package=""
+  local owner=""
+  local repo=""
+  local profile=""
+  local tap=""
+  local tap_entry_re='^[[:space:]]*tap[[:space:]]+"([^"]+)"'
+  local package_entry_re='^[[:space:]]*(brew|cask)[[:space:]]+"([^"]+/[^"]+/[^"]+)"'
+  local -a brewfiles=("$DOTFILES/brewfiles/core")
+  local -a taps=()
+  local -a sorted_taps=()
+
+  command -v brew >/dev/null 2>&1 || return 0
+
+  if [[ "$ALL_PROFILES" == true ]]; then
+    for profile in "${PROFILE_ORDER[@]}"; do
+      brewfiles+=("$(profile_brewfile "$profile")")
+    done
+  elif ((${#SELECTED_PROFILES[@]} > 0)); then
+    for profile in "${SELECTED_PROFILES[@]}"; do
+      brewfiles+=("$(profile_brewfile "$profile")")
+    done
+  fi
+
+  for brewfile in "${brewfiles[@]}"; do
+    [[ -f "$brewfile" ]] || continue
+
+    while IFS= read -r line || [[ -n "$line" ]]; do
+      if [[ "$line" =~ $tap_entry_re ]]; then
+        taps+=("${BASH_REMATCH[1]}")
+      elif [[ "$line" =~ $package_entry_re ]]; then
+        package="${BASH_REMATCH[2]}"
+        IFS=/ read -r owner repo _ <<<"$package"
+        taps+=("$owner/$repo")
+      fi
+    done <"$brewfile"
+  done
+
+  if ((${#taps[@]} == 0)); then
+    return 0
+  fi
+
+  while IFS= read -r tap; do
+    [[ -n "$tap" ]] || continue
+    sorted_taps+=("$tap")
+  done < <(printf '%s\n' "${taps[@]}" | sort -u)
+
+  taps=("${sorted_taps[@]}")
+  brew trust --tap --quiet "${taps[@]}"
+}
+
 setup_sudo_askpass() {
   (
     builtin read -r -s -p "Password: "
@@ -1046,7 +1102,7 @@ setup_sudo_askpass() {
   printf "\n"
 
   at_exit "
-printf '\e[0;31mRemoving dotfiles keychain entry ...\e[0m\n'
+printf '\e[0;33mRemoving dotfiles keychain entry ...\e[0m\n'
 /usr/bin/security delete-generic-password -s 'dotfiles' -a '${USER}' >/dev/null 2>&1 || true
   "
 
@@ -1054,7 +1110,7 @@ printf '\e[0;31mRemoving dotfiles keychain entry ...\e[0m\n'
   printf "SUDO_ASKPASS: %s\n" "$SUDO_ASKPASS"
 
   at_exit "
-printf '\e[0;31mDeleting SUDO_ASKPASS script ...\e[0m\n'
+printf '\e[0;33mDeleting SUDO_ASKPASS script ...\e[0m\n'
 /bin/rm -f '${SUDO_ASKPASS}'
   "
 
@@ -1066,10 +1122,31 @@ printf '\e[0;31mDeleting SUDO_ASKPASS script ...\e[0m\n'
   /bin/chmod +x "${SUDO_ASKPASS}"
   export SUDO_ASKPASS
 
-  if ! /usr/bin/sudo -A -kv 2>/dev/null; then
-    printf '\e[0;31mIncorrect password.\e[0m\n' 1>&2
-    exit 1
+  if /usr/bin/sudo -A -kv 2>/dev/null; then
+    DOTFILES_USE_SUDO_ASKPASS=true
+  else
+    DOTFILES_USE_SUDO_ASKPASS=false
+    printf '\e[0;33mSUDO_ASKPASS helper failed; falling back to interactive sudo.\e[0m\n' 1>&2
+    /usr/bin/sudo -v
   fi
+
+  export DOTFILES_USE_SUDO_ASKPASS
+}
+
+start_sudo_keepalive() {
+  [[ "$DOTFILES_USE_SUDO_ASKPASS" == true ]] || return
+
+  (
+    while true; do
+      /usr/bin/sudo -A -v >/dev/null 2>&1 || exit 0
+      /bin/sleep 60
+    done
+  ) &
+  SUDO_KEEPALIVE_PID="$!"
+
+  at_exit "
+/bin/kill '${SUDO_KEEPALIVE_PID}' >/dev/null 2>&1 || true
+  "
 }
 
 install_homebrew() {
@@ -1255,15 +1332,19 @@ main() {
 
   /usr/bin/caffeinate -dimu -w $$ &
   setup_sudo_askpass
+  start_sudo_keepalive
   load_homebrew
+  trust_homebrew_taps
   install_homebrew
   load_homebrew
+  load_tool_library
+  trust_homebrew_taps
 
   if [[ "$RUN_XCODE_SETUP" == true ]]; then
     section "Xcode"
     brew install mas
     mas install 497799835
-    sudo xcodebuild -license accept
+    sudo_askpass xcodebuild -license accept
   fi
 
   install_packages

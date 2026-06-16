@@ -51,6 +51,22 @@ app_exists() {
   [[ -d "/Applications/${name}.app" ]]
 }
 
+sudo_askpass() {
+  if [[ "${DOTFILES_USE_SUDO_ASKPASS:-false}" == true && -n "${SUDO_ASKPASS:-}" && -x "$SUDO_ASKPASS" ]]; then
+    if /usr/bin/sudo -A -v 2>/dev/null; then
+      /usr/bin/sudo -A "$@"
+      return
+    fi
+
+    DOTFILES_USE_SUDO_ASKPASS=false
+    export DOTFILES_USE_SUDO_ASKPASS
+    echo "Warning: SUDO_ASKPASS helper failed; falling back to interactive sudo." >&2
+  fi
+
+  /usr/bin/sudo -v
+  /usr/bin/sudo "$@"
+}
+
 # Stow a tool's config directory into $HOME with --restow for idempotency
 # Usage: stow_config <tool_name>
 stow_config() {

@@ -119,7 +119,7 @@ migrate_repo_owned_zoxide_files
 stow_config fish
 
 # Add fish to shells if not already present
-grep -qxF "$bin_path" /etc/shells || printf '%s\n' "$bin_path" | sudo tee -a /etc/shells >/dev/null
+grep -qxF "$bin_path" /etc/shells || printf '%s\n' "$bin_path" | sudo_askpass tee -a /etc/shells >/dev/null
 
 # Set fish as default shell
 chsh -s "$bin_path"

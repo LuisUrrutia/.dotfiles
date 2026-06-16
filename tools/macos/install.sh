@@ -92,7 +92,7 @@ set_scutil_name() {
     return
   fi
 
-  sudo /usr/sbin/scutil --set "$key" "$value"
+  sudo_askpass /usr/sbin/scutil --set "$key" "$value"
 }
 
 configure_hostname() {
@@ -300,12 +300,12 @@ configure_updates_security() {
   defaults write com.apple.AdLib allowApplePersonalizedAdvertising -bool false
 
   # Enable firewall with sensible defaults
-  sudo /usr/libexec/ApplicationFirewall/socketfilterfw --setblockall off --setallowsigned off --setallowsignedapp off --setstealthmode on --setglobalstate on
+  sudo_askpass /usr/libexec/ApplicationFirewall/socketfilterfw --setblockall off --setallowsigned off --setallowsignedapp off --setstealthmode on --setglobalstate on
 
   # Enable FileVault disk encryption if not already enabled
   # Improves security by encrypting the entire disk
   if ! fdesetup status | grep -q "FileVault is On"; then
-    sudo fdesetup enable -user "$(whoami)"
+    sudo_askpass fdesetup enable -user "$(whoami)"
   fi
 }
 
@@ -315,17 +315,17 @@ configure_power_management() {
   ###############################################################################
 
   # Wake the machine when the laptop lid is opened
-  sudo pmset -a lidwake 1
+  sudo_askpass pmset -a lidwake 1
 
   # Power management settings for when plugged in (AC power)
   # Disable machine sleep while charging for desktop replacement mode
-  sudo pmset -c sleep 0
-  sudo pmset -c displaysleep 30
+  sudo_askpass pmset -c sleep 0
+  sudo_askpass pmset -c displaysleep 30
 
   # Power management settings for battery power
   # Set display sleep to happen before system sleep
-  sudo pmset -b displaysleep 10
-  sudo pmset -b sleep 15
+  sudo_askpass pmset -b displaysleep 10
+  sudo_askpass pmset -b sleep 15
 }
 
 configure_application_settings() {
@@ -423,7 +423,7 @@ configure_remote_access() {
 
   # Disable Apple Remote Desktop
   # Prevents remote management unless explicitly configured
-  sudo /System/Library/CoreServices/RemoteManagement/ARDAgent.app/Contents/Resources/kickstart -deactivate
+  sudo_askpass /System/Library/CoreServices/RemoteManagement/ARDAgent.app/Contents/Resources/kickstart -deactivate
 }
 
 restart_affected_services() {
