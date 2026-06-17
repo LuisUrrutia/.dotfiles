@@ -1292,7 +1292,7 @@ Possible next steps:
 ---> Configure HyperKey in Settings -> Advanced
 -> Configure 1Password
 ---> Save Recovery Key
----> Configure 1Password SSH
+---> Run install-ssh-key-from-1password if you want a local SSH key
 ---> Settings -> Touch ID -> Enable Apple Watch
 ---> 1Password -> Settings -> Apple Watch
 -> Configure CleanShot

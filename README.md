@@ -154,9 +154,12 @@ Supported fields:
 - `install_mode`: `all`, `core`, or `selected`
 - `profile_list`: comma-separated profile flags when `install_mode=selected`
 - `git_user_name` and `git_user_email`: written to machine-local `~/.gitconfig`
-- `git_signing_key` and `git_signing_program`: optional SSH signing setup
+- `git_signing_key`: optional SSH signing key path or public key
+- `git_signing_program`: optional SSH signing program override
 
-Add signing fields to the same record when you use SSH commit signing.
+Add `git_signing_key=~/.ssh/id_ed25519` to the same record when you use a
+local SSH key for commit signing. Leave `git_signing_program` unset unless you
+need a non-default signing program.
 
 Do not put passwords, private keys, tokens, or other secrets in
 `hardware-profiles.sh`. Public SSH signing keys and app paths are fine.
@@ -171,6 +174,28 @@ written only to `~/.gitconfig` by `tools/git/install.sh`.
 The legacy `tools/git/config/.gitconfig` path is intentionally local-only and
 ignored by Git. Keep it on disk if you want a machine-specific file there, but do
 not track it as shared repo config.
+
+After the dotfiles are installed and 1Password CLI is signed in, install a local
+SSH key from a 1Password SSH key item whenever you need it:
+
+```sh
+install-ssh-key-from-1password \
+  --private-key-ref "op://Private/SSH/GitHub/private key?ssh-format=openssh" \
+  --public-key-ref "op://Private/SSH/GitHub/public key" \
+  --git-signing-key
+
+install-ssh-key-from-1password
+```
+
+The command writes the key to `~/.ssh/id_ed25519`, refuses to overwrite a
+different existing key unless `--force` is passed, and leaves Git untouched
+unless the installed key is confirmed as the Git SSH signing key. Pass
+`--git-signing-key` for non-interactive installs, or answer yes to the signing
+prompt in the interactive flow. Only then does the command remove any global
+`gpg.ssh.program` value so Git signs with the local key instead of the
+1Password SSH signer. When you omit `--private-key-ref`, it lists 1Password SSH
+Key items, prompts you to choose one, asks for the local basename with
+`id_ed25519` as the default, then asks whether that key is your Git signing key.
 
 Install or re-run one tool config:
 
@@ -277,7 +302,8 @@ This list is intentionally grouped. The exact package list lives in
 - Restart the terminal after install.
 - Restore Raycast with `raycast-config restore`, then configure HyperKey in
   Raycast Settings > Advanced.
-- Set up 1Password, save the recovery key, and enable the SSH agent.
+- Set up 1Password, save the recovery key, and run
+  `install-ssh-key-from-1password` if you want a local SSH key.
 - Complete CleanShot setup.
 - Finish Docker Desktop setup if the `dev` profile was selected.
 - Add Bluetooth permission for Hammerspoon in System Settings > Privacy &
