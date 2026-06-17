@@ -9,6 +9,7 @@ machine_git_config="$HOME/.gitconfig"
 config_home="$HOME/.config"
 git_config_dir="$config_home/git"
 local_git_config="$git_config_dir/local.gitconfig"
+global_git_ignore="$git_config_dir/ignore"
 local_include_path=""
 allowed_machine_keys=(
   user.name
@@ -115,6 +116,20 @@ backup_old_local_config() {
 
   mv "$local_git_config" "$backup"
   echo "Backed up old Git config: $backup"
+}
+
+backup_old_git_ignore() {
+  local backup=""
+
+  [[ -f "$global_git_ignore" && ! -L "$global_git_ignore" ]] || return 0
+
+  backup="$global_git_ignore.migrated.$(/bin/date +%Y%m%d%H%M%S)"
+  if [[ -e "$backup" ]]; then
+    backup="$backup.$$"
+  fi
+
+  mv "$global_git_ignore" "$backup"
+  echo "Backed up old Git ignore: $backup"
 }
 
 backup_machine_config() {
@@ -301,4 +316,5 @@ remove_old_stowed_machine_config
 remove_old_stowed_git_config_dir
 mkdir -p "$git_config_dir"
 backup_old_local_config
+backup_old_git_ignore
 ensure_machine_config_include_first

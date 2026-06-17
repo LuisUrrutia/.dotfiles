@@ -60,12 +60,20 @@ local_backup_count() {
   find "$HOME_DIR/.config/git" -maxdepth 1 -type f -name 'local.gitconfig.migrated.*' 2>/dev/null | wc -l | tr -d ' '
 }
 
+ignore_backup_count() {
+  find "$HOME_DIR/.config/git" -maxdepth 1 -type f -name 'ignore.migrated.*' 2>/dev/null | wc -l | tr -d ' '
+}
+
 assert_machine_backup_count() {
   [[ "$(machine_backup_count)" == "$1" ]]
 }
 
 assert_local_backup_count() {
   [[ "$(local_backup_count)" == "$1" ]]
+}
+
+assert_ignore_backup_count() {
+  [[ "$(ignore_backup_count)" == "$1" ]]
 }
 
 assert_migration_fails() {
@@ -225,6 +233,17 @@ test_local_gitconfig_backup() {
   assert_local_backup_count 1
 }
 
+test_git_ignore_backup() {
+  setup_home "git-ignore-backup"
+  mkdir -p "$HOME_DIR/.config/git"
+  printf '%s\n' '*.local' >"$HOME_DIR/.config/git/ignore"
+
+  run_migration
+
+  [[ ! -e "$HOME_DIR/.config/git/ignore" ]]
+  assert_ignore_backup_count 1
+}
+
 tests=(
   test_monolithic_filtering
   test_duplicate_include_cleanup
@@ -233,6 +252,7 @@ tests=(
   test_non_managed_git_config_dir_symlink_refusal
   test_old_managed_symlink_removal
   test_local_gitconfig_backup
+  test_git_ignore_backup
 )
 
 for test_name in "${tests[@]}"; do
