@@ -22,7 +22,7 @@ TO_REMOVE_FROM_DOCK=(
 )
 for item in "${TO_REMOVE_FROM_DOCK[@]}"; do
   # Ignore errors if item doesn't exist
-  "$bin_path" --remove "$item" --no-restart || true
+  "$bin_path" --remove "$item" --no-restart &>/dev/null || true
 done
 
 # Add app to dock if it exists, or move it into the preferred order if present
