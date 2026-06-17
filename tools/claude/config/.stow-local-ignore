@@ -1,0 +1,17 @@
+^/\.claude/\.last-cleanup
+^/\.claude/\.last-update-result\.json
+^/\.claude/backups
+^/\.claude/cache
+^/\.claude/downloads
+^/\.claude/file-history
+^/\.claude/paste-cache
+^/\.claude/plans
+^/\.claude/plugins
+^/\.claude/projects
+^/\.claude/session-env
+^/\.claude/sessions
+^/\.claude/settings\.json\..*
+^/\.claude/shell-snapshots
+^/\.claude/skills
+^/\.claude/telemetry
+^/\.claude/transcripts
