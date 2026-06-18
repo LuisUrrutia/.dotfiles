@@ -155,7 +155,7 @@ cask "figma" # Interface design
 # ------------------------------------------------------------------------------
 # Productivity
 # ------------------------------------------------------------------------------
-cask "raycast"      # Command palette (Spotlight replacement)
+cask "LuisUrrutia/tap/raycast@beta", trusted: true # Next-generation Raycast beta
 cask "obsidian"     # Markdown knowledge base
 cask "fliqlo"       # Clock screensaver
 cask "cleanshot"                   # Screen capture
