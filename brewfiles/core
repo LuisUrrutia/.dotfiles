@@ -1,7 +1,7 @@
 # ==============================================================================
 # Core System Tools
 # ==============================================================================
-tap "muxy-app/tap" # Muxy terminal multiplexer cask
+tap "muxy-app/tap", trusted: true # Muxy terminal multiplexer cask
 
 brew "coreutils"  # GNU core utilities (those that come with macOS are outdated)
 brew "moreutils"  # Collection of additional Unix utilities (like sponge)
@@ -12,7 +12,7 @@ brew "grep"       # GNU grep (macOS uses BSD version)
 brew "jq"         # JSON processor
 brew "stow"       # Symlink manager for dotfiles
 brew "blueutil"   # Bluetooth device management CLI
-brew "steipete/tap/remindctl" # Apple Reminders CLI
+brew "steipete/tap/remindctl", trusted: true # Apple Reminders CLI
 brew "zstd"       # Fast real-time compression algorithm
 brew "fastfetch"  # Fast system information tool
 
@@ -40,7 +40,7 @@ vscode "vscodevim.vim"             # Vim emulation
 # ==============================================================================
 brew "python"          # Python
 brew "mise"             # Multiple package manager
-brew "oven-sh/bun/bun" # Bun (JavaScript runtime)
+brew "oven-sh/bun/bun", trusted: true # Bun (JavaScript runtime)
 brew "openjdk"         # Java Development Kit
 brew "lua-language-server" # Lua language server
 
@@ -53,7 +53,7 @@ brew "fish"      # Shell
 brew "fisher"    # Fish plugin manager
 brew "atuin"     # Shell history manager
 brew "tmux"      # Terminal multiplexer
-brew "tmuxpack/tpack/tpack"     # tmux plugin manager
+cask "tmuxpack/tpack/tpack", trusted: true # tmux plugin manager
 brew "starship"  # Shell prompt
 
 # Terminal enhancements
@@ -104,6 +104,7 @@ brew "httpie"  # User-friendly HTTP client
 brew "openssh" # Secure shell
 brew "gnupg"   # GNU Privacy Guard
 brew "gitleaks" # Secret scanner
+brew "homebrew/brew-vulns/brew-vulns" # Homebrew vulnerability scanner
 brew "ykman"   # YubiKey Manager CLI
 brew "aria2"   # Multi-protocol download utility
 

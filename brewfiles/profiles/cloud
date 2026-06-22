@@ -4,4 +4,4 @@ brew "aws-sam-cli"             # AWS SAM CLI
 brew "kubernetes-cli"          # Kubernetes CLI (kubectl)
 brew "helm"                    # Kubernetes package manager
 brew "cosign"                  # Container signing and verification
-brew "hashicorp/tap/terraform" # Infrastructure as code
+brew "hashicorp/tap/terraform", trusted: true # Infrastructure as code

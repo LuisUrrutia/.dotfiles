@@ -1,1 +1,1 @@
-brew "asmvik/formulae/skhd" # Hotkey daemon
+brew "asmvik/formulae/skhd", trusted: true # Hotkey daemon
