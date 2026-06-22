@@ -5,7 +5,8 @@ set -euo pipefail
 DOTFILES="${DOTFILES:-$HOME/.dotfiles}"
 BACKUP_DIR="${RAYCAST_BACKUP_DIR:-$DOTFILES/tools/raycast/backups}"
 EXPORT_DIR="${RAYCAST_EXPORT_DIR:-$HOME/Downloads}"
-EXPORT_DEEPLINK="raycast://extensions/raycast/raycast/export-settings-data"
+EXPORT_DEEPLINK_PATH="extensions/raycast/raycast/export-settings-data"
+EXPORT_COMMAND_NAME="Export Settings & Data"
 DEFAULT_TIMEOUT_SECONDS=300
 
 usage() {
@@ -23,6 +24,10 @@ Commands:
 Environment:
   RAYCAST_BACKUP_DIR       Override backup directory
   RAYCAST_EXPORT_DIR       Override directory watched for Raycast exports
+  RAYCAST_APP_NAME         Override app target (Raycast or Raycast Beta)
+  RAYCAST_EXPORT_PASSWORD  Passphrase for encrypted exports
+  RAYCAST_EXPORT_PASSWORD_CMD
+                           Command that prints the export passphrase
   RAYCAST_CONFIG_DRY_RUN   Print targets without opening Raycast
 
 Raycast exports may include private app settings. Keep sensitive backups in
@@ -94,6 +99,96 @@ file_is_stable() {
 	[[ "$size_before" == "$size_after" && "$modified_before" == "$modified_after" ]]
 }
 
+raycast_app_name() {
+	if [[ -n "${RAYCAST_APP_NAME:-}" ]]; then
+		printf '%s\n' "$RAYCAST_APP_NAME"
+		return
+	fi
+
+	if [[ -d "/Applications/Raycast Beta.app" ]]; then
+		printf 'Raycast Beta\n'
+		return
+	fi
+
+	printf 'Raycast\n'
+}
+
+raycast_export_deeplink() {
+	local app_name="$1"
+
+	case "$app_name" in
+	Raycast\ Beta)
+		printf 'raycast-x://%s\n' "$EXPORT_DEEPLINK_PATH"
+		;;
+	*)
+		printf 'raycast://%s\n' "$EXPORT_DEEPLINK_PATH"
+		;;
+	esac
+}
+
+raycast_needs_search_launch() {
+	local app_name="$1"
+
+	[[ "$app_name" == "Raycast Beta" ]]
+}
+
+raycast_export_password_configured() {
+	[[ -n "${RAYCAST_EXPORT_PASSWORD:-}" || -n "${RAYCAST_EXPORT_PASSWORD_CMD:-}" ]]
+}
+
+raycast_export_password() {
+	local password=""
+
+	if [[ -n "${RAYCAST_EXPORT_PASSWORD_CMD:-}" ]]; then
+		password="$(bash -c "$RAYCAST_EXPORT_PASSWORD_CMD")" || die "export password command failed"
+	elif [[ -n "${RAYCAST_EXPORT_PASSWORD:-}" ]]; then
+		password="$RAYCAST_EXPORT_PASSWORD"
+	fi
+
+	if [[ -n "$password" ]]; then
+		[[ "$password" != *$'\n'* ]] || die "export password must be a single line"
+		((${#password} >= 8)) || die "export password must be at least 8 characters"
+	fi
+
+	printf '%s\n' "$password"
+}
+
+open_export_flow() {
+	local app_name="$1"
+	local export_deeplink="$2"
+
+	if raycast_needs_search_launch "$app_name"; then
+		open -a "$app_name"
+		osascript - "$app_name" "$EXPORT_COMMAND_NAME" <<'APPLESCRIPT'
+on run argv
+  set raycastApp to item 1 of argv
+  set exportCommand to item 2 of argv
+
+  tell application raycastApp to activate
+  delay 0.4
+
+  tell application "System Events"
+    if not (exists process raycastApp) then error raycastApp & " process was not found"
+
+    tell process raycastApp
+      set frontmost to true
+      delay 0.2
+    end tell
+
+    keystroke "a" using {command down}
+    delay 0.05
+    keystroke exportCommand
+    delay 0.15
+    key code 36
+  end tell
+end run
+APPLESCRIPT
+		return
+	fi
+
+	open "$export_deeplink"
+}
+
 wait_for_new_export() {
 	local start_time="$1"
 	local timeout_seconds="$2"
@@ -135,38 +230,69 @@ copy_backup() {
 
 automate_export_flow() {
 	local export_dir="$1"
+	local app_name="$2"
+	local confirm_command="$3"
+	local export_password="$4"
 
-	osascript - "$export_dir" <<'APPLESCRIPT'
+	RAYCAST_RESOLVED_EXPORT_PASSWORD="$export_password" osascript - "$export_dir" "$app_name" "$confirm_command" <<'APPLESCRIPT'
 on run argv
   set exportDir to item 1 of argv
+  set raycastApp to item 2 of argv
+  set shouldConfirmCommand to item 3 of argv
+  set exportPassword to system attribute "RAYCAST_RESOLVED_EXPORT_PASSWORD"
+  set previousClipboard to ""
+  set shouldRestoreClipboard to false
 
-  tell application "Raycast" to activate
-  delay 0.2
+  try
+    set previousClipboard to the clipboard as text
+    set shouldRestoreClipboard to true
+  end try
 
-  tell application "System Events"
-    if not (exists process "Raycast") then error "Raycast process was not found"
+  try
+    tell application raycastApp to activate
+    delay 0.4
 
-    tell process "Raycast"
-      set frontmost to true
-      delay 0.15
+    tell application "System Events"
+      if not (exists process raycastApp) then error raycastApp & " process was not found"
 
-      -- Confirmation dialog: "Run Command" / "Always Run Command".
+      tell process raycastApp
+        set frontmost to true
+        delay 0.15
+
+        if shouldConfirmCommand is "true" then
+          -- Confirmation dialog: "Run Command" / "Always Run Command".
+          key code 36
+          delay 0.15
+        end if
+
+        -- Export Settings & Data screen: press the focused/default Export button.
+        key code 36
+        delay 0.4
+
+        if exportPassword is not "" then
+          set the clipboard to exportPassword
+          keystroke "v" using {command down}
+          delay 0.1
+          key code 36
+          delay 1.5
+        end if
+      end tell
+
+      -- Save panel: choose the export directory explicitly, then confirm Export.
+      keystroke "g" using {command down, shift down}
+      delay 0.2
+      set the clipboard to exportDir
+      keystroke "v" using {command down}
       key code 36
-      delay 0.15
-
-      -- Export Settings & Data screen: press the focused/default Export button.
+      delay 0.2
       key code 36
-      delay 0.3
     end tell
+  on error errorMessage number errorNumber
+    if shouldRestoreClipboard then set the clipboard to previousClipboard
+    error errorMessage number errorNumber
+  end try
 
-    -- Save panel: choose the export directory explicitly, then confirm Export.
-    keystroke "g" using {command down, shift down}
-    delay 0.2
-    keystroke exportDir
-    key code 36
-    delay 0.2
-    key code 36
-  end tell
+  if shouldRestoreClipboard then set the clipboard to previousClipboard
 end run
 APPLESCRIPT
 }
@@ -237,6 +363,10 @@ cmd_backup() {
 	local open_raycast=true
 	local automate=true
 	local force=false
+	local app_name=""
+	local export_deeplink=""
+	local confirm_command=true
+	local export_password=""
 
 	while [[ $# -gt 0 ]]; do
 		case "$1" in
@@ -285,23 +415,43 @@ cmd_backup() {
 	fi
 
 	[[ -d "$EXPORT_DIR" ]] || die "export directory not found: $EXPORT_DIR"
+	app_name="$(raycast_app_name)"
+	export_deeplink="$(raycast_export_deeplink "$app_name")"
+	if raycast_needs_search_launch "$app_name"; then
+		confirm_command=false
+	fi
 
 	local start_time
 	start_time="$(date +%s)"
 
 	if [[ "$open_raycast" == true ]]; then
 		if [[ "${RAYCAST_CONFIG_DRY_RUN:-}" == 1 ]]; then
-			printf 'Would open: %s\n' "$EXPORT_DEEPLINK"
+			printf 'Would automate app: %s\n' "$app_name"
+			if raycast_needs_search_launch "$app_name"; then
+				printf 'Would search command: %s\n' "$EXPORT_COMMAND_NAME"
+			else
+				printf 'Would open: %s\n' "$export_deeplink"
+			fi
+			if raycast_export_password_configured; then
+				printf 'Would use configured export passphrase.\n'
+			fi
 			printf 'Would wait for a new Raycast export in: %s\n' "$EXPORT_DIR"
 			return
 		fi
 
-		open "$EXPORT_DEEPLINK"
+		if [[ "$automate" == true ]]; then
+			if raycast_needs_search_launch "$app_name" && ! raycast_export_password_configured; then
+				die "Raycast Beta export requires a passphrase; set RAYCAST_EXPORT_PASSWORD_CMD or RAYCAST_EXPORT_PASSWORD"
+			fi
+			export_password="$(raycast_export_password)"
+		fi
+
+		open_export_flow "$app_name" "$export_deeplink"
 		printf 'Opened Raycast export flow.\n'
 
 		if [[ "$automate" == true ]]; then
 			printf 'Pressing Raycast export buttons with AppleScript...\n'
-			automate_export_flow "$EXPORT_DIR"
+			automate_export_flow "$EXPORT_DIR" "$app_name" "$confirm_command" "$export_password"
 		else
 			printf 'Complete the Raycast export manually.\n'
 		fi

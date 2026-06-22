@@ -3,7 +3,10 @@
 # shellcheck disable=SC1091
 source "${DOTFILES:-$HOME/.dotfiles}/tools/lib.sh"
 
-require_app Raycast
+if ! app_exists Raycast && ! app_exists "Raycast Beta"; then
+  echo "Warning: Raycast not found, skipping" >&2
+  exit 0
+fi
 
 mkdir -p "$DOTFILES/tools/raycast/backups"
 

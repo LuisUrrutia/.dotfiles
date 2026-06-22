@@ -22,14 +22,28 @@ raycast-config path latest
 ```
 
 `backup` without an argument opens Raycast's `Export Settings & Data` command,
-uses AppleScript to press Return through the confirmation/export/save dialogs,
-then waits for a new `Raycast*.rayconfig` export in `~/Downloads` and copies it
-into `tools/raycast/backups`.
+uses AppleScript to press Return through the export/save dialogs, then waits for
+a new `Raycast*.rayconfig` export in `~/Downloads` and copies it into
+`tools/raycast/backups`.
 
 The automated path requires macOS Accessibility permission for the terminal app
 running `raycast-config`. If the UI changes or automation fails, run
 `raycast-config backup --manual` to open the export flow and finish the dialogs
 yourself.
+
+When `Raycast Beta.app` is installed, `raycast-config` targets it by default.
+Set `RAYCAST_APP_NAME=Raycast` only if you need to force automation against the
+stable app instead.
+
+Raycast Beta may require an export passphrase before opening the directory
+picker. Provide it without storing secrets in this repo:
+
+```sh
+RAYCAST_EXPORT_PASSWORD_CMD='op read op://Private/Raycast/export-passphrase' \
+  raycast-config backup
+```
+
+`RAYCAST_EXPORT_PASSWORD` is also supported for one-off local runs.
 
 `backup --no-open` skips opening Raycast and only waits for a new export. Use
 this if Raycast is already open or if you triggered the export manually.
