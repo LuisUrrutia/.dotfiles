@@ -2,40 +2,33 @@
 
 set -euo pipefail
 
-DOTFILES="${DOTFILES:-$HOME/.dotfiles}"
-BREWFILES_DIR="$DOTFILES/brewfiles"
-PROFILE_BREWFILES_DIR="$BREWFILES_DIR/profiles"
-MERGED_BREWFILE="$(mktemp)"
-BREW_BUNDLE_CLEANUP_ARGS=()
-BREWFILES=("$BREWFILES_DIR/core")
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+DOTFILES="$(cd "$SCRIPT_DIR/.." && pwd)"
+BREWFILES=()
 PROFILE_SCOPE=""
+WARN_ONLY=false
 
 usage() {
   cat <<EOF
-Usage: $0 [--force] [--core-only | --all-profiles | --profile NAME | --file BREWFILE]
+Usage: $0 [--warn-only] [--core-only | --all-profiles | --profile NAME | --file BREWFILE]
 
 Options:
-  --force          Remove packages instead of only previewing cleanup
-  --core-only      Keep only packages from brewfiles/core
-  --all-profiles   Keep packages from brewfiles/core and every profile Brewfile
-  --profile NAME   Keep packages from brewfiles/core and one profile Brewfile
-  --file BREWFILE  Keep packages from brewfiles/core and an extra Brewfile
+  --warn-only      Report vulnerabilities without returning a failing status
+  --core-only      Scan only brewfiles/core
+  --all-profiles   Scan brewfiles/core and every profile Brewfile
+  --profile NAME   Scan brewfiles/core and one profile Brewfile
+  --file BREWFILE  Scan brewfiles/core and an extra Brewfile
   -h, --help       Show this help
 
-Without a profile scope, cleanup keeps all profile Brewfiles for compatibility.
+Without a profile scope, all profile Brewfiles are scanned.
 EOF
 }
-
-cleanup() {
-  rm -f "$MERGED_BREWFILE"
-}
-trap cleanup EXIT
 
 set_fixed_profile_scope() {
   local scope="$1"
 
   if [[ -n "$PROFILE_SCOPE" && "$PROFILE_SCOPE" != "$scope" ]]; then
-    echo "Error: profile cleanup scope is already set to $PROFILE_SCOPE" >&2
+    echo "Error: profile vulnerability scope is already set to $PROFILE_SCOPE" >&2
     exit 1
   fi
 
@@ -44,7 +37,7 @@ set_fixed_profile_scope() {
 
 set_custom_profile_scope() {
   if [[ "$PROFILE_SCOPE" == "core" || "$PROFILE_SCOPE" == "all" ]]; then
-    echo "Error: profile cleanup scope is already set to $PROFILE_SCOPE" >&2
+    echo "Error: profile vulnerability scope is already set to $PROFILE_SCOPE" >&2
     exit 1
   fi
 
@@ -65,17 +58,17 @@ add_brewfile() {
 add_profile_brewfile() {
   local profile="$1"
 
-  add_brewfile "$PROFILE_BREWFILES_DIR/$profile"
+  add_brewfile "$DOTFILES/brewfiles/profiles/$profile"
 }
 
 add_all_profile_brewfiles() {
   local brewfile=""
 
-  if [[ ! -d "$PROFILE_BREWFILES_DIR" ]]; then
+  if [[ ! -d "$DOTFILES/brewfiles/profiles" ]]; then
     return
   fi
 
-  for brewfile in "$PROFILE_BREWFILES_DIR"/*; do
+  for brewfile in "$DOTFILES/brewfiles/profiles"/*; do
     [[ -f "$brewfile" ]] || continue
     BREWFILES+=("$brewfile")
   done
@@ -83,8 +76,8 @@ add_all_profile_brewfiles() {
 
 while (($#)); do
   case "$1" in
-  --force)
-    BREW_BUNDLE_CLEANUP_ARGS+=(--force)
+  --warn-only)
+    WARN_ONLY=true
     ;;
   --core-only)
     set_fixed_profile_scope core
@@ -134,30 +127,44 @@ done
 
 if ! command -v brew >/dev/null 2>&1; then
   echo "Error: Homebrew is not installed" >&2
-  exit 1
+  exit 2
 fi
 
-if [[ ! -d "$BREWFILES_DIR" ]]; then
-  echo "Error: missing brewfiles directory: $BREWFILES_DIR" >&2
-  exit 1
+if ! brew vulns --help >/dev/null 2>&1; then
+  echo "Error: brew vulns is unavailable; install homebrew/brew-vulns/brew-vulns" >&2
+  exit 2
 fi
 
+add_brewfile "$DOTFILES/brewfiles/core"
 if [[ -z "$PROFILE_SCOPE" ]]; then
   add_all_profile_brewfiles
 fi
 
+vulnerabilities_found=false
+scan_failed=false
+
 for brewfile in "${BREWFILES[@]}"; do
-  [[ -f "$brewfile" ]] || continue
-  {
-    printf '# %s\n' "$brewfile"
-    cat "$brewfile"
-    printf '\n'
-  } >>"$MERGED_BREWFILE"
+  status=0
+
+  printf 'Scanning Homebrew vulnerabilities in %s\n' "$brewfile"
+  brew vulns --brewfile "$brewfile" --deps || status="$?"
+
+  if [[ "$status" == 0 ]]; then
+    continue
+  fi
+
+  if [[ "$status" == 1 ]]; then
+    vulnerabilities_found=true
+    continue
+  fi
+
+  scan_failed=true
 done
 
-if [[ ! -s "$MERGED_BREWFILE" ]]; then
-  echo "Error: no Brewfiles found in $BREWFILES_DIR" >&2
-  exit 1
+if [[ "$scan_failed" == true ]]; then
+  exit 2
 fi
 
-brew bundle cleanup --file="$MERGED_BREWFILE" "${BREW_BUNDLE_CLEANUP_ARGS[@]}"
+if [[ "$vulnerabilities_found" == true && "$WARN_ONLY" != true ]]; then
+  exit 1
+fi

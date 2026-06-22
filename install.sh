@@ -807,16 +807,12 @@ configure_install_plan() {
 configure_cleanup_plan() {
   RUN_CLEANUP=false
 
-  if [[ "$ALL_PROFILES" != true ]]; then
-    return
-  fi
-
   if ! is_interactive; then
     return
   fi
 
   section "Cleanup"
-  if ask_yes_no "Clean up Homebrew dependencies and cache after install?" "n"; then
+  if ask_yes_no "Clean up Homebrew packages not listed in the selected Brewfiles after install?" "n"; then
     RUN_CLEANUP=true
   fi
 }
@@ -1041,59 +1037,6 @@ load_homebrew() {
   fi
 }
 
-trust_homebrew_taps() {
-  local brewfile=""
-  local line=""
-  local package=""
-  local owner=""
-  local repo=""
-  local profile=""
-  local tap=""
-  local tap_entry_re='^[[:space:]]*tap[[:space:]]+"([^"]+)"'
-  local package_entry_re='^[[:space:]]*(brew|cask)[[:space:]]+"([^"]+/[^"]+/[^"]+)"'
-  local -a brewfiles=("$DOTFILES/brewfiles/core")
-  local -a taps=()
-  local -a sorted_taps=()
-
-  command -v brew >/dev/null 2>&1 || return 0
-
-  if [[ "$ALL_PROFILES" == true ]]; then
-    for profile in "${PROFILE_ORDER[@]}"; do
-      brewfiles+=("$(profile_brewfile "$profile")")
-    done
-  elif ((${#SELECTED_PROFILES[@]} > 0)); then
-    for profile in "${SELECTED_PROFILES[@]}"; do
-      brewfiles+=("$(profile_brewfile "$profile")")
-    done
-  fi
-
-  for brewfile in "${brewfiles[@]}"; do
-    [[ -f "$brewfile" ]] || continue
-
-    while IFS= read -r line || [[ -n "$line" ]]; do
-      if [[ "$line" =~ $tap_entry_re ]]; then
-        taps+=("${BASH_REMATCH[1]}")
-      elif [[ "$line" =~ $package_entry_re ]]; then
-        package="${BASH_REMATCH[2]}"
-        IFS=/ read -r owner repo _ <<<"$package"
-        taps+=("$owner/$repo")
-      fi
-    done <"$brewfile"
-  done
-
-  if ((${#taps[@]} == 0)); then
-    return 0
-  fi
-
-  while IFS= read -r tap; do
-    [[ -n "$tap" ]] || continue
-    sorted_taps+=("$tap")
-  done < <(printf '%s\n' "${taps[@]}" | sort -u)
-
-  taps=("${sorted_taps[@]}")
-  brew trust --tap --quiet "${taps[@]}"
-}
-
 setup_sudo_askpass() {
   (
     builtin read -r -s -p "Password: "
@@ -1192,25 +1135,13 @@ run_brew_bundle_install() {
   local label="$1"
   local brewfile="$2"
   local source_label="${3:-$brewfile}"
-  local entry_brewfile=""
-  local line=""
-  local line_number=0
 
-  entry_brewfile="$(mktemp)"
-  while IFS= read -r line || [[ -n "$line" ]]; do
-    line_number=$((line_number + 1))
-    [[ "$line" =~ ^[[:space:]]*(brew|cask|tap|mas|vscode)[[:space:]] ]] || continue
+  if brew bundle install --jobs=auto --file "$brewfile"; then
+    return 0
+  fi
 
-    printf '%s\n' "$line" >"$entry_brewfile"
-    if brew bundle install --file "$entry_brewfile"; then
-      continue
-    fi
-
-    BREW_BUNDLE_FAILURES+=("$label: $source_label:$line_number: $line")
-    note "Homebrew bundle failed for $label entry at $source_label:$line_number; continuing with remaining packages."
-  done <"$brewfile"
-
-  /bin/rm -f "$entry_brewfile"
+  BREW_BUNDLE_FAILURES+=("$label: $source_label")
+  note "Homebrew bundle failed for $label from $source_label; continuing with remaining install steps."
 }
 
 print_brew_bundle_failures() {
@@ -1219,23 +1150,55 @@ print_brew_bundle_failures() {
   brew_bundle_failed || return 0
 
   section "Homebrew bundle failures"
-  say "Some Brewfile entries failed. The rest of the installer continued."
+  say "Some Brewfiles failed. The rest of the installer continued."
   for failure in "${BREW_BUNDLE_FAILURES[@]}"; do
     say "  - $failure"
   done
   say "Review the Homebrew output above, then rerun ./install.sh after fixing those packages."
 }
 
+run_brew_vulns() {
+  local -a vulns_args=(--warn-only)
+
+  if ! command -v brew >/dev/null 2>&1; then
+    return
+  fi
+
+  if ! brew vulns --help >/dev/null 2>&1; then
+    note "Skipping Homebrew vulnerability scan; brew vulns is not installed."
+    return
+  fi
+
+  if [[ -n "$SELECTED_PROFILE_BREWFILE" ]]; then
+    vulns_args+=(--file "$SELECTED_PROFILE_BREWFILE")
+  else
+    vulns_args+=(--core-only)
+  fi
+
+  section "Homebrew vulnerability scan"
+  if ! bash "$DOTFILES/brewfiles/vulns.sh" "${vulns_args[@]}"; then
+    note "Homebrew vulnerability scan failed; continuing install."
+  fi
+}
+
 run_cleanup() {
+  local -a cleanup_args=()
+
   if [[ "$RUN_CLEANUP" != true ]]; then
     say "Skipping Homebrew cleanup."
     return
   fi
 
+  if [[ -n "$SELECTED_PROFILE_BREWFILE" ]]; then
+    cleanup_args+=(--file "$SELECTED_PROFILE_BREWFILE")
+  else
+    cleanup_args+=(--core-only)
+  fi
+
   section "Homebrew cleanup"
   say "Previewing Brewfile cleanup..."
-  bash "$DOTFILES/cleanup.sh" || true
-  bash "$DOTFILES/cleanup.sh" --force
+  bash "$DOTFILES/cleanup.sh" "${cleanup_args[@]}" || true
+  bash "$DOTFILES/cleanup.sh" --force "${cleanup_args[@]}"
   brew cleanup --prune=all
 }
 
@@ -1334,11 +1297,9 @@ main() {
   setup_sudo_askpass
   start_sudo_keepalive
   load_homebrew
-  trust_homebrew_taps
   install_homebrew
   load_homebrew
   load_tool_library
-  trust_homebrew_taps
 
   if [[ "$RUN_XCODE_SETUP" == true ]]; then
     section "Xcode"
@@ -1348,6 +1309,7 @@ main() {
   fi
 
   install_packages
+  run_brew_vulns
   run_cleanup
   run_tool_installers
   run_first_run_tasks
