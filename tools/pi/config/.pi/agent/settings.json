@@ -1,0 +1,21 @@
+{
+  "collapseChangelog": true,
+  "defaultModel": "gpt-5.5",
+  "defaultProvider": "openai-codex",
+  "defaultThinkingLevel": "xhigh",
+  "extensions": [
+    "extensions/muxy-notify.ts"
+  ],
+  "hideThinkingBlock": true,
+  "lastChangelogVersion": "0.80.3",
+  "packages": [
+    "npm:@juicesharp/rpiv-ask-user-question",
+    "npm:@juicesharp/rpiv-i18n",
+    "npm:@juicesharp/rpiv-todo",
+    "npm:@juicesharp/rpiv-btw",
+    "npm:@juicesharp/rpiv-args",
+    "git:github.com/obra/superpowers",
+    "npm:pi-subagents"
+  ],
+  "theme": "dark"
+}

@@ -1,0 +1,7 @@
+^/\.pi/agent/auth\.json
+^/\.pi/agent/trust\.json
+^/\.pi/agent/sessions
+^/\.pi/agent/git
+^/\.pi/agent/npm
+^/\.pi/agent/tmp
+^/\.pi/agent/settings\.json\..*
