@@ -40,10 +40,3 @@ else
         mise activate fish --shims 2>/dev/null | source
     end
 end
-
-# pnpm
-set -gx PNPM_HOME "/Users/luisurrutia/Library/pnpm"
-if not string match -q -- "$PNPM_HOME/bin" $PATH
-  set -gx PATH "$PNPM_HOME/bin" $PATH
-end
-# pnpm end

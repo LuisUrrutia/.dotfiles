@@ -24,7 +24,7 @@ function nuke -d "Kill unwanted background processes"
     end
 
     for process_name in $process_names
-        set -l pids (pgrep -x "$process_name" 2>/dev/null | string match -v -- "$fish_pid")
+        set -l pids (pgrep -x "$process_name" 2>/dev/null)
 
         if test (count $pids) -gt 0
             set -l killed_count (count $pids)

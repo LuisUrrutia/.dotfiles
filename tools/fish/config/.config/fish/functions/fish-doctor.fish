@@ -107,7 +107,7 @@ function fish-doctor -d "Check Fish dotfiles health"
         __fish_doctor_warn "fzf.fish functions are not loaded in this config home"
     end
 
-    if env $fish_env fish -ic 'command -q zoxide; and functions -q z; and functions -q zi; and functions -q _zoxide_cd; and functions cd | string match -q "*z \$argv*"' >/dev/null 2>&1
+    if env $fish_env fish -ic 'command -q zoxide; and functions -q z; and functions -q zi; and functions cd | string match -q "*z \$argv*"' >/dev/null 2>&1
         __fish_doctor_ok "zoxide cd integration is loaded"
     else
         __fish_doctor_warn "zoxide cd integration is not loaded"

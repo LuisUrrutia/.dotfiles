@@ -118,7 +118,7 @@ function upd -d "updates different tools"
     end
 
     if command -q bunx
-        if bunx skills list -g
+        if bunx skills list -g >/dev/null 2>&1
             bunx skills update --yes
         else
             echo "[upd] unable to list skills, skipping skills update"

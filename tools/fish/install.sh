@@ -122,8 +122,14 @@ stow_config fish
 grep -qxF "$bin_path" /etc/shells || printf '%s\n' "$bin_path" | sudo_askpass tee -a /etc/shells >/dev/null
 
 # Set fish as default shell
-chsh -s "$bin_path"
+if [[ "$SHELL" != "$bin_path" ]]; then
+  chsh -s "$bin_path"
+fi
 
 # Install fish plugins
 fish_plugins_path="$HOME/.config/fish/fish_plugins"
-"$bin_path" --command "source \"$opt_path/share/fish/vendor_functions.d/fisher.fish\"; and test -f \"$fish_plugins_path\"; and fisher update"
+if [[ ! -f "$fish_plugins_path" ]]; then
+  echo "Error: missing fish_plugins manifest: $fish_plugins_path" >&2
+  exit 1
+fi
+"$bin_path" --command "source \"$opt_path/share/fish/vendor_functions.d/fisher.fish\"; and fisher update"

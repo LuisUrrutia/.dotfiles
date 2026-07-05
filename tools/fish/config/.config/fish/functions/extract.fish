@@ -19,6 +19,8 @@ function extract -d "Extract various archive formats"
             set cmd tar -xvzf
         case "*.tar.xz"
             set cmd tar -xvJf
+        case "*.tar.zst"
+            set cmd tar --zstd -xvf
         case "*.tar"
             set cmd tar -xvf
         case "*.bz2"
@@ -27,6 +29,10 @@ function extract -d "Extract various archive formats"
             set cmd rar x
         case "*.gz"
             set cmd gunzip
+        case "*.xz"
+            set cmd unxz
+        case "*.zst"
+            set cmd zstd -d
         case "*.zip"
             set cmd unzip
         case "*.Z"

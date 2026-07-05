@@ -11,6 +11,7 @@ config/.config/fish/conf.d/fzf.fish
 config/.config/fish/conf.d/sponge.fish
 config/.config/fish/completions/fisher.fish
 config/.config/fish/completions/fzf_configure_bindings.fish
+config/.config/fish/completions/omp.fish
 config/.config/fish/completions/uv.fish
 config/.config/fish/completions/uvx.fish
 config/.config/fish/themes/Catppuccin *.theme

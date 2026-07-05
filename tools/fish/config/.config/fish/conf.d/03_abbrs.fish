@@ -88,6 +88,7 @@ abbr -a -- gbg 'git bisect good'
 abbr -a -- gbb 'git bisect bad'
 abbr -a -- gbn 'git branch-name'
 abbr -a -- grbs 'git recent-branches'
+abbr -a -- wts 'wt switch --no-cd'
 
 abbr -a -- amend 'git commit --amend'
 abbr -a -- unstage 'git reset HEAD'
