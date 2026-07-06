@@ -4,6 +4,8 @@ docs/superpowers/
 .omo/
 .sisyphus/
 *.bak
+
+# machine-local legacy git identity, kept on disk but untracked
 tools/git/config/.gitconfig
 
 # OpenCode generated state
