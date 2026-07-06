@@ -22,9 +22,6 @@ tools/opencode/config/.config/opencode/oh-my-openagent.json.migrations.json
 tools/opencode/config/.config/opencode/oh-my-opencode.json*
 tools/opencode/config/.config/opencode/skills/*
 
-# Claude generated state
-tools/claude/config/.claude/skills/*
-
 # cc-safety-net generated state
 tools/cc-safety-net/config/.cc-safety-net/cache/
 tools/cc-safety-net/config/.cc-safety-net/logs/
