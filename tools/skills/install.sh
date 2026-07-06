@@ -9,10 +9,11 @@ GLOBAL_SKILLS_AGENTS=(
 
 GLOBAL_SKILL_GROUPS=(
   "https://github.com/anthropics/skills|skill-creator"
-  "https://github.com/vercel-labs/agent-skills|vercel-react-best-practices vercel-composition-patterns vercel-react-view-transitions web-design-guidelines"
-  "mattpocock/skills|grill-with-docs triage improve-codebase-architecture to-issues to-prd prototype diagnosing-bugs tdd domain-modeling codebase-design grill-me handoff teach writing-great-skills grilling setup-matt-pocock-skills"
+  "https://github.com/vercel-labs/agent-skills|vercel-composition-patterns vercel-react-best-practices vercel-react-native-skills vercel-react-view-transitions web-design-guidelines writing-guidelines"
+  "mattpocock/skills|code-review codebase-design diagnosing-bugs domain-modeling grill-me grill-with-docs grilling handoff implement improve-codebase-architecture prototype research setup-matt-pocock-skills tdd teach to-issues to-prd triage writing-great-skills claude-handoff design-an-interface edit-article loop-me request-refactor-plan resolving-merge-conflicts wayfinder"
   "https://github.com/ast-grep/agent-skill.git|ast-grep"
   "LuisUrrutia/skills|commit pr daily-meeting-update github-actions humanize"
+  "https://github.com/stablyai/orca|orca-cli orchestration computer-use orca-linear orca-emulator"
 )
 
 install_global_skills() {
