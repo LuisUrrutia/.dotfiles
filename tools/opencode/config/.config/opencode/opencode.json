@@ -9,8 +9,7 @@
   },
   "plugin": [
     "cc-safety-net",
-    "@tarquinen/opencode-dcp@latest",
-    "oh-my-openagent@latest"
+    "@tarquinen/opencode-dcp@latest"
   ],
   "mcp": {
     "Expo": {
