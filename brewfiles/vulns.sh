@@ -140,6 +140,39 @@ if [[ -z "$PROFILE_SCOPE" ]]; then
   add_all_profile_brewfiles
 fi
 
+# brew vulns runs brew info on each formula, and Homebrew no longer auto-taps
+# third-party taps there, so fully-qualified entries fail on machines that have
+# not tapped them yet (fresh installs, CI). Tap them up front.
+ensure_brewfile_taps() {
+  local brewfile=""
+  local line=""
+  local name=""
+  local tap=""
+  local tapped=""
+  local seen=" "
+
+  tapped="$(brew tap)"
+
+  for brewfile in "${BREWFILES[@]}"; do
+    while IFS= read -r line; do
+      [[ "$line" =~ ^[[:space:]]*brew[[:space:]]+\"([^\"]+)\" ]] || continue
+      name="${BASH_REMATCH[1]}"
+      [[ "$name" == */*/* ]] || continue
+
+      tap="$(printf '%s' "${name%/*}" | tr '[:upper:]' '[:lower:]')"
+      [[ "$seen" == *" $tap "* ]] && continue
+      seen+="$tap "
+
+      if ! grep -qFx "$tap" <<<"$tapped"; then
+        printf 'Tapping %s for vulnerability scan\n' "$tap"
+        brew tap "$tap" || echo "Warning: failed to tap $tap; its formulas may fail to scan" >&2
+      fi
+    done <"$brewfile"
+  done
+}
+
+ensure_brewfile_taps
+
 vulnerabilities_found=false
 scan_failed=false
 
