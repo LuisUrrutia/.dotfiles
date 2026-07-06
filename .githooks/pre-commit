@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+
+# Block commits that stage secrets. CI runs gitleaks too, but this repo is
+# public, so anything caught only after push is already exposed.
+
+set -euo pipefail
+
+if ! command -v gitleaks >/dev/null 2>&1; then
+  echo "pre-commit: gitleaks not found; skipping staged secret scan" >&2
+  exit 0
+fi
+
+exec gitleaks git --staged --redact --no-banner
