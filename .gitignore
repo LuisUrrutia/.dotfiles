@@ -22,6 +22,10 @@ tools/opencode/config/.config/opencode/oh-my-openagent.json.migrations.json
 tools/opencode/config/.config/opencode/oh-my-opencode.json*
 tools/opencode/config/.config/opencode/skills/*
 
+# Pi generated state (skills installed via npx skills)
+tools/pi/config/.pi/agent/.agents/
+tools/pi/config/.pi/agent/skills-lock.json
+
 # cc-safety-net generated state
 tools/cc-safety-net/config/.cc-safety-net/cache/
 tools/cc-safety-net/config/.cc-safety-net/logs/
