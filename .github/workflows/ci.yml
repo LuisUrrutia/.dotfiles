@@ -33,7 +33,7 @@ jobs:
           set -euo pipefail
 
           scripts=()
-          for script in install.sh private-install.sh cleanup.sh brewfiles/*.sh tools/lib.sh tools/*/install.sh tools/*/migrate-config.sh tools/*/config/.local/bin/* tools/macos/prefs-diff.sh; do
+          for script in install.sh private-install.sh cleanup.sh machines/*.sh .githooks/* brewfiles/*.sh tools/lib.sh tools/*/install.sh tools/*/common.sh tools/*/migrate-config.sh tools/*/config/.local/bin/* tools/macos/prefs-diff.sh; do
             [[ -f "$script" ]] && scripts+=("$script")
           done
 
@@ -47,6 +47,17 @@ jobs:
           bash tools/bin/tests/install-ssh-key-from-1password.sh
           bash tools/git/tests/migrate-config.sh
           bash tools/skills/tests/install.sh
+
+      - name: Smoke test installer plan
+        run: |
+          set -euo pipefail
+
+          ./install.sh --dry-run
+          ./install.sh --dry-run --core-only
+          ./install.sh --dry-run --all-profiles
+          ./install.sh --dry-run --profile web3,streaming,audio
+          ./install.sh --dry-run --profile blockchain,obs,focusrite
+          DOTFILES_HARDWARE_HASH_OVERRIDE=55930b1d4d8e ./install.sh --dry-run
 
       - name: Check Hammerspoon tests
         run: bash tools/hammerspoon/tests/run.sh
