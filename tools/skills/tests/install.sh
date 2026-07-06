@@ -43,7 +43,7 @@ bash "$SKILLS_INSTALL" >/dev/null
 
 [[ -s "$FAKE_NPX_LOG" ]]
 
-[[ "$(wc -l <"$FAKE_NPX_LOG")" -eq 5 ]]
+[[ "$(wc -l <"$FAKE_NPX_LOG")" -eq 6 ]]
 grep -F -- '--skill skill-creator' "$FAKE_NPX_LOG" >/dev/null
 grep -F -- '--skill vercel-composition-patterns' "$FAKE_NPX_LOG" >/dev/null
 grep -F -- '--skill vercel-react-best-practices' "$FAKE_NPX_LOG" >/dev/null
@@ -52,6 +52,7 @@ grep -F -- '--skill web-design-guidelines' "$FAKE_NPX_LOG" >/dev/null
 grep -F -- '--skill grill-with-docs' "$FAKE_NPX_LOG" >/dev/null
 grep -F -- '--skill ast-grep' "$FAKE_NPX_LOG" >/dev/null
 grep -F -- '--skill commit' "$FAKE_NPX_LOG" >/dev/null
+grep -F -- '--skill orca-cli' "$FAKE_NPX_LOG" >/dev/null
 grep -F -- '--agent opencode --agent claude-code -g -y' "$FAKE_NPX_LOG" >/dev/null
 
 missing_output="$TMP_DIR/missing-npx.log"
