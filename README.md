@@ -60,7 +60,7 @@ audio interface?" so the installer selects the right optional tool groups.
   changes the default shell
 - keeps shared Git defaults in the stowed XDG config and writes identity/signing
   values only to machine-local `~/.gitconfig`
-- optionally reads `hardware-profiles.sh` machine records to choose an install
+- optionally reads a `machines/<hardware-hash>.sh` file to choose an install
   mode, hostname, and local Git identity without storing it in shared Git config
 - writes `.installed` so first-run work does not repeat
 
@@ -111,58 +111,51 @@ Other optional questions work the same way: say yes to the need, then the
 installer immediately asks about each package/app with every item enabled by
 default.
 
-## Hardware profiles
+## Machines
 
-`hardware-profiles.sh` is the place to describe known laptops or desktops. It is
-tracked config, not an ignored private file, so fork users can edit it for their
-own machines and keep those choices versioned.
+`machines/` holds one file per known laptop or desktop, named after the
+machine's hardware hash. They are tracked config, not ignored private files, so
+fork users can add their own machines and keep those choices versioned.
 
-Get this Mac's hardware hash after the Fish config is installed:
-
-```sh
-machash
-```
-
-Before install, run the helper directly from the repo:
+Get this Mac's hardware hash (the script is also on `PATH` as `machash` after
+install):
 
 ```sh
-fish -c 'source tools/fish/config/.config/fish/functions/machash.fish; machash'
+./tools/bin/config/.local/bin/machash
 ```
 
-Then add or update a record in `DOTFILES_HARDWARE_PROFILES`:
+Then create `machines/<hardware-hash>.sh` with plain variables:
 
 ```bash
-work_laptop="hash=<hardware-hash>"
-work_laptop+="|id=work-laptop"
-work_laptop+="|name=Work Laptop"
-work_laptop+="|hostname=work-laptop"
-work_laptop+="|install_mode=selected"
-work_laptop+="|profile_list=dev,languages"
-work_laptop+="|git_user_name=Your Name"
-work_laptop+="|git_user_email=you@example.com"
-
-DOTFILES_HARDWARE_PROFILES=(
-  "$work_laptop"
-)
+# shellcheck shell=bash disable=SC2034
+MACHINE_ID="work-laptop"
+MACHINE_NAME="Work Laptop"
+MACHINE_HOSTNAME="work-laptop"
+MACHINE_INSTALL_MODE="selected"
+MACHINE_PROFILES="dev,languages"
+MACHINE_GIT_USER_NAME="Your Name"
+MACHINE_GIT_USER_EMAIL="you@example.com"
 ```
 
-Supported fields:
+Supported variables:
 
-- `hash`: required hardware hash from `machash`
-- `id` and `name`: labels shown in install output
-- `hostname`: optional macOS `HostName`, `LocalHostName`, and `ComputerName`
-- `install_mode`: `all`, `core`, or `selected`
-- `profile_list`: comma-separated profile flags when `install_mode=selected`
-- `git_user_name` and `git_user_email`: written to machine-local `~/.gitconfig`
-- `git_signing_key`: optional SSH signing key path or public key
-- `git_signing_program`: optional SSH signing program override
+- `MACHINE_ID` and `MACHINE_NAME`: labels shown in install output
+- `MACHINE_HOSTNAME`: optional macOS `HostName`, `LocalHostName`, and
+  `ComputerName`
+- `MACHINE_INSTALL_MODE`: `all`, `core`, or `selected`
+- `MACHINE_PROFILES`: comma-separated profile flags when
+  `MACHINE_INSTALL_MODE="selected"`
+- `MACHINE_GIT_USER_NAME` and `MACHINE_GIT_USER_EMAIL`: written to
+  machine-local `~/.gitconfig`
+- `MACHINE_GIT_SIGNING_KEY`: optional SSH signing key path or public key
+- `MACHINE_GIT_SIGNING_PROGRAM`: optional SSH signing program override
 
-Add `git_signing_key=~/.ssh/id_ed25519` to the same record when you use a
-local SSH key for commit signing. Leave `git_signing_program` unset unless you
-need a non-default signing program.
+Set `MACHINE_GIT_SIGNING_KEY="~/.ssh/id_ed25519"` when you use a local SSH key
+for commit signing. Leave `MACHINE_GIT_SIGNING_PROGRAM` unset unless you need a
+non-default signing program.
 
-Do not put passwords, private keys, tokens, or other secrets in
-`hardware-profiles.sh`. Public SSH signing keys and app paths are fine.
+Do not put passwords, private keys, tokens, or other secrets in `machines/`
+files. Public SSH signing keys and app paths are fine.
 
 ## Local Git identity
 
@@ -242,12 +235,15 @@ blindly overwrite home-directory config unless you know which version you want.
 ├── brewfiles/
 │   ├── core              # Base packages and apps
 │   └── profiles/         # Selectable profile Brewfiles
+├── machines/             # Per-machine config, named <machash>.sh
 ├── tools/
 │   ├── lib.sh            # Shared installer helpers
 │   └── <tool>/
 │       ├── install.sh    # Tool-specific setup
 │       └── config/       # Files stowed into $HOME
+├── .githooks/            # Repo-local hooks (gitleaks pre-commit)
 ├── archived/             # Old configs kept for reference
+├── POST_INSTALL.md       # Manual post-install checklist
 ├── private-install.sh    # Owner-only private setup
 └── install.sh            # Main bootstrapper
 ```
@@ -299,21 +295,9 @@ This list is intentionally grouped. The exact package list lives in
 
 ## Post-install checklist
 
-- Restart the terminal after install.
-- Restore Raycast with `raycast-config restore`, then configure HyperKey in
-  Raycast Settings > Advanced.
-- Set up 1Password, save the recovery key, and run
-  `install-ssh-key-from-1password` if you want a local SSH key.
-- Complete CleanShot setup.
-- Finish Docker Desktop setup if the `dev` profile was selected.
-- Add Bluetooth permission for Hammerspoon in System Settings > Privacy &
-  Security > Bluetooth.
-- Allow Ghostty under System Settings > Privacy & Security > Developer Tools.
-- Set Fliqlo manually as the active screensaver.
-- Run `remindctl authorize` to grant Reminders access.
-- Install or configure Insta360 Link Controller if needed.
-- Configure SoundSource and Loopback licenses if the `audio` profile was selected.
-- Configure BusyCal and OBS if their profiles were selected.
+The manual steps live in [POST_INSTALL.md](POST_INSTALL.md), which the
+installer also prints at the end of every run. Keep that file as the single
+source; do not duplicate the list here.
 
 ## Customizing
 
@@ -323,7 +307,9 @@ only by hand if they should exist on the next machine too.
 
 Secrets and private credentials belong outside the public repo. Use
 `private-install.sh` for owner-only setup instead of committing tokens,
-passwords, private keys, or license data here.
+passwords, private keys, or license data here. As a safety net,
+`tools/git/install.sh` points this repo's `core.hooksPath` at `.githooks/`,
+where a pre-commit hook runs gitleaks over staged changes before every commit.
 
 ## Troubleshooting
 

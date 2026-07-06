@@ -5,38 +5,24 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 export DOTFILES="${DOTFILES:-$SCRIPT_DIR}"
 
-DOTFILES_HARDWARE_PROFILES=()
-# shellcheck source=hardware-profiles.sh
-# shellcheck disable=SC1091
-if [[ -r "$DOTFILES/hardware-profiles.sh" ]]; then
-  source "$DOTFILES/hardware-profiles.sh"
-fi
+MACHINES_DIR="$DOTFILES/machines"
 
 DRY_RUN=false
 ARG_ALL_PROFILES=false
 ARG_CORE_ONLY=false
 ARG_PROFILE_LIST=""
 FIRST_RUN=false
-HAS_HARDWARE_PROFILE=false
-ACTIVE_HARDWARE_PROFILE_ID=""
-ACTIVE_HARDWARE_PROFILE_NAME=""
-ACTIVE_HARDWARE_PROFILE_HOSTNAME=""
-ACTIVE_HARDWARE_PROFILE_INSTALL_MODE=""
-ACTIVE_HARDWARE_PROFILE_PROFILES=""
-ACTIVE_HARDWARE_PROFILE_GIT_USER_NAME=""
-ACTIVE_HARDWARE_PROFILE_GIT_USER_EMAIL=""
-ACTIVE_HARDWARE_PROFILE_GIT_SIGNING_KEY=""
-ACTIVE_HARDWARE_PROFILE_GIT_SIGNING_PROGRAM=""
-HARDWARE_PROFILE_RECORD_HASH=""
-HARDWARE_PROFILE_RECORD_ID=""
-HARDWARE_PROFILE_RECORD_NAME=""
-HARDWARE_PROFILE_RECORD_HOSTNAME=""
-HARDWARE_PROFILE_RECORD_INSTALL_MODE=""
-HARDWARE_PROFILE_RECORD_PROFILE_LIST=""
-HARDWARE_PROFILE_RECORD_GIT_USER_NAME=""
-HARDWARE_PROFILE_RECORD_GIT_USER_EMAIL=""
-HARDWARE_PROFILE_RECORD_GIT_SIGNING_KEY=""
-HARDWARE_PROFILE_RECORD_GIT_SIGNING_PROGRAM=""
+DETECTED_HARDWARE_HASH=""
+HAS_MACHINE_CONFIG=false
+MACHINE_ID=""
+MACHINE_NAME=""
+MACHINE_HOSTNAME=""
+MACHINE_INSTALL_MODE=""
+MACHINE_PROFILES=""
+MACHINE_GIT_USER_NAME=""
+MACHINE_GIT_USER_EMAIL=""
+MACHINE_GIT_SIGNING_KEY=""
+MACHINE_GIT_SIGNING_PROGRAM=""
 ALL_PROFILES=false
 RUN_CLEANUP=false
 RUN_TOOL_INSTALLERS=true
@@ -91,15 +77,7 @@ say() {
 }
 
 machash() {
-  local uuid=""
-
-  uuid="$(/usr/sbin/ioreg -rd1 -c IOPlatformExpertDevice | /usr/bin/awk -F '"' '/IOPlatformUUID/ { print $4; exit }')"
-  if [[ -z "$uuid" ]]; then
-    say "Error: unable to read IOPlatformUUID" >&2
-    return 1
-  fi
-
-  printf '%s' "$uuid" | /usr/bin/shasum -a 256 | /usr/bin/cut -c1-12
+  bash "$DOTFILES/tools/bin/config/.local/bin/machash"
 }
 
 detected_hardware_hash() {
@@ -113,81 +91,38 @@ detected_hardware_hash() {
   machash
 }
 
-reset_hardware_profile_record() {
-  HARDWARE_PROFILE_RECORD_HASH=""
-  HARDWARE_PROFILE_RECORD_ID=""
-  HARDWARE_PROFILE_RECORD_NAME=""
-  HARDWARE_PROFILE_RECORD_HOSTNAME=""
-  HARDWARE_PROFILE_RECORD_INSTALL_MODE=""
-  HARDWARE_PROFILE_RECORD_PROFILE_LIST=""
-  HARDWARE_PROFILE_RECORD_GIT_USER_NAME=""
-  HARDWARE_PROFILE_RECORD_GIT_USER_EMAIL=""
-  HARDWARE_PROFILE_RECORD_GIT_SIGNING_KEY=""
-  HARDWARE_PROFILE_RECORD_GIT_SIGNING_PROGRAM=""
+reset_machine_config() {
+  MACHINE_ID=""
+  MACHINE_NAME=""
+  MACHINE_HOSTNAME=""
+  MACHINE_INSTALL_MODE=""
+  MACHINE_PROFILES=""
+  MACHINE_GIT_USER_NAME=""
+  MACHINE_GIT_USER_EMAIL=""
+  MACHINE_GIT_SIGNING_KEY=""
+  MACHINE_GIT_SIGNING_PROGRAM=""
 }
 
-load_hardware_profile_record() {
-  local record="$1"
-  local fields=()
-  local field=""
-  local key=""
-  local value=""
-
-  reset_hardware_profile_record
-  IFS='|' read -r -a fields <<<"$record"
-
-  for field in "${fields[@]}"; do
-    key="${field%%=*}"
-    value="${field#*=}"
-
-    case "$key" in
-    hash) HARDWARE_PROFILE_RECORD_HASH="$value" ;;
-    id) HARDWARE_PROFILE_RECORD_ID="$value" ;;
-    name) HARDWARE_PROFILE_RECORD_NAME="$value" ;;
-    hostname) HARDWARE_PROFILE_RECORD_HOSTNAME="$value" ;;
-    install_mode) HARDWARE_PROFILE_RECORD_INSTALL_MODE="$value" ;;
-    profile_list) HARDWARE_PROFILE_RECORD_PROFILE_LIST="$value" ;;
-    git_user_name) HARDWARE_PROFILE_RECORD_GIT_USER_NAME="$value" ;;
-    git_user_email) HARDWARE_PROFILE_RECORD_GIT_USER_EMAIL="$value" ;;
-    git_signing_key) HARDWARE_PROFILE_RECORD_GIT_SIGNING_KEY="$value" ;;
-    git_signing_program) HARDWARE_PROFILE_RECORD_GIT_SIGNING_PROGRAM="$value" ;;
-    esac
-  done
+# Source one machines/<hash>.sh file on top of fresh MACHINE_* values
+load_machine_file() {
+  reset_machine_config
+  # shellcheck disable=SC1090
+  source "$1"
 }
 
-load_hardware_profile() {
+load_active_machine() {
   local hardware_hash="${1:-}"
-  local profile_record=""
+  local machine_file=""
 
-  HAS_HARDWARE_PROFILE=false
-  ACTIVE_HARDWARE_PROFILE_ID=""
-  ACTIVE_HARDWARE_PROFILE_NAME=""
-  ACTIVE_HARDWARE_PROFILE_HOSTNAME=""
-  ACTIVE_HARDWARE_PROFILE_INSTALL_MODE=""
-  ACTIVE_HARDWARE_PROFILE_PROFILES=""
-  ACTIVE_HARDWARE_PROFILE_GIT_USER_NAME=""
-  ACTIVE_HARDWARE_PROFILE_GIT_USER_EMAIL=""
-  ACTIVE_HARDWARE_PROFILE_GIT_SIGNING_KEY=""
-  ACTIVE_HARDWARE_PROFILE_GIT_SIGNING_PROGRAM=""
+  HAS_MACHINE_CONFIG=false
+  reset_machine_config
 
-  ((${#DOTFILES_HARDWARE_PROFILES[@]} > 0)) || return 0
+  [[ -n "$hardware_hash" ]] || return 0
+  machine_file="$MACHINES_DIR/$hardware_hash.sh"
+  [[ -r "$machine_file" ]] || return 0
 
-  for profile_record in "${DOTFILES_HARDWARE_PROFILES[@]}"; do
-    load_hardware_profile_record "$profile_record"
-    [[ "$HARDWARE_PROFILE_RECORD_HASH" == "$hardware_hash" ]] || continue
-
-    HAS_HARDWARE_PROFILE=true
-    ACTIVE_HARDWARE_PROFILE_ID="$HARDWARE_PROFILE_RECORD_ID"
-    ACTIVE_HARDWARE_PROFILE_NAME="$HARDWARE_PROFILE_RECORD_NAME"
-    ACTIVE_HARDWARE_PROFILE_HOSTNAME="$HARDWARE_PROFILE_RECORD_HOSTNAME"
-    ACTIVE_HARDWARE_PROFILE_INSTALL_MODE="$HARDWARE_PROFILE_RECORD_INSTALL_MODE"
-    ACTIVE_HARDWARE_PROFILE_PROFILES="$HARDWARE_PROFILE_RECORD_PROFILE_LIST"
-    ACTIVE_HARDWARE_PROFILE_GIT_USER_NAME="$HARDWARE_PROFILE_RECORD_GIT_USER_NAME"
-    ACTIVE_HARDWARE_PROFILE_GIT_USER_EMAIL="$HARDWARE_PROFILE_RECORD_GIT_USER_EMAIL"
-    ACTIVE_HARDWARE_PROFILE_GIT_SIGNING_KEY="$HARDWARE_PROFILE_RECORD_GIT_SIGNING_KEY"
-    ACTIVE_HARDWARE_PROFILE_GIT_SIGNING_PROGRAM="$HARDWARE_PROFILE_RECORD_GIT_SIGNING_PROGRAM"
-    return
-  done
+  load_machine_file "$machine_file"
+  HAS_MACHINE_CONFIG=true
 }
 
 blank() {
@@ -365,6 +300,72 @@ package_matches_filter() {
   return 1
 }
 
+# Shared Brewfile entry parser. Calls <callback> once per package entry with:
+#   $1 kind, $2 name, $3 description (trailing comment), $4 original line
+# Callbacks run in the current shell and communicate through the
+# BREWFILE_ENTRY_* globals below.
+BREWFILE_ENTRY_FILTER=()
+BREWFILE_ENTRY_INDENT="  "
+BREWFILE_ENTRY_MATCHED=false
+BREWFILE_ENTRY_NAMES=()
+BREWFILE_ENTRY_DESCRIPTIONS=()
+
+each_brewfile_entry() {
+  local brewfile="$1"
+  local callback="$2"
+  local line=""
+  local kind=""
+  local name=""
+  local rest=""
+  local description=""
+
+  while IFS= read -r line; do
+    [[ "$line" =~ ^[[:space:]]*(brew|cask|tap|mas|vscode)[[:space:]]+\"([^\"]+)\"(.*)$ ]] || continue
+    kind="${BASH_REMATCH[1]}"
+    name="${BASH_REMATCH[2]}"
+    rest="${BASH_REMATCH[3]}"
+    description=""
+
+    if [[ "$rest" == *#* ]]; then
+      description="${rest#*#}"
+      description="${description#"${description%%[![:space:]]*}"}"
+    fi
+
+    "$callback" "$kind" "$name" "$description" "$line"
+  done <"$brewfile"
+}
+
+print_brewfile_entry_row() {
+  local kind="$1"
+  local name="$2"
+  local description="$3"
+
+  if ((${#BREWFILE_ENTRY_FILTER[@]} > 0)) && ! package_matches_filter "$name" "${BREWFILE_ENTRY_FILTER[@]}"; then
+    return
+  fi
+
+  if [[ -n "$description" ]]; then
+    printf '%s%-6s %-31s %s\n' "$BREWFILE_ENTRY_INDENT" "$kind" "$name" "$description"
+  else
+    printf '%s%-6s %-31s\n' "$BREWFILE_ENTRY_INDENT" "$kind" "$name"
+  fi
+  BREWFILE_ENTRY_MATCHED=true
+}
+
+collect_brewfile_entry() {
+  BREWFILE_ENTRY_NAMES+=("$2")
+  BREWFILE_ENTRY_DESCRIPTIONS+=("$3")
+}
+
+emit_matching_brewfile_line() {
+  local name="$2"
+  local line="$4"
+
+  if package_matches_filter "$name" "${BREWFILE_ENTRY_FILTER[@]}"; then
+    printf '%s\n' "$line"
+  fi
+}
+
 print_profile_packages() {
   local profile="$1"
   local indent="${2:-  }"
@@ -373,44 +374,18 @@ print_profile_packages() {
     shift
   fi
 
-  local package_filter=("$@")
   local profile_file=""
-  local line=""
-  local kind=""
-  local name=""
-  local rest=""
-  local description=""
-  local printed=false
+
+  BREWFILE_ENTRY_FILTER=("$@")
+  BREWFILE_ENTRY_INDENT="$indent"
+  BREWFILE_ENTRY_MATCHED=false
 
   profile_file="$(profile_brewfile "$profile")"
   say "${indent}Type   Package                         Notes"
   say "${indent}----   -------                         -----"
-  while IFS= read -r line; do
-    if [[ "$line" =~ ^[[:space:]]*(brew|cask|tap|mas|vscode)[[:space:]]+\"([^\"]+)\"(.*)$ ]]; then
-      kind="${BASH_REMATCH[1]}"
-      name="${BASH_REMATCH[2]}"
-      rest="${BASH_REMATCH[3]}"
-      description=""
+  each_brewfile_entry "$profile_file" print_brewfile_entry_row
 
-      if ((${#package_filter[@]} > 0)) && ! package_matches_filter "$name" "${package_filter[@]}"; then
-        continue
-      fi
-
-      if [[ "$rest" == *#* ]]; then
-        description="${rest#*#}"
-        description="${description#"${description%%[![:space:]]*}"}"
-      fi
-
-      if [[ -n "$description" ]]; then
-        printf '%s%-6s %-31s %s\n' "$indent" "$kind" "$name" "$description"
-      else
-        printf '%s%-6s %-31s\n' "$indent" "$kind" "$name"
-      fi
-      printed=true
-    fi
-  done <"$profile_file"
-
-  if [[ "$printed" != true ]]; then
+  if [[ "$BREWFILE_ENTRY_MATCHED" != true ]]; then
     say "${indent}(no matching packages)"
   fi
 }
@@ -418,35 +393,25 @@ print_profile_packages() {
 ask_profile_package_questions() {
   local profile="$1"
   local profile_file=""
-  local line=""
-  local name=""
-  local rest=""
-  local description=""
   local prompt=""
+  local i=0
 
   profile_file="$(profile_brewfile "$profile")"
-  while IFS= read -r line; do
-    if [[ "$line" =~ ^[[:space:]]*(brew|cask|tap|mas|vscode)[[:space:]]+\"([^\"]+)\"(.*)$ ]]; then
-      name="${BASH_REMATCH[2]}"
-      rest="${BASH_REMATCH[3]}"
-      description=""
+  BREWFILE_ENTRY_NAMES=()
+  BREWFILE_ENTRY_DESCRIPTIONS=()
+  each_brewfile_entry "$profile_file" collect_brewfile_entry
 
-      if [[ "$rest" == *#* ]]; then
-        description="${rest#*#}"
-        description="${description#"${description%%[![:space:]]*}"}"
-      fi
-
-      prompt="Install $name"
-      if [[ -n "$description" ]]; then
-        prompt+=" ($description)"
-      fi
-      prompt+="?"
-
-      if ask_yes_no "$prompt" "y"; then
-        add_profile_package "$profile" "$name"
-      fi
+  for ((i = 0; i < ${#BREWFILE_ENTRY_NAMES[@]}; i++)); do
+    prompt="Install ${BREWFILE_ENTRY_NAMES[$i]}"
+    if [[ -n "${BREWFILE_ENTRY_DESCRIPTIONS[$i]}" ]]; then
+      prompt+=" (${BREWFILE_ENTRY_DESCRIPTIONS[$i]})"
     fi
-  done <"$profile_file"
+    prompt+="?"
+
+    if ask_yes_no "$prompt" "y"; then
+      add_profile_package "$profile" "${BREWFILE_ENTRY_NAMES[$i]}"
+    fi
+  done
 }
 
 language_label() {
@@ -684,75 +649,75 @@ ask_language_questions() {
 }
 
 detect_state() {
-  local hardware_hash=""
-
   [[ -f "$DOTFILES/.installed" ]] && FIRST_RUN=false || FIRST_RUN=true
-  hardware_hash="$(detected_hardware_hash 2>/dev/null || true)"
-  load_hardware_profile "$hardware_hash"
+  DETECTED_HARDWARE_HASH="$(detected_hardware_hash 2>/dev/null || true)"
+  load_active_machine "$DETECTED_HARDWARE_HASH"
 }
 
-configure_hardware_profile_environment() {
+configure_machine_environment() {
   local i=0
   local managed_identity_count=0
   local name_var=""
   local email_var=""
   local signing_key_var=""
   local signing_program_var=""
-  local profile_record=""
-
-  export DOTFILES_HAS_HARDWARE_PROFILE="$HAS_HARDWARE_PROFILE"
-  export DOTFILES_HARDWARE_PROFILE_ID="$ACTIVE_HARDWARE_PROFILE_ID"
-  export DOTFILES_HARDWARE_PROFILE_NAME="$ACTIVE_HARDWARE_PROFILE_NAME"
-  export DOTFILES_HARDWARE_HOSTNAME="$ACTIVE_HARDWARE_PROFILE_HOSTNAME"
-  export DOTFILES_GIT_USER_NAME="$ACTIVE_HARDWARE_PROFILE_GIT_USER_NAME"
-  export DOTFILES_GIT_USER_EMAIL="$ACTIVE_HARDWARE_PROFILE_GIT_USER_EMAIL"
-  export DOTFILES_GIT_SIGNING_KEY="$ACTIVE_HARDWARE_PROFILE_GIT_SIGNING_KEY"
-  export DOTFILES_GIT_SIGNING_PROGRAM="$ACTIVE_HARDWARE_PROFILE_GIT_SIGNING_PROGRAM"
+  local machine_file=""
 
   for ((i = 1; i <= ${DOTFILES_MANAGED_GIT_IDENTITY_COUNT:-0}; i++)); do
     unset "DOTFILES_MANAGED_GIT_USER_NAME_$i" "DOTFILES_MANAGED_GIT_USER_EMAIL_$i" "DOTFILES_MANAGED_GIT_SIGNING_KEY_$i" "DOTFILES_MANAGED_GIT_SIGNING_PROGRAM_$i"
   done
 
-  if ((${#DOTFILES_HARDWARE_PROFILES[@]} > 0)); then
-    for profile_record in "${DOTFILES_HARDWARE_PROFILES[@]}"; do
-      load_hardware_profile_record "$profile_record"
-      if [[ -z "$HARDWARE_PROFILE_RECORD_GIT_USER_NAME" && -z "$HARDWARE_PROFILE_RECORD_GIT_USER_EMAIL" && -z "$HARDWARE_PROFILE_RECORD_GIT_SIGNING_KEY" && -z "$HARDWARE_PROFILE_RECORD_GIT_SIGNING_PROGRAM" ]]; then
-        continue
-      fi
+  for machine_file in "$MACHINES_DIR"/*.sh; do
+    [[ -f "$machine_file" ]] || continue
+    load_machine_file "$machine_file"
+    if [[ -z "$MACHINE_GIT_USER_NAME" && -z "$MACHINE_GIT_USER_EMAIL" && -z "$MACHINE_GIT_SIGNING_KEY" && -z "$MACHINE_GIT_SIGNING_PROGRAM" ]]; then
+      continue
+    fi
 
-      managed_identity_count=$((managed_identity_count + 1))
-      name_var="DOTFILES_MANAGED_GIT_USER_NAME_$managed_identity_count"
-      email_var="DOTFILES_MANAGED_GIT_USER_EMAIL_$managed_identity_count"
-      signing_key_var="DOTFILES_MANAGED_GIT_SIGNING_KEY_$managed_identity_count"
-      signing_program_var="DOTFILES_MANAGED_GIT_SIGNING_PROGRAM_$managed_identity_count"
+    managed_identity_count=$((managed_identity_count + 1))
+    name_var="DOTFILES_MANAGED_GIT_USER_NAME_$managed_identity_count"
+    email_var="DOTFILES_MANAGED_GIT_USER_EMAIL_$managed_identity_count"
+    signing_key_var="DOTFILES_MANAGED_GIT_SIGNING_KEY_$managed_identity_count"
+    signing_program_var="DOTFILES_MANAGED_GIT_SIGNING_PROGRAM_$managed_identity_count"
 
-      printf -v "$name_var" '%s' "$HARDWARE_PROFILE_RECORD_GIT_USER_NAME"
-      printf -v "$email_var" '%s' "$HARDWARE_PROFILE_RECORD_GIT_USER_EMAIL"
-      printf -v "$signing_key_var" '%s' "$HARDWARE_PROFILE_RECORD_GIT_SIGNING_KEY"
-      printf -v "$signing_program_var" '%s' "$HARDWARE_PROFILE_RECORD_GIT_SIGNING_PROGRAM"
-      export "${name_var?}" "${email_var?}" "${signing_key_var?}" "${signing_program_var?}"
-    done
-  fi
+    printf -v "$name_var" '%s' "$MACHINE_GIT_USER_NAME"
+    printf -v "$email_var" '%s' "$MACHINE_GIT_USER_EMAIL"
+    printf -v "$signing_key_var" '%s' "$MACHINE_GIT_SIGNING_KEY"
+    printf -v "$signing_program_var" '%s' "$MACHINE_GIT_SIGNING_PROGRAM"
+    export "${name_var?}" "${email_var?}" "${signing_key_var?}" "${signing_program_var?}"
+  done
 
   export DOTFILES_MANAGED_GIT_IDENTITY_COUNT="$managed_identity_count"
 
-  if [[ "$HAS_HARDWARE_PROFILE" != true ]]; then
+  # The loop above clobbered MACHINE_*; restore this machine's values.
+  load_active_machine "$DETECTED_HARDWARE_HASH"
+
+  export DOTFILES_HAS_HARDWARE_PROFILE="$HAS_MACHINE_CONFIG"
+  export DOTFILES_HARDWARE_PROFILE_ID="$MACHINE_ID"
+  export DOTFILES_HARDWARE_PROFILE_NAME="$MACHINE_NAME"
+  export DOTFILES_HARDWARE_HOSTNAME="$MACHINE_HOSTNAME"
+  export DOTFILES_GIT_USER_NAME="$MACHINE_GIT_USER_NAME"
+  export DOTFILES_GIT_USER_EMAIL="$MACHINE_GIT_USER_EMAIL"
+  export DOTFILES_GIT_SIGNING_KEY="$MACHINE_GIT_SIGNING_KEY"
+  export DOTFILES_GIT_SIGNING_PROGRAM="$MACHINE_GIT_SIGNING_PROGRAM"
+
+  if [[ "$HAS_MACHINE_CONFIG" != true ]]; then
     return
   fi
 
   unset GIT_USER_NAME GIT_USER_EMAIL GIT_SIGNING_KEY GIT_SIGNING_PROGRAM
 
-  if [[ -n "$ACTIVE_HARDWARE_PROFILE_GIT_USER_NAME" ]]; then
-    export GIT_USER_NAME="$ACTIVE_HARDWARE_PROFILE_GIT_USER_NAME"
+  if [[ -n "$MACHINE_GIT_USER_NAME" ]]; then
+    export GIT_USER_NAME="$MACHINE_GIT_USER_NAME"
   fi
-  if [[ -n "$ACTIVE_HARDWARE_PROFILE_GIT_USER_EMAIL" ]]; then
-    export GIT_USER_EMAIL="$ACTIVE_HARDWARE_PROFILE_GIT_USER_EMAIL"
+  if [[ -n "$MACHINE_GIT_USER_EMAIL" ]]; then
+    export GIT_USER_EMAIL="$MACHINE_GIT_USER_EMAIL"
   fi
-  if [[ -n "$ACTIVE_HARDWARE_PROFILE_GIT_SIGNING_KEY" ]]; then
-    export GIT_SIGNING_KEY="$ACTIVE_HARDWARE_PROFILE_GIT_SIGNING_KEY"
+  if [[ -n "$MACHINE_GIT_SIGNING_KEY" ]]; then
+    export GIT_SIGNING_KEY="$MACHINE_GIT_SIGNING_KEY"
   fi
-  if [[ -n "$ACTIVE_HARDWARE_PROFILE_GIT_SIGNING_PROGRAM" ]]; then
-    export GIT_SIGNING_PROGRAM="$ACTIVE_HARDWARE_PROFILE_GIT_SIGNING_PROGRAM"
+  if [[ -n "$MACHINE_GIT_SIGNING_PROGRAM" ]]; then
+    export GIT_SIGNING_PROGRAM="$MACHINE_GIT_SIGNING_PROGRAM"
   fi
 }
 
@@ -773,8 +738,8 @@ configure_install_plan() {
     return
   fi
 
-  if [[ "$HAS_HARDWARE_PROFILE" == true ]]; then
-    case "$ACTIVE_HARDWARE_PROFILE_INSTALL_MODE" in
+  if [[ "$HAS_MACHINE_CONFIG" == true ]]; then
+    case "$MACHINE_INSTALL_MODE" in
     all)
       ALL_PROFILES=true
       return
@@ -785,15 +750,15 @@ configure_install_plan() {
       ;;
     selected)
       ALL_PROFILES=false
-      if [[ -z "$ACTIVE_HARDWARE_PROFILE_PROFILES" ]]; then
-        say "Error: selected install mode for hardware profile '$ACTIVE_HARDWARE_PROFILE_ID' requires explicit profiles" >&2
+      if [[ -z "$MACHINE_PROFILES" ]]; then
+        say "Error: selected install mode for machine '$MACHINE_ID' requires explicit profiles" >&2
         exit 1
       fi
-      parse_profiles "$ACTIVE_HARDWARE_PROFILE_PROFILES"
+      parse_profiles "$MACHINE_PROFILES"
       return
       ;;
     *)
-      say "Error: invalid install mode for hardware profile '$ACTIVE_HARDWARE_PROFILE_ID': $ACTIVE_HARDWARE_PROFILE_INSTALL_MODE" >&2
+      say "Error: invalid install mode for machine '$MACHINE_ID': $MACHINE_INSTALL_MODE" >&2
       exit 1
       ;;
     esac
@@ -913,13 +878,11 @@ print_install_plan() {
   subsection "Run context"
   plan_value "Mode" "$mode"
   plan_value "Dotfiles" "$DOTFILES"
-  if [[ "$HAS_HARDWARE_PROFILE" == true ]]; then
-    plan_value "Hardware profile" "registered"
+  if [[ "$HAS_MACHINE_CONFIG" == true ]]; then
+    plan_value "Machine config" "${MACHINE_ID:-registered}"
+    plan_value "Machine install mode" "$MACHINE_INSTALL_MODE"
   else
-    plan_value "Hardware profile" "unregistered"
-  fi
-  if [[ "$HAS_HARDWARE_PROFILE" == true ]]; then
-    plan_value "Hardware install mode" "$ACTIVE_HARDWARE_PROFILE_INSTALL_MODE"
+    plan_value "Machine config" "unregistered"
   fi
   plan_value "First run" "$FIRST_RUN"
 
@@ -957,10 +920,6 @@ create_profile_brewfile() {
   local profile_file=""
   local language=""
   local package=""
-  local language_package_filter=()
-  local profile_package_filter=()
-  local line=""
-  local package_name=""
 
   : >"$output"
   for profile in "${profiles[@]}"; do
@@ -976,51 +935,28 @@ create_profile_brewfile() {
       exit 1
     fi
 
+    BREWFILE_ENTRY_FILTER=()
     if [[ "$profile" == "languages" && ${#SELECTED_LANGUAGES[@]} -gt 0 ]]; then
-      language_package_filter=()
       for language in "${SELECTED_LANGUAGES[@]}"; do
         while IFS= read -r package; do
-          language_package_filter+=("$package")
+          BREWFILE_ENTRY_FILTER+=("$package")
         done < <(language_packages "$language")
       done
-
-      {
-        printf '# %s\n' "$profile_file"
-        while IFS= read -r line; do
-          if [[ "$line" =~ ^[[:space:]]*(brew|cask|tap|mas|vscode)[[:space:]]+\"([^\"]+)\" ]]; then
-            package_name="${BASH_REMATCH[2]}"
-            if package_matches_filter "$package_name" "${language_package_filter[@]}"; then
-              printf '%s\n' "$line"
-            fi
-          fi
-        done <"$profile_file"
-        printf '\n'
-      } >>"$output"
     elif profile_has_selected_packages "$profile"; then
-      profile_package_filter=()
       while IFS= read -r package; do
-        profile_package_filter+=("$package")
+        BREWFILE_ENTRY_FILTER+=("$package")
       done < <(selected_profile_package_names "$profile")
-
-      {
-        printf '# %s\n' "$profile_file"
-        while IFS= read -r line; do
-          if [[ "$line" =~ ^[[:space:]]*(brew|cask|tap|mas|vscode)[[:space:]]+\"([^\"]+)\" ]]; then
-            package_name="${BASH_REMATCH[2]}"
-            if package_matches_filter "$package_name" "${profile_package_filter[@]}"; then
-              printf '%s\n' "$line"
-            fi
-          fi
-        done <"$profile_file"
-        printf '\n'
-      } >>"$output"
-    else
-      {
-        printf '# %s\n' "$profile_file"
-        cat "$profile_file"
-        printf '\n'
-      } >>"$output"
     fi
+
+    {
+      printf '# %s\n' "$profile_file"
+      if ((${#BREWFILE_ENTRY_FILTER[@]} > 0)); then
+        each_brewfile_entry "$profile_file" emit_matching_brewfile_line
+      else
+        cat "$profile_file"
+      fi
+      printf '\n'
+    } >>"$output"
   done
 
   if ! grep -Eq '^[[:space:]]*(brew|cask|tap|mas|vscode)[[:space:]]' "$output"; then
@@ -1247,26 +1183,8 @@ print_next_steps() {
     say "Installation complete!"
   fi
 
-  cat <<'EOF'
-Please restart your terminal to apply changes.
-
-Possible next steps:
--> Configure Raycast
----> Configure HyperKey in Settings -> Advanced
--> Configure 1Password
----> Save Recovery Key
----> Run install-ssh-key-from-1password if you want a local SSH key
----> Settings -> Touch ID -> Enable Apple Watch
----> 1Password -> Settings -> Apple Watch
--> Configure CleanShot
--> Install Insta360 Link Controller
--> Configure Clock Screensaver
--> Finish Docker Installation
--> Configure SoundSource and Loopback Licenses
--> Configure BusyCal
--> Configure OBS
--> Add bluetooth permissions to Hammerspoon
-EOF
+  blank
+  cat "$DOTFILES/POST_INSTALL.md"
 }
 
 main() {
@@ -1283,7 +1201,7 @@ main() {
   fi
 
   detect_state
-  configure_hardware_profile_environment
+  configure_machine_environment
   configure_install_plan
   configure_cleanup_plan
   configure_system_plan
@@ -1324,4 +1242,7 @@ main() {
   print_next_steps
 }
 
-main "$@"
+# Allow tests to source this file without running the installer.
+if [[ "${DOTFILES_INSTALL_NO_MAIN:-false}" != true ]]; then
+  main "$@"
+fi

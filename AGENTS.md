@@ -17,8 +17,10 @@ Shareable macOS dotfiles repository managing system configuration, shell environ
 │       ├── install.sh   # Tool-specific setup script
 │       └── config/      # Config files (symlinked via Stow)
 ├── archived/            # Deprecated tools
-├── hardware-profiles.sh # Tracked per-machine profile records
+├── machines/            # Tracked per-machine config files (<machash>.sh)
+├── .githooks/           # Repo-local git hooks (gitleaks pre-commit)
 ├── install.sh           # Main installer
+├── POST_INSTALL.md      # Manual post-install checklist (printed by install.sh)
 └── private-install.sh   # Owner-only private install script
 ```
 
@@ -200,10 +202,10 @@ The repository uses **Catppuccin** theme consistently across tools:
    narrow local validation before claiming success
 2. **macOS only**: Scripts assume macOS and Homebrew
 3. **Stow-based**: Config files live in `config/` subdirectories and are symlinked
-4. **Hardware profiles are tracked config**: `hardware-profiles.sh` is meant
-   for users to edit for their laptops/desktops; do not add it to `.gitignore`
-   or treat it as disposable private state
-5. **No secrets in tracked profiles**: Hardware profiles may contain public SSH
+4. **Machine configs are tracked config**: `machines/<hash>.sh` files are meant
+   for users to edit for their laptops/desktops; do not add them to `.gitignore`
+   or treat them as disposable private state
+5. **No secrets in tracked machine configs**: They may contain public SSH
    signing keys and local app paths, but never tokens, private keys, passwords,
    or license data
 6. **Owner detection**: `install.sh` may default owner prompts differently, but
@@ -228,22 +230,27 @@ The repository uses **Catppuccin** theme consistently across tools:
 14. **Glossary ownership**: Keep domain language in `CONTEXT.md`; do not
     duplicate the glossary here
 
-## Hardware Profile Rules
+## Machine Config Rules
 
-`install.sh` loads `hardware-profiles.sh` only when the file is readable. Keep
-`DOTFILES_HARDWARE_PROFILES=()` as the default so public clones and test
-fixtures can run without records.
+`install.sh` sources `machines/<hardware-hash>.sh` when a file matching this
+Mac's `machash` output exists. Missing files are fine; public clones and test
+fixtures run without any machine files.
 
-Each record is a pipe-delimited `key=value` string. Supported keys are `hash`,
-`id`, `name`, `hostname`, `install_mode`, `profile_list`, `git_user_name`,
-`git_user_email`, `git_signing_key`, and `git_signing_program`.
+Each file sets plain `MACHINE_*` variables: `MACHINE_ID`, `MACHINE_NAME`,
+`MACHINE_HOSTNAME`, `MACHINE_INSTALL_MODE`, `MACHINE_PROFILES`,
+`MACHINE_GIT_USER_NAME`, `MACHINE_GIT_USER_EMAIL`, `MACHINE_GIT_SIGNING_KEY`,
+and `MACHINE_GIT_SIGNING_PROGRAM`.
 
-`install_mode` accepts `all`, `core`, or `selected`. When using `selected`,
-`profile_list` must contain comma-separated profile flags from `PROFILE_ORDER`.
+`MACHINE_INSTALL_MODE` accepts `all`, `core`, or `selected`. When using
+`selected`, `MACHINE_PROFILES` must contain comma-separated profile flags from
+`PROFILE_ORDER`.
 
-Hardware profile values are exported for tool installers through
-`DOTFILES_HARDWARE_*`, `DOTFILES_GIT_*`, and `DOTFILES_MANAGED_GIT_*` variables.
-When no hardware profile matches, preserve caller-provided `GIT_USER_NAME`,
+Machine config values are exported for tool installers through
+`DOTFILES_HARDWARE_*`, `DOTFILES_GIT_*`, and `DOTFILES_MANAGED_GIT_*` variables
+(names kept for compatibility with the tool-installer contract). Every
+`machines/*.sh` file with git identity fields contributes a
+`DOTFILES_MANAGED_GIT_*_N` entry so stale identities can be cleaned. When no
+machine file matches, preserve caller-provided `GIT_USER_NAME`,
 `GIT_USER_EMAIL`, `GIT_SIGNING_KEY`, and `GIT_SIGNING_PROGRAM` fallbacks.
 
 ## Git Config Rules
@@ -267,10 +274,9 @@ of mutating their targets.
 When editing this area, validate at minimum:
 
 ```bash
-bash -n install.sh hardware-profiles.sh \
+bash -n install.sh machines/*.sh \
   tools/git/install.sh tools/git/migrate-config.sh tools/macos/install.sh
-fish -n tools/fish/config/.config/fish/functions/machash.fish
-shellcheck install.sh hardware-profiles.sh \
+shellcheck install.sh machines/*.sh \
   tools/git/install.sh tools/git/migrate-config.sh tools/macos/install.sh
 git config --file tools/git/config/.config/git/local.gitconfig --list >/dev/null
 ```

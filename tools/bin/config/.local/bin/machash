@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+
+# Print this Mac's hardware hash, used to match machines/<hash>.sh records.
+
+set -euo pipefail
+
+uuid="$(/usr/sbin/ioreg -rd1 -c IOPlatformExpertDevice | /usr/bin/awk -F '"' '/IOPlatformUUID/ { print $4; exit }')"
+
+if [[ -z "$uuid" ]]; then
+  echo "machash: unable to read IOPlatformUUID" >&2
+  exit 1
+fi
+
+printf '%s' "$uuid" | /usr/bin/shasum -a 256 | /usr/bin/cut -c1-12
