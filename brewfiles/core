@@ -48,7 +48,6 @@ brew "lua-language-server" # Lua language server
 # Shell and Terminal
 # ==============================================================================
 cask "ghostty"   # Terminal emulator
-cask "muxy"      # Terminal multiplexer for macOS
 brew "fish"      # Shell
 brew "fisher"    # Fish plugin manager
 brew "atuin"     # Shell history manager
@@ -147,6 +146,7 @@ cask "macfuse"       # File system integration
 # Web Browsers
 # ------------------------------------------------------------------------------
 cask "thebrowsercompany-dia" # AI browser
+cask "google-chrome"         # Google browser
 
 # ------------------------------------------------------------------------------
 # Design
@@ -219,5 +219,7 @@ cask "zoom"        # Video conferencing
 # ------------------------------------------------------------------------------
 cask "claude"      # AI assistant
 cask "claude-code" # AI coding assistant
+cask "codex"       # OpenAI coding agent
 cask "codexbar"    # Menu bar usage monitor for AI coding tools
+cask "stablyai/orca/orca", trusted: true # Multi-agent orchestration app
 brew "ollama"      # Local AI model runner
