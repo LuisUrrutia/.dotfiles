@@ -2,7 +2,7 @@
   "collapseChangelog": true,
   "defaultModel": "gpt-5.5",
   "defaultProvider": "openai-codex",
-  "defaultThinkingLevel": "xhigh",
+  "defaultThinkingLevel": "off",
   "extensions": [
     "extensions/muxy-notify.ts"
   ],
