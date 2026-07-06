@@ -167,6 +167,27 @@ CONFIG
   assert_machine_backup_count 0
 }
 
+test_unmanaged_include_stripped_with_backup() {
+  setup_home "unmanaged-include-stripped"
+
+  cat >"$HOME_DIR/.gitconfig" <<'CONFIG'
+[include]
+	path = ~/.config/git/local.gitconfig
+	path = ~/.config/git/delta.gitconfig
+[user]
+	name = Example User
+CONFIG
+
+  run_migration
+
+  first_include_is_canonical
+  # The include path is stored as a literal tilde on purpose.
+  # shellcheck disable=SC2088
+  [[ "$(git config --file "$HOME_DIR/.gitconfig" --get-all include.path)" == '~/.config/git/local.gitconfig' ]]
+  assert_config_value user.name "Example User"
+  assert_machine_backup_count 1
+}
+
 test_clean_split_config_is_idempotent() {
   setup_home "clean-split-idempotent"
 
@@ -247,6 +268,7 @@ test_git_ignore_backup() {
 tests=(
   test_monolithic_filtering
   test_duplicate_include_cleanup
+  test_unmanaged_include_stripped_with_backup
   test_clean_split_config_is_idempotent
   test_non_managed_machine_config_symlink_refusal
   test_non_managed_git_config_dir_symlink_refusal

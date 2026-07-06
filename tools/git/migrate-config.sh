@@ -252,18 +252,6 @@ machine_config_has_canonical_include() {
   return 1
 }
 
-machine_config_starts_with_canonical_include() {
-  local first_line=""
-  local second_line=""
-
-  [[ -f "$machine_git_config" ]] || return 1
-
-  IFS= read -r first_line <"$machine_git_config" || true
-  second_line="$(sed -n '2p' "$machine_git_config")"
-
-  [[ "$first_line" == "[include]" && "$second_line" == $'\tpath = ~/.config/git/local.gitconfig' ]]
-}
-
 machine_config_needs_migration_backup() {
   [[ -f "$machine_git_config" && ! -L "$machine_git_config" ]] || return 1
 
@@ -299,11 +287,6 @@ rebuild_machine_config() {
 ensure_machine_config_include_first() {
   if machine_config_needs_migration_backup; then
     backup_machine_config
-  fi
-
-  if ! machine_config_starts_with_canonical_include || machine_config_has_unmanaged_keys || machine_config_has_unmanaged_includes; then
-    rebuild_machine_config
-    return
   fi
 
   rebuild_machine_config
