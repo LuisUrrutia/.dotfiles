@@ -2,3 +2,4 @@ config/.claude/*
 !config/.claude/agents/
 !config/.claude/commands/
 !config/.claude/skills/
+!config/.claude/settings.json

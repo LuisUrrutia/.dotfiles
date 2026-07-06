@@ -1,0 +1,112 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(bun test *)",
+      "Bash(sg --pattern *)",
+      "Bash(sg -l *)",
+      "Bash(sg -p *)",
+      "Bash(sg --version)",
+      "Bash(pnpm run format:check)",
+      "Bash(pnpm run typecheck)",
+      "Bash(pnpm typecheck)",
+      "Bash(pnpm lint)",
+      "Bash(pnpm lint:boundaries)",
+      "Bash(pnpm test *)",
+      "Bash(pnpm --dir apps/mobile typecheck)",
+      "Bash(pnpm --dir apps/mobile test)",
+      "Bash(bun run typecheck)",
+      "Bash(actionlint *)",
+      "Bash(plutil -lint *)",
+      "Bash(fish -n *)",
+      "Bash(bash -n *)"
+    ],
+    "defaultMode": "bypassPermissions"
+  },
+  "model": "claude-fable-5[1m]",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if [ -x '/Users/luisurrutia/.orca/agent-hooks/claude-hook.sh' ]; then /bin/sh '/Users/luisurrutia/.orca/agent-hooks/claude-hook.sh'; fi",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if [ -x '/Users/luisurrutia/.orca/agent-hooks/claude-hook.sh' ]; then /bin/sh '/Users/luisurrutia/.orca/agent-hooks/claude-hook.sh'; fi",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if [ -x '/Users/luisurrutia/.orca/agent-hooks/claude-hook.sh' ]; then /bin/sh '/Users/luisurrutia/.orca/agent-hooks/claude-hook.sh'; fi",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "StopFailure": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if [ -x '/Users/luisurrutia/.orca/agent-hooks/claude-hook.sh' ]; then /bin/sh '/Users/luisurrutia/.orca/agent-hooks/claude-hook.sh'; fi",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if [ -x '/Users/luisurrutia/.orca/agent-hooks/claude-hook.sh' ]; then /bin/sh '/Users/luisurrutia/.orca/agent-hooks/claude-hook.sh'; fi",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "PostToolUseFailure": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if [ -x '/Users/luisurrutia/.orca/agent-hooks/claude-hook.sh' ]; then /bin/sh '/Users/luisurrutia/.orca/agent-hooks/claude-hook.sh'; fi",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "PermissionRequest": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if [ -x '/Users/luisurrutia/.orca/agent-hooks/claude-hook.sh' ]; then /bin/sh '/Users/luisurrutia/.orca/agent-hooks/claude-hook.sh'; fi",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  },
+  "tui": "fullscreen",
+  "skipDangerousModePermissionPrompt": true,
+  "theme": "dark"
+}
