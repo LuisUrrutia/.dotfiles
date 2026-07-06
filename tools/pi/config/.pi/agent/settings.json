@@ -3,9 +3,6 @@
   "defaultModel": "gpt-5.5",
   "defaultProvider": "openai-codex",
   "defaultThinkingLevel": "off",
-  "extensions": [
-    "extensions/muxy-notify.ts"
-  ],
   "hideThinkingBlock": true,
   "lastChangelogVersion": "0.80.3",
   "packages": [
