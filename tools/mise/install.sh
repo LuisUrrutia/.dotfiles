@@ -2,6 +2,6 @@
 
 source "${DOTFILES:-$HOME/.dotfiles}/tools/lib.sh"
 
-require_brew_bin direnv
+require_brew_bin mise
 
-stow_config direnv
+stow_config mise

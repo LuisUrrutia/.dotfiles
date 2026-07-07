@@ -1,0 +1,11 @@
+[settings]
+env_file = ".env"
+
+[tools]
+"aqua:vercel-labs/agent-browser" = "latest"
+bun = "latest"
+markdownlint-cli2 = "latest"
+node = "lts"
+pnpm = "latest"
+python = "3"
+uv = "latest"
