@@ -10,23 +10,31 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   smoke:
     name: Smoke test dotfiles
     runs-on: macos-15
+    timeout-minutes: 30
 
     steps:
       - name: Checkout
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
       - name: Install validation tools
-        run: brew install actionlint fish gitleaks lua shellcheck stow
+        run: brew install actionlint fish gitleaks lua luacheck shellcheck stow
 
       - name: Lint workflows
-        run: actionlint .github/workflows/ci.yml
+        run: actionlint
 
       - name: Audit action pins
         run: tools/bin/config/.local/bin/gha-pins audit .github/workflows
+
+      - name: Scan for secrets
+        run: gitleaks detect --source . --no-git --redact --no-banner
 
       - name: Check shell scripts
         run: |
@@ -61,6 +69,9 @@ jobs:
           /bin/bash install.sh --dry-run --profile blockchain,obs,focusrite
           DOTFILES_HARDWARE_HASH_OVERRIDE=55930b1d4d8e /bin/bash install.sh --dry-run
 
+      - name: Lint Lua
+        run: luacheck tools/hammerspoon
+
       - name: Check Hammerspoon tests
         run: bash tools/hammerspoon/tests/run.sh
 
@@ -71,9 +82,6 @@ jobs:
           while IFS= read -r -d '' script; do
             fish --no-execute "$script"
           done < <(find tools/fish -type f -name '*.fish' -print0)
-
-      - name: Scan for secrets
-        run: gitleaks detect --source . --no-git --redact --no-banner
 
       - name: Check Brewfiles
         run: |
