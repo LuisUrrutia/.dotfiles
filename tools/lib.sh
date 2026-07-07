@@ -67,8 +67,11 @@ sudo_askpass() {
   /usr/bin/sudo "$@"
 }
 
-# Stow a tool's config directory into $HOME with --restow for idempotency
-# Usage: stow_config <tool_name>
+# Stow a tool's config directory into $HOME with --restow for idempotency.
+# Default is per-file symlinks (--no-folding), so files an app creates at
+# runtime stay in $HOME instead of landing inside the repo. Pass --fold to
+# let Stow fold a whole tree into a single directory symlink.
+# Usage: stow_config <tool_name> [--fold]
 stow_config() {
   local tool="$1"
   local tool_dir="$DOTFILES/tools/$tool"
@@ -78,7 +81,11 @@ stow_config() {
     exit 1
   fi
 
-  stow -v --restow --no-folding -d "$tool_dir" -t "$HOME" config
+  if [[ "${2:-}" == "--fold" ]]; then
+    stow -v --restow -d "$tool_dir" -t "$HOME" config
+  else
+    stow -v --restow --no-folding -d "$tool_dir" -t "$HOME" config
+  fi
   echo "Stowed $tool config"
 }
 
