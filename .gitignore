@@ -26,10 +26,11 @@ tools/opencode/config/.config/opencode/skills/*
 tools/pi/config/.pi/agent/.agents/
 tools/pi/config/.pi/agent/skills-lock.json
 
-# cc-safety-net generated state
+# cc-safety-net runtime state (guard: must never land in the stow package;
+# rulebooks under rules/ ARE tracked, only the lock file is generated)
 tools/cc-safety-net/config/.cc-safety-net/cache/
 tools/cc-safety-net/config/.cc-safety-net/logs/
-tools/cc-safety-net/config/.cc-safety-net/rules/
+tools/cc-safety-net/config/.cc-safety-net/rules/rule.lock
 
 # Stray HOME/XDG/toolchain state accidentally captured into a stow package
 # (created when a process runs with HOME pointed at tools/*/config/).

@@ -1,0 +1,253 @@
+{
+  "rulebook_version": 1,
+  "name": "user-rules",
+  "version": "1.1.0",
+  "description": "Personal CC Safety Net rules: no global installs, no irreversible gh/npm actions, no cooldown-policy bypass.",
+  "author": "project",
+  "allowed_commands": [
+    "npm",
+    "pnpm",
+    "yarn",
+    "bun",
+    "gh"
+  ],
+  "rules": [
+    {
+      "name": "block-npm-global-install",
+      "command": "npm",
+      "subcommand": "install",
+      "block_args": [
+        "-g",
+        "--global"
+      ],
+      "reason": "Global npm installs can cause version conflicts. Use npx or a local install."
+    },
+    {
+      "name": "block-npm-global-i",
+      "command": "npm",
+      "subcommand": "i",
+      "block_args": [
+        "-g",
+        "--global"
+      ],
+      "reason": "Global npm installs can cause version conflicts. Use npx or a local install."
+    },
+    {
+      "name": "block-pnpm-global-add",
+      "command": "pnpm",
+      "subcommand": "add",
+      "block_args": [
+        "-g",
+        "--global"
+      ],
+      "reason": "Global pnpm installs can cause version conflicts. Use pnpm dlx or a local install."
+    },
+    {
+      "name": "block-pnpm-global-install",
+      "command": "pnpm",
+      "subcommand": "install",
+      "block_args": [
+        "-g",
+        "--global"
+      ],
+      "reason": "Global pnpm installs can cause version conflicts. Use pnpm dlx or a local install."
+    },
+    {
+      "name": "block-pnpm-global-subcommand",
+      "command": "pnpm",
+      "subcommand": "global",
+      "block_args": [
+        "add",
+        "bin",
+        "dir",
+        "list",
+        "remove",
+        "unlink",
+        "update"
+      ],
+      "reason": "Global pnpm commands can cause version conflicts. Use pnpm dlx or a local install."
+    },
+    {
+      "name": "block-bun-global-add",
+      "command": "bun",
+      "subcommand": "add",
+      "block_args": [
+        "-g",
+        "--global"
+      ],
+      "reason": "Global bun installs can cause version conflicts. Use bunx or a local install."
+    },
+    {
+      "name": "block-bun-global-install",
+      "command": "bun",
+      "subcommand": "install",
+      "block_args": [
+        "-g",
+        "--global"
+      ],
+      "reason": "Global bun installs can cause version conflicts. Use bunx or a local install."
+    },
+    {
+      "name": "block-gh-pr-merge",
+      "command": "gh",
+      "subcommand": "pr",
+      "block_args": [
+        "merge"
+      ],
+      "reason": "Merging pull requests from the terminal is irreversible enough to require an explicit manual decision."
+    },
+    {
+      "name": "block-yarn-global-add",
+      "command": "yarn",
+      "subcommand": "global",
+      "block_args": [
+        "add",
+        "remove",
+        "upgrade"
+      ],
+      "reason": "Global yarn installs can cause version conflicts. Use yarn dlx or a local install."
+    },
+    {
+      "name": "block-gh-repo-delete",
+      "command": "gh",
+      "subcommand": "repo",
+      "block_args": [
+        "delete"
+      ],
+      "reason": "Deleting a repository is irreversible and requires an explicit manual decision."
+    },
+    {
+      "name": "block-npm-publish",
+      "command": "npm",
+      "block_args": [
+        "publish"
+      ],
+      "reason": "Publishing to the npm registry is irreversible and requires an explicit manual decision."
+    },
+    {
+      "name": "block-npm-cooldown-bypass",
+      "command": "npm",
+      "block_args": [
+        "min-release-age",
+        "min-release-age-exclude",
+        "--min-release-age",
+        "--min-release-age=0",
+        "--min-release-age-exclude"
+      ],
+      "reason": "The min-release-age cooldown protects against supply-chain attacks. Do not override or weaken it; ask a human instead."
+    },
+    {
+      "name": "block-pnpm-cooldown-bypass",
+      "command": "pnpm",
+      "block_args": [
+        "minimumReleaseAge",
+        "minimum-release-age",
+        "minimumReleaseAgeExclude",
+        "minimum-release-age-exclude",
+        "--config.minimumReleaseAge=0",
+        "--config.minimum-release-age=0",
+        "--config.minimumReleaseAgeExclude"
+      ],
+      "reason": "The minimumReleaseAge cooldown protects against supply-chain attacks. Do not override or weaken it; ask a human instead."
+    },
+    {
+      "name": "block-yarn-cooldown-bypass",
+      "command": "yarn",
+      "block_args": [
+        "npmMinimalAgeGate",
+        "npmPreapprovedPackages"
+      ],
+      "reason": "The npmMinimalAgeGate cooldown protects against supply-chain attacks. Do not override or weaken it; ask a human instead."
+    }
+  ],
+  "tests": [
+    {
+      "command": "npm install -g",
+      "expect": "blocked",
+      "rule": "block-npm-global-install"
+    },
+    {
+      "command": "npm i -g",
+      "expect": "blocked",
+      "rule": "block-npm-global-i"
+    },
+    {
+      "command": "pnpm add -g",
+      "expect": "blocked",
+      "rule": "block-pnpm-global-add"
+    },
+    {
+      "command": "pnpm install -g",
+      "expect": "blocked",
+      "rule": "block-pnpm-global-install"
+    },
+    {
+      "command": "pnpm global add",
+      "expect": "blocked",
+      "rule": "block-pnpm-global-subcommand"
+    },
+    {
+      "command": "bun add -g",
+      "expect": "blocked",
+      "rule": "block-bun-global-add"
+    },
+    {
+      "command": "bun install -g",
+      "expect": "blocked",
+      "rule": "block-bun-global-install"
+    },
+    {
+      "command": "gh pr merge",
+      "expect": "blocked",
+      "rule": "block-gh-pr-merge"
+    },
+    {
+      "command": "yarn global add typescript",
+      "expect": "blocked",
+      "rule": "block-yarn-global-add"
+    },
+    {
+      "command": "gh repo delete owner/repo --yes",
+      "expect": "blocked",
+      "rule": "block-gh-repo-delete"
+    },
+    {
+      "command": "npm publish",
+      "expect": "blocked",
+      "rule": "block-npm-publish"
+    },
+    {
+      "command": "npm config set min-release-age 0",
+      "expect": "blocked",
+      "rule": "block-npm-cooldown-bypass"
+    },
+    {
+      "command": "npm install left-pad --min-release-age 0",
+      "expect": "blocked",
+      "rule": "block-npm-cooldown-bypass"
+    },
+    {
+      "command": "pnpm config set minimumReleaseAge 0",
+      "expect": "blocked",
+      "rule": "block-pnpm-cooldown-bypass"
+    },
+    {
+      "command": "pnpm install --config.minimumReleaseAge=0",
+      "expect": "blocked",
+      "rule": "block-pnpm-cooldown-bypass"
+    },
+    {
+      "command": "yarn config set npmMinimalAgeGate 0",
+      "expect": "blocked",
+      "rule": "block-yarn-cooldown-bypass"
+    },
+    {
+      "command": "npm install left-pad",
+      "expect": "allowed"
+    },
+    {
+      "command": "pnpm add left-pad",
+      "expect": "allowed"
+    }
+  ]
+}
