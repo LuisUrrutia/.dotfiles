@@ -253,6 +253,25 @@ test_explicit_git_signing_flag_updates_git() {
   [[ "$(<"$key_path")" == "$PRIVATE_KEY_CONTENT" ]]
   [[ "$(<"$key_path.pub")" == "$PUBLIC_KEY_CONTENT" ]]
 
+  assert_git_was_configured "$key_path.pub"
+  assert_no_secret_output "$output_file" "$error_file"
+}
+
+test_git_signing_without_public_key_uses_private_key_path() {
+  local output_file="$TMP_DIR/signing-private.out"
+  local error_file="$TMP_DIR/signing-private.err"
+  local key_path=""
+
+  setup_home "signing-private"
+  key_path="$HOME_DIR/.ssh/id_ed25519"
+
+  "$SCRIPT" \
+    --private-key-ref private-ref \
+    --git-signing-key >"$output_file" 2>"$error_file"
+
+  [[ "$(<"$key_path")" == "$PRIVATE_KEY_CONTENT" ]]
+  [[ ! -e "$key_path.pub" ]]
+
   assert_git_was_configured "$key_path"
   assert_no_secret_output "$output_file" "$error_file"
 }
@@ -290,7 +309,7 @@ test_interactive_signing_confirmation_updates_git() {
   [[ "$(<"$key_path")" == "$PRIVATE_KEY_CONTENT" ]]
   [[ "$(<"$key_path.pub")" == "$PUBLIC_KEY_CONTENT" ]]
 
-  assert_git_was_configured "$key_path"
+  assert_git_was_configured "$key_path.pub"
   assert_no_secret_output "$output_file" "$error_file"
 }
 
@@ -368,6 +387,7 @@ test_flags_can_set_key_name_and_skip_git() {
 tests=(
   test_installs_key_without_git_by_default
   test_explicit_git_signing_flag_updates_git
+  test_git_signing_without_public_key_uses_private_key_path
   test_interactive_default_name_path_prompts_and_installs_public_key
   test_interactive_signing_confirmation_updates_git
   test_interactive_custom_name_path_uses_selected_item
