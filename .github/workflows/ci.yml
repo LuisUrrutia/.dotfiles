@@ -41,7 +41,7 @@ jobs:
           set -euo pipefail
 
           scripts=()
-          for script in install.sh private-install.sh cleanup.sh machines/*.sh .githooks/* brewfiles/*.sh tools/lib.sh tools/*/install.sh tools/*/common.sh tools/*/migrate-config.sh tools/*/config/.local/bin/* tools/macos/prefs-diff.sh; do
+          for script in install.sh private-install.sh cleanup.sh machines/*.sh .githooks/* brewfiles/*.sh tools/lib.sh tools/*/install.sh tools/*/common.sh tools/*/migrate-config.sh tools/*/config/.local/bin/* tools/*/tests/*.sh tools/macos/prefs-diff.sh; do
             [[ -f "$script" ]] && scripts+=("$script")
           done
 
@@ -51,10 +51,11 @@ jobs:
 
           shellcheck "${scripts[@]}"
 
-          bash tools/bin/tests/thaw-config.sh
-          bash tools/bin/tests/install-ssh-key-from-1password.sh
-          bash tools/git/tests/migrate-config.sh
-          bash tools/skills/tests/install.sh
+          # Hammerspoon's runner wraps Lua tests and has its own CI step.
+          for test_script in tools/*/tests/*.sh; do
+            [[ "$test_script" == tools/hammerspoon/* ]] && continue
+            bash "$test_script"
+          done
 
       - name: Smoke test installer plan
         run: |
