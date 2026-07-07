@@ -1,9 +1,10 @@
 [settings]
-env_file = ".env"
+idiomatic_version_file_enable_tools = ["node", "python"]
 
 [tools]
 "aqua:vercel-labs/agent-browser" = "latest"
 bun = "latest"
+java = "lts"
 markdownlint-cli2 = "latest"
 node = "lts"
 pnpm = "latest"

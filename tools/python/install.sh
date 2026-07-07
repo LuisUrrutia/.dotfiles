@@ -4,16 +4,10 @@ source "${DOTFILES:-$HOME/.dotfiles}/tools/lib.sh"
 
 require_brew_bin mise
 
-# Activate mise
+# Python and uv are installed by tools/mise (declared in mise's config.toml).
 eval "$("$bin_path" activate bash)"
 
-# Install UV
-"$bin_path" use -g uv@latest
-
 stow_config python
-
-# Install latest version of python 3
-"$bin_path" use -g python@3
 
 # Install pre-commit
 uv tool install --force pre-commit --with pre-commit-uv
