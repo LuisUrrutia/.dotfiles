@@ -450,6 +450,10 @@ language_selected() {
   local candidate="$1"
   local selected=""
 
+  # Length checks before expanding: bash 3.2 (the only bash on a fresh Mac)
+  # treats empty-array expansion as an unbound variable under set -u.
+  ((${#SELECTED_LANGUAGES[@]} > 0)) || return 1
+
   for selected in "${SELECTED_LANGUAGES[@]}"; do
     [[ "$selected" == "$candidate" ]] && return 0
   done
@@ -475,6 +479,8 @@ profile_package_selected() {
   local package_name="$2"
   local selected=""
 
+  ((${#SELECTED_PROFILE_PACKAGES[@]} > 0)) || return 1
+
   for selected in "${SELECTED_PROFILE_PACKAGES[@]}"; do
     [[ "$selected" == "$profile:$package_name" ]] && return 0
   done
@@ -495,6 +501,8 @@ selected_profile_package_names() {
   local profile="$1"
   local selected=""
 
+  ((${#SELECTED_PROFILE_PACKAGES[@]} > 0)) || return 0
+
   for selected in "${SELECTED_PROFILE_PACKAGES[@]}"; do
     [[ "$selected" == "$profile:"* ]] || continue
     say "${selected#*:}"
@@ -504,6 +512,8 @@ selected_profile_package_names() {
 profile_has_selected_packages() {
   local profile="$1"
   local selected=""
+
+  ((${#SELECTED_PROFILE_PACKAGES[@]} > 0)) || return 1
 
   for selected in "${SELECTED_PROFILE_PACKAGES[@]}"; do
     [[ "$selected" == "$profile:"* ]] && return 0
@@ -551,6 +561,8 @@ profile_selected() {
   local candidate="$1"
   local selected=""
 
+  ((${#SELECTED_PROFILES[@]} > 0)) || return 1
+
   for selected in "${SELECTED_PROFILES[@]}"; do
     [[ "$selected" == "$candidate" ]] && return 0
   done
@@ -585,6 +597,7 @@ parse_profiles() {
   local profile=""
 
   IFS=',' read -r -a raw_profiles <<<"$raw_list"
+  ((${#raw_profiles[@]} > 0)) || return 0
   for raw_profile in "${raw_profiles[@]}"; do
     [[ -n "$raw_profile" ]] || continue
     if ! profile="$(normalize_profile "$raw_profile")"; then

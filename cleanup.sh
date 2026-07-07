@@ -160,4 +160,6 @@ if [[ ! -s "$MERGED_BREWFILE" ]]; then
   exit 1
 fi
 
-brew bundle cleanup --file="$MERGED_BREWFILE" "${BREW_BUNDLE_CLEANUP_ARGS[@]}"
+# The +"..." expansion keeps bash 3.2 happy when no --force flag was given;
+# plain "${arr[@]}" on an empty array is an unbound-variable error there.
+brew bundle cleanup --file="$MERGED_BREWFILE" ${BREW_BUNDLE_CLEANUP_ARGS[@]+"${BREW_BUNDLE_CLEANUP_ARGS[@]}"}
