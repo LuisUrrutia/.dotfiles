@@ -158,7 +158,7 @@ cask "figma" # Interface design
 # ------------------------------------------------------------------------------
 cask "LuisUrrutia/tap/raycast@beta", trusted: true # Next-generation Raycast beta
 cask "obsidian"     # Markdown knowledge base
-cask "fliqlo"       # Clock screensaver
+cask "cadran"       # Desktop clock rendered behind icons
 cask "cleanshot"                   # Screen capture
 cask "hammerspoon"  # Automation
 
