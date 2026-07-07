@@ -13,6 +13,11 @@ eval "$("$bin_path" activate bash)"
 # Install and use the latest Node LTS.
 "$bin_path" use -g node@lts
 
+# Package cooldown (unit: days), matching pnpm's minimumReleaseAge and yarn's
+# npmMinimalAgeGate (10080 min). Written into ~/.npmrc, which stays untracked
+# because npm also keeps the registry auth token there.
+npm config set min-release-age 7 --location=user
+
 # Install bun
 "$bin_path" use -g bun@latest
 
