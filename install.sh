@@ -1176,30 +1176,6 @@ print_brew_bundle_failures() {
   say "Review the Homebrew output above, then rerun ./install.sh after fixing those packages."
 }
 
-run_brew_vulns() {
-  local -a vulns_args=(--warn-only)
-
-  if ! command -v brew >/dev/null 2>&1; then
-    return
-  fi
-
-  if ! brew vulns --help >/dev/null 2>&1; then
-    note "Skipping Homebrew vulnerability scan; brew vulns is not installed."
-    return
-  fi
-
-  if [[ -n "$SELECTED_PROFILE_BREWFILE" ]]; then
-    vulns_args+=(--file "$SELECTED_PROFILE_BREWFILE")
-  else
-    vulns_args+=(--core-only)
-  fi
-
-  section "Homebrew vulnerability scan"
-  if ! bash "$DOTFILES/brewfiles/vulns.sh" "${vulns_args[@]}"; then
-    note "Homebrew vulnerability scan failed; continuing install."
-  fi
-}
-
 run_cleanup() {
   local -a cleanup_args=()
 
@@ -1322,7 +1298,6 @@ main() {
   fi
 
   install_packages
-  run_brew_vulns
   run_cleanup
   run_tool_installers
   run_first_run_tasks
