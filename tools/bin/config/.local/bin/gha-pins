@@ -5,12 +5,14 @@ set -euo pipefail
 usage() {
   cat <<'EOF'
 Usage: gha-pins audit [path...]
+       gha-pins update [path...]
        gha-pins latest owner/repo [tag]
 
 Audit GitHub Actions workflow `uses:` entries and resolve latest release pins.
 
 Commands:
   audit   Require remote actions to be pinned to full commit SHAs with a version comment
+  update  Rewrite remote action pins in place to the latest release SHA
   latest  Print the latest, or requested, action tag as a pinned `uses:` line
 EOF
 }
@@ -66,10 +68,13 @@ audit_file() {
   return "$status"
 }
 
-run_audit() {
-  local status=0
-  local found=false
+# Fills WORKFLOW_FILES from the given paths (default: .github/workflows) and
+# sets MISSING_PATHS=1 when any argument does not exist.
+collect_workflow_files() {
   local path file
+
+  WORKFLOW_FILES=()
+  MISSING_PATHS=0
 
   if [[ "$#" -eq 0 ]]; then
     set -- .github/workflows
@@ -78,22 +83,32 @@ run_audit() {
   for path in "$@"; do
     if [[ -d "$path" ]]; then
       while IFS= read -r -d '' file; do
-        found=true
-        audit_file "$file" || status=1
+        WORKFLOW_FILES+=("$file")
       done < <(find "$path" -type f \( -name '*.yml' -o -name '*.yaml' \) -print0)
     elif [[ -f "$path" ]]; then
-      found=true
-      audit_file "$path" || status=1
+      WORKFLOW_FILES+=("$path")
     else
       printf 'gha-pins: path not found: %s\n' "$path" >&2
-      status=1
+      MISSING_PATHS=1
     fi
   done
+}
 
-  if [[ "$found" = false ]]; then
+run_audit() {
+  local status=0
+  local file
+
+  collect_workflow_files "$@"
+  status="$MISSING_PATHS"
+
+  if [[ "${#WORKFLOW_FILES[@]}" -eq 0 ]]; then
     printf 'gha-pins: no workflow files found\n'
     return "$status"
   fi
+
+  for file in "${WORKFLOW_FILES[@]}"; do
+    audit_file "$file" || status=1
+  done
 
   if [[ "$status" -eq 0 ]]; then
     printf 'gha-pins: all remote actions are SHA-pinned\n'
@@ -118,6 +133,115 @@ resolve_tag_sha() {
   printf '%s' "$sha"
 }
 
+# Actions may include a subdirectory (owner/repo/path); the repository is
+# always the first two segments.
+action_repo() {
+  local action="$1"
+  local owner="${action%%/*}"
+  local rest="${action#*/}"
+
+  printf '%s/%s' "$owner" "${rest%%/*}"
+}
+
+# Resolves a repository's latest release into RESOLVED_SHA/RESOLVED_TAG,
+# caching per repository so multi-file updates hit the API once per action.
+resolve_repo_pin() {
+  local repo="$1"
+  local cached=""
+
+  cached="$(printf '%s' "$RESOLVE_CACHE" | awk -v repo="$repo" '$1 == repo { print $2, $3; exit }')"
+  if [[ -n "$cached" ]]; then
+    RESOLVED_SHA="${cached%% *}"
+    RESOLVED_TAG="${cached##* }"
+    return 0
+  fi
+
+  RESOLVED_TAG="$(gh api "repos/$repo/releases/latest" --jq '.tag_name' 2>/dev/null)" || return 1
+  RESOLVED_SHA="$(resolve_tag_sha "$repo" "$RESOLVED_TAG")" || return 1
+  RESOLVE_CACHE="$RESOLVE_CACHE$repo $RESOLVED_SHA $RESOLVED_TAG"$'\n'
+}
+
+update_file() {
+  local file="$1"
+  local line_no=0
+  local changed=false
+  local status=0
+  local tmp_file line prefix raw_value value action repo quote new_line
+
+  tmp_file="$(mktemp)"
+
+  while IFS= read -r line || [[ -n "$line" ]]; do
+    line_no=$((line_no + 1))
+
+    if [[ "$line" =~ ^([[:space:]]*(-[[:space:]]*)?uses:[[:space:]]*)([^[:space:]#]+) ]]; then
+      prefix="${BASH_REMATCH[1]}"
+      raw_value="${BASH_REMATCH[3]}"
+      value="$(strip_quotes "$raw_value")"
+
+      if [[ "$value" != ./* && "$value" != docker://* ]]; then
+        action="${value%%@*}"
+        repo="$(action_repo "$action")"
+
+        if resolve_repo_pin "$repo"; then
+          quote=""
+          case "$raw_value" in
+            \"*) quote='"' ;;
+            \'*) quote="'" ;;
+          esac
+
+          new_line="$prefix$quote$action@$RESOLVED_SHA$quote # $RESOLVED_TAG"
+          if [[ "$new_line" != "$line" ]]; then
+            printf '%s:%s: %s -> %s@%s # %s\n' \
+              "$file" "$line_no" "$value" "$action" "$RESOLVED_SHA" "$RESOLVED_TAG"
+            line="$new_line"
+            changed=true
+          fi
+        else
+          printf '%s:%s: no release found for %s; skipping\n' "$file" "$line_no" "$repo" >&2
+          status=1
+        fi
+      fi
+    fi
+
+    printf '%s\n' "$line" >>"$tmp_file"
+  done < "$file"
+
+  if [[ "$changed" == true ]]; then
+    mv "$tmp_file" "$file"
+  else
+    rm -f "$tmp_file"
+  fi
+
+  return "$status"
+}
+
+run_update() {
+  local status=0
+  local file
+
+  command -v gh >/dev/null 2>&1 || die 'gh is required for update'
+
+  collect_workflow_files "$@"
+  status="$MISSING_PATHS"
+
+  if [[ "${#WORKFLOW_FILES[@]}" -eq 0 ]]; then
+    printf 'gha-pins: no workflow files found\n'
+    return "$status"
+  fi
+
+  RESOLVE_CACHE=""
+
+  for file in "${WORKFLOW_FILES[@]}"; do
+    update_file "$file" || status=1
+  done
+
+  if [[ "$status" -eq 0 ]]; then
+    printf 'gha-pins: all remote actions pinned to their latest release\n'
+  fi
+
+  return "$status"
+}
+
 run_latest() {
   local repo="${1:-}"
   local tag="${2:-}"
@@ -139,6 +263,10 @@ case "${1:-}" in
   audit)
     shift
     run_audit "$@"
+    ;;
+  update)
+    shift
+    run_update "$@"
     ;;
   latest)
     shift
