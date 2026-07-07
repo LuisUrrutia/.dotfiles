@@ -86,7 +86,10 @@ jobs:
           set -euo pipefail
 
           brew install homebrew/brew-vulns/brew-vulns
-          bash brewfiles/vulns.sh
+          # --warn-only: upstream OSV findings in third-party deps are not
+          # actionable from this repo and should not hold main hostage; scan
+          # errors (exit 2) still fail the job.
+          bash brewfiles/vulns.sh --warn-only
 
       - name: Check Stow packages
         run: |
