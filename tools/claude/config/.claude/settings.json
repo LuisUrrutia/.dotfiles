@@ -30,7 +30,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "if [ -x '/Users/luisurrutia/.orca/agent-hooks/claude-hook.sh' ]; then /bin/sh '/Users/luisurrutia/.orca/agent-hooks/claude-hook.sh'; fi",
+            "command": "if [ -x \"$HOME/.orca/agent-hooks/claude-hook.sh\" ]; then /bin/sh \"$HOME/.orca/agent-hooks/claude-hook.sh\"; fi",
             "timeout": 10
           }
         ]
@@ -41,7 +41,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "if [ -x '/Users/luisurrutia/.orca/agent-hooks/claude-hook.sh' ]; then /bin/sh '/Users/luisurrutia/.orca/agent-hooks/claude-hook.sh'; fi",
+            "command": "if [ -x \"$HOME/.orca/agent-hooks/claude-hook.sh\" ]; then /bin/sh \"$HOME/.orca/agent-hooks/claude-hook.sh\"; fi",
             "timeout": 10
           }
         ]
@@ -52,7 +52,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "if [ -x '/Users/luisurrutia/.orca/agent-hooks/claude-hook.sh' ]; then /bin/sh '/Users/luisurrutia/.orca/agent-hooks/claude-hook.sh'; fi",
+            "command": "if [ -x \"$HOME/.orca/agent-hooks/claude-hook.sh\" ]; then /bin/sh \"$HOME/.orca/agent-hooks/claude-hook.sh\"; fi",
             "timeout": 10
           }
         ]
@@ -63,7 +63,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "if [ -x '/Users/luisurrutia/.orca/agent-hooks/claude-hook.sh' ]; then /bin/sh '/Users/luisurrutia/.orca/agent-hooks/claude-hook.sh'; fi",
+            "command": "if [ -x \"$HOME/.orca/agent-hooks/claude-hook.sh\" ]; then /bin/sh \"$HOME/.orca/agent-hooks/claude-hook.sh\"; fi",
             "timeout": 10
           }
         ]
@@ -75,7 +75,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "if [ -x '/Users/luisurrutia/.orca/agent-hooks/claude-hook.sh' ]; then /bin/sh '/Users/luisurrutia/.orca/agent-hooks/claude-hook.sh'; fi",
+            "command": "if [ -x \"$HOME/.orca/agent-hooks/claude-hook.sh\" ]; then /bin/sh \"$HOME/.orca/agent-hooks/claude-hook.sh\"; fi",
             "timeout": 10
           }
         ]
@@ -87,7 +87,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "if [ -x '/Users/luisurrutia/.orca/agent-hooks/claude-hook.sh' ]; then /bin/sh '/Users/luisurrutia/.orca/agent-hooks/claude-hook.sh'; fi",
+            "command": "if [ -x \"$HOME/.orca/agent-hooks/claude-hook.sh\" ]; then /bin/sh \"$HOME/.orca/agent-hooks/claude-hook.sh\"; fi",
             "timeout": 10
           }
         ]
@@ -99,7 +99,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "if [ -x '/Users/luisurrutia/.orca/agent-hooks/claude-hook.sh' ]; then /bin/sh '/Users/luisurrutia/.orca/agent-hooks/claude-hook.sh'; fi",
+            "command": "if [ -x \"$HOME/.orca/agent-hooks/claude-hook.sh\" ]; then /bin/sh \"$HOME/.orca/agent-hooks/claude-hook.sh\"; fi",
             "timeout": 10
           }
         ]
