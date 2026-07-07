@@ -1,19 +1,29 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-branch="$(git branch --show-current 2>/dev/null || true)"
+# One git call covers the common case; this runs on every prompt render.
+branch=""
+toplevel=""
+if info="$(git rev-parse --abbrev-ref HEAD --show-toplevel 2>/dev/null)"; then
+  branch="${info%%$'\n'*}"
+  toplevel="${info#*$'\n'}"
 
-if [[ -z "$branch" ]]; then
-  # Detached HEAD: fall back to the short commit hash
-  sha="$(git rev-parse --short HEAD 2>/dev/null || true)"
-  [[ -n "$sha" ]] || exit 1
-  printf '\356\202\240 @%s' "$sha"
-  exit 0
+  if [[ "$branch" == "HEAD" ]]; then
+    # Detached HEAD: fall back to the short commit hash
+    sha="$(git rev-parse --short HEAD 2>/dev/null || true)"
+    [[ -n "$sha" ]] || exit 1
+    printf '\356\202\240 @%s' "$sha"
+    exit 0
+  fi
+else
+  # Unborn branch (no commits yet): HEAD does not resolve to a commit
+  branch="$(git symbolic-ref --short -q HEAD 2>/dev/null || true)"
+  [[ -n "$branch" ]] || exit 1
+  toplevel="$(git rev-parse --show-toplevel 2>/dev/null || true)"
 fi
 
 # Worktree directories are named "repository.branch"; hide the branch when
 # the worktree root's name already equals or ends with it.
-toplevel="$(git rev-parse --show-toplevel 2>/dev/null || true)"
 dir_name="${toplevel##*/}"
 [[ -n "$dir_name" ]] || dir_name="${PWD##*/}"
 
