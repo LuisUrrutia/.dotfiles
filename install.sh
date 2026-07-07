@@ -187,6 +187,31 @@ ask_yes_no() {
   esac
 }
 
+check_full_disk_access() {
+  if has_full_disk_access; then
+    return 0
+  fi
+
+  section "Full Disk Access"
+  say "This terminal lacks Full Disk Access, which sandboxed app settings (Safari, Messages) need."
+  say "macOS requires restarting the terminal after granting it, so it's best to sort this out"
+  say "now instead of re-running the whole install later."
+
+  if ! is_interactive; then
+    note "Non-interactive run: continuing; sandboxed app settings will be skipped."
+    return 0
+  fi
+
+  open "x-apple.systempreferences:com.apple.preference.security?Privacy_AllFiles" 2>/dev/null || true
+  say "System Settings should now be open at Privacy & Security > Full Disk Access."
+
+  if ask_yes_no "Exit to grant Full Disk Access? (grant it, restart your terminal, re-run ./install.sh)" "y"; then
+    exit 0
+  fi
+
+  note "Continuing without Full Disk Access; sandboxed app settings will be skipped."
+}
+
 at_exit() {
   AT_EXIT+="${AT_EXIT:+$'\n'}"
   AT_EXIT+="${*?}"
@@ -898,6 +923,11 @@ print_install_plan() {
     plan_value "Machine config" "unregistered"
   fi
   plan_value "First run" "$FIRST_RUN"
+  if has_full_disk_access; then
+    plan_value "Full Disk Access" "granted"
+  else
+    plan_value "Full Disk Access" "missing (sandboxed app settings would be skipped)"
+  fi
 
   subsection "Brewfiles"
   plan_value "Core Brewfile" "$DOTFILES/brewfiles/core"
@@ -1213,6 +1243,7 @@ main() {
     exit 1
   fi
 
+  load_tool_library
   detect_state
   configure_machine_environment
   configure_install_plan
@@ -1223,6 +1254,8 @@ main() {
   if [[ "$DRY_RUN" == true ]]; then
     exit 0
   fi
+
+  check_full_disk_access
 
   /usr/bin/caffeinate -dimu -w $$ &
   setup_sudo_askpass

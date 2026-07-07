@@ -4,7 +4,9 @@
 
 set -euo pipefail
 
-: "${HOMEBREW_PREFIX:?HOMEBREW_PREFIX is not set}"
+# HOMEBREW_PREFIX is only required by the require_brew_* helpers (checked at
+# call time), so this file stays sourceable before Homebrew is installed —
+# the root installer loads it early for has_full_disk_access.
 DOTFILES="${DOTFILES:-$HOME/.dotfiles}"
 
 # Check if a Homebrew binary exists, warn and exit 0 if not
@@ -12,7 +14,7 @@ DOTFILES="${DOTFILES:-$HOME/.dotfiles}"
 # Sets: bin_path variable with full path to binary
 require_brew_bin() {
   local name="$1"
-  bin_path="${HOMEBREW_PREFIX}/bin/${name}"
+  bin_path="${HOMEBREW_PREFIX:?HOMEBREW_PREFIX is not set}/bin/${name}"
   if [[ ! -x "$bin_path" ]]; then
     echo "Warning: $name not found, skipping" >&2
     exit 0
@@ -24,7 +26,7 @@ require_brew_bin() {
 # Sets: opt_path variable with full path to package
 require_brew_opt() {
   local name="$1"
-  opt_path="${HOMEBREW_PREFIX}/opt/${name}"
+  opt_path="${HOMEBREW_PREFIX:?HOMEBREW_PREFIX is not set}/opt/${name}"
   if [[ ! -d "$opt_path" ]]; then
     echo "Warning: $name not found, skipping" >&2
     exit 0
@@ -49,6 +51,12 @@ require_app() {
 app_exists() {
   local name="$1"
   [[ -d "/Applications/${name}.app" ]]
+}
+
+# Check whether this terminal has Full Disk Access. ~/Library/Safari is
+# TCC-protected; listing it only succeeds when the permission is granted.
+has_full_disk_access() {
+  /bin/ls "$HOME/Library/Safari" >/dev/null 2>&1
 }
 
 sudo_askpass() {

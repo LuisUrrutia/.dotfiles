@@ -8,6 +8,7 @@ macos_step_failed=0
 macos_last_error=""
 macos_error_log="${DOTFILES_MACOS_ERROR_LOG:-${XDG_STATE_HOME:-$HOME/.local/state}/dotfiles/macos-install.log}"
 macos_failed_steps=()
+macos_skipped_settings=()
 
 setup_macos_error_log() {
   local log_dir
@@ -64,7 +65,41 @@ run_macos_step() {
   fi
 }
 
+# Best-effort `defaults` write for settings that need extra permissions
+# (sandboxed apps like Safari or Messages) or vary across macOS versions.
+# A failure is recorded as a skip instead of an error, and the rest of the
+# step keeps running.
+# Usage: defaults_try "<description>" write <domain> <key> ...
+defaults_try() {
+  local description="$1"
+  shift
+
+  if defaults "$@" 2>/dev/null; then
+    return 0
+  fi
+
+  macos_skipped_settings+=("$description")
+  echo "Skipped: $description (defaults $*)" >&2
+}
+
+request_full_disk_access() {
+  # Full Disk Access can't be granted programmatically (TCC forbids it by
+  # design). The most we can do is open the right Settings pane. macOS also
+  # requires restarting the terminal app after granting, so sandboxed-app
+  # settings apply on the next run.
+  has_full_disk_access && return 0
+
+  echo "Warning: this terminal lacks Full Disk Access; sandboxed app settings (Safari, Messages) will be skipped." >&2
+  echo "Grant it in the Settings pane that just opened, restart your terminal, and re-run this script." >&2
+  open "x-apple.systempreferences:com.apple.preference.security?Privacy_AllFiles" 2>/dev/null || true
+  return 1
+}
+
 summarize_macos_errors() {
+  if [[ "${#macos_skipped_settings[@]}" -gt 0 ]]; then
+    echo "Skipped ${#macos_skipped_settings[@]} best-effort setting(s): ${macos_skipped_settings[*]}" >&2
+  fi
+
   if [[ "$macos_error_count" -eq 0 ]]; then
     return
   fi
@@ -261,6 +296,9 @@ configure_dock_menu_bar() {
   defaults write com.apple.dock "expose-group-apps" -bool true
 
   # Show 24 hours clock instead of 12-hour format
+  # Ventura+ follows the Language & Region setting; Show24Hour is the
+  # pre-Ventura key, kept for older machines
+  defaults write NSGlobalDomain AppleICUForce24HourTime -bool true
   defaults write com.apple.menuextra.clock Show24Hour -int 1
 
   # Don't show siri in menubar to save space
@@ -271,7 +309,9 @@ configure_dock_menu_bar() {
   defaults -currentHost write com.apple.Spotlight MenuItemHidden -int 1
 
   # Show battery percentage in menubar
-  defaults write ~/Library/Preferences/ByHost/com.apple.controlcenter.plist BatteryShowPercentage -bool true
+  # Write through cfprefsd instead of the ByHost plist path so the change
+  # isn't overwritten from the daemon's cache
+  defaults -currentHost write com.apple.controlcenter BatteryShowPercentage -bool true
 }
 
 configure_updates_security() {
@@ -301,11 +341,35 @@ configure_updates_security() {
 
   # Enable firewall with sensible defaults
   sudo_askpass /usr/libexec/ApplicationFirewall/socketfilterfw --setblockall off --setallowsigned off --setallowsignedapp off --setstealthmode on --setglobalstate on
+}
 
-  # Enable FileVault disk encryption if not already enabled
+configure_filevault() {
+  ###############################################################################
+  # FileVault Disk Encryption                                                   #
+  ###############################################################################
+
+  # Enable FileVault if not already enabled
   # Improves security by encrypting the entire disk
-  if ! fdesetup status | grep -q "FileVault is On"; then
-    sudo_askpass fdesetup enable -user "$(whoami)"
+  if fdesetup status | grep -q "FileVault is On"; then
+    return 0
+  fi
+
+  if [[ ! -t 0 ]]; then
+    echo "Skipping FileVault enablement: needs an interactive terminal to prompt for the login password" >&2
+    return 0
+  fi
+
+  # fdesetup prints the recovery key to stdout exactly once; save a copy so
+  # it doesn't get lost in the scrollback
+  local key_file="$HOME/Desktop/FileVault Recovery Key.txt"
+
+  echo "Enabling FileVault; the recovery key will also be saved to: $key_file" >&2
+  if (umask 177 && sudo_askpass fdesetup enable -user "$(whoami)" | tee "$key_file"); then
+    echo "IMPORTANT: store the FileVault recovery key in your password manager, then delete '$key_file'." >&2
+  else
+    rm -f "$key_file"
+    echo "Warning: FileVault enablement failed" >&2
+    return 1
   fi
 }
 
@@ -322,10 +386,13 @@ configure_power_management() {
   sudo_askpass pmset -c sleep 0
   sudo_askpass pmset -c displaysleep 30
 
-  # Power management settings for battery power
+  # Power management settings for battery power (laptops only; -b fails on
+  # Macs without a battery)
   # Set display sleep to happen before system sleep
-  sudo_askpass pmset -b displaysleep 10
-  sudo_askpass pmset -b sleep 15
+  if pmset -g batt 2>/dev/null | grep -q "InternalBattery"; then
+    sudo_askpass pmset -b displaysleep 10
+    sudo_askpass pmset -b sleep 15
+  fi
 }
 
 configure_application_settings() {
@@ -431,10 +498,13 @@ restart_affected_services() {
   # Apply Changes & Restart Services                                            #
   ###############################################################################
 
-  # Restart affected services to apply changes immediately
-  killall -9 SystemUIServer
-  killall -9 Dock
-  killall Finder
+  # Restart affected services to apply changes immediately; killall exits
+  # non-zero when a process isn't running (headless or SSH sessions), which
+  # isn't an error here
+  local app
+  for app in SystemUIServer Dock Finder; do
+    killall "$app" 2>/dev/null || true
+  done
 }
 
 setup_macos_error_log
@@ -445,6 +515,7 @@ run_macos_step configure_screen_display
 run_macos_step configure_finder_files
 run_macos_step configure_dock_menu_bar
 run_macos_step configure_updates_security
+run_macos_step configure_filevault
 run_macos_step configure_power_management
 run_macos_step configure_application_settings
 run_macos_step configure_keyboard_shortcuts
