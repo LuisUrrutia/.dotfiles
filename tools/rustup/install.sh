@@ -4,6 +4,24 @@ source "${DOTFILES:-$HOME/.dotfiles}/tools/lib.sh"
 
 require_brew_bin rustup
 
+installed_toolchains="$("$bin_path" toolchain list 2>/dev/null || true)"
+stable_installed=false
+
+while IFS= read -r toolchain; do
+  toolchain="${toolchain%% *}"
+  if [[ "$toolchain" == stable || "$toolchain" == stable-* ]]; then
+    stable_installed=true
+    break
+  fi
+done <<<"$installed_toolchains"
+
+if $stable_installed; then
+  echo "Rust stable toolchain is already installed"
+else
+  "$bin_path" toolchain install stable
+  echo "Installed stable Rust toolchain"
+fi
+
 default_toolchain="$("$bin_path" default 2>/dev/null || true)"
 default_toolchain="${default_toolchain%% *}"
 
