@@ -7,6 +7,11 @@ require_brew_bin mise
 # Python and uv are installed by tools/mise (declared in mise's config.toml).
 eval "$("$bin_path" activate bash)"
 
+# uv installs tool executables into ~/.local/bin and warns if it's not on
+# PATH. Fish already adds it (conf.d/01_paths.fish); mirror that here so the
+# warning doesn't fire inside this non-interactive shell.
+export PATH="$HOME/.local/bin:$PATH"
+
 stow_config python
 
 # Install pre-commit
