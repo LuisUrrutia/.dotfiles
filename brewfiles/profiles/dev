@@ -1,3 +1,8 @@
+# label: Docker and development GUI tools
+# question: Do you need Docker, Android tools, or developer GUI apps?
+# summary: Docker, Yaak, Android tools, app inspection
+# aliases: dev-tools, development, docker
+
 cask "docker-desktop"         # Container platform
 brew "dive"                   # Docker image layer inspector
 cask "yaak"                   # API development environment

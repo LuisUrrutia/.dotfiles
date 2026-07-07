@@ -211,7 +211,9 @@ The repository uses **Catppuccin** theme consistently across tools:
 6. **Owner detection**: `install.sh` may default owner prompts differently, but
    install behavior is profile-based
 7. **Profile installs**: Core tools always installed, optional tools come from
-   `brewfiles/profiles/`
+   `brewfiles/profiles/`; each profile Brewfile starts with `# label:`,
+   `# question:`, `# summary:`, and optional `# aliases:` header metadata that
+   `install.sh` reads (adding a profile = adding one file)
 8. **Fish is default shell**: Configured last in install.sh
 9. **Git config split**: Shared Git defaults are tracked at
    `tools/git/config/.config/git/local.gitconfig`; machine identity/signing is

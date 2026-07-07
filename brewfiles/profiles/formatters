@@ -1,3 +1,8 @@
+# label: formatters and linters
+# question: Do you want extra formatter and linter tools?
+# summary: shfmt, markdownlint, stylua, yamlfmt, biome
+# aliases: formatter, lint, linters
+
 brew "shfmt"             # Shell script formatter
 brew "markdownlint-cli2" # Markdown linter
 brew "stylua"            # Lua formatter

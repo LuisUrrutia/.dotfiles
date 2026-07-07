@@ -1,3 +1,8 @@
+# label: streaming and recording tools
+# question: Are you going to stream or record video?
+# summary: Camo Studio, OBS, OBS scene automation
+# aliases: stream, obs
+
 cask "camo-studio"                 # iPhone as webcam
 cask "obs"                         # Streaming/recording
 cask "obs-advanced-scene-switcher" # OBS scene automation

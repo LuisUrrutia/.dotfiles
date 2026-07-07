@@ -7,10 +7,16 @@ export DOTFILES="${DOTFILES:-$SCRIPT_DIR}"
 
 MACHINES_DIR="$DOTFILES/machines"
 
+# Machine state lives outside the repo so a re-clone or git clean does not
+# re-trigger first-run tasks; the repo-local .installed path is the legacy spot.
+INSTALLED_MARKER="${XDG_STATE_HOME:-$HOME/.local/state}/dotfiles/installed"
+LEGACY_INSTALLED_MARKER="$DOTFILES/.installed"
+
 DRY_RUN=false
 ARG_ALL_PROFILES=false
 ARG_CORE_ONLY=false
 ARG_PROFILE_LIST=""
+ARG_NO_UPGRADE=false
 FIRST_RUN=false
 DETECTED_HARDWARE_HASH=""
 HAS_MACHINE_CONFIG=false
@@ -25,12 +31,13 @@ MACHINE_GIT_SIGNING_KEY=""
 MACHINE_GIT_SIGNING_PROGRAM=""
 ALL_PROFILES=false
 RUN_CLEANUP=false
+RUN_BREW_UPGRADE=true
 RUN_TOOL_INSTALLERS=true
 RUN_XCODE_SETUP=false
 RUN_FISH_SETUP=false
 RUN_PROJECTS_SETUP=false
 TOOLS_LIB_LOADED=false
-PROFILE_ORDER=(audio dev formatters languages web3 cloud image productivity streaming window)
+PROFILE_ORDER=() # populated from brewfiles/profiles/ by init_profile_order
 LANGUAGE_ORDER=(go lua rust perl)
 SELECTED_PROFILES=()
 SELECTED_LANGUAGES=()
@@ -43,6 +50,8 @@ SELECTED_PROFILE_BREWFILE=""
 BREW_BUNDLE_FAILURES=()
 
 usage() {
+  local profile=""
+
   cat <<'EOF'
 Usage: ./install.sh [options]
 
@@ -50,20 +59,18 @@ Options:
   -n, --dry-run          Show the install plan without changing the system
       --all-profiles     Install every optional profile
       --core-only        Install only core packages
-      --profile LIST     Install selected profiles (comma-separated)
+      --profile LIST     Install selected profiles (comma-separated, repeatable)
+      --no-upgrade       Skip updating/upgrading already-installed Homebrew packages
   -h, --help             Show this help
 
 Profile flags for scripted installs:
-  audio                  Focusrite Control, Loopback, SoundSource
-  dev                    Docker, Yaak, Android tools, app inspection
-  formatters             shfmt, markdownlint, stylua, yamlfmt, biome
-  languages              Go, Lua, Rust, Perl toolchains
-  web3                   Solidity, Ethereum, Stellar, Foundry
-  cloud                  AWS, Terraform, Cosign
-  image                  ImageMagick, libvips, AVIF/JPEG libraries
-  productivity           BusyCal
-  streaming              Camo Studio, OBS, OBS scene automation
-  window                 skhd
+EOF
+
+  for profile in "${PROFILE_ORDER[@]}"; do
+    printf '  %-22s %s\n' "$profile" "$(profile_metadata "$profile" summary)"
+  done
+
+  cat <<'EOF'
 
 Examples:
   ./install.sh --dry-run
@@ -233,22 +240,21 @@ parse_args() {
       ;;
     --profile)
       shift
-      if (($# == 0)); then
+      if (($# == 0)) || [[ -z "$1" ]]; then
         say "Error: --profile requires a comma-separated list" >&2
         exit 1
       fi
-      if [[ -z "$1" ]]; then
-        say "Error: --profile requires a comma-separated list" >&2
-        exit 1
-      fi
-      ARG_PROFILE_LIST="$1"
+      ARG_PROFILE_LIST="${ARG_PROFILE_LIST:+$ARG_PROFILE_LIST,}$1"
       ;;
     --profile=*)
-      ARG_PROFILE_LIST="${1#--profile=}"
-      if [[ -z "$ARG_PROFILE_LIST" ]]; then
+      if [[ -z "${1#--profile=}" ]]; then
         say "Error: --profile requires a comma-separated list" >&2
         exit 1
       fi
+      ARG_PROFILE_LIST="${ARG_PROFILE_LIST:+$ARG_PROFILE_LIST,}${1#--profile=}"
+      ;;
+    --no-upgrade)
+      ARG_NO_UPGRADE=true
       ;;
     -h | --help)
       usage
@@ -272,54 +278,74 @@ parse_args() {
     say "Error: --core-only and --profile cannot be used together" >&2
     exit 1
   fi
+
+  if [[ "$ARG_ALL_PROFILES" == true && -n "$ARG_PROFILE_LIST" ]]; then
+    say "Error: --all-profiles and --profile cannot be used together" >&2
+    exit 1
+  fi
+}
+
+# Each brewfiles/profiles/<name> file is the single source of truth for its
+# profile: the packages plus "# label:", "# question:", "# summary:", and
+# optional "# aliases:" header metadata.
+init_profile_order() {
+  local profile_file=""
+
+  PROFILE_ORDER=()
+  for profile_file in "$DOTFILES/brewfiles/profiles"/*; do
+    [[ -f "$profile_file" ]] || continue
+    PROFILE_ORDER+=("$(basename "$profile_file")")
+  done
+
+  if ((${#PROFILE_ORDER[@]} == 0)); then
+    say "Error: no profile Brewfiles found in $DOTFILES/brewfiles/profiles" >&2
+    exit 1
+  fi
+}
+
+profile_exists() {
+  array_contains "$1" "${PROFILE_ORDER[@]}"
+}
+
+profile_metadata() {
+  local profile="$1"
+  local key="$2"
+  local profile_file="$DOTFILES/brewfiles/profiles/$profile"
+  local value=""
+
+  value="$(sed -n "s/^# ${key}: *//p" "$profile_file" 2>/dev/null | sed -n 1p)"
+  if [[ -z "$value" ]]; then
+    say "Error: profile '$profile' is missing '# ${key}:' metadata in $profile_file" >&2
+    return 1
+  fi
+
+  say "$value"
 }
 
 profile_label() {
-  case "$1" in
-  audio) say "audio interface tools" ;;
-  dev) say "Docker and development GUI tools" ;;
-  formatters) say "formatters and linters" ;;
-  languages) say "extra programming language toolchains" ;;
-  web3) say "Web3 and blockchain tools" ;;
-  cloud) say "cloud and infrastructure tools" ;;
-  image) say "image processing libraries" ;;
-  productivity) say "productivity extras" ;;
-  streaming) say "streaming and recording tools" ;;
-  window) say "hotkey/window-management extras" ;;
-  *) return 1 ;;
-  esac
+  profile_metadata "$1" label
 }
 
 profile_question() {
-  case "$1" in
-  audio) say "Do you have an audio interface?" ;;
-  dev) say "Do you need Docker, Android tools, or developer GUI apps?" ;;
-  formatters) say "Do you want extra formatter and linter tools?" ;;
-  languages) say "programming language toolchains" ;;
-  web3) say "Are you working on Web3 or blockchain projects?" ;;
-  cloud) say "Do you work with AWS, Terraform, or cloud infrastructure?" ;;
-  image) say "Do you work with image or media processing libraries?" ;;
-  productivity) say "Do you want productivity extras like BusyCal?" ;;
-  streaming) say "Are you going to stream or record video?" ;;
-  window) say "Do you want hotkey and window-management tools?" ;;
-  *) return 1 ;;
-  esac
+  profile_metadata "$1" question
 }
 
 profile_brewfile() {
   local profile="$1"
 
-  profile_label "$profile" >/dev/null || return 1
+  profile_exists "$profile" || return 1
   say "$DOTFILES/brewfiles/profiles/$profile"
 }
 
-package_matches_filter() {
-  local package_name="$1"
+# bash 3.2 (the only bash on a fresh Mac) treats empty-array expansion as an
+# unbound variable under set -u, so callers must length-check before expanding.
+array_contains() {
+  local needle="$1"
+  local item=""
   shift
 
-  local wanted=""
-  for wanted in "$@"; do
-    [[ "$package_name" == "$wanted" ]] && return 0
+  for item in "$@"; do
+    [[ "$item" == "$needle" ]] && return 0
   done
 
   return 1
@@ -365,7 +391,7 @@ print_brewfile_entry_row() {
   local name="$2"
   local description="$3"
 
-  if ((${#BREWFILE_ENTRY_FILTER[@]} > 0)) && ! package_matches_filter "$name" "${BREWFILE_ENTRY_FILTER[@]}"; then
+  if ((${#BREWFILE_ENTRY_FILTER[@]} > 0)) && ! array_contains "$name" "${BREWFILE_ENTRY_FILTER[@]}"; then
     return
   fi
 
@@ -386,18 +412,15 @@ emit_matching_brewfile_line() {
   local name="$2"
   local line="$4"
 
-  if package_matches_filter "$name" "${BREWFILE_ENTRY_FILTER[@]}"; then
+  if array_contains "$name" "${BREWFILE_ENTRY_FILTER[@]}"; then
     printf '%s\n' "$line"
   fi
 }
 
 print_profile_packages() {
   local profile="$1"
-  local indent="${2:-  }"
-  shift
-  if (($#)); then
-    shift
-  fi
+  local indent="$2"
+  shift 2
 
   local profile_file=""
 
@@ -472,18 +495,8 @@ language_packages() {
 }
 
 language_selected() {
-  local candidate="$1"
-  local selected=""
-
-  # Length checks before expanding: bash 3.2 (the only bash on a fresh Mac)
-  # treats empty-array expansion as an unbound variable under set -u.
   ((${#SELECTED_LANGUAGES[@]} > 0)) || return 1
-
-  for selected in "${SELECTED_LANGUAGES[@]}"; do
-    [[ "$selected" == "$candidate" ]] && return 0
-  done
-
-  return 1
+  array_contains "$1" "${SELECTED_LANGUAGES[@]}"
 }
 
 add_language() {
@@ -502,15 +515,9 @@ add_language() {
 profile_package_selected() {
   local profile="$1"
   local package_name="$2"
-  local selected=""
 
   ((${#SELECTED_PROFILE_PACKAGES[@]} > 0)) || return 1
-
-  for selected in "${SELECTED_PROFILE_PACKAGES[@]}"; do
-    [[ "$selected" == "$profile:$package_name" ]] && return 0
-  done
-
-  return 1
+  array_contains "$profile:$package_name" "${SELECTED_PROFILE_PACKAGES[@]}"
 }
 
 add_profile_package() {
@@ -567,39 +574,38 @@ normalize_profile() {
   profile="${profile// /}"
   profile="${profile//_/-}"
 
-  case "$profile" in
-  audio | audio-interface | focusrite) say "audio" ;;
-  dev | dev-tools | development | docker) say "dev" ;;
-  formatter | formatters | lint | linters) say "formatters" ;;
-  language | languages | runtimes | toolchains) say "languages" ;;
-  web3 | blockchain | crypto) say "web3" ;;
-  cloud | infra | infrastructure | aws) say "cloud" ;;
-  image | images | media-processing) say "image" ;;
-  productivity | calendar | busycal) say "productivity" ;;
-  stream | streaming | obs) say "streaming" ;;
-  window | windows | skhd | hotkeys) say "window" ;;
-  *) return 1 ;;
-  esac
-}
+  local candidate=""
+  local aliases=""
+  local alias_list=()
 
-profile_selected() {
-  local candidate="$1"
-  local selected=""
+  for candidate in "${PROFILE_ORDER[@]}"; do
+    if [[ "$profile" == "$candidate" ]]; then
+      say "$candidate"
+      return 0
+    fi
 
-  ((${#SELECTED_PROFILES[@]} > 0)) || return 1
-
-  for selected in "${SELECTED_PROFILES[@]}"; do
-    [[ "$selected" == "$candidate" ]] && return 0
+    aliases="$(profile_metadata "$candidate" aliases 2>/dev/null || true)"
+    [[ -n "$aliases" ]] || continue
+    IFS=', ' read -r -a alias_list <<<"$aliases"
+    if ((${#alias_list[@]} > 0)) && array_contains "$profile" "${alias_list[@]}"; then
+      say "$candidate"
+      return 0
+    fi
   done
 
   return 1
+}
+
+profile_selected() {
+  ((${#SELECTED_PROFILES[@]} > 0)) || return 1
+  array_contains "$1" "${SELECTED_PROFILES[@]}"
 }
 
 add_profile() {
   local profile="$1"
   local brewfile=""
 
-  profile_label "$profile" >/dev/null || {
+  profile_exists "$profile" || {
     say "Error: unknown profile: $profile" >&2
     exit 1
   }
@@ -687,8 +693,16 @@ ask_language_questions() {
 }
 
 detect_state() {
-  [[ -f "$DOTFILES/.installed" ]] && FIRST_RUN=false || FIRST_RUN=true
-  DETECTED_HARDWARE_HASH="$(detected_hardware_hash 2>/dev/null || true)"
+  if [[ -f "$INSTALLED_MARKER" || -f "$LEGACY_INSTALLED_MARKER" ]]; then
+    FIRST_RUN=false
+  else
+    FIRST_RUN=true
+  fi
+
+  if ! DETECTED_HARDWARE_HASH="$(detected_hardware_hash 2>/dev/null)"; then
+    DETECTED_HARDWARE_HASH=""
+    note "Hardware hash detection failed; treating this machine as unregistered."
+  fi
   load_active_machine "$DETECTED_HARDWARE_HASH"
 }
 
@@ -822,12 +836,16 @@ configure_cleanup_plan() {
 
 configure_system_plan() {
   RUN_TOOL_INSTALLERS=true
+  RUN_BREW_UPGRADE=true
+
+  if [[ "$ARG_NO_UPGRADE" == true ]]; then
+    RUN_BREW_UPGRADE=false
+  fi
 
   if [[ "$FIRST_RUN" == true ]]; then
     RUN_PROJECTS_SETUP=true
     RUN_XCODE_SETUP=true
     RUN_FISH_SETUP=true
-
   fi
 }
 
@@ -939,6 +957,11 @@ print_install_plan() {
 
   subsection "Planned actions"
   plan_value "Install Homebrew" "$brew_missing"
+  if [[ "$brew_missing" == "yes" ]]; then
+    plan_value "Upgrade existing packages" "n/a (installing Homebrew)"
+  else
+    plan_value "Upgrade existing packages" "$RUN_BREW_UPGRADE"
+  fi
   plan_value "Xcode setup" "$RUN_XCODE_SETUP"
   plan_value "Run Homebrew cleanup" "$RUN_CLEANUP"
   plan_value "Tool configs/macOS settings" "$RUN_TOOL_INSTALLERS"
@@ -950,7 +973,7 @@ print_install_plan() {
   list_tool_installers
 
   if [[ "$DRY_RUN" == true ]]; then
-    note "Dry run: exiting before sudo, keychain, Homebrew, mas, cleanup, Stow, chsh, mkdir, or .installed changes."
+    note "Dry run: exiting before sudo, keychain, Homebrew, mas, cleanup, Stow, chsh, mkdir, or install-marker changes."
   fi
 }
 
@@ -1017,9 +1040,13 @@ load_homebrew() {
 }
 
 setup_sudo_askpass() {
+  # security -i tokenizes double-quoted strings with \\ and \" as the only
+  # escapes; single quotes cannot safely wrap arbitrary passwords.
   (
     builtin read -r -s -p "Password: "
-    builtin echo "add-generic-password -U -s 'dotfiles' -a '${USER}' -w '${REPLY}'"
+    REPLY="${REPLY//\\/\\\\}"
+    REPLY="${REPLY//\"/\\\"}"
+    builtin echo "add-generic-password -U -s 'dotfiles' -a '${USER}' -w \"${REPLY}\""
   ) | /usr/bin/security -i
   printf "\n"
 
@@ -1048,7 +1075,8 @@ printf '\e[0;33mDeleting SUDO_ASKPASS script ...\e[0m\n'
     DOTFILES_USE_SUDO_ASKPASS=true
   else
     DOTFILES_USE_SUDO_ASKPASS=false
-    printf '\e[0;33mSUDO_ASKPASS helper failed; falling back to interactive sudo.\e[0m\n' 1>&2
+    printf '\e[0;33mSUDO_ASKPASS helper failed; removing keychain entry and falling back to interactive sudo.\e[0m\n' 1>&2
+    /usr/bin/security delete-generic-password -s 'dotfiles' -a "${USER}" >/dev/null 2>&1 || true
     /usr/bin/sudo -v
   fi
 
@@ -1075,35 +1103,47 @@ install_homebrew() {
   if ! command -v brew >/dev/null 2>&1 && [[ ! -x "/opt/homebrew/bin/brew" ]]; then
     say "Installing Homebrew..."
     NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-  else
-    load_homebrew
-    say "Updating Homebrew..."
-    brew update -q
-    brew upgrade -q
+    return
   fi
+
+  load_homebrew
+  if [[ "$RUN_BREW_UPGRADE" != true ]]; then
+    say "Skipping Homebrew update/upgrade (--no-upgrade)."
+    return
+  fi
+
+  say "Updating Homebrew..."
+  brew update -q
+  brew upgrade -q
 }
 
 install_packages() {
+  local profiles=()
+  local label=""
+  local source_label=""
+
   section "Homebrew packages"
   run_brew_bundle_install "core packages" "$DOTFILES/brewfiles/core"
 
   if [[ "$ALL_PROFILES" == true ]]; then
-    SELECTED_PROFILE_BREWFILE="$(mktemp)"
-    at_exit "
-/bin/rm -f '${SELECTED_PROFILE_BREWFILE}'
-    "
-    create_profile_brewfile "$SELECTED_PROFILE_BREWFILE" "${PROFILE_ORDER[@]}"
-    run_brew_bundle_install "optional profile packages" "$SELECTED_PROFILE_BREWFILE" "generated all-profiles Brewfile"
+    profiles=("${PROFILE_ORDER[@]}")
+    label="optional profile packages"
+    source_label="generated all-profiles Brewfile"
   elif ((${#SELECTED_PROFILES[@]} > 0)); then
-    SELECTED_PROFILE_BREWFILE="$(mktemp)"
-    at_exit "
-/bin/rm -f '${SELECTED_PROFILE_BREWFILE}'
-    "
-    create_profile_brewfile "$SELECTED_PROFILE_BREWFILE" "${SELECTED_PROFILES[@]}"
-    run_brew_bundle_install "selected profile packages" "$SELECTED_PROFILE_BREWFILE" "generated selected-profiles Brewfile"
+    profiles=("${SELECTED_PROFILES[@]}")
+    label="selected profile packages"
+    source_label="generated selected-profiles Brewfile"
   else
     say "Skipping optional profile Brewfiles."
+    return
   fi
+
+  SELECTED_PROFILE_BREWFILE="$(mktemp)"
+  at_exit "
+/bin/rm -f '${SELECTED_PROFILE_BREWFILE}'
+  "
+  create_profile_brewfile "$SELECTED_PROFILE_BREWFILE" "${profiles[@]}"
+  run_brew_bundle_install "$label" "$SELECTED_PROFILE_BREWFILE" "$source_label"
 }
 
 brew_bundle_failed() {
@@ -1231,6 +1271,7 @@ print_next_steps() {
 }
 
 main() {
+  init_profile_order
   parse_args "$@"
 
   if [[ $EUID -eq 0 ]]; then
@@ -1257,6 +1298,10 @@ main() {
 
   check_full_disk_access
 
+  # Turn fatal signals into a normal exit so the at_exit cleanup
+  # (keychain entry, askpass script, temp Brewfiles) still runs.
+  trap 'exit 129' HUP INT TERM
+
   /usr/bin/caffeinate -dimu -w $$ &
   setup_sudo_askpass
   start_sudo_keepalive
@@ -1268,8 +1313,12 @@ main() {
   if [[ "$RUN_XCODE_SETUP" == true ]]; then
     section "Xcode"
     brew install mas
-    mas install 497799835
-    sudo_askpass xcodebuild -license accept
+    if mas install 497799835; then
+      sudo_askpass xcodebuild -license accept
+    else
+      note "mas could not install Xcode (are you signed in to the App Store?); skipping Xcode setup."
+      note "Install Xcode from the App Store, then run: sudo xcodebuild -license accept"
+    fi
   fi
 
   install_packages
@@ -1284,7 +1333,9 @@ main() {
     exit 1
   fi
 
-  touch "$DOTFILES/.installed"
+  mkdir -p "$(dirname "$INSTALLED_MARKER")"
+  touch "$INSTALLED_MARKER"
+  rm -f "$LEGACY_INSTALLED_MARKER"
   print_next_steps
 }
 

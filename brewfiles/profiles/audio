@@ -1,3 +1,8 @@
+# label: audio interface tools
+# question: Do you have an audio interface?
+# summary: Focusrite Control, Loopback, SoundSource
+# aliases: audio-interface, focusrite
+
 cask "focusrite-control-2" # Audio interface control
 cask "loopback"            # Audio routing
 cask "soundsource"         # Audio control

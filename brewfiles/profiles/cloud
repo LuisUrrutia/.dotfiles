@@ -1,3 +1,8 @@
+# label: cloud and infrastructure tools
+# question: Do you work with AWS, Terraform, or cloud infrastructure?
+# summary: gcloud, AWS CLI, kubectl, Helm, Terraform, Cosign
+# aliases: infra, infrastructure, aws
+
 cask "gcloud-cli"              # Google Cloud CLI
 brew "awscli"                  # AWS CLI
 brew "aws-sam-cli"             # AWS SAM CLI

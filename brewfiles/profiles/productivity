@@ -1,1 +1,6 @@
+# label: productivity extras
+# question: Do you want productivity extras like BusyCal?
+# summary: BusyCal
+# aliases: calendar, busycal
+
 cask "busycal" # Calendar and tasks

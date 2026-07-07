@@ -1,3 +1,8 @@
+# label: extra programming language toolchains
+# question: Do you want extra programming language toolchains?
+# summary: Go, Lua, Rust, Perl toolchains
+# aliases: language, runtimes, toolchains
+
 brew "go"       # Go
 brew "lua"      # Lua
 brew "rustup"   # Rust toolchain manager

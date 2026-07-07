@@ -1,3 +1,8 @@
+# label: Web3 and blockchain tools
+# question: Are you working on Web3 or blockchain projects?
+# summary: Solidity, Ethereum, Stellar, Foundry
+# aliases: blockchain, crypto
+
 brew "solidity"    # Ethereum smart contract language
 brew "ethereum"    # Ethereum tools
 brew "stellar-cli" # Stellar CLI

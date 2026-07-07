@@ -1,1 +1,6 @@
+# label: hotkey/window-management extras
+# question: Do you want hotkey and window-management tools?
+# summary: skhd
+# aliases: windows, skhd, hotkeys
+
 brew "asmvik/formulae/skhd", trusted: true # Hotkey daemon

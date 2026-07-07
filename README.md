@@ -45,7 +45,7 @@ audio interface?" so the installer selects the right optional tool groups.
 
 - refuses to run as root or outside macOS
 - supports `--dry-run` so you can inspect the plan before sudo, Homebrew,
-  cleanup, Stow, shell changes, directory creation, or `.installed` writes
+  cleanup, Stow, shell changes, directory creation, or install-marker writes
 - asks plain-language questions, shows the packages/apps behind each yes, then
   maps the answers to optional profile Brewfiles
 - prompts for your password, stores it temporarily in Keychain, and removes it
@@ -62,7 +62,9 @@ audio interface?" so the installer selects the right optional tool groups.
   values only to machine-local `~/.gitconfig`
 - optionally reads a `machines/<hardware-hash>.sh` file to choose an install
   mode, hostname, and local Git identity without storing it in shared Git config
-- writes `.installed` so first-run work does not repeat
+- writes an install marker to `~/.local/state/dotfiles/installed` so first-run
+  work does not repeat (a legacy repo-local `.installed` file is still honored
+  and cleaned up)
 
 Several tool installers have real side effects: macOS defaults, shell
 registration, tmux plugin setup, service starts, generated completions,
@@ -100,8 +102,11 @@ Available profile flags: `audio`, `dev`, `formatters`, `languages`, `web3`,
 scriptable names for the same question-driven tool groups.
 
 `brewfiles/profiles/` is the installer's optional-package source of truth, one
-Brewfile per profile. The installer joins the files selected by answers or
-`--profile` into a temporary Brewfile.
+Brewfile per profile. Each file starts with `# label:`, `# question:`,
+`# summary:`, and optional `# aliases:` header comments that drive the
+interactive questions, `--help` text, and `--profile` flag aliases — adding a
+profile means adding one file. The installer joins the files selected by
+answers or `--profile` into a temporary Brewfile.
 
 The interactive language question behaves like a lightweight checkbox list:
 Go, Lua, Rust, and Perl are all enabled by default, and you can answer `n` for
