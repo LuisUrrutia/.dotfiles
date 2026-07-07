@@ -1,6 +1,6 @@
 --[[
 Caffeinate at Home Module for Hammerspoon
-Prevents sleep and disables screensaver password when on home WiFi networks
+Prevents sleep when on home WiFi networks and AC power
 --]]
 
 local mod = {}
@@ -8,10 +8,14 @@ local mod = {}
 ---@type { d: fun(message: string), i: fun(message: string), w: fun(message: string), e: fun(message: string) }
 local log = hs.logger.new('caffeinate_at_home')
 
-local screensaver = require('utils.screensaver')
+-- WiFi transitions briefly report a nil SSID; wait this long before
+-- treating a nil SSID as a real network change
+local WIFI_SETTLE_DELAY = 5
 
 local wifi_watcher = nil
 local battery_watcher = nil
+local wake_watcher = nil
+local settle_timer = nil
 local home_SSID_set = {}
 
 local function set_caffeinate(enabled)
@@ -32,9 +36,9 @@ local function request_location_services()
     hs.location.get()
 end
 
--- Handle WiFi change events
+-- Apply caffeinate state for the current WiFi network and power source
 -- @return nil
-local function on_wifi_change()
+local function evaluate()
     local current_SSID = hs.wifi.currentNetwork()
     local current_SSID_label = current_SSID or "<unavailable>"
 
@@ -44,7 +48,6 @@ local function on_wifi_change()
         log.i("On home WiFi: prevent sleep")
 
         set_caffeinate(true)
-        screensaver.set_require_password(false)
     else
         if not current_SSID then
             log.w("WiFi SSID unavailable. Check Hammerspoon Location Services permission.")
@@ -53,7 +56,31 @@ local function on_wifi_change()
         log.i("Allow normal sleep. Current SSID: " .. current_SSID_label .. ", power: " .. hs.battery.powerSource())
 
         set_caffeinate(false)
-        screensaver.set_require_password(true)
+    end
+end
+
+-- Handle WiFi/power change events, debouncing transient nil SSIDs
+-- @return nil
+local function on_change()
+    if settle_timer then
+        settle_timer:stop()
+        settle_timer = nil
+    end
+
+    if not hs.wifi.currentNetwork() then
+        settle_timer = hs.timer.doAfter(WIFI_SETTLE_DELAY, function()
+            settle_timer = nil
+            evaluate()
+        end)
+        return
+    end
+
+    evaluate()
+end
+
+local function on_wake(event_type)
+    if event_type == hs.caffeinate.watcher.systemDidWake then
+        on_change()
     end
 end
 
@@ -74,9 +101,9 @@ local function normalize_SSIDs(SSIDs)
     return SSID_set
 end
 
--- Start the caffeinate at home mod
--- @param SSID string - The SSID of the home WiFi network
--- @return nil
+-- Start the caffeinate at home mod; restarts with the new list if running
+-- @param SSIDs table - The SSIDs of the home WiFi networks
+-- @return boolean
 function mod.start(SSIDs)
     local SSID_set = normalize_SSIDs(SSIDs)
     if not SSID_set then
@@ -84,8 +111,9 @@ function mod.start(SSIDs)
         return false
     end
 
-    if wifi_watcher or battery_watcher then
-        return true
+    if wifi_watcher or battery_watcher or wake_watcher then
+        log.i("Already running; restarting with new SSIDs")
+        mod.stop()
     end
 
     log.i("Starting caffeinate at home mod with SSIDs: " .. table.concat(SSIDs, ", "))
@@ -93,13 +121,15 @@ function mod.start(SSIDs)
     request_location_services()
 
     home_SSID_set = SSID_set
-    wifi_watcher = hs.wifi.watcher.new(on_wifi_change)
+    wifi_watcher = hs.wifi.watcher.new(on_change)
     wifi_watcher:start()
-    battery_watcher = hs.battery.watcher.new(on_wifi_change)
+    battery_watcher = hs.battery.watcher.new(on_change)
     battery_watcher:start()
+    wake_watcher = hs.caffeinate.watcher.new(on_wake)
+    wake_watcher:start()
 
     -- Run once at startup
-    on_wifi_change()
+    on_change()
 
     return true
 end
@@ -117,9 +147,18 @@ function mod.stop()
         battery_watcher = nil
     end
 
+    if wake_watcher then
+        wake_watcher:stop()
+        wake_watcher = nil
+    end
+
+    if settle_timer then
+        settle_timer:stop()
+        settle_timer = nil
+    end
+
     home_SSID_set = {}
     set_caffeinate(false)
-    screensaver.set_require_password(true)
 end
 
 return mod

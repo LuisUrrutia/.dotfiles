@@ -8,37 +8,76 @@ local mod = {}
 local log = hs.logger.new('bluetooth_sleep_manager')
 local bluetooth = require('utils.bluetooth')
 
+-- How long to wait after wake (and between retries) before reconnecting
+local RECONNECT_DELAY = 2
+-- Give up reconnecting after this many failed attempts per wake
+local MAX_RECONNECT_ATTEMPTS = 5
+
 -- Store addresses of devices that were connected before sleep
 local previous_connected = {}
 local reconnect_timer = nil
+local reconnect_attempts = 0
 
 -- Caffeinate watcher instance
 local caffeinate_watcher = nil
 
--- Handle sleep/wake events for Bluetooth devices
--- @param eventType number - Caffeinate event type constant
-local function has_previous_connected()
-    for _ in pairs(previous_connected) do
-        return true
-    end
+local reconnect_previous
 
-    return false
+local function has_previous_connected()
+    return next(previous_connected) ~= nil
 end
 
-local function reconnect_previous()
+local function retry_or_give_up(reason)
+    reconnect_attempts = reconnect_attempts + 1
+
+    if reconnect_attempts >= MAX_RECONNECT_ATTEMPTS then
+        log.w(reason .. "; giving up after " .. reconnect_attempts .. " attempts")
+        previous_connected = {}
+        reconnect_attempts = 0
+        return
+    end
+
+    log.w(reason .. "; retrying in " .. RECONNECT_DELAY .. "s")
+    reconnect_timer = hs.timer.doAfter(RECONNECT_DELAY, reconnect_previous)
+end
+
+-- Drop devices that reconnected; retry the rest until attempts run out
+local function verify_reconnect()
     reconnect_timer = nil
 
-    if (not bluetooth.is_powered_on()) then
-        log.w("Machine woke up but Bluetooth is not powered on; reconnect deferred")
+    if not has_previous_connected() then
+        reconnect_attempts = 0
+        return
+    end
+
+    retry_or_give_up("Some Bluetooth devices failed to reconnect")
+end
+
+reconnect_previous = function()
+    reconnect_timer = nil
+
+    if not bluetooth.is_powered_on() then
+        retry_or_give_up("Machine woke up but Bluetooth is not powered on")
         return
     end
 
     log.i("Machine woke up: reconnecting Bluetooth devices")
+
+    local addresses = {}
     for address in pairs(previous_connected) do
-        bluetooth.connect(address)
+        table.insert(addresses, address)
     end
 
-    previous_connected = {}
+    for _, address in ipairs(addresses) do
+        bluetooth.connect(address, function(ok)
+            if ok then
+                previous_connected[address] = nil
+            end
+        end)
+    end
+
+    -- Give the async connects time to settle before checking for stragglers
+    reconnect_timer = hs.timer.doAfter(RECONNECT_DELAY, verify_reconnect)
 end
 
 local function watch(eventType)
@@ -67,7 +106,8 @@ local function watch(eventType)
         -- Reconnect all previously connected devices
         -- when the machine wakes up
         if has_previous_connected() and not reconnect_timer then
-            reconnect_timer = hs.timer.doAfter(2, reconnect_previous)
+            reconnect_attempts = 0
+            reconnect_timer = hs.timer.doAfter(RECONNECT_DELAY, reconnect_previous)
         end
     end
 end
@@ -100,6 +140,7 @@ function mod.stop()
     end
 
     previous_connected = {}
+    reconnect_attempts = 0
 end
 
 return mod

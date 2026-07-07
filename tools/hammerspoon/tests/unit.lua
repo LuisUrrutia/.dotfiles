@@ -61,6 +61,9 @@ local function build_hs()
         timers = {},
         hotkey = {},
         json = {},
+        task = {},
+        task_fail = {},
+        fs = { files = { ["/opt/homebrew/bin/blueutil"] = true } },
         bluetooth_powered_on = true,
     }
 
@@ -71,10 +74,6 @@ local function build_hs()
 
     function hs.caffeinate.set(kind, value, ac_and_battery)
         table.insert(hs.calls, { type = "caffeinate_set", kind = kind, value = value, ac_and_battery = ac_and_battery })
-    end
-
-    function hs.caffeinate.get(kind)
-        return hs.caffeinate.values and hs.caffeinate.values[kind] or false
     end
 
     function hs.caffeinate.watcher.new(fn)
@@ -176,6 +175,27 @@ local function build_hs()
         return "", true, "exit", 0
     end
 
+    function hs.task.new(path, callback, arguments)
+        return {
+            start = function(self)
+                table.insert(hs.calls, { type = "task", path = path, arguments = arguments })
+                local exit_code = hs.task_fail[arguments[#arguments]] and 1 or 0
+                if callback then
+                    callback(exit_code, "", "")
+                end
+                return self
+            end,
+        }
+    end
+
+    function hs.fs.attributes(path, attribute)
+        table.insert(hs.calls, { type = "fs_attributes", path = path, attribute = attribute })
+        if hs.fs.files[path] then
+            return "file"
+        end
+        return nil
+    end
+
     function hs.json.decode(value)
         if value == "bad" then
             error("bad json")
@@ -192,6 +212,29 @@ local function load_module(name)
     return require(name)
 end
 
+local function count_calls(hs, predicate)
+    local count = 0
+    for _, call in ipairs(hs.calls) do
+        if predicate(call) then
+            count = count + 1
+        end
+    end
+    return count
+end
+
+local function count_disconnects(hs)
+    return count_calls(hs, function(call)
+        return call.type == "execute" and call.command:find("%-%-disconnect") ~= nil
+    end)
+end
+
+local function count_connects(hs, address)
+    return count_calls(hs, function(call)
+        return call.type == "task" and call.arguments[1] == "--connect"
+            and (address == nil or call.arguments[2] == address)
+    end)
+end
+
 test("bluetooth manager uses system sleep events, dedupes devices, and delays reconnect", function()
     local hs = build_hs()
     hs.json.next_value = {
@@ -206,22 +249,14 @@ test("bluetooth manager uses system sleep events, dedupes devices, and delays re
     hs.caffeinate.callback(hs.caffeinate.watcher.systemWillSleep)
     hs.caffeinate.callback(hs.caffeinate.watcher.systemDidWake)
     hs.timers[1]:fire()
+    hs.timers[2]:fire()
 
-    local disconnects = 0
-    local connects = 0
-    local timers = 0
-    for _, call in ipairs(hs.calls) do
-        if call.type == "execute" and call.command:find("%-%-disconnect") then disconnects = disconnects + 1 end
-        if call.type == "execute" and call.command:find("%s%-%-connect%s") then connects = connects + 1 end
-        if call.type == "timer" then timers = timers + 1 end
-    end
-
-    assert_equal(disconnects, 1, "system sleep should disconnect each device once")
-    assert_equal(connects, 1, "system wake should reconnect each device once")
-    assert_equal(timers, 1, "wake reconnect should be delayed")
+    assert_equal(count_disconnects(hs), 1, "system sleep should disconnect each device once")
+    assert_equal(count_connects(hs), 1, "system wake should reconnect each device once")
+    assert_equal(#hs.timers, 2, "wake should schedule a delayed reconnect and a settle check")
 end)
 
-test("bluetooth manager retries reconnect after Bluetooth is unavailable", function()
+test("bluetooth manager retries when Bluetooth is off after wake", function()
     local hs = build_hs()
     hs.json.next_value = {
         { address = "aa-bb-cc-dd-ee-ff" },
@@ -236,19 +271,67 @@ test("bluetooth manager retries reconnect after Bluetooth is unavailable", funct
     hs.caffeinate.callback(hs.caffeinate.watcher.systemDidWake)
     hs.timers[1]:fire()
 
-    hs.bluetooth_powered_on = true
-    hs.caffeinate.callback(hs.caffeinate.watcher.systemDidWake)
-    hs.timers[2]:fire()
+    assert_equal(#hs.timers, 2, "powered-off Bluetooth should schedule a retry")
 
-    local connects = 0
-    local timers = 0
-    for _, call in ipairs(hs.calls) do
-        if call.type == "execute" and call.command:find("%s%-%-connect%s") then connects = connects + 1 end
-        if call.type == "timer" then timers = timers + 1 end
+    hs.bluetooth_powered_on = true
+    hs.timers[2]:fire()
+    hs.timers[3]:fire()
+
+    assert_equal(count_connects(hs), 1, "retry should reconnect the remembered device")
+    assert_equal(#hs.timers, 3, "successful reconnect should stop retrying")
+end)
+
+test("bluetooth manager gives up reconnecting after max attempts", function()
+    local hs = build_hs()
+    hs.json.next_value = {
+        { address = "aa-bb-cc-dd-ee-ff" },
+    }
+
+    local bluetooth_sleep_manager = load_module("modules.bluetooth_sleep_manager")
+    bluetooth_sleep_manager.start()
+
+    hs.caffeinate.callback(hs.caffeinate.watcher.systemWillSleep)
+
+    hs.bluetooth_powered_on = false
+    hs.caffeinate.callback(hs.caffeinate.watcher.systemDidWake)
+
+    local index = 1
+    while hs.timers[index] do
+        hs.timers[index]:fire()
+        index = index + 1
     end
 
-    assert_equal(connects, 1, "later wake should reconnect the remembered device")
-    assert_equal(timers, 2, "failed reconnect should clear pending timer for a later wake")
+    assert_equal(#hs.timers, 5, "retries should stop after the attempt limit")
+    assert_equal(count_connects(hs), 0, "no reconnect should run while Bluetooth is off")
+
+    hs.caffeinate.callback(hs.caffeinate.watcher.systemDidWake)
+    assert_equal(#hs.timers, 5, "given-up devices should not be retried on a later wake")
+end)
+
+test("bluetooth manager retries only devices that failed to reconnect", function()
+    local hs = build_hs()
+    hs.json.next_value = {
+        { address = "aa-bb-cc-dd-ee-01" },
+        { address = "aa-bb-cc-dd-ee-02" },
+    }
+
+    local bluetooth_sleep_manager = load_module("modules.bluetooth_sleep_manager")
+    bluetooth_sleep_manager.start()
+
+    hs.caffeinate.callback(hs.caffeinate.watcher.systemWillSleep)
+    hs.caffeinate.callback(hs.caffeinate.watcher.systemDidWake)
+
+    hs.task_fail["aa-bb-cc-dd-ee-01"] = true
+    hs.timers[1]:fire()
+    hs.timers[2]:fire()
+
+    hs.task_fail["aa-bb-cc-dd-ee-01"] = nil
+    hs.timers[3]:fire()
+    hs.timers[4]:fire()
+
+    assert_equal(count_connects(hs, "aa-bb-cc-dd-ee-01"), 2, "failed device should be retried")
+    assert_equal(count_connects(hs, "aa-bb-cc-dd-ee-02"), 1, "connected device should not be retried")
+    assert_equal(#hs.timers, 4, "retry loop should stop once every device reconnected")
 end)
 
 test("bluetooth manager start is idempotent", function()
@@ -278,6 +361,62 @@ test("bluetooth manager requests Bluetooth permission at startup", function()
 
     assert_equal(probes, 1, "start should probe Bluetooth permission once")
     assert_false(with_user_env, "blueutil permission probe should not use user shell env")
+end)
+
+test("bluetooth utility resolves blueutil from the Intel Homebrew prefix", function()
+    local hs = build_hs()
+    hs.fs.files = { ["/usr/local/bin/blueutil"] = true }
+
+    local bluetooth = load_module("utils.bluetooth")
+    bluetooth.request_permission()
+
+    local intel_probes = count_calls(hs, function(call)
+        return call.type == "execute" and call.command == "/usr/local/bin/blueutil --paired"
+    end)
+
+    assert_equal(intel_probes, 1, "Intel Homebrew path should be used when Apple Silicon path is missing")
+end)
+
+test("bluetooth utility fails gracefully when blueutil is missing", function()
+    local hs = build_hs()
+    hs.fs.files = {}
+
+    local bluetooth = load_module("utils.bluetooth")
+
+    local connect_result = nil
+    assert_false(bluetooth.request_permission(), "permission probe should fail without blueutil")
+    assert_equal(#bluetooth.connected_devices(), 0, "device listing should be empty without blueutil")
+    assert_false(bluetooth.connect("aa-bb-cc-dd-ee-ff", function(ok) connect_result = ok end),
+        "connect should not start without blueutil")
+    assert_false(connect_result, "connect callback should report failure")
+
+    local shell_calls = count_calls(hs, function(call)
+        return call.type == "execute" or call.type == "task"
+    end)
+    assert_equal(shell_calls, 0, "missing blueutil should never shell out")
+end)
+
+test("bluetooth utility validates addresses and ignores failed blueutil output", function()
+    local hs = build_hs()
+    local bluetooth = load_module("utils.bluetooth")
+
+    local connect_result = nil
+    assert_false(bluetooth.connect("not valid; rm -rf ~", function(ok) connect_result = ok end),
+        "invalid addresses should be rejected")
+    assert_false(connect_result, "connect callback should report failure for invalid addresses")
+    assert_false(bluetooth.disconnect("not valid; rm -rf ~"), "invalid addresses should be rejected")
+
+    hs.execute = function(command)
+        table.insert(hs.calls, { type = "execute", command = command })
+        return "bad", false, "exit", 1
+    end
+
+    assert_equal(#bluetooth.connected_devices(), 0, "failed blueutil should return no devices")
+
+    local shell_calls = count_calls(hs, function(call)
+        return call.type == "execute" or call.type == "task"
+    end)
+    assert_equal(shell_calls, 1, "invalid addresses should not execute shell commands")
 end)
 
 test("caffeinate at home enables only on home wifi and AC power", function()
@@ -314,6 +453,7 @@ test("caffeinate at home requests location before checking wifi", function()
     local caffeinate_at_home = load_module("modules.caffeinate_at_home")
 
     caffeinate_at_home.start({ "Shadow" })
+    hs.timers[1]:fire()
 
     local location_get_index = nil
     local wifi_lookup_index = nil
@@ -330,61 +470,95 @@ test("caffeinate at home requests location before checking wifi", function()
     assert_equal(disabled, 2, "unavailable SSID should allow system and display idle")
 end)
 
-test("caffeinate at home validates SSIDs and restores secure defaults on stop", function()
+test("caffeinate at home debounces transient nil SSIDs", function()
+    local hs = build_hs()
+    hs.battery.source = "AC Power"
+    hs.wifi.current = "Shadow"
+    local caffeinate_at_home = load_module("modules.caffeinate_at_home")
+
+    caffeinate_at_home.start({ "Shadow" })
+
+    hs.wifi.current = nil
+    hs.wifi.callback()
+
+    local disabled_after_blip = count_calls(hs, function(call)
+        return call.type == "caffeinate_set" and not call.value
+    end)
+    assert_equal(disabled_after_blip, 0, "transient nil SSID should not immediately allow sleep")
+
+    hs.wifi.current = "Shadow"
+    hs.wifi.callback()
+    hs.timers[1]:fire()
+
+    local disabled = count_calls(hs, function(call)
+        return call.type == "caffeinate_set" and not call.value
+    end)
+    assert_equal(disabled, 0, "SSID returning during the settle window should keep caffeinate on")
+end)
+
+test("caffeinate at home applies a nil SSID that persists past the settle window", function()
+    local hs = build_hs()
+    hs.battery.source = "AC Power"
+    hs.wifi.current = "Shadow"
+    local caffeinate_at_home = load_module("modules.caffeinate_at_home")
+
+    caffeinate_at_home.start({ "Shadow" })
+
+    hs.wifi.current = nil
+    hs.wifi.callback()
+    hs.timers[1]:fire()
+
+    local disabled = count_calls(hs, function(call)
+        return call.type == "caffeinate_set" and not call.value
+    end)
+    assert_equal(disabled, 2, "a persistent nil SSID should allow system and display idle")
+end)
+
+test("caffeinate at home re-evaluates on system wake", function()
+    local hs = build_hs()
+    hs.battery.source = "AC Power"
+    hs.wifi.current = "Shadow"
+    local caffeinate_at_home = load_module("modules.caffeinate_at_home")
+
+    caffeinate_at_home.start({ "Shadow" })
+
+    hs.battery.source = "Battery Power"
+    hs.caffeinate.callback(hs.caffeinate.watcher.systemDidWake)
+
+    local disabled = count_calls(hs, function(call)
+        return call.type == "caffeinate_set" and not call.value
+    end)
+    assert_equal(disabled, 2, "wake should re-evaluate the caffeinate state")
+end)
+
+test("caffeinate at home restarts with new SSIDs and validates input", function()
     local hs = build_hs()
     hs.battery.source = "AC Power"
     hs.wifi.current = "Shadow"
     local caffeinate_at_home = load_module("modules.caffeinate_at_home")
 
     assert_false(caffeinate_at_home.start(nil), "nil SSIDs should be rejected")
+    assert_false(caffeinate_at_home.start({}), "empty SSIDs should be rejected")
+
     caffeinate_at_home.start({ "Shadow" })
-    caffeinate_at_home.start({ "Shadow" })
+    caffeinate_at_home.start({ "Other" })
+
+    assert_equal(hs.wifi.watch_count, 2, "second start should replace the wifi watcher")
+    assert_equal(hs.battery.watch_count, 2, "second start should replace the battery watcher")
+
+    local last_set = nil
+    for _, call in ipairs(hs.calls) do
+        if call.type == "caffeinate_set" then last_set = call.value end
+    end
+    assert_false(last_set, "restart with non-matching SSIDs should allow sleep")
+
     caffeinate_at_home.stop()
 
-    assert_equal(hs.wifi.watch_count, 1, "start should create one wifi watcher")
-    assert_equal(hs.battery.watch_count, 1, "start should create one battery watcher")
-
-    local password_enabled = 0
+    local final_set = nil
     for _, call in ipairs(hs.calls) do
-        if call.type == "execute" and call.command:find("askForPassword %-int 1") then
-            password_enabled = password_enabled + 1
-        end
+        if call.type == "caffeinate_set" then final_set = call.value end
     end
-    assert_truthy(password_enabled > 0, "stop should require screensaver password")
-end)
-
-test("screensaver avoids duplicate writes and sets password delay", function()
-    local hs = build_hs()
-    local screensaver = load_module("utils.screensaver")
-
-    screensaver.set_require_password(true)
-    screensaver.set_require_password(true)
-    screensaver.set_require_password(false)
-
-    local ask_password_writes = 0
-    local delay_writes = 0
-    for _, call in ipairs(hs.calls) do
-        if call.type == "execute" and call.command:find("askForPassword %-int") then ask_password_writes =
-            ask_password_writes + 1 end
-        if call.type == "execute" and call.command:find("askForPasswordDelay") then delay_writes = delay_writes + 1 end
-    end
-
-    assert_equal(ask_password_writes, 2, "duplicate password states should not be rewritten")
-    assert_equal(delay_writes, 2, "password delay should be managed with password state")
-end)
-
-test("bluetooth utility validates addresses and ignores failed blueutil output", function()
-    local hs = build_hs()
-    local bluetooth = load_module("utils.bluetooth")
-
-    hs.execute = function(command)
-        table.insert(hs.calls, { type = "execute", command = command })
-        return "bad", false, "exit", 1
-    end
-
-    assert_false(bluetooth.connect("not valid; rm -rf ~"), "invalid addresses should be rejected")
-    assert_equal(#bluetooth.connected_devices(), 0, "failed blueutil should return no devices")
-    assert_equal(#hs.calls, 1, "invalid address should not execute shell command")
+    assert_false(final_set, "stop should allow sleep")
 end)
 
 test("bindings only keeps Hammerspoon hotkeys", function()
