@@ -87,6 +87,27 @@ function upd -d "updates different tools"
         echo "[upd] nvim not found, skipping"
     end
 
+    if command -q pi
+        pi update extensions
+    else
+        echo "[upd] pi not found, skipping extension updates"
+    end
+
+    if test -d "$HOME/.cache/opencode"
+        echo "[upd] removing OpenCode cache"
+        rm -rf "$HOME/.cache/opencode"
+    end
+
+    if command -q bunx
+        if bunx skills list -g >/dev/null 2>&1
+            bunx skills update --yes
+        else
+            echo "[upd] unable to list skills, skipping skills update"
+        end
+    else
+        echo "[upd] bunx not found, skipping skills update"
+    end
+
     if command -q mo
         set -l stamp_file "$state_dir/mo-clean"
         set -l should_run_clean 1
@@ -110,21 +131,6 @@ function upd -d "updates different tools"
         end
     else
         echo "[upd] mo not found, skipping"
-    end
-
-    if test -d "$HOME/.cache/opencode"
-        echo "[upd] removing OpenCode cache"
-        rm -rf "$HOME/.cache/opencode"
-    end
-
-    if command -q bunx
-        if bunx skills list -g >/dev/null 2>&1
-            bunx skills update --yes
-        else
-            echo "[upd] unable to list skills, skipping skills update"
-        end
-    else
-        echo "[upd] bunx not found, skipping skills update"
     end
 
     # Fish plugin update should be at the end of the function.
