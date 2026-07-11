@@ -5,7 +5,6 @@
 ^/\.config/opencode/bun\.lock
 ^/\.config/opencode/oh-my-openagent.*
 ^/\.config/opencode/oh-my-opencode.*
-^/\.config/opencode/skills
 # runtime state; opencode rewrites tui.json and clobbers the symlink
 ^/\.config/opencode/tui\.json
 ^/\.config/opencode/\.omo
