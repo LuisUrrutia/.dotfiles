@@ -36,18 +36,5 @@ ensure_link() {
 }
 
 agents_source="$DOTFILES/tools/ai/AGENTS.md"
-skills_source="$DOTFILES/tools/ai/skills"
 
 ensure_link "$agents_source" "$HOME/.agents/AGENTS.md"
-
-for skill_source in "$skills_source"/*; do
-  if [[ ! -f "$skill_source/SKILL.md" ]]; then
-    continue
-  fi
-
-  skill_name="$(basename "$skill_source")"
-  shared_skill="$HOME/.agents/skills/$skill_name"
-
-  ensure_link "$skill_source" "$shared_skill"
-  ensure_link "$shared_skill" "$HOME/.claude/skills/$skill_name"
-done
