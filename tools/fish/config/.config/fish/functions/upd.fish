@@ -57,6 +57,23 @@ function upd -d "updates different tools"
         set -q PNPM_HOME; or set -gx PNPM_HOME "$HOME/Library/pnpm"
         mkdir -p "$PNPM_HOME"
         fish_add_path --append --path --move "$PNPM_HOME"
+
+        set -l global_package_paths (pnpm -g list --depth 0 --parseable 2>/dev/null)
+        set -l pnpm_self_packages
+        for package_path in $global_package_paths
+            switch "$package_path"
+                case "*/node_modules/@pnpm/exe"
+                    set --append pnpm_self_packages "@pnpm/exe"
+                case "*/node_modules/pnpm"
+                    set --append pnpm_self_packages "pnpm"
+            end
+        end
+
+        if set -q pnpm_self_packages[1]
+            echo "[upd] removing globally installed pnpm; mise manages pnpm"
+            pnpm -g remove $pnpm_self_packages
+        end
+
         pnpm -g update
     else
         echo "[upd] pnpm not found, skipping"

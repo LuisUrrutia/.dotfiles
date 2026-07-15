@@ -1,27 +1,8 @@
-# <type>[optional scope]: <description>
+# <type>[optional scope][!]: <description>
 #
-# [optional body]
+# [optional body: explain what and why]
 #
-# [optional footer(s)]
-
-# Type can be 
-#    feat     (new feature)
-#    fix      (bug fix)
-#    refactor (refactoring production code)
-#    style    (formatting, missing semi colons, etc; no code change)
-#    docs     (changes to documentation)
-#    test     (adding or refactoring tests; no production code change)
-#    build    (changes that affect the build system or external dependencies)
-#    ci       (changes to CI configuration files and scripts)
-#    perf     (changes that improves performance)
-#    chore    (config updates, scripts, etc. no production code change)
-#    revert   (reverts a previous commit)
-# --------------------
-# Remember to
-#    Appends a ! after the type/scope if there are breaking changes
-#    Use the imperative mood in the description
-#    Do not end the description line with a period
-#    Separate description from body with a blank line
-#    Use the body to explain what and why vs. how
-#    Can use multiple lines with "-" for bullet points in body
-
+# [optional footer(s), e.g. BREAKING CHANGE: ...]
+#
+# Types: feat, fix, refactor, perf, test, docs, build, ci, style, chore, revert
+# Use the imperative mood and no trailing period in the description.

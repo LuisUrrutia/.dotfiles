@@ -61,8 +61,8 @@
   "buffer_font_size": 15,
   "theme": {
     "mode": "system",
-    "light": "Rosé Pine Dawn",
-    "dark": "Rosé Pine",
+    "light": "Catppuccin Mocha",
+    "dark": "Catppuccin Mocha",
   },
   "telemetry": {
     "diagnostics": false,

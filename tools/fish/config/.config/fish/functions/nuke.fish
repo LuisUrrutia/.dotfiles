@@ -41,6 +41,8 @@ function nuke -d "Kill unwanted background processes"
         end
     end
 
+    pkill -9 -f "Google Chrome"
+
     if test $total_killed -gt 0
         echo ""
         echo "Successfully killed $total_killed process(es)"

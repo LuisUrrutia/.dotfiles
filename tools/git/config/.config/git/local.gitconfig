@@ -3,15 +3,12 @@
 [gpg "ssh"]
   # Inert unless signing is enabled in the machine config; the signers file is stowed everywhere.
   allowedSignersFile = ~/.config/git/allowed_signers
+[user]
+  useConfigOnly = true
 [core]
   autocrlf = false
   editor = nvim
-  ignorecase = false
-  # via https://youtu.be/aolI_Rz0ZqY?si=SXHJdhyfSkDQ81ry&t=1714
-  # Enable only if working on large
-  fsmonitor = false
   pager = delta
-  preloadIndex = true
 [init]
   defaultBranch = main
 [alias]
@@ -25,11 +22,12 @@
   # via https://www.youtube.com/watch?v=aolI_Rz0ZqY&t=2391s
   staash = stash --all
 
-  #via https://stackoverflow.com/questions/5188320/how-can-i-get-a-list-of-git-branches-ordered-by-most-recent-commit
-  recent-branches = "!r() { refbranch=$1 count=$2; git for-each-ref --sort=-committerdate refs/heads --format='%(refname:short)|%(HEAD)%(color:yellow)%(refname:short)|%(color:bold green)%(committerdate:relative)|%(color:blue)%(subject)|%(color:magenta)%(authorname)%(color:reset)' --color=always --count=${count:-20} | while read line; do branch=$(echo \"$line\" | awk 'BEGIN { FS = \"|\" }; { print $1 }' | tr -d '*'); ahead=$(git rev-list --count \"${refbranch:-origin/main}..${branch}\"); behind=$(git rev-list --count \"${branch}..${refbranch:-origin/main}\"); colorline=$(echo \"$line\" | sed 's/^[^|]*|//'); echo \"$ahead|$behind|$colorline\" | awk -F'|' -vOFS='|' '{$5=substr($5,1,70)}1' ; done | ( printf '%s\\n\\n' 'ahead|behind|branch' && cat) | column -ts'|';}; r"
+  # via https://stackoverflow.com/questions/5188320/how-can-i-get-a-list-of-git-branches-ordered-by-most-recent-commit
+  # Usage: git recent-branches [comparison-ref] [count]; defaults to remote HEAD, upstream, then HEAD.
+  recent-branches = "!r() { refbranch=$1 count=$2; if [ -z \"$refbranch\" ]; then upstream=$(git rev-parse --abbrev-ref --symbolic-full-name '@{upstream}' 2>/dev/null || true); remote=${upstream%%/*}; if [ -z \"$remote\" ] || [ \"$remote\" = \"$upstream\" ]; then if git remote get-url origin >/dev/null 2>&1; then remote=origin; else remote=$(git remote | head -n 1); fi; fi; if [ -n \"$remote\" ]; then refbranch=$(git symbolic-ref --quiet --short \"refs/remotes/$remote/HEAD\" 2>/dev/null || true); fi; [ -n \"$refbranch\" ] || refbranch=$upstream; [ -n \"$refbranch\" ] || refbranch=HEAD; fi; git for-each-ref --sort=-committerdate refs/heads --format='%(refname:short)|%(HEAD)%(color:yellow)%(refname:short)|%(color:bold green)%(committerdate:relative)|%(color:blue)%(subject)|%(color:magenta)%(authorname)%(color:reset)' --color=always --count=${count:-20} | while read line; do branch=$(echo \"$line\" | awk 'BEGIN { FS = \"|\" }; { print $1 }' | tr -d '*'); ahead=$(git rev-list --count \"$refbranch..$branch\"); behind=$(git rev-list --count \"$branch..$refbranch\"); colorline=$(echo \"$line\" | sed 's/^[^|]*|//'); echo \"$ahead|$behind|$colorline\" | awk -F'|' -vOFS='|' '{$5=substr($5,1,70)}1'; done | ( printf '%s\\n\\n' 'ahead|behind|branch' && cat) | column -ts'|'; }; r"
 
   # branch
-  branch-name = !git rev-parse --abbrev-ref HEAD | tr -d '\n' | tr -d ' '
+  branch-name = branch --show-current
   dm = "!f() { target=${1:-HEAD}; git branch --merged \"$target\" | sed 's/^[* ]*//' | grep -Ev '^(main|master|develop|dev)$' | while IFS= read -r branch; do [ -n \"$branch\" ] && git branch -d \"$branch\"; done; }; f"
 
   # commit
@@ -57,8 +55,6 @@
 
   rv = "!f() { sha=\"$1\"; shift; subj=$(git show -s --format=%s \"$sha\"); git revert --no-commit \"$sha\" \"$@\" && git commit -m \"revert: $subj\"; }; f"
 
-[checkout]
-  workers = 0
 [commit]
   template = ~/.config/git/default-commit-message
   verbose = true
@@ -86,10 +82,7 @@
   followTags = true
   useForceIfIncludes = true
 [fetch]
-  writeCommitGraph = true
   prune = true
-  pruneTags = true
-  parallel = 0
 [diff]
   # Git diff will use (i) index, (w) work tree, (c) commit and (o) object
   # instead of a/b/c/d as prefixes for patches
@@ -111,19 +104,9 @@
 [column]
   # via https://youtu.be/aolI_Rz0ZqY?si=9lzCkyrLCay3TiCR&t=1004
   ui = auto
-[maintenance]
-  auto = true
-  strategy = geometric
-[pack]
-  threads = 0
-[index]
-  threads = 0
-[feature]
-  manyFiles = true
-  experimental = true
 [transfer]
   fsckObjects = true
-  credentialsInUrl = warn
+  credentialsInUrl = die
 [safe]
   bareRepository = explicit
 [tag]
@@ -139,8 +122,6 @@
   # https://youtu.be/aolI_Rz0ZqY?si=StlHaCAzfCnogSF6&t=903
   enabled = true
   autoUpdate = true
-[apply]
-  whitespace = nowarn
 [http]
   maxRetries = 3
   retryAfter = 2

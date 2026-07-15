@@ -40,3 +40,5 @@ else
         mise activate fish --shims 2>/dev/null | source
     end
 end
+
+export PATH="$PATH:/Users/luisurrutia/.bifrost/bin"
