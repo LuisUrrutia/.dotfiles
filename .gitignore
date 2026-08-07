@@ -15,15 +15,9 @@ tools/opencode/config/.config/opencode/node_modules/
 tools/opencode/config/.config/opencode/package.json
 tools/opencode/config/.config/opencode/package-lock.json
 tools/opencode/config/.config/opencode/bun.lock
-tools/opencode/config/.config/opencode/oh-my-openagent.json
-tools/opencode/config/.config/opencode/oh-my-openagent.jsonc
-tools/opencode/config/.config/opencode/oh-my-openagent.json.bak.*
-tools/opencode/config/.config/opencode/oh-my-openagent.jsonc.bak.*
-tools/opencode/config/.config/opencode/oh-my-openagent.json.migrations.json
-tools/opencode/config/.config/opencode/oh-my-opencode.json*
 tools/opencode/config/.config/opencode/skills/*
 
-# Pi generated state (skills installed via npx skills)
+# Pi generated state (skills installed via the skills CLI)
 tools/pi/config/.pi/agent/.agents/
 tools/pi/config/.pi/agent/skills-lock.json
 

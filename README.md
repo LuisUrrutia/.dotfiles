@@ -255,13 +255,13 @@ blindly overwrite home-directory config unless you know which version you want.
 
 ## What's included
 
-- Shell and terminal: Fish, Starship, Ghostty, tmux, fzf, zoxide, Muxy
+- Shell and terminal: Fish, Starship, Ghostty, tmux, fzf, zoxide
 - CLI and search: bat, eza, ripgrep, fd, btop, dust, duf, procs, tailspin,
   tlrc, hyperfine, jq, watch, fswatch, rename
 - Development: Neovim, Zed, Git with delta, Git LFS, GitHub CLI, actionlint,
   ShellCheck, gitleaks, cspell
-- Languages: Node via mise, Python and uv, Bun, OpenJDK, plus optional Rust,
-  Go, LuaRocks, and Perl profiles
+- Languages: Node, Python, uv, Bun, OpenJDK, and .NET via mise, plus optional
+  Rust, Go, LuaRocks, and Perl profiles
 - macOS/system: GNU core tools, dockutil, mas, mole, Linearmouse, Thaw,
   DisplayLink, The Unarchiver
 - Automation and hotkeys: Hammerspoon, skhd
@@ -273,8 +273,9 @@ blindly overwrite home-directory config unless you know which version you want.
 - Optional tool groups: Docker Desktop, Yaak, Android platform tools, AWS,
   Google Cloud, web3 tools, audio/streaming apps
 
-This list is intentionally grouped. The exact package list lives in
-`brewfiles/core` and `brewfiles/profiles/`.
+This list is intentionally grouped. The exact package lists live in
+`brewfiles/core`, `brewfiles/profiles/`, and
+`tools/mise/config/.config/mise/config.toml`.
 
 ## Notable workflows
 

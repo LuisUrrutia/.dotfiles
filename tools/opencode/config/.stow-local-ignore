@@ -3,8 +3,6 @@
 ^/\.config/opencode/package\.json
 ^/\.config/opencode/package-lock\.json
 ^/\.config/opencode/bun\.lock
-^/\.config/opencode/oh-my-openagent.*
-^/\.config/opencode/oh-my-opencode.*
 # runtime state; opencode rewrites tui.json and clobbers the symlink
 ^/\.config/opencode/tui\.json
 ^/\.config/opencode/\.omo
