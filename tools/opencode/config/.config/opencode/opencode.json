@@ -1,6 +1,5 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  "theme": "catppuccin",
   "autoupdate": true,
   "formatter": true,
   "lsp": true,
@@ -10,12 +9,26 @@
   },
   "plugin": [
     "cc-safety-net",
-    "@tarquinen/opencode-dcp@latest"
+    "@tarquinen/opencode-dcp@latest",
+    "opencode-with-claude"
   ],
+  "provider": {
+    "anthropic": {
+      "options": {
+        "baseURL": "http://127.0.0.1:3456",
+        "apiKey": "dummy"
+      }
+    }
+  },
   "mcp": {
     "Expo": {
       "type": "remote",
       "url": "https://mcp.expo.dev/mcp",
+      "enabled": false
+    },
+    "Browser MCP": {
+      "type": "local",
+      "command": ["npx", "-y", "@browsermcp/mcp@latest"],
       "enabled": false
     },
     "Figma Desktop": {
@@ -23,12 +36,17 @@
       "url": "http://127.0.0.1:3845/mcp",
       "enabled": false
     },
-    "linear": {
+    "Linear Urrutia": {
       "type": "remote",
       "url": "https://mcp.linear.app/mcp",
-      "enabled": true
+      "enabled": false
     },
-    "chrome-devtools": {
+    "Linear Civinova": {
+      "type": "remote",
+      "url": "https://mcp.linear.app/mcp",
+      "enabled": false
+    },
+    "Chrome DevTools": {
       "type": "local",
       "command": [
         "npx",
@@ -37,9 +55,9 @@
         "--user-data-dir",
         "{env:HOME}/.local/state/opencode/chrome-devtools-mcp"
       ],
-      "enabled": true
+      "enabled": false
     },
-    "playwright": {
+    "Playwright": {
       "type": "local",
       "command": [
         "npx",
