@@ -167,15 +167,18 @@ files. Public SSH signing keys and app paths are fine.
 
 Global Claude and Codex instructions share the tracked source at
 `tools/ai/AGENTS.md`. The AI Tool Installer links it as
-`~/.agents/AGENTS.md`, makes Codex read the same file through
-`~/.codex/AGENTS.md`; the Claude Stowed Config keeps its global `CLAUDE.md`
-import pointed at that source.
+`~/.agents/AGENTS.md`. Because Codex does not discover that location itself,
+`~/.codex/AGENTS.md` links to `~/.agents/AGENTS.md`. Claude reads the Stowed
+`~/.claude/CLAUDE.md`, whose entire content is `@~/.agents/AGENTS.md`.
 
 For a registered machine, add `machines/<hardware-hash>.agents.md` beside its
 Machine Config. The installer links it to `~/.agents/AGENTS_LOCAL.md`, and the
 common instructions tell agents to read that file when present. This keeps
 different machine workflows tracked without duplicating the common guidance.
-An unregistered machine simply has no local instruction link.
+An unregistered machine simply has no local instruction link. The installer
+never concatenates or generates an effective file, preserves unknown
+destinations, and warns when a non-empty `~/.codex/AGENTS.override.md` shadows
+the managed Codex instructions.
 
 ## Local Git identity
 
@@ -301,10 +304,10 @@ backups under `${XDG_DATA_HOME:-$HOME/.local/share}/dotfiles/config-backups`.
 - Shell and terminal: Fish, Starship, Ghostty, tmux, fzf, zoxide
 - CLI and search: bat, eza, ripgrep, fd, btop, dust, duf, procs, tailspin,
   tlrc, hyperfine, jq, watch, fswatch, rename
-- Development: Neovim, Zed, Git with delta, Git LFS, GitHub CLI, actionlint,
-  ShellCheck, gitleaks, cspell
-- Languages: Node, Python, uv, Bun, OpenJDK, and .NET via mise, plus optional
-  Rust, Go, LuaRocks, and Perl profiles
+- Development: Neovim, Zed, Git with delta, Git LFS, GitHub CLI, tree-sitter,
+  actionlint, ShellCheck, gitleaks, and shared cspell dictionaries
+- Languages: Node, Python, uv, Bun, Deno, OpenJDK, and .NET via mise, plus
+  optional Rust, Go, LuaRocks, and Perl profiles
 - macOS/system: GNU core tools, dockutil, mas, mole, Linearmouse, Thaw,
   DisplayLink, The Unarchiver
 - Automation and hotkeys: Hammerspoon, skhd
@@ -312,13 +315,28 @@ backups under `${XDG_DATA_HOME:-$HOME/.local/share}/dotfiles/config-backups`.
   Discord, WhatsApp, Telegram, Slack, Figma, Zoom
 - Security/networking: 1Password CLI, OpenSSH, GnuPG, YubiKey Manager,
   NordVPN, Tailscale, VeraCrypt
-- AI tools: Claude, Claude Code, OpenCode config, Claude agent profiles
+- AI tools: Claude, Claude Code, Codex, Ollama, OpenCode config, Claude agent
+  profiles
 - Optional tool groups: Docker Desktop, Yaak, Android platform tools, AWS,
   Google Cloud, web3 tools, audio/streaming apps
 
 This list is intentionally grouped. The exact package lists live in
 `brewfiles/core`, `brewfiles/profiles/`, and
 `tools/mise/config/.config/mise/config.toml`.
+
+### Package ownership
+
+Homebrew owns macOS apps, system utilities, native dependencies, and packages
+selected through install profiles. The global mise config owns Core Install
+runtimes and portable global CLIs, including Claude Code and Codex. Project
+dependencies remain project-local, and no command has two package managers.
+
+Versions follow moving channels such as `latest`, `lts`, or a major release;
+the repo does not record exact installed versions. During an ownership change,
+the Bootstrapper installs and verifies the mise replacement before removing a
+known legacy Homebrew cask. See
+[ADR 0001](docs/adr/0001-own-portable-global-clis-with-mise.md) for the complete
+decision.
 
 ## Notable workflows
 
@@ -376,8 +394,9 @@ source; do not duplicate the list here.
 Edit the files under `tools/<tool>/config`, then run
 `dotfiles config repair <tool>` or re-run that Tool Installer. When an app has
 replaced a symlink, inspect it with `dotfiles config diff` and choose Capture or
-Discard explicitly. Declare persistent packages according to the ownership
-rules in [CONTEXT.md](CONTEXT.md) instead of installing them only by hand.
+Discard explicitly. Declare persistent packages according to
+[ADR 0001](docs/adr/0001-own-portable-global-clis-with-mise.md) instead of
+installing them only by hand.
 
 Secrets and private credentials belong outside the public repo. Use
 `private-install.sh` for owner-only setup instead of committing tokens,

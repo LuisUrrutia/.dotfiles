@@ -1,308 +1,183 @@
-# AGENTS.md - Guidelines for AI Coding Agents
+# Agent Guide
 
-This document provides context and guidelines for AI agents working in this macOS dotfiles repository.
+This is a shareable, macOS-only dotfiles repository. GNU Stow keeps tracked
+configuration in `tools/<tool>/config` and links it into `$HOME`.
 
-## Repository Overview
+## Source Map
 
-Shareable macOS dotfiles repository managing system configuration, shell environment, development tools, and application settings. Uses **GNU Stow** for symlink management.
+Load only the source relevant to the current branch of work:
 
-### Directory Structure
+- `README.md`: installation, profiles, machines, repository layout, and
+  user-facing workflows.
+- `CONTEXT.md`: domain language. Read it before architecture, diagnosis, TDD,
+  or issue-writing work; keep glossary definitions there.
+- `docs/adr/0001-own-portable-global-clis-with-mise.md`: package ownership.
+  Read it before adding, removing, or migrating persistent software.
+- `.editorconfig`: formatting and indentation. It is the formatting source of
+  truth.
+- `.github/workflows/ci.yml`: complete validation inventory and command shapes.
+- `dotfiles` and `cli/*.sh`: root routing, public grammar, help, and thin
+  adapter boundaries.
+- `config/run.sh`, `maintenance/`, and `verification/`: lifecycle,
+  maintenance, and repository-check owners.
+- `tools/lib.sh`: Shared Installer Helpers and their current interfaces.
+- `tools/hammerspoon/AGENTS.md`: verified macOS platform constraints for
+  Hammerspoon or screen-lock work.
 
-```
-.dotfiles/
-├── brewfiles/           # Homebrew bundle files (core, profiles)
-├── tools/               # Tool-specific configurations
-│   ├── lib.sh           # Shared Bash helper functions
-│   └── <tool>/          # Per-tool directories
-│       ├── install.sh   # Tool-specific setup script
-│       └── config/      # Config files (symlinked via Stow)
-├── archived/            # Deprecated tools
-├── machines/            # Tracked per-machine config files (<machash>.sh)
-├── .githooks/           # Repo-local git hooks (gitleaks pre-commit)
-├── install.sh           # Main installer
-├── POST_INSTALL.md      # Manual post-install checklist (printed by install.sh)
-└── private-install.sh   # Owner-only private install script
-```
+Read implementations before changing them. Documentation describes intent;
+the executable path defines current behavior.
 
-### Languages Used
+## Completion Gate
 
-| Language | Usage | Indentation |
-|----------|-------|-------------|
-| Bash | Install scripts, macOS configuration | 2 spaces |
-| Fish | Shell configuration, functions | 4 spaces |
-| Lua (Hammerspoon) | macOS automation | 4 spaces |
-| Lua (Neovim) | Editor configuration | 2 spaces |
-| TOML/JSON | Configuration files | 2 spaces |
+An implementation is complete only when all applicable gates pass:
 
-## Build/Install Commands
+1. Run the narrowest behavioral test for the changed contract.
+2. Run syntax and static checks used by CI for the changed languages.
+3. Run one broader smoke path outside the changed feature.
+4. Run `git diff --check` and inspect the final diff for unintended state.
 
-### Interactive Installation
+For Bootstrapper or Profile Install changes, include the relevant macOS Bash
+3.2 `/bin/bash install.sh --dry-run ...` modes from CI.
+
+For Stowed Config changes, restow every package into a temporary HOME using
+`--no-folding`; a clean simulation is required before completion.
+
+For machine or identity changes, include secret scanning and the Git-specific
+checks below. Report exact commands and outcomes; name any unavailable check and
+its blocker.
+
+## Universal Invariants
+
+### Safe Bootstrap
+
+Follow the **Safe Bootstrap Convention** from `CONTEXT.md`: preserve user state,
+make destructive intent explicit, and degrade gracefully when an optional app
+or command is unavailable. Actual errors return nonzero.
+
+App-updated settings may replace a managed symlink with a regular file. Treat
+that as config drift: inspect and diff it, back it up, then require an explicit
+capture or discard decision. Blind `stow --adopt` and overwriting unknown live
+targets are unsafe.
+
+### Ownership
+
+The Bootstrapper orchestrates Tool Installers. A `tools/<tool>/install.sh`
+owns only its Tool Directory and never invokes another Tool Installer. Shared
+cross-tool behavior belongs in the Bootstrapper or `tools/lib.sh`.
+
+Follow the package-ownership ADR; never introduce a second manager for an
+existing command. Retire a legacy owner only after the new owner has installed
+and verified its replacement.
+
+### Public State
+
+Machine configs are tracked configuration. Preserve `machines/<hash>.sh` and
+never add the directory to `.gitignore`. Public signing keys and local app paths
+are acceptable; tokens, passwords, private keys, licenses, sessions, logs,
+caches, and databases stay outside tracked state.
+
+### Predictable Defaults
+
+Global CLI configs must preserve predictable script behavior. Stateful or
+interactive policies that resume, rename, skip, hide, or page data belong behind
+explicit flags, functions, or interactive abbreviations.
+
+Independent maintenance tasks continue after failures, collect
+completed/skipped/warning/failed outcomes, and return nonzero when any critical
+task fails. Write gate stamps after mutations succeed and before advisory
+diagnostics.
+
+## Installer Work
+
+Use Bash 3.2-compatible syntax in scripts that run before Homebrew. Shell
+scripts use `#!/usr/bin/env bash`, quoted expansions, `[[ ]]`, and
+`set -euo pipefail` through `tools/lib.sh`.
+
+Tool Installers source:
+
 ```bash
-./install.sh              # Interactive install (asks which profiles to install)
-```
-
-### Individual Tool Installation
-```bash
-./tools/<tool>/install.sh  # Install specific tool (e.g., ./tools/git/install.sh)
-```
-
-### Homebrew Package Management
-```bash
-brew bundle install --file brewfiles/core      # Core packages only
-brew bundle install --file brewfiles/profiles/web3  # One optional profile
-```
-
-## Code Style Guidelines
-
-### EditorConfig Rules (enforced)
-- All files: LF line endings, UTF-8, trim trailing whitespace, final newline
-- Bash/Zsh: 2-space indentation
-- Fish: 4-space indentation
-- Lua: 4-space indentation (Hammerspoon), 2-space (Neovim config)
-- Python: 4-space indentation
-- .gitconfig: Tab indentation
-
-### Bash Script Conventions
-
-```bash
-#!/usr/bin/env bash
-
 source "${DOTFILES:-$HOME/.dotfiles}/tools/lib.sh"
-
-# Use require_* functions for graceful dependency handling
-require_brew_bin git    # Sets $bin_path, exits 0 if missing
-require_brew_opt nodejs # Sets $opt_path, exits 0 if missing
-require_app "App Name"  # Sets $app_path, exits 0 if missing
-
-# Use stow for symlinking config directories
-stow -d "$DOTFILES/tools/<tool>" -t "$HOME" config
 ```
 
-**Key patterns:**
-- Shebang: `#!/usr/bin/env bash`
-- Source lib.sh at the start of install scripts
-- Use helper functions from lib.sh for dependency checks
-- Graceful exit (exit 0) when optional dependencies are missing
-- Quote all variable expansions: `"$variable"`
-- Use `[[ ]]` for conditionals, not `[ ]`
+Use `require_brew_bin`, `require_brew_opt`, and `require_app` for optional
+dependencies. They set `bin_path`, `opt_path`, and `app_path` and exit cleanly
+when the dependency is absent. Use `stow_config <tool>` for per-file links.
 
-### Fish Script Conventions
+## Global Agent Instructions
+
+`tools/ai/AGENTS.md` is the tracked common source. The `ai` Tool Installer owns
+these links:
+
+- `~/.agents/AGENTS.md` -> the tracked common source
+- `~/.codex/AGENTS.md` -> `~/.agents/AGENTS.md`, because Codex does not discover
+  the `.agents` location itself
+- `~/.agents/AGENTS_LOCAL.md` ->
+  `machines/<hardware-hash>.agents.md` when that Registered Machine source exists
+
+The common source tells agents to read `~/.agents/AGENTS_LOCAL.md` when present.
+Claude uses the Stowed `~/.claude/CLAUDE.md`, whose entire content is
+`@~/.agents/AGENTS.md`. Do not concatenate or generate common and local
+instructions.
+
+Preserve unknown regular files and foreign symlinks at every destination.
+Preserve a non-empty `~/.codex/AGENTS.override.md` and warn that it shadows the
+managed Codex instructions. Remove a stale local link only when it is a known
+managed link into `machines/*.agents.md`.
+
+## Fish Work
+
+Human-only behavior starts after an interactive guard. This includes secrets,
+prompt setup, abbreviations, and other presentation policy.
+
+Preserve caller-provided environment values with default-only assignments, for
+example:
 
 ```fish
-# Guard for interactive sessions at file start
-status is-interactive || exit
-
-# Function definition with description
-function myfunction -d "Brief description"
-    # Function body
-end
-
-# Environment variables
-set -gx VARIABLE_NAME "value"
-
-# Abbreviations (preferred over aliases)
-abbr -a -- gs 'git status'
+set -q PAGER; or set -gx PAGER less
 ```
 
-**Key patterns:**
-- Guard interactive-only code with `status is-interactive || exit`
-- Use `-d "description"` flag for function documentation
-- Prefer abbreviations (`abbr`) over aliases for git/common commands
-- Use `set -gx` for exported environment variables
-- Use `set -l` for local variables
+Keep raw CLI behavior available to subprocesses and agents. Apply user-only
+policy through an explicit Fish function plus an interactive abbreviation, not
+a globally exported config variable.
 
-### Lua Conventions (Hammerspoon)
+Functions include `-d "description"`; exported state uses `set -gx`, local state
+uses `set -l`, and interactive shorthand uses abbreviations rather than aliases.
 
-```lua
---[[
-Module description block
---]]
+After Fish changes, run `fish --no-execute` over every Fish file, then execute
+matching `tools/fish/tests/*.sh` scripts with Bash. Software Maintenance changes
+require `bash maintenance/tests/update.sh`; its Fish abbreviation and migration
+seam additionally require `bash tools/fish/tests/upd.sh`.
 
-local mod = {}
+## Machine And Git Work
 
-local log = hs.logger.new('module_name')
+Read the machine and Git sections in `README.md` before editing this area.
+Machine config compatibility is carried through `DOTFILES_HARDWARE_*`,
+`DOTFILES_GIT_*`, and `DOTFILES_MANAGED_GIT_*` variables. When no machine file
+matches, preserve caller-provided Git identity and signing fallbacks.
 
--- JSDoc-style comments for functions
--- @param paramName type - Description
--- @return type - Description
-function mod.public_function()
-    -- Implementation
-end
+Git has two owners:
 
-local function private_function()
-    -- Implementation
-end
+- Shared defaults: `tools/git/config/.config/git/local.gitconfig`, stowed to
+  `~/.config/git/local.gitconfig`.
+- Machine identity and signing: `~/.gitconfig`, managed by
+  `tools/git/install.sh`.
 
-return mod
-```
+Keep identity out of shared config. Preserve the ignored, local-only
+`tools/git/config/.gitconfig`. Migration keeps the canonical include first,
+moves existing regular XDG Git config and ignore files to timestamped backups,
+backs up `~/.gitconfig` before filtering when it has unmanaged keys or includes
+or lacks the canonical include, refuses non-managed `~/.gitconfig` or
+`~/.config/git` symlinks, and preserves manual-migration errors instead of
+writing through them.
 
-**Key patterns:**
-- Module pattern: local table returned at end
-- Logger initialization: `hs.logger.new('name')`
-- JSDoc-style comments: `-- @param`, `-- @return`
-- Private functions use `local function`
-- Public functions assigned to module table
-
-### Lua Conventions (Neovim)
-
-```lua
--- Modular imports
-require("config.module")
-
--- Inline comments explaining each option
-vim.opt.number = true  -- print line numbers
-```
-
-**Key patterns:**
-- 2-space indentation (differs from Hammerspoon)
-- Inline comments explaining vim options
-- Modular config structure under `lua/config/`
-
-## Naming Conventions
-
-### Files and Directories
-- Tool directories: lowercase, hyphen-separated (`line-mouse` not `linearmouse`)
-- Fish config.d files: numbered prefix for load order (`00_homebrew.fish`, `01_paths.fish`)
-- Install scripts: always named `install.sh`
-
-### Variables
-- Bash: UPPER_SNAKE_CASE for exports, lower_snake_case for locals
-- Fish: UPPER_SNAKE_CASE for exports, lower_snake_case for locals
-- Lua: snake_case for variables and functions
-
-### Functions
-- Bash: snake_case (`require_brew_bin`)
-- Fish: snake_case with hyphens allowed (`fish_user_key_bindings`)
-- Lua: snake_case (`is_powered_on`)
-
-## Error Handling
-
-### Bash
-- Use `set -euo pipefail` in lib.sh (inherited by install scripts)
-- Warn and exit 0 for missing optional dependencies (graceful skip)
-- Exit 1 for actual errors
-
-### Fish
-- Use `and` for chained commands: `mkdir -p $dir and cd $dir`
-- Return non-zero for function errors: `return 1`
-
-### Lua
-- Use `if` guards for nil checks
-- Log errors via `hs.logger`
-
-## Theming
-
-The repository uses **Catppuccin** theme consistently across tools:
-- Fish, bat, btop, Ghostty, Neovim all use Catppuccin variants
-- FZF colors are configured in `config.fish`
-
-## Important Notes for Agents
-
-1. **CI is lint-focused**: GitHub Actions runs shell/static checks; still run
-   narrow local validation before claiming success
-2. **macOS only**: Scripts assume macOS and Homebrew
-3. **Stow-based**: Config files live in `config/` subdirectories and are symlinked
-4. **Machine configs are tracked config**: `machines/<hash>.sh` files are meant
-   for users to edit for their laptops/desktops; do not add them to `.gitignore`
-   or treat them as disposable private state
-5. **No secrets in tracked machine configs**: They may contain public SSH
-   signing keys and local app paths, but never tokens, private keys, passwords,
-   or license data
-6. **Owner detection**: `install.sh` may default owner prompts differently, but
-   install behavior is profile-based
-7. **Profile installs**: Core tools always installed, optional tools come from
-   `brewfiles/profiles/`; each profile Brewfile starts with `# label:`,
-   `# question:`, `# summary:`, and optional `# aliases:` header metadata that
-   `install.sh` reads (adding a profile = adding one file)
-8. **Fish is default shell**: Configured last in install.sh
-9. **Git config split**: Shared Git defaults are tracked at
-   `tools/git/config/.config/git/local.gitconfig`; machine identity/signing is
-   written to `~/.gitconfig`
-10. **Local legacy Git config**: `tools/git/config/.gitconfig` is intentionally
-    ignored/local-only; do not delete the user's local copy when removing it from
-    Git tracking
-11. **Git migration safety**: `tools/git/migrate-config.sh` must not write
-    through non-managed `~/.gitconfig` or `~/.config/git` symlinks; preserve
-    manual migration errors
-12. **Tool installer boundaries**: A `tools/<tool>/install.sh` script must not
-    invoke another tool's installer. `install.sh` orchestrates all tools, so
-    cross-tool setup belongs in the owning tool or shared `tools/lib.sh` helpers
-13. **Domain docs**: Read `CONTEXT.md` before architecture, diagnosis, TDD, or
-    issue-writing work
-14. **Glossary ownership**: Keep domain language in `CONTEXT.md`; do not
-    duplicate the glossary here
-
-## Machine Config Rules
-
-`install.sh` sources `machines/<hardware-hash>.sh` when a file matching this
-Mac's `machash` output exists. Missing files are fine; public clones and test
-fixtures run without any machine files.
-
-Each file sets plain `MACHINE_*` variables: `MACHINE_ID`, `MACHINE_NAME`,
-`MACHINE_HOSTNAME`, `MACHINE_INSTALL_MODE`, `MACHINE_PROFILES`,
-`MACHINE_GIT_USER_NAME`, `MACHINE_GIT_USER_EMAIL`, `MACHINE_GIT_SIGNING_KEY`,
-and `MACHINE_GIT_SIGNING_PROGRAM`.
-
-`MACHINE_INSTALL_MODE` accepts `all`, `core`, or `selected`. When using
-`selected`, `MACHINE_PROFILES` must contain comma-separated profile flags from
-`PROFILE_ORDER`.
-
-Machine config values are exported for tool installers through
-`DOTFILES_HARDWARE_*`, `DOTFILES_GIT_*`, and `DOTFILES_MANAGED_GIT_*` variables
-(names kept for compatibility with the tool-installer contract). Every
-`machines/*.sh` file with git identity fields contributes a
-`DOTFILES_MANAGED_GIT_*_N` entry so stale identities can be cleaned. When no
-machine file matches, preserve caller-provided `GIT_USER_NAME`,
-`GIT_USER_EMAIL`, `GIT_SIGNING_KEY`, and `GIT_SIGNING_PROGRAM` fallbacks.
-
-## Git Config Rules
-
-The Git tool has two layers:
-
-- Shared, stowed defaults: `tools/git/config/.config/git/local.gitconfig` ->
-  `~/.config/git/local.gitconfig`
-- Machine-local identity/signing: `~/.gitconfig`, created or updated by
-  `tools/git/install.sh`
-
-Do not reintroduce tracked identity into the shared Git config. Do not track
-`tools/git/config/.gitconfig`; it is ignored so users can keep a local file
-without publishing identity settings.
-
-`tools/git/migrate-config.sh` keeps the include for
-`~/.config/git/local.gitconfig` first in `~/.gitconfig`, backs up old non-symlink
-`~/.config/git/local.gitconfig` files, and refuses non-managed symlinks instead
-of mutating their targets.
-
-When editing this area, validate at minimum:
+Minimum Git-area validation:
 
 ```bash
 bash -n install.sh machines/*.sh \
   tools/git/install.sh tools/git/migrate-config.sh tools/macos/install.sh
 shellcheck install.sh machines/*.sh \
   tools/git/install.sh tools/git/migrate-config.sh tools/macos/install.sh
+bash tools/git/tests/identity.sh
+bash tools/git/tests/migrate-config.sh
 git config --file tools/git/config/.config/git/local.gitconfig --list >/dev/null
 ```
-
-## Available Helper Functions (lib.sh)
-
-| Function | Purpose | Sets Variable |
-|----------|---------|---------------|
-| `require_brew_bin <name>` | Check Homebrew binary exists | `$bin_path` |
-| `require_brew_opt <name>` | Check Homebrew opt package exists | `$opt_path` |
-| `require_app <name>` | Check /Applications app exists | `$app_path` |
-| `app_exists <name>` | Check app exists (returns 0/1) | - |
-| `run_tool <name>` | Execute tool's install.sh | - |
-
-## Agent skills
-
-### Issue tracker
-
-Issues and PRDs are tracked in GitHub Issues for `LuisUrrutia/.dotfiles`. See `docs/agents/issue-tracker.md`.
-
-### Triage labels
-
-The triage vocabulary uses the default mattpocock/skills labels. See `docs/agents/triage-labels.md`.
-
-### Domain docs
-
-This is a single-context repo using root `CONTEXT.md` and root `docs/adr/`. See `docs/agents/domain.md`.
