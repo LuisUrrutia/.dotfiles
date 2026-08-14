@@ -1,6 +1,7 @@
 status is-interactive; or return
 
 abbr -a -- fdf fd
+abbr -a -- rg rgi
 abbr -a -- top btop
 
 # navigation

@@ -1,5 +1,5 @@
-set -gx EDITOR nvim
-set -gx VISUAL nvim
+set -q EDITOR; or set -gx EDITOR nvim
+set -q VISUAL; or set -gx VISUAL nvim
 
 status is-interactive; or return
 
