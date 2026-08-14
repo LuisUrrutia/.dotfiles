@@ -2,10 +2,16 @@
 idiomatic_version_file_enable_tools = ["node", "python"]
 
 [tools]
+"aqua:anthropics/claude-code" = "latest"
 "aqua:dlvhdr/gh-dash" = "latest"
+"aqua:ollama/ollama" = "latest"
+"aqua:openai/codex" = "latest"
+"aqua:tree-sitter/tree-sitter" = "latest"
 "aqua:vercel-labs/agent-browser" = "latest"
 bun = "latest"
+deno = "latest"
 dotnet = "10"
+"github:yt-dlp/yt-dlp" = "latest"
 java = "lts"
 markdownlint-cli2 = "latest"
 node = "lts"
@@ -16,6 +22,7 @@ node = "lts"
 "npm:skills" = "latest"
 opencode = "latest"
 pi = "latest"
+"pipx:httpie" = "latest"
 "pipx:pre-commit" = { version = "latest", uvx_args = "--with pre-commit-uv" }
 pnpm = "latest"
 python = "3"

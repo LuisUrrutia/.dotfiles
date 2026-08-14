@@ -902,10 +902,14 @@ list_tool_installers() {
   local tool_dir=""
   local tool_name=""
 
+  if [[ -x "$DOTFILES/tools/mise/install.sh" ]]; then
+    say "  - mise"
+  fi
+
   for tool_dir in "$DOTFILES/tools"/*; do
     [[ -d "$tool_dir" ]] || continue
     tool_name="$(basename "$tool_dir")"
-    [[ "$tool_name" == "fish" ]] && continue
+    [[ "$tool_name" == "fish" || "$tool_name" == "mise" ]] && continue
     [[ -x "$tool_dir/install.sh" ]] || continue
     say "  - $tool_name"
   done
@@ -1215,10 +1219,14 @@ run_tool_installers() {
   load_tool_library
   mkdir -p "$HOME/.config"
 
+  # mise owns the shared runtime and portable CLI toolchain required by later
+  # Tool Installers, so the Bootstrapper establishes it first.
+  run_tool "mise"
+
   for tool_dir in "$DOTFILES/tools"/*; do
     if [[ -d "$tool_dir" ]]; then
       tool_name="$(basename "$tool_dir")"
-      [[ "$tool_name" == "fish" ]] && continue
+      [[ "$tool_name" == "fish" || "$tool_name" == "mise" ]] && continue
       run_tool "$tool_name"
     fi
   done
