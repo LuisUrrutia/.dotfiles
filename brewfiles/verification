@@ -1,0 +1,25 @@
+# Verification Toolchain
+# verify-bin: actionlint
+# verify-bin: brew
+# verify-bin: fish
+# verify-bin: git
+# verify-bin: gitleaks
+# verify-bin: lua
+# verify-bin: luacheck
+# verify-bin: python3
+# verify-bin: ruby
+# verify-bin: shellcheck
+# verify-bin: stow
+# verify-bin: wget
+
+brew "actionlint"
+brew "fish"
+brew "git"
+brew "gitleaks"
+brew "lua"
+brew "luacheck"
+brew "python"
+brew "ruby"
+brew "shellcheck"
+brew "stow"
+brew "wget"

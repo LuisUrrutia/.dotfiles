@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 
+# shellcheck source=tools/lib.sh
 source "${DOTFILES:-$HOME/.dotfiles}/tools/lib.sh"
+# shellcheck source=tools/fish/migrate-legacy.sh
+source "$DOTFILES/tools/fish/migrate-legacy.sh"
 
 require_brew_bin fish
 require_brew_opt fisher
@@ -116,6 +119,7 @@ migrate_repo_owned_zoxide_files() {
 
 migrate_managed_folded_fish_config
 migrate_repo_owned_zoxide_files
+migrate_retired_fish_links
 stow_config fish
 
 # Add fish to shells if not already present

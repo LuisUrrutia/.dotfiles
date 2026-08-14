@@ -25,6 +25,12 @@ die() {
   exit 1
 }
 
+record_backup_outcome() {
+  local outcome="$1"
+  [[ -z "${DOTFILES_BACKUP_OUTCOME_FILE:-}" ]] ||
+    printf '%s\n' "$outcome" >"$DOTFILES_BACKUP_OUTCOME_FILE"
+}
+
 cmd_backup() {
   local timestamp=""
   local backup_file=""
@@ -32,6 +38,7 @@ cmd_backup() {
 
   if [[ ! -f "$PREFERENCES_FILE" ]]; then
     printf 'No existing Thaw preferences found at %s; skipping backup.\n' "$PREFERENCES_FILE"
+    record_backup_outcome skipped
     return 0
   fi
 
@@ -46,6 +53,7 @@ cmd_backup() {
   done
 
   cp "$PREFERENCES_FILE" "$backup_file"
+  record_backup_outcome completed
   printf 'Backed up Thaw preferences: %s\n' "$backup_file"
 }
 

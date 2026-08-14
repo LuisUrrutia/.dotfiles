@@ -47,6 +47,12 @@ die() {
 	exit 1
 }
 
+record_backup_outcome() {
+	local outcome="$1"
+	[[ -z "${DOTFILES_BACKUP_OUTCOME_FILE:-}" ]] ||
+		printf '%s\n' "$outcome" >"$DOTFILES_BACKUP_OUTCOME_FILE"
+}
+
 ensure_backup_dir() {
 	mkdir -p "$BACKUP_DIR"
 }
@@ -411,6 +417,7 @@ cmd_backup() {
 
 	if [[ -n "$source_file" ]]; then
 		copy_backup "$source_file" "$force"
+		record_backup_outcome completed
 		return
 	fi
 
@@ -436,6 +443,7 @@ cmd_backup() {
 				printf 'Would use configured export passphrase.\n'
 			fi
 			printf 'Would wait for a new Raycast export in: %s\n' "$EXPORT_DIR"
+			record_backup_outcome skipped
 			return
 		fi
 
@@ -460,6 +468,7 @@ cmd_backup() {
 	printf 'Waiting up to %s seconds for a new Raycast export in %s...\n' "$timeout_seconds" "$EXPORT_DIR"
 	source_file="$(wait_for_new_export "$start_time" "$timeout_seconds")"
 	copy_backup "$source_file" "$force"
+	record_backup_outcome completed
 }
 
 cmd_restore() {

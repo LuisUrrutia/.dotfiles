@@ -1,0 +1,78 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+resolve_command_root() {
+  local source="${BASH_SOURCE[0]}"
+  local directory=""
+  local target=""
+
+  while [[ -L "$source" ]]; do
+    directory="$(cd "$(dirname "$source")" && pwd -P)"
+    target="$(readlink "$source")"
+    if [[ "$target" == /* ]]; then
+      source="$target"
+    else
+      source="$directory/$target"
+    fi
+  done
+
+  cd "$(dirname "$source")" && pwd -P
+}
+
+DOTFILES="$(resolve_command_root)"
+export DOTFILES
+
+# shellcheck source=cli/help.sh
+source "$DOTFILES/cli/help.sh"
+# shellcheck source=cli/install.sh
+source "$DOTFILES/cli/install.sh"
+# shellcheck source=cli/tool.sh
+source "$DOTFILES/cli/tool.sh"
+# shellcheck source=cli/verify.sh
+source "$DOTFILES/cli/verify.sh"
+# shellcheck source=cli/config.sh
+source "$DOTFILES/cli/config.sh"
+# shellcheck source=cli/maintenance.sh
+source "$DOTFILES/cli/maintenance.sh"
+
+main() {
+  case "${1:-}" in
+  "" | -h | --help) root_help ;;
+  help)
+    shift
+    run_help "$@"
+    ;;
+  install)
+    shift
+    run_install "$@"
+    ;;
+  tool)
+    shift
+    run_tool_command "$@"
+    ;;
+  verify)
+    shift
+    run_verify "$@"
+    ;;
+  config)
+    shift
+    run_config "$@"
+    ;;
+  update)
+    shift
+    run_update "$@"
+    ;;
+  backup)
+    shift
+    run_backup "$@"
+    ;;
+  *)
+    printf 'dotfiles: unknown command: %s\n' "$1" >&2
+    root_help >&2
+    return 2
+    ;;
+  esac
+}
+
+main "$@"

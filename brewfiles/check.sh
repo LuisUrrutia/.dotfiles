@@ -4,7 +4,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DOTFILES="$(cd "$SCRIPT_DIR/.." && pwd)"
-BREWFILES=("$DOTFILES/brewfiles/core")
+BREWFILES=("$DOTFILES/brewfiles/core" "$DOTFILES/brewfiles/verification")
 ENTRY_RE='^[[:space:]]*(tap|brew|cask)[[:space:]]+"([^"]+)"(.*)$'
 TRUST_RE='(^|[[:space:],])trusted:[[:space:]]*true([[:space:],#]|$)'
 

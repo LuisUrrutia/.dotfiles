@@ -121,6 +121,8 @@ abbr -a -- myip 'curl -s https://api.ipify.org && echo'
 abbr -a -- captive 'open -a Safari http://captive.apple.com'
 
 # utilities
+abbr -a -- upd 'dotfiles update'
+abbr -a -- backup-configs 'dotfiles backup all'
 abbr -a -- today 'date +"%Y/%m/%d"'
 abbr -a -- timestamp 'date +"%Y%m%d%H%M%S"'
 abbr -a -- epoch 'date +%s'
