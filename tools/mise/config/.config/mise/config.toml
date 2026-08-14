@@ -2,11 +2,21 @@
 idiomatic_version_file_enable_tools = ["node", "python"]
 
 [tools]
+"aqua:dlvhdr/gh-dash" = "latest"
 "aqua:vercel-labs/agent-browser" = "latest"
 bun = "latest"
+dotnet = "10"
 java = "lts"
 markdownlint-cli2 = "latest"
 node = "lts"
+"npm:@playwright/cli" = "latest"
+"npm:@code-yeongyu/comment-checker" = "latest"
+"npm:@steipete/bird" = "latest"
+"npm:clawpatch" = "latest"
+"npm:skills" = "latest"
+opencode = "latest"
+pi = "latest"
+"pipx:pre-commit" = { version = "latest", uvx_args = "--with pre-commit-uv" }
 pnpm = "latest"
 python = "3"
 uv = "latest"

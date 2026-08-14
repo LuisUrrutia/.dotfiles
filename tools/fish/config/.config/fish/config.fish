@@ -1,7 +1,6 @@
 set -gx LANG en_US.UTF-8
 set -gx PAGER less
 set -gx XDG_CONFIG_HOME "$HOME/.config"
-set -gx PNPM_HOME "$HOME/Library/pnpm"
 test -f ~/secrets.fish; and source ~/secrets.fish
 
 if status is-interactive

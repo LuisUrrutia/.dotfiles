@@ -3,9 +3,7 @@
 # meh = ctrl + alt + shift
 
 # Application launchers
-hyper - backtick : open -a Muxy
 f13 : open -a Slack
 f15 : open -a Dia
 f16 : open -a WhatsApp
 f17 : open -a Zed
-f18 : open -a Muxy

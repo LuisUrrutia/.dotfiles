@@ -5,11 +5,4 @@ fish_add_path --prepend --path --move \
     "$HOMEBREW_PREFIX/sbin" \
     "$HOMEBREW_PREFIX/opt/rustup/bin"
 
-fish_add_path --append --path --move \
-    "$HOME/Library/pnpm" \
-    "$HOME/Library/pnpm/bin" \
-    "$HOME/.bun/bin" \
-    "$HOME/.foundry/bin" \
-    "$HOME/.opencode/bin"
-
 set -gx RIPGREP_CONFIG_PATH "$HOME/.config/ripgrep/ripgreprc"

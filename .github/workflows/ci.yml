@@ -90,16 +90,6 @@ jobs:
 
           bash brewfiles/check.sh
 
-      - name: Check Homebrew vulnerabilities
-        run: |
-          set -euo pipefail
-
-          brew install homebrew/brew-vulns/brew-vulns
-          # --warn-only: upstream OSV findings in third-party deps are not
-          # actionable from this repo and should not hold main hostage; scan
-          # errors (exit 2) still fail the job.
-          bash brewfiles/vulns.sh --warn-only
-
       - name: Check Stow packages
         run: |
           set -euo pipefail

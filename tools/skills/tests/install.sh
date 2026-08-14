@@ -5,8 +5,8 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 TMP_DIR="$(mktemp -d)"
 SKILLS_INSTALL="$ROOT_DIR/tools/skills/install.sh"
-FAKE_BIN_DIR="$TMP_DIR/bin"
-FAKE_NPX_LOG="$TMP_DIR/npx.log"
+FAKE_HOMEBREW_BIN="$TMP_DIR/homebrew/bin"
+FAKE_MISE_LOG="$TMP_DIR/mise.log"
 
 cleanup() {
   rm -rf "$TMP_DIR"
@@ -14,48 +14,70 @@ cleanup() {
 
 trap cleanup EXIT
 
-mkdir -p "$FAKE_BIN_DIR"
+mkdir -p "$FAKE_HOMEBREW_BIN"
 
-cat >"$FAKE_BIN_DIR/npx" <<'EOF'
+cat >"$FAKE_HOMEBREW_BIN/mise" <<'EOF'
 #!/usr/bin/env bash
 
 set -euo pipefail
 
-log_file="$FAKE_NPX_LOG"
+log_file="$FAKE_MISE_LOG"
 
-if [[ "$*" == *'skills@latest add'* ]]; then
+if [[ "$*" == 'which skills' || "$*" == 'which playwright-cli' ]]; then
+  exit 0
+fi
+
+if [[ "$*" == 'exec -- skills add '* || "$*" == 'exec -- playwright-cli install '* ]]; then
   printf '%s\n' "$*" >>"$log_file"
   exit 0
 fi
 
-printf 'Unexpected npx invocation: %s\n' "$*" >&2
+printf 'Unexpected mise invocation: %s\n' "$*" >&2
 exit 1
 EOF
 
-chmod +x "$FAKE_BIN_DIR/npx"
+chmod +x "$FAKE_HOMEBREW_BIN/mise"
 
 export DOTFILES="$ROOT_DIR"
 export HOMEBREW_PREFIX="$TMP_DIR/homebrew"
-export FAKE_NPX_LOG
-export PATH="$FAKE_BIN_DIR:/usr/bin:/bin"
+export FAKE_MISE_LOG
+export PATH="/usr/bin:/bin"
 
 bash "$SKILLS_INSTALL" >/dev/null
 
-[[ -s "$FAKE_NPX_LOG" ]]
+[[ -s "$FAKE_MISE_LOG" ]]
 
-[[ "$(wc -l <"$FAKE_NPX_LOG")" -eq 6 ]]
-grep -F -- '--skill skill-creator' "$FAKE_NPX_LOG" >/dev/null
-grep -F -- '--skill vercel-composition-patterns' "$FAKE_NPX_LOG" >/dev/null
-grep -F -- '--skill vercel-react-best-practices' "$FAKE_NPX_LOG" >/dev/null
-grep -F -- '--skill vercel-react-view-transitions' "$FAKE_NPX_LOG" >/dev/null
-grep -F -- '--skill web-design-guidelines' "$FAKE_NPX_LOG" >/dev/null
-grep -F -- '--skill grill-with-docs' "$FAKE_NPX_LOG" >/dev/null
-grep -F -- '--skill ast-grep' "$FAKE_NPX_LOG" >/dev/null
-grep -F -- '--skill commit' "$FAKE_NPX_LOG" >/dev/null
-grep -F -- '--skill orca-cli' "$FAKE_NPX_LOG" >/dev/null
-grep -F -- '--agent opencode --agent claude-code -g -y' "$FAKE_NPX_LOG" >/dev/null
+[[ "$(wc -l <"$FAKE_MISE_LOG")" -eq 8 ]]
+grep -F -- 'exec -- skills add ' "$FAKE_MISE_LOG" >/dev/null
+grep -F -- '--skill skill-creator' "$FAKE_MISE_LOG" >/dev/null
+grep -F -- '--skill vercel-composition-patterns' "$FAKE_MISE_LOG" >/dev/null
+grep -F -- '--skill vercel-react-best-practices' "$FAKE_MISE_LOG" >/dev/null
+grep -F -- '--skill vercel-react-view-transitions' "$FAKE_MISE_LOG" >/dev/null
+grep -F -- '--skill web-design-guidelines' "$FAKE_MISE_LOG" >/dev/null
+grep -F -- '--skill grill-with-docs' "$FAKE_MISE_LOG" >/dev/null
+grep -F -- '--skill ast-grep' "$FAKE_MISE_LOG" >/dev/null
+grep -F -- '--skill commit' "$FAKE_MISE_LOG" >/dev/null
+grep -F -- '--skill orca-cli' "$FAKE_MISE_LOG" >/dev/null
+grep -F -- '--agent opencode --agent claude-code -g -y' "$FAKE_MISE_LOG" >/dev/null
+[[ "$(grep -Fxc -- 'exec -- playwright-cli install --skills --global' "$FAKE_MISE_LOG")" -eq 1 ]]
+[[ "$(grep -Fxc -- 'exec -- playwright-cli install --skills=agents --global' "$FAKE_MISE_LOG")" -eq 1 ]]
 
-missing_output="$TMP_DIR/missing-npx.log"
-PATH="/usr/bin:/bin" bash "$SKILLS_INSTALL" >"$TMP_DIR/missing-npx.out" 2>"$missing_output"
+cat >"$FAKE_HOMEBREW_BIN/mise" <<'EOF'
+#!/usr/bin/env bash
 
-grep -F -- 'Warning: npx not found, skipping global skills' "$missing_output" >/dev/null
+exit 1
+EOF
+
+chmod +x "$FAKE_HOMEBREW_BIN/mise"
+
+missing_skills_output="$TMP_DIR/missing-skills.log"
+bash "$SKILLS_INSTALL" >"$TMP_DIR/missing-skills.out" 2>"$missing_skills_output"
+
+grep -F -- 'Warning: skills is not installed by mise, skipping' "$missing_skills_output" >/dev/null
+grep -F -- 'Warning: playwright-cli is not installed by mise, skipping' "$missing_skills_output" >/dev/null
+
+rm "$FAKE_HOMEBREW_BIN/mise"
+missing_output="$TMP_DIR/missing-mise.log"
+bash "$SKILLS_INSTALL" >"$TMP_DIR/missing-mise.out" 2>"$missing_output"
+
+grep -F -- 'Warning: mise not found, skipping' "$missing_output" >/dev/null

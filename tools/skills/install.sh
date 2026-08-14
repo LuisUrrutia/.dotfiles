@@ -2,6 +2,8 @@
 
 source "${DOTFILES:-$HOME/.dotfiles}/tools/lib.sh"
 
+require_brew_bin mise
+
 GLOBAL_SKILLS_AGENTS=(
   "opencode"
   "claude-code"
@@ -17,8 +19,8 @@ GLOBAL_SKILL_GROUPS=(
 )
 
 install_global_skills() {
-  if ! command -v npx >/dev/null 2>&1; then
-    echo "Warning: npx not found, skipping global skills" >&2
+  if ! "$bin_path" which skills >/dev/null 2>&1; then
+    echo "Warning: skills is not installed by mise, skipping" >&2
     return 0
   fi
 
@@ -38,8 +40,19 @@ install_global_skills() {
       skill_args+=(--skill "$skill_name")
     done
 
-    npx --yes skills@latest add "$skill_source" "${skill_args[@]}" "${agent_args[@]}" -g -y
+    "$bin_path" exec -- skills add "$skill_source" "${skill_args[@]}" "${agent_args[@]}" -g -y
   done
 }
 
+install_playwright_skills() {
+  if ! "$bin_path" which playwright-cli >/dev/null 2>&1; then
+    echo "Warning: playwright-cli is not installed by mise, skipping" >&2
+    return 0
+  fi
+
+  "$bin_path" exec -- playwright-cli install --skills --global
+  "$bin_path" exec -- playwright-cli install --skills=agents --global
+}
+
 install_global_skills
+install_playwright_skills
