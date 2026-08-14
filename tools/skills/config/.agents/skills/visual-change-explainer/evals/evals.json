@@ -1,0 +1,47 @@
+{
+  "skill_name": "visual-change-explainer",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "I audited my shell config and found that RIPGREP_CONFIG_PATH points to a config that excludes package-lock.json and node_modules for every child process. I want clean interactive searches, but coding agents must be able to inspect everything. Explain the current problem and the best options before changing any files. Create the visual HTML brief you would show me.",
+      "expected_output": "A self-contained visual HTML report explaining inherited ripgrep policy through a concrete current-state example, a recommended human-versus-agent solution, real alternatives, and before/after causal diagrams.",
+      "files": [],
+      "expectations": [
+        "Creates a self-contained HTML file outside the repository",
+        "Explains the problem in plain language before technical detail",
+        "Includes a numbered current-state example and a numbered solution example",
+        "Includes before and after causal diagrams with replayable animation",
+        "Distinguishes interactive human behavior from agent or script behavior",
+        "Marks one option as recommended and states its tradeoff"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "A review recommends changing our checkout API from automatic retries to idempotency keys. Today a client timeout can cause the same payment request to be retried, and the provider may charge twice even though our first response was lost. Do not implement it yet. Explain the existing behavior and compare at least two possible solutions in a visual HTML report that a product manager can understand.",
+      "expected_output": "A plain-language visual change brief with a concrete duplicate-charge scenario, before/after request flows, idempotency as the recommendation, a credible alternative, and technical detail kept secondary.",
+      "files": [],
+      "expectations": [
+        "Creates a visual HTML decision brief rather than only a prose response",
+        "Starts from a concrete user-visible duplicate-charge scenario",
+        "Shows the current and proposed request sequences separately",
+        "Explains idempotency keys without unexplained jargon",
+        "Compares at least two credible solutions and recommends one",
+        "Keeps implementation details secondary to the simple explanation"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Our updater runs Homebrew, mise, Rust, and editor plugin updates. It keeps going when one manager fails, but the shell returns the status of the last command, so an early failure can look successful. I want to preserve best-effort updates while making automation trust the final exit code. Propose the change and explain it with examples and diagrams in HTML; do not edit the updater.",
+      "expected_output": "A visual report that explains masked exit status with a concrete sequence, preserves best-effort execution, recommends accumulated failures and a truthful final status, and includes testable outcomes.",
+      "files": [],
+      "expectations": [
+        "Creates a self-contained HTML report without editing the updater",
+        "Explains how a later success masks an earlier failure",
+        "Shows a concrete current-state sequence and its misleading result",
+        "Preserves best-effort execution in the recommended solution",
+        "Shows the corrected final status in an after diagram",
+        "Lists concrete behavioral cases that can become regression tests"
+      ]
+    }
+  ]
+}

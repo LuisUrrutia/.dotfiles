@@ -7,6 +7,7 @@ TMP_DIR="$(mktemp -d)"
 SKILLS_INSTALL="$ROOT_DIR/tools/skills/install.sh"
 FAKE_HOMEBREW_BIN="$TMP_DIR/homebrew/bin"
 FAKE_MISE_LOG="$TMP_DIR/mise.log"
+FAKE_STOW_LOG="$TMP_DIR/stow.log"
 
 cleanup() {
   rm -rf "$TMP_DIR"
@@ -15,6 +16,14 @@ cleanup() {
 trap cleanup EXIT
 
 mkdir -p "$FAKE_HOMEBREW_BIN"
+
+cat >"$FAKE_HOMEBREW_BIN/stow" <<'EOF'
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+printf '%s\n' "$*" >>"$FAKE_STOW_LOG"
+EOF
 
 cat >"$FAKE_HOMEBREW_BIN/mise" <<'EOF'
 #!/usr/bin/env bash
@@ -36,15 +45,20 @@ printf 'Unexpected mise invocation: %s\n' "$*" >&2
 exit 1
 EOF
 
-chmod +x "$FAKE_HOMEBREW_BIN/mise"
+chmod +x "$FAKE_HOMEBREW_BIN/mise" "$FAKE_HOMEBREW_BIN/stow"
 
 export DOTFILES="$ROOT_DIR"
 export HOMEBREW_PREFIX="$TMP_DIR/homebrew"
 export FAKE_MISE_LOG
-export PATH="/usr/bin:/bin"
+export FAKE_STOW_LOG
+export HOME="$TMP_DIR/home"
+export PATH="$FAKE_HOMEBREW_BIN:/usr/bin:/bin"
+
+mkdir -p "$HOME"
 
 bash "$SKILLS_INSTALL" >/dev/null
 
+grep -F -- "--restow --no-folding -d $ROOT_DIR/tools/skills -t $HOME config" "$FAKE_STOW_LOG" >/dev/null
 [[ -s "$FAKE_MISE_LOG" ]]
 
 [[ "$(wc -l <"$FAKE_MISE_LOG")" -eq 8 ]]
@@ -81,3 +95,4 @@ missing_output="$TMP_DIR/missing-mise.log"
 bash "$SKILLS_INSTALL" >"$TMP_DIR/missing-mise.out" 2>"$missing_output"
 
 grep -F -- 'Warning: mise not found, skipping' "$missing_output" >/dev/null
+[[ "$(wc -l <"$FAKE_STOW_LOG")" -eq 3 ]]

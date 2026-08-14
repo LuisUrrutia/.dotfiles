@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>__TITLE__</title>
+  <style>
+    :root {
+      --paper: #f5f0e7;
+      --card: #fffdf8;
+      --ink: #1c1917;
+      --muted: #68615a;
+      --line: #ddd3c5;
+      --bad: #b94734;
+      --bad-bg: #fff0ec;
+      --good: #26704f;
+      --good-bg: #eaf7ef;
+      --info: #355d87;
+      --info-bg: #edf5ff;
+      --warn: #a16b13;
+      --warn-bg: #fff8df;
+      --dark: #24211f;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 5% 0%, rgba(161, 107, 19, .14), transparent 28rem),
+        radial-gradient(circle at 95% 15%, rgba(38, 112, 79, .12), transparent 30rem),
+        var(--paper);
+      font-family: "Avenir Next", Avenir, "Helvetica Neue", sans-serif;
+      line-height: 1.6;
+    }
+
+    code, pre { font-family: "SFMono-Regular", Menlo, Monaco, monospace; }
+    code { font-size: .9em; }
+    .shell { width: min(1180px, calc(100% - 32px)); margin: 0 auto; }
+    header { padding: 64px 0 38px; border-bottom: 1px solid var(--line); background: rgba(255, 253, 248, .72); }
+    .eyebrow { margin: 0 0 10px; color: var(--bad); font-size: .75rem; font-weight: 800; letter-spacing: .18em; text-transform: uppercase; }
+    h1, h2, h3 { font-family: Georgia, "Times New Roman", serif; line-height: 1.12; }
+    h1 { max-width: 900px; margin: 0; font-size: clamp(2.7rem, 7vw, 5.7rem); letter-spacing: -.045em; }
+    h2 { margin: 0; font-size: clamp(2rem, 4vw, 3.35rem); letter-spacing: -.025em; }
+    h3 { margin: 0; font-size: 1.4rem; }
+    .lead { max-width: 850px; margin: 24px 0 0; color: var(--muted); font-size: 1.15rem; }
+    main { padding: 38px 0 80px; }
+    article { margin-bottom: 34px; padding: clamp(22px, 5vw, 44px); border: 1px solid var(--line); border-radius: 28px; background: rgba(255,253,248,.94); box-shadow: 0 20px 65px rgba(55,43,31,.08); }
+    .section-head { display: flex; align-items: flex-start; gap: 18px; }
+    .number { display: grid; flex: 0 0 46px; width: 46px; height: 46px; place-items: center; border-radius: 14px; background: var(--dark); color: white; font-weight: 800; }
+    .question { margin: 10px 0 0; color: var(--muted); font-size: 1.03rem; }
+    .one-line { margin-top: 26px; padding: 18px 20px; border-left: 5px solid var(--info); border-radius: 0 15px 15px 0; background: var(--info-bg); font-size: 1.08rem; }
+    .one-line strong { display: block; margin-bottom: 4px; color: var(--info); }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-top: 24px; }
+    .panel { padding: 20px; border: 1px solid var(--line); border-radius: 18px; background: white; }
+    .panel.bad { border-color: #e7b3a9; background: var(--bad-bg); }
+    .panel.good { border-color: #a9d5b9; background: var(--good-bg); }
+    .panel.warn { border-color: #ead38d; background: var(--warn-bg); }
+    .label { margin: 0 0 8px; color: var(--muted); font-size: .7rem; font-weight: 900; letter-spacing: .15em; text-transform: uppercase; }
+    .bad .label { color: var(--bad); }
+    .good .label { color: var(--good); }
+    .warn .label { color: var(--warn); }
+    .steps { counter-reset: step; margin: 18px 0 0; padding: 0; list-style: none; }
+    .steps li { position: relative; min-height: 34px; margin-bottom: 12px; padding-left: 44px; }
+    .steps li::before { counter-increment: step; content: counter(step); position: absolute; left: 0; top: -2px; display: grid; width: 30px; height: 30px; place-items: center; border-radius: 50%; background: var(--dark); color: white; font-size: .78rem; font-weight: 800; }
+    .flow-wrap { margin-top: 18px; padding: 18px; border-radius: 18px; background: var(--dark); color: white; }
+    .flow-title { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .replay { cursor: pointer; border: 1px solid #66605a; border-radius: 999px; padding: 6px 10px; color: white; background: transparent; font: inherit; font-size: .75rem; }
+    .flow { display: flex; align-items: stretch; gap: 10px; margin-top: 16px; overflow-x: auto; padding: 4px 2px 10px; }
+    .node { flex: 1 0 130px; padding: 13px; border: 1px solid #5a5550; border-radius: 12px; background: #302c29; opacity: .4; transform: translateY(8px); }
+    .node strong { display: block; color: #f2c977; font-size: .78rem; }
+    .node span { display: block; margin-top: 5px; color: #e7e0d8; font-size: .78rem; line-height: 1.45; }
+    .arrow { display: grid; flex: 0 0 18px; place-items: center; color: #aaa099; opacity: .45; }
+    .flow.play .node, .flow.play .arrow { animation: reveal .48s ease forwards; animation-delay: calc(var(--i) * .42s); }
+    .flow.play .bad-node { animation-name: reveal-bad; }
+    .flow.play .good-node { animation-name: reveal-good; }
+    @keyframes reveal { to { opacity: 1; transform: translateY(0); } }
+    @keyframes reveal-bad { to { opacity: 1; transform: translateY(0); border-color: #e07c68; background: #4a2924; } }
+    @keyframes reveal-good { to { opacity: 1; transform: translateY(0); border-color: #72c693; background: #243c2e; } }
+    .verdict { margin-top: 24px; padding: 20px; border: 2px solid var(--good); border-radius: 18px; background: var(--good-bg); }
+    .verdict strong { color: var(--good); }
+    details { margin-top: 20px; border-top: 1px solid var(--line); padding-top: 16px; }
+    summary { cursor: pointer; color: var(--info); font-weight: 800; }
+    pre { overflow-x: auto; padding: 16px; border-radius: 14px; color: #f7f1e8; background: #211e1c; font-size: .8rem; line-height: 1.6; }
+    @media (max-width: 760px) { .grid { grid-template-columns: 1fr; } .flow { flex-direction: column; } .node { flex-basis: auto; } .arrow { transform: rotate(90deg); } }
+    @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } .flow.play .node, .flow.play .arrow { animation: none; opacity: 1; transform: none; } }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="shell">
+      <p class="eyebrow">__REPORT_KIND__</p>
+      <h1>__TITLE__</h1>
+      <p class="lead">__INTRODUCTION__</p>
+    </div>
+  </header>
+
+  <main class="shell">
+    <!-- Duplicate this article for each recommendation. -->
+    <article id="__SECTION_ID__">
+      <div class="section-head">
+        <div class="number">__NUMBER__</div>
+        <div>
+          <p class="eyebrow">__TOPIC__</p>
+          <h2>__OBSERVABLE_HEADLINE__</h2>
+          <p class="question">__USER_QUESTION__</p>
+        </div>
+      </div>
+
+      <div class="one-line">
+        <strong>__PLAIN_PROBLEM_LABEL__</strong>
+        __PLAIN_PROBLEM__
+      </div>
+
+      <div class="grid">
+        <section class="panel bad">
+          <p class="label">__CURRENT_EXAMPLE_LABEL__</p>
+          <h3>__CURRENT_EXAMPLE_TITLE__</h3>
+          <ol class="steps">
+            <li>__CURRENT_STEP_1__</li>
+            <li>__CURRENT_STEP_2__</li>
+            <li>__CURRENT_STEP_3__</li>
+            <li>__CURRENT_RESULT__</li>
+          </ol>
+        </section>
+        <section class="panel">
+          <p class="label">__WHY_LABEL__</p>
+          <h3>__WHY_TITLE__</h3>
+          <p>__WHY_EXPLANATION__</p>
+        </section>
+      </div>
+
+      <div class="flow-wrap">
+        <div class="flow-title">
+          <strong>__BEFORE_FLOW_TITLE__</strong>
+          <button type="button" class="replay" onclick="replay(this)">__REPLAY_LABEL__</button>
+        </div>
+        <div class="flow play animated">
+          <div class="node" style="--i:0"><strong>__NODE_1_TITLE__</strong><span>__NODE_1_TEXT__</span></div>
+          <div class="arrow" style="--i:1">&rarr;</div>
+          <div class="node" style="--i:2"><strong>__NODE_2_TITLE__</strong><span>__NODE_2_TEXT__</span></div>
+          <div class="arrow" style="--i:3">&rarr;</div>
+          <div class="node bad-node" style="--i:4"><strong>__BAD_NODE_TITLE__</strong><span>__BAD_NODE_TEXT__</span></div>
+        </div>
+      </div>
+
+      <div class="grid">
+        <section class="panel good">
+          <p class="label">__SOLUTION_LABEL__</p>
+          <h3>__SOLUTION_TITLE__</h3>
+          <ol class="steps">
+            <li>__SOLUTION_STEP_1__</li>
+            <li>__SOLUTION_STEP_2__</li>
+            <li>__SOLUTION_STEP_3__</li>
+            <li>__SOLUTION_RESULT__</li>
+          </ol>
+        </section>
+        <section class="panel warn">
+          <p class="label">__LIMIT_LABEL__</p>
+          <h3>__LIMIT_TITLE__</h3>
+          <p>__LIMIT_EXPLANATION__</p>
+        </section>
+      </div>
+
+      <div class="flow-wrap">
+        <div class="flow-title">
+          <strong>__AFTER_FLOW_TITLE__</strong>
+          <button type="button" class="replay" onclick="replay(this)">__REPLAY_LABEL__</button>
+        </div>
+        <div class="flow play animated">
+          <div class="node" style="--i:0"><strong>__AFTER_NODE_1_TITLE__</strong><span>__AFTER_NODE_1_TEXT__</span></div>
+          <div class="arrow" style="--i:1">&rarr;</div>
+          <div class="node" style="--i:2"><strong>__AFTER_NODE_2_TITLE__</strong><span>__AFTER_NODE_2_TEXT__</span></div>
+          <div class="arrow" style="--i:3">&rarr;</div>
+          <div class="node good-node" style="--i:4"><strong>__GOOD_NODE_TITLE__</strong><span>__GOOD_NODE_TEXT__</span></div>
+        </div>
+      </div>
+
+      <div class="verdict"><strong>__SUMMARY_LABEL__</strong> __SUMMARY__</div>
+
+      <details>
+        <summary>__TECHNICAL_DETAILS_LABEL__</summary>
+        <div>__TECHNICAL_DETAILS__</div>
+      </details>
+    </article>
+  </main>
+
+  <script>
+    function replay(button) {
+      const flow = button.closest('.flow-wrap').querySelector('.animated');
+      flow.classList.remove('play');
+      void flow.offsetWidth;
+      flow.classList.add('play');
+    }
+
+    const observer = new IntersectionObserver((entries) => {
+      for (const entry of entries) {
+        if (entry.isIntersecting) {
+          entry.target.classList.remove('play');
+          void entry.target.offsetWidth;
+          entry.target.classList.add('play');
+          observer.unobserve(entry.target);
+        }
+      }
+    }, { threshold: 0.35 });
+
+    document.querySelectorAll('.animated').forEach((flow) => {
+      observer.observe(flow);
+    });
+  </script>
+</body>
+</html>

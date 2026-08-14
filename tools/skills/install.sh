@@ -2,6 +2,8 @@
 
 source "${DOTFILES:-$HOME/.dotfiles}/tools/lib.sh"
 
+stow_config skills
+
 require_brew_bin mise
 
 GLOBAL_SKILLS_AGENTS=(
