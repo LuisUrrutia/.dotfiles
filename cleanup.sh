@@ -7,7 +7,7 @@ BREWFILES_DIR="$DOTFILES/brewfiles"
 PROFILE_BREWFILES_DIR="$BREWFILES_DIR/profiles"
 MERGED_BREWFILE="$(mktemp)"
 BREW_BUNDLE_CLEANUP_ARGS=()
-BREWFILES=("$BREWFILES_DIR/core")
+BREWFILES=("$BREWFILES_DIR/core" "$BREWFILES_DIR/verification")
 PROFILE_SCOPE=""
 
 usage() {
@@ -16,13 +16,13 @@ Usage: $0 [--force] [--core-only | --all-profiles | --profile NAME | --file BREW
 
 Options:
   --force          Remove packages instead of only previewing cleanup
-  --core-only      Keep only packages from brewfiles/core
-  --all-profiles   Keep packages from brewfiles/core and every profile Brewfile
-  --profile NAME   Keep packages from brewfiles/core and one profile Brewfile
-  --file BREWFILE  Keep packages from brewfiles/core and an extra Brewfile
+  --core-only      Keep packages from core and verification
+  --all-profiles   Keep core, verification, and every profile Brewfile
+  --profile NAME   Keep core, verification, and one profile Brewfile
+  --file BREWFILE  Keep core, verification, and an extra Brewfile
   -h, --help       Show this help
 
-Without a profile scope, cleanup keeps all profile Brewfiles for compatibility.
+Without a profile scope, cleanup also keeps every profile Brewfile for compatibility.
 EOF
 }
 

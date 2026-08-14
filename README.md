@@ -23,7 +23,7 @@ This is meant for bootstrapping a new Mac, including shared installs for people
 who only want parts of the setup. Preview the plan first:
 
 ```sh
-./install.sh --dry-run
+./dotfiles install --dry-run
 ```
 
 Then run the installer when the prompts look right:
@@ -32,7 +32,7 @@ Then run the installer when the prompts look right:
 cd "$HOME" \
   && git clone https://github.com/LuisUrrutia/.dotfiles.git \
   && cd .dotfiles \
-  && ./install.sh
+  && ./dotfiles install
 ```
 
 Non-owners default to a smaller core install and can answer setup questions like
@@ -41,7 +41,8 @@ audio interface?" so the installer selects the right optional tool groups.
 
 ## What the installer does
 
-`install.sh` is not just a symlink script. It:
+`dotfiles install` validates the public command and delegates to `install.sh`.
+The Bootstrapper is not just a symlink script. It:
 
 - refuses to run as root or outside macOS
 - supports `--dry-run` so you can inspect the plan before sudo, Homebrew,
@@ -75,26 +76,26 @@ language toolchains, and app-specific config.
 Preview the default interactive plan:
 
 ```sh
-./install.sh --dry-run
+./dotfiles install --dry-run
 ```
 
 Core-only install:
 
 ```sh
-./install.sh --core-only
+./dotfiles install --core-only
 ```
 
 Install all optional tool groups via flag:
 
 ```sh
-./install.sh --all-profiles
+./dotfiles install --all-profiles
 ```
 
 Install selected optional tool groups directly:
 
 ```sh
-./install.sh --profile web3,streaming,audio
-./install.sh --dry-run --profile blockchain,obs,focusrite
+./dotfiles install --profile web3,streaming,audio
+./dotfiles install --dry-run --profile blockchain,obs,focusrite
 ```
 
 Available profile flags: `audio`, `dev`, `formatters`, `languages`, `web3`,
@@ -162,6 +163,20 @@ non-default signing program.
 Do not put passwords, private keys, tokens, or other secrets in `machines/`
 files. Public SSH signing keys and app paths are fine.
 
+### Machine-specific agent instructions
+
+Global Claude and Codex instructions share the tracked source at
+`tools/ai/AGENTS.md`. The AI Tool Installer links it as
+`~/.agents/AGENTS.md`, makes Codex read the same file through
+`~/.codex/AGENTS.md`; the Claude Stowed Config keeps its global `CLAUDE.md`
+import pointed at that source.
+
+For a registered machine, add `machines/<hardware-hash>.agents.md` beside its
+Machine Config. The installer links it to `~/.agents/AGENTS_LOCAL.md`, and the
+common instructions tell agents to read that file when present. This keeps
+different machine workflows tracked without duplicating the common guidance.
+An unregistered machine simply has no local instruction link.
+
 ## Local Git identity
 
 Shared Git defaults are stowed from
@@ -198,10 +213,14 @@ Key items, prompts you to choose one, asks for the local basename with
 Install or re-run one tool config:
 
 ```sh
-./tools/git/install.sh
-./tools/fish/install.sh
-./tools/vim/install.sh
+dotfiles tool list
+dotfiles tool apply git
+dotfiles tool apply fish
+dotfiles tool apply vim
 ```
+
+The direct `tools/<tool>/install.sh` entry points remain available for advanced
+use.
 
 Private config, for the repo owner only:
 
@@ -233,13 +252,36 @@ stow -D -d "$HOME/.dotfiles/tools/git" -t "$HOME" config
 If Stow reports conflicts, move or back up the existing files first. Do not
 blindly overwrite home-directory config unless you know which version you want.
 
+Applications sometimes replace a Stow symlink with a regular file. Inspect and
+resolve that drift through the Config Lifecycle instead of using `stow --adopt`:
+
+```sh
+dotfiles config status
+dotfiles config status fish
+dotfiles config diff <tool> <home-relative-path>
+dotfiles config repair <tool> <home-relative-path> --dry-run
+dotfiles config repair <tool> <home-relative-path>
+```
+
+`repair` handles only missing or byte-identical entries. For a divergent
+regular file, explicitly choose `capture` to make the live file authoritative
+or `discard` to restore the tracked source; both accept `--dry-run`. Use
+`resolve <tool> <path> [--agent claude|codex]` when the right choice needs an
+interactive agent discussion. Mutating operations create timestamped safety
+backups under `${XDG_DATA_HOME:-$HOME/.local/share}/dotfiles/config-backups`.
+
 ## Repository layout
 
 ```text
 .dotfiles/
+├── dotfiles              # Canonical user-facing command
 ├── brewfiles/
 │   ├── core              # Base packages and apps
+│   ├── verification      # Verification toolchain
 │   └── profiles/         # Selectable profile Brewfiles
+├── cli/                  # Focused adapters behind the root dispatcher
+├── config/               # Config Lifecycle owner
+├── maintenance/          # Update and aggregate Backup owners
 ├── machines/             # Per-machine config, named <machash>.sh
 ├── tools/
 │   ├── lib.sh            # Shared installer helpers
@@ -250,6 +292,7 @@ blindly overwrite home-directory config unless you know which version you want.
 ├── archived/             # Old configs kept for reference
 ├── POST_INSTALL.md       # Manual post-install checklist
 ├── private-install.sh    # Owner-only private setup
+├── verification/         # Shared local/CI Verification Suite
 └── install.sh            # Main bootstrapper
 ```
 
@@ -279,6 +322,29 @@ This list is intentionally grouped. The exact package lists live in
 
 ## Notable workflows
 
+The installed `dotfiles` command is linked into `~/.local/bin`. Every command
+supports contextual help, for example `dotfiles help config repair`.
+
+```sh
+# Deterministic, offline repository checks
+dotfiles verify
+
+# Update installed package managers, tools, plugins, and caches
+dotfiles update
+dotfiles update --ignore-schedule
+
+# Back up one app or both concurrently
+dotfiles backup thaw
+dotfiles backup raycast
+dotfiles backup all
+```
+
+Update keeps Homebrew work daily-gated and Mole cleanup weekly-gated unless
+`--ignore-schedule` is used. It updates toward current versions without
+reconciling Brewfile membership, removing manually installed software, or
+changing this Git repository. Fish keeps `upd` and `backup-configs` as
+interactive abbreviations for the canonical commands.
+
 - Fish has abbreviations for Git, Docker, Brew, common cleanup,
   iCloud/Obsidian paths, and WorkTrunk shell integration. `halp` and `cheat`
   show local command notes inspired by ChristianLempa's cheat-sheets.
@@ -294,8 +360,8 @@ This list is intentionally grouped. The exact package lists live in
   logic, and hotkeys.
 - Raycast exports are tracked as `.rayconfig` backups with `raycast-config`
   helpers for status, listing, backup, restore, and scriptable latest-path lookup.
-- Thaw preferences back up with `thaw-config backup`; `backup-configs` runs the
-  Thaw and Raycast backup helpers in parallel. Review app backups before
+- Thaw preferences back up with `dotfiles backup thaw`; `dotfiles backup all`
+  runs the Thaw and Raycast owners concurrently. Review app backups before
   committing them because they can contain private app state.
 - Catppuccin is used across Fish/FZF, Starship, Ghostty, bat, btop, and editor tooling.
 
@@ -307,9 +373,11 @@ source; do not duplicate the list here.
 
 ## Customizing
 
-Edit the files under `tools/<tool>/config`, then re-run that tool's installer
-or restow manually. Add packages to the Brewfiles instead of installing them
-only by hand if they should exist on the next machine too.
+Edit the files under `tools/<tool>/config`, then run
+`dotfiles config repair <tool>` or re-run that Tool Installer. When an app has
+replaced a symlink, inspect it with `dotfiles config diff` and choose Capture or
+Discard explicitly. Declare persistent packages according to the ownership
+rules in [CONTEXT.md](CONTEXT.md) instead of installing them only by hand.
 
 Secrets and private credentials belong outside the public repo. Use
 `private-install.sh` for owner-only setup instead of committing tokens,
@@ -319,7 +387,8 @@ where a pre-commit hook runs gitleaks over staged changes before every commit.
 
 ## Troubleshooting
 
-- Stow conflict: move the existing file out of the way, then re-run the tool installer.
+- Stow conflict: inspect it with `dotfiles config status <tool>` and
+  `dotfiles config diff <tool> <path>` before choosing Capture or Discard.
 - Missing optional dependency: most `require_*` checks warn and skip that tool.
 - Fish did not become the shell: re-run `./tools/fish/install.sh` after
   Homebrew Fish is installed.

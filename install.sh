@@ -1123,6 +1123,7 @@ install_packages() {
   local source_label=""
 
   section "Homebrew packages"
+  run_brew_bundle_install "verification tools" "$DOTFILES/brewfiles/verification"
   run_brew_bundle_install "core packages" "$DOTFILES/brewfiles/core"
 
   if [[ "$ALL_PROFILES" == true ]]; then
