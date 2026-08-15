@@ -97,16 +97,130 @@ HOME="$tmux_tmp_home" PATH="$tpack_bin_dir:$PATH" \
   "$tmux_bin_path" -L "$tmux_socket" -f /dev/null start-server \; source-file -n "$tmux_config_path"
 echo "Validated tmux config syntax with isolated server"
 
+diagnose_tpack_repository() {
+  local plugin="$1"
+  local output_path="$2"
+  local timeout_seconds=20
+  local repository="${plugin%%#*}"
+  local repository_url="https://github.com/${repository}.git"
+  local raw_output="${output_path}.raw"
+  local timeout_marker="${output_path}.timeout"
+  local git_pid
+  local watchdog_pid
+  local git_status
+
+  GIT_TERMINAL_PROMPT=0 GIT_ASKPASS=/usr/bin/false \
+    "$git_bin_path" -c credential.helper= \
+    ls-remote "$repository_url" HEAD >"$raw_output" 2>&1 &
+  git_pid="$!"
+
+  (
+    sleep "$timeout_seconds"
+    if kill -0 "$git_pid" >/dev/null 2>&1; then
+      touch "$timeout_marker"
+      kill -TERM "$git_pid" >/dev/null 2>&1 || true
+    fi
+  ) &
+  watchdog_pid="$!"
+
+  if wait "$git_pid"; then
+    git_status=0
+  else
+    git_status="$?"
+  fi
+  kill -TERM "$watchdog_pid" >/dev/null 2>&1 || true
+  wait "$watchdog_pid" >/dev/null 2>&1 || true
+
+  {
+    printf 'repository=%s\n' "$repository"
+    if [[ -f "$timeout_marker" ]]; then
+      printf 'result=timeout seconds=%s\n' "$timeout_seconds"
+    elif [[ "$git_status" -eq 0 ]]; then
+      printf 'result=reachable\n'
+    else
+      printf 'result=failed exit=%s\n' "$git_status"
+    fi
+    /usr/bin/sed -E \
+      's#https://[^/@[:space:]]+@github\.com/#https://<REDACTED>@github.com/#g' \
+      "$raw_output"
+    printf '\n'
+  } >"$output_path"
+
+  rm -f "$raw_output" "$timeout_marker"
+}
+
+append_tpack_failure_diagnostics() {
+  local tpack_log_path="$1"
+  local diagnostics_dir="$tmux_tmp_home/tpack-diagnostics"
+  local plugin_list="$diagnostics_dir/plugins"
+  local plugin
+  local output_path
+  local diagnostic_file
+  local pid
+  local index=0
+  local -a diagnostic_pids=()
+
+  mkdir -p "$diagnostics_dir"
+  /usr/bin/sed -n \
+    "s/.*@plugin[[:space:]]*'\\([^']*\\)'.*/\\1/p" \
+    "$tmux_config_path" >"$plugin_list"
+
+  printf '\nconnectivity_diagnostics_started_at_utc=%s\n' \
+    "$(date -u '+%Y-%m-%dT%H:%M:%SZ')" >>"$tpack_log_path"
+
+  while IFS= read -r plugin; do
+    [[ -n "$plugin" ]] || continue
+    index=$((index + 1))
+    output_path="$(printf '%s/repository-%02d.log' "$diagnostics_dir" "$index")"
+    diagnose_tpack_repository "$plugin" "$output_path" &
+    diagnostic_pids[${#diagnostic_pids[@]}]="$!"
+  done <"$plugin_list"
+
+  for pid in "${diagnostic_pids[@]}"; do
+    wait "$pid" || true
+  done
+
+  for diagnostic_file in "$diagnostics_dir"/repository-*.log; do
+    [[ -f "$diagnostic_file" ]] || continue
+    /bin/cat "$diagnostic_file" >>"$tpack_log_path"
+  done
+}
+
 install_tpack_plugins() {
   local max_attempts="${DOTFILES_TPACK_MAX_ATTEMPTS:-5}"
   local attempt=1
   local retry_delay=5
   local delay
+  local tpack_log_dir="${XDG_STATE_HOME:-$HOME/.local/state}/dotfiles/logs"
+  local tpack_log_path
+  local tpack_version
+
+  tpack_log_path="$tpack_log_dir/tmux-tpack-install-$(date -u '+%Y%m%dT%H%M%SZ')-$$.log"
+  mkdir -p "$tpack_log_dir"
+  chmod 700 "$tpack_log_dir"
+  : >"$tpack_log_path"
+  chmod 600 "$tpack_log_path"
+
+  tpack_version="$(PATH="$tpack_bin_dir:$PATH" "$tpack_bin_path" version 2>&1 || printf 'unavailable')"
+  {
+    printf 'started_at_utc=%s\n' "$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
+    printf 'tpack_version=%s\n' "$tpack_version"
+    printf 'tmux_version=tmux %s\n' "$tmux_version"
+    printf 'max_attempts=%s\n' "$max_attempts"
+  } >>"$tpack_log_path"
+  echo "TPack install log: $tpack_log_path"
 
   while [[ "$attempt" -le "$max_attempts" ]]; do
-    if PATH="$tpack_bin_dir:$PATH" "$tpack_bin_path" install; then
+    printf 'attempt=%s/%s status=started at_utc=%s\n' \
+      "$attempt" "$max_attempts" "$(date -u '+%Y-%m-%dT%H:%M:%SZ')" >>"$tpack_log_path"
+    if PATH="$tpack_bin_dir:$PATH" "$tpack_bin_path" install 2>&1 |
+      /usr/bin/tee -a "$tpack_log_path"; then
+      printf 'attempt=%s/%s status=succeeded at_utc=%s\n' \
+        "$attempt" "$max_attempts" "$(date -u '+%Y-%m-%dT%H:%M:%SZ')" >>"$tpack_log_path"
       return 0
     fi
+    printf 'attempt=%s/%s status=failed at_utc=%s\n' \
+      "$attempt" "$max_attempts" "$(date -u '+%Y-%m-%dT%H:%M:%SZ')" >>"$tpack_log_path"
 
     if [[ "$attempt" -lt "$max_attempts" ]]; then
       delay="${DOTFILES_TPACK_RETRY_DELAY_SECONDS:-$retry_delay}"
@@ -119,6 +233,9 @@ install_tpack_plugins() {
   done
 
   echo "Error: TPack could not install all plugins after $max_attempts attempts." >&2
+  echo "Collecting bounded Git connectivity diagnostics for the declared plugins..." >&2
+  append_tpack_failure_diagnostics "$tpack_log_path"
+  echo "Detailed TPack log: $tpack_log_path" >&2
   echo "Check GitHub connectivity, then rerun: dotfiles tool apply tmux" >&2
   return 1
 }
