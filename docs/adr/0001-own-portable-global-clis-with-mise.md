@@ -12,9 +12,10 @@ channel.
 Homebrew owns macOS applications, system utilities, native dependencies, and
 packages selected through optional Brewfile profiles. The global mise config
 owns Core Install runtimes and portable ecosystem CLIs distributed through
-npm, pipx, Aqua, GitHub releases, or another mise backend. Claude Code and Codex
-are portable global CLIs and therefore belong to mise; the Claude desktop app
-and CodexBar remain Homebrew casks. Project dependencies remain project-local.
+npm, pipx, Aqua, GitHub releases, or another mise backend. Claude Code, Codex,
+and TPack are portable global CLIs and therefore belong to mise; the Claude
+desktop app and CodexBar remain Homebrew casks. Project dependencies remain
+project-local.
 
 Each persistent command has exactly one Package Owner. Versions use moving
 channels such as `latest`, `lts`, or a major version instead of an installed

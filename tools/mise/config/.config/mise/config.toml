@@ -11,6 +11,7 @@ idiomatic_version_file_enable_tools = ["node", "python"]
 bun = "latest"
 deno = "latest"
 dotnet = "10"
+"github:tmuxpack/tpack" = "latest"
 "github:yt-dlp/yt-dlp" = "latest"
 java = "lts"
 markdownlint-cli2 = "latest"

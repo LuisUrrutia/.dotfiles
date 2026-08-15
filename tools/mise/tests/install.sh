@@ -49,11 +49,17 @@ set -euo pipefail
 printf 'brew %s\n' "$*" >>"$CALL_LOG"
 if [[ "${1:-}" == list && "${2:-}" == --cask ]]; then
   case "${3:-}" in
-  claude-code | claude-code@latest | codex) exit 0 ;;
+  claude-code | claude-code@latest | codex | tpack) exit 0 ;;
   *) exit 1 ;;
   esac
 fi
+if [[ "${1:-}" == list && "${2:-}" == --formula && "${3:-}" == tpack ]]; then
+  exit 0
+fi
 if [[ "${1:-}" == uninstall && "${2:-}" == --cask ]]; then
+  exit 0
+fi
+if [[ "${1:-}" == uninstall && "${2:-}" == --formula ]]; then
   exit 0
 fi
 exit 1
@@ -88,12 +94,17 @@ stow -v --restow --no-folding -d $ROOT_DIR/tools/mise -t $TMP_DIR/success/home c
 mise install --yes
 mise which claude
 mise which codex
+mise which tpack
 brew list --cask claude-code
 brew uninstall --cask claude-code
 brew list --cask claude-code@latest
 brew uninstall --cask claude-code@latest
 brew list --cask codex
 brew uninstall --cask codex
+brew list --cask tpack
+brew uninstall --cask tpack
+brew list --formula tpack
+brew uninstall --formula tpack
 EOF
 cmp -s "$expected_sequence" "$TMP_DIR/success/calls.log" ||
   fail "mise install and legacy migration ran in the wrong order"
@@ -102,14 +113,20 @@ cmp -s "$expected_sequence" "$TMP_DIR/success/calls.log" ||
   fail "desktop app casks were included in the CLI migration"
 
 set +e
-MISE_MISSING_COMMAND=codex run_install missing-codex
+MISE_MISSING_COMMAND=tpack run_install missing-tpack
 missing_status=$?
 set -e
 [[ "$missing_status" -eq 1 ]] || fail "missing mise command did not fail the migration"
-grep -F 'preserving legacy Homebrew casks' "$TMP_DIR/missing-codex/stderr" >/dev/null ||
+grep -F 'preserving legacy Homebrew packages' "$TMP_DIR/missing-tpack/stderr" >/dev/null ||
   fail "missing mise command did not explain the safe fallback"
-! grep -F 'brew ' "$TMP_DIR/missing-codex/calls.log" >/dev/null ||
-  fail "legacy casks were inspected before mise ownership was proven"
+! grep -F 'brew ' "$TMP_DIR/missing-tpack/calls.log" >/dev/null ||
+  fail "legacy packages were inspected before mise ownership was proven"
+
+grep -F '"github:tmuxpack/tpack" = "latest"' \
+  "$ROOT_DIR/tools/mise/config/.config/mise/config.toml" >/dev/null ||
+  fail "TPack is not declared in the mise-owned portable toolchain"
+! grep -F 'tmuxpack/tpack/tpack' "$ROOT_DIR/brewfiles/core" >/dev/null ||
+  fail "TPack still has a duplicate Homebrew owner"
 
 bootstrap_plan="$(/bin/bash "$ROOT_DIR/install.sh" --dry-run --core-only)"
 mise_line="$(printf '%s\n' "$bootstrap_plan" | grep -n -m 1 '^  - mise$' | cut -d: -f1)"

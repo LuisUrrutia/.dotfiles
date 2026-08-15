@@ -46,7 +46,6 @@ brew "fish"      # Shell
 brew "fisher"    # Fish plugin manager
 brew "atuin"     # Shell history manager
 brew "tmux"      # Terminal multiplexer
-cask "tmuxpack/tpack/tpack", trusted: true # tmux plugin manager
 brew "starship"  # Shell prompt
 
 # Terminal enhancements

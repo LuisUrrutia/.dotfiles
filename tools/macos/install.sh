@@ -133,7 +133,7 @@ set_scutil_name() {
 configure_hostname() {
   local hostname="${DOTFILES_HARDWARE_HOSTNAME:-}"
 
-  [[ -n "$hostname" ]] || return
+  [[ -n "$hostname" ]] || return 0
 
   if [[ ! "$hostname" =~ ^[A-Za-z0-9-]+$ ]]; then
     echo "Error: invalid hardware hostname: $hostname" >&2
@@ -507,18 +507,24 @@ restart_affected_services() {
   done
 }
 
-setup_macos_error_log
-run_macos_step close_system_settings
-run_macos_step configure_hostname
-run_macos_step configure_keyboard_input
-run_macos_step configure_screen_display
-run_macos_step configure_finder_files
-run_macos_step configure_dock_menu_bar
-run_macos_step configure_updates_security
-run_macos_step configure_filevault
-run_macos_step configure_power_management
-run_macos_step configure_application_settings
-run_macos_step configure_keyboard_shortcuts
-run_macos_step configure_remote_access
-run_macos_step restart_affected_services
-summarize_macos_errors
+main() {
+  setup_macos_error_log
+  run_macos_step close_system_settings
+  run_macos_step configure_hostname
+  run_macos_step configure_keyboard_input
+  run_macos_step configure_screen_display
+  run_macos_step configure_finder_files
+  run_macos_step configure_dock_menu_bar
+  run_macos_step configure_updates_security
+  run_macos_step configure_filevault
+  run_macos_step configure_power_management
+  run_macos_step configure_application_settings
+  run_macos_step configure_keyboard_shortcuts
+  run_macos_step configure_remote_access
+  run_macos_step restart_affected_services
+  summarize_macos_errors
+}
+
+if [[ "${DOTFILES_MACOS_NO_MAIN:-false}" != true ]]; then
+  main "$@"
+fi

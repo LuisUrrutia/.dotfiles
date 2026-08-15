@@ -5,8 +5,15 @@ source "${DOTFILES:-$HOME/.dotfiles}/tools/lib.sh"
 require_brew_bin tmux
 tmux_bin_path="$bin_path"
 require_brew_bin git
-require_brew_bin tpack
-tpack_bin_path="$bin_path"
+require_brew_bin mise
+mise_bin_path="$bin_path"
+
+if ! tpack_bin_path="$("$mise_bin_path" which tpack 2>/dev/null)" ||
+  [[ ! -x "$tpack_bin_path" ]]; then
+  echo "Error: mise-owned TPack is unavailable; run dotfiles tool apply mise" >&2
+  exit 1
+fi
+tpack_bin_dir="$(dirname "$tpack_bin_path")"
 
 tmux_min_major=3
 tmux_min_minor=5
@@ -34,7 +41,8 @@ cleanup_tmux_validation() {
 }
 trap cleanup_tmux_validation EXIT
 
-HOME="$tmux_tmp_home" "$tmux_bin_path" -L "$tmux_socket" -f /dev/null start-server \; source-file "$tmux_config_path"
+HOME="$tmux_tmp_home" PATH="$tpack_bin_dir:$PATH" \
+  "$tmux_bin_path" -L "$tmux_socket" -f /dev/null start-server \; source-file "$tmux_config_path"
 echo "Validated tmux config with isolated server"
 
-"$tpack_bin_path" install
+PATH="$tpack_bin_dir:$PATH" "$tpack_bin_path" install

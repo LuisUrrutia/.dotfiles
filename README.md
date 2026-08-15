@@ -353,13 +353,14 @@ This list is intentionally grouped. The exact package lists live in
 
 Homebrew owns macOS apps, system utilities, native dependencies, and packages
 selected through install profiles. The global mise config owns Core Install
-runtimes and portable global CLIs, including Claude Code and Codex. Project
-dependencies remain project-local, and no command has two package managers.
+runtimes and portable global CLIs, including Claude Code, Codex, and TPack.
+Project dependencies remain project-local, and no command has two package
+managers.
 
 Versions follow moving channels such as `latest`, `lts`, or a major release;
 the repo does not record exact installed versions. During an ownership change,
 the Bootstrapper installs and verifies the mise replacement before removing a
-known legacy Homebrew cask. See
+known legacy Homebrew package. See
 [ADR 0001](docs/adr/0001-own-portable-global-clis-with-mise.md) for the complete
 decision.
 
@@ -397,8 +398,8 @@ interactive abbreviations for the canonical commands.
   jobs, and time with a Catppuccin palette.
 - Neovim is modular, with Lazy, Treesitter, Telescope/frecency, LSP,
   completion, formatting, Fugitive, and diff helpers.
-- tmux uses TPack for plugins and validates the config in an isolated server before
-  installing plugins.
+- tmux uses the mise-owned TPack for plugins and validates the config in an
+  isolated server before installing plugins.
 - Hammerspoon handles Bluetooth sleep/reconnect behavior, caffeinate-at-home
   logic, and hotkeys.
 - Raycast exports are tracked as `.rayconfig` backups with `raycast-config`
