@@ -47,11 +47,14 @@ cat >"$fake_bin/git" <<'EOF'
 #!/usr/bin/env bash
 set -euo pipefail
 printf 'git %s\n' "$*" >>"$CALL_LOG"
-if [[ "$*" == *"config --get remote.origin.url"* ]]; then
+if [[ "$*" == "--version" ]]; then
+  printf 'git version 2.55.0-test\n'
+elif [[ "$*" == *"config --get remote.origin.url"* ]]; then
   printf 'https://legacy-user@github.com/tmux-plugins/tmux-resurrect\n'
-elif [[ "$*" == *"ls-remote"* ]]; then
-  printf 'fatal: unable to access https://secret-token@github.com/example/plugin: SSL_ERROR_SYSCALL\n' >&2
-  exit "${TPACK_GIT_DIAGNOSTIC_STATUS:-0}"
+elif [[ "$*" == *"clone"* ]]; then
+  printf "fatal: destination path 'tmux-resurrect' already exists and is not an empty directory.\n" >&2
+  printf 'fatal: unable to access https://secret-token@github.com/example/plugin\n' >&2
+  exit 128
 fi
 EOF
 
@@ -86,6 +89,8 @@ elif [[ "${1:-}" == install ]]; then
   attempt=$((attempt + 1))
   printf '%s\n' "$attempt" >"$TPACK_ATTEMPT_FILE"
   if [[ "$attempt" -le "${TPACK_FAILURES_BEFORE_SUCCESS:-2}" ]]; then
+    git clone https://github.com/tmux-plugins/tmux-resurrect.git \
+      "$HOME/.tmux/plugins/tmux-resurrect" >/dev/null 2>&1 || true
     printf 'Installing "tmux-plugins/tmux-resurrect"\n'
     printf 'tpack: error: "tmux-plugins/tmux-resurrect" download fail\n' >&2
     exit 1
@@ -129,7 +134,6 @@ grep -F -- "-c transfer.credentialsInUrl=allow -C $legacy_plugin remote set-url 
 set +e
 run_install "$TMP_DIR/tpack-persistent-attempt" \
   TPACK_FAILURES_BEFORE_SUCCESS=99 \
-  TPACK_GIT_DIAGNOSTIC_STATUS=128 \
   DOTFILES_TPACK_MAX_ATTEMPTS=3 \
   >"$TMP_DIR/persistent.out" 2>"$TMP_DIR/persistent.err"
 persistent_status=$?
@@ -150,19 +154,23 @@ tpack_log_path="$(
   fail "TPack log was not private"
 grep -F 'tpack_version=tpack 2.0.4-test' "$tpack_log_path" >/dev/null ||
   fail "TPack log did not record the managed version"
+grep -F 'git_version=git version 2.55.0-test' "$tpack_log_path" >/dev/null ||
+  fail "TPack log did not record the Git version"
 [[ "$(grep -c 'download fail' "$tpack_log_path")" -eq 3 ]] ||
   fail "TPack log did not retain every failed attempt"
 grep -F 'attempt=3/3 status=failed' "$tpack_log_path" >/dev/null ||
   fail "TPack log did not identify the final failed attempt"
-[[ "$(grep -c '^repository=' "$tpack_log_path")" -eq 4 ]] ||
-  fail "TPack failure did not diagnose every declared plugin repository"
-[[ "$(grep -c '^result=failed exit=128$' "$tpack_log_path")" -eq 4 ]] ||
-  fail "TPack log did not retain Git transport failures"
-grep -F 'SSL_ERROR_SYSCALL' "$tpack_log_path" >/dev/null ||
-  fail "TPack log did not retain the underlying Git transport error"
+grep -F 'git_command=clone' "$tpack_log_path" >/dev/null ||
+  fail "TPack log did not identify the failing Git operation"
+grep -F 'git_arguments=clone ' "$tpack_log_path" >/dev/null ||
+  fail "TPack log did not retain the failing Git arguments"
+[[ "$(grep -c '^git_exit=128$' "$tpack_log_path")" -eq 3 ]] ||
+  fail "TPack log did not retain each real Git exit status"
+grep -F "destination path 'tmux-resurrect' already exists" "$tpack_log_path" >/dev/null ||
+  fail "TPack log did not retain the swallowed Git error"
 grep -F 'https://<REDACTED>@github.com/' "$tpack_log_path" >/dev/null ||
-  fail "TPack log did not redact GitHub credentials"
+  fail "TPack Git log did not redact GitHub credentials"
 ! grep -F 'secret-token' "$tpack_log_path" >/dev/null ||
-  fail "TPack log leaked GitHub credentials"
+  fail "TPack Git log leaked GitHub credentials"
 
 printf 'tmux install test: passed\n'

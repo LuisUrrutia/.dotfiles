@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+
+set -uo pipefail
+
+real_git="${DOTFILES_TPACK_REAL_GIT:-}"
+log_dir="${DOTFILES_TPACK_GIT_LOG_DIR:-}"
+
+if [[ -z "$real_git" || ! -x "$real_git" || -z "$log_dir" ]]; then
+  echo "Error: TPack Git logger is missing its real Git path or log directory." >&2
+  exit 1
+fi
+
+umask 077
+mkdir -p "$log_dir"
+
+log_path="$log_dir/git-command-$PPID-$$.log"
+stdout_path="$log_dir/git-command-$PPID-$$.stdout"
+stderr_path="$log_dir/git-command-$PPID-$$.stderr"
+git_started_at_utc="$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
+
+"$real_git" "$@" >"$stdout_path" 2>"$stderr_path"
+git_status="$?"
+
+{
+  printf 'git_started_at_utc=%s\n' "$git_started_at_utc"
+  printf 'git_command=%s\n' "${1:-unknown}"
+  printf 'git_arguments='
+  for argument in "$@"; do
+    redacted_argument="$(
+      printf '%s' "$argument" |
+        /usr/bin/sed -E 's#https://[^/@[:space:]]+@#https://<REDACTED>@#g'
+    )"
+    printf '%q ' "$redacted_argument"
+  done
+  printf '\n'
+  printf 'git_working_directory=%s\n' "$PWD"
+  printf 'git_exit=%s\n' "$git_status"
+  /usr/bin/sed -E \
+    's#https://[^/@[:space:]]+@#https://<REDACTED>@#g' \
+    "$stdout_path" "$stderr_path"
+  printf '\n'
+} >"$log_path"
+
+/bin/cat "$stdout_path"
+/bin/cat "$stderr_path" >&2
+rm -f "$stdout_path" "$stderr_path"
+exit "$git_status"
