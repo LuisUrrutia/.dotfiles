@@ -35,6 +35,10 @@ if [[ "${1:-}" == -V ]]; then
   exit 0
 fi
 printf 'tmux PATH=%s ARGS=%s\n' "$PATH" "$*" >>"$CALL_LOG"
+if [[ "$*" == *"source-file"* && "$*" != *"source-file -n"* ]]; then
+  printf "'tpack init' returned 1\n" >&2
+  exit 1
+fi
 EOF
 
 cat >"$fake_bin/git" <<'EOF'
@@ -80,5 +84,7 @@ grep -F 'managed-tpack ' "$call_log" >/dev/null ||
   fail "installer used the shadowing legacy Homebrew cask"
 grep -F "tmux PATH=$managed_bin:" "$call_log" >/dev/null ||
   fail "isolated tmux validation could not resolve the mise-owned TPack"
+grep -F 'source-file -n ' "$call_log" >/dev/null ||
+  fail "tmux validation executed the config instead of parsing it"
 
 printf 'tmux install test: passed\n'
