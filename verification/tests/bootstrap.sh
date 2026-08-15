@@ -24,8 +24,36 @@ export DOTFILES DOTFILES_INSTALL_NO_MAIN
 # shellcheck disable=SC1090,SC1091
 source "$INSTALL"
 
-[[ "$(sudo_askpass_keychain_service)" == "dotfiles.install.$$" ]] ||
-  fail "SUDO_ASKPASS did not use a per-run Keychain service"
+at_exit() { :; }
+original_tmpdir="${TMPDIR:-}"
+TMPDIR="$TMP_DIR"
+initialize_sudo_askpass_transport
+if [[ -n "$original_tmpdir" ]]; then
+  TMPDIR="$original_tmpdir"
+else
+  unset TMPDIR
+fi
+if grep -F '/usr/bin/security' "$SUDO_ASKPASS" >/dev/null; then
+  fail "SUDO_ASKPASS still depends on a transient Keychain item"
+fi
+start_sudo_password_broker "fixture password"
+broker_pid="$SUDO_ASKPASS_BROKER_PID"
+askpass_pids=()
+for askpass_index in 1 2 3 4; do
+  "$SUDO_ASKPASS" >"$TMP_DIR/askpass-$askpass_index.out" &
+  askpass_pids+=("$!")
+done
+for askpass_pid in "${askpass_pids[@]}"; do
+  wait "$askpass_pid"
+done
+for askpass_index in 1 2 3 4; do
+  [[ "$(<"$TMP_DIR/askpass-$askpass_index.out")" == "fixture password" ]] ||
+    fail "concurrent SUDO_ASKPASS reader did not receive the in-memory credential"
+done
+stop_sudo_password_broker
+if /bin/kill -0 "$broker_pid" >/dev/null 2>&1; then
+  fail "SUDO_ASKPASS credential broker survived cleanup"
+fi
 
 clt_request_log="$TMP_DIR/clt-request.log"
 set +e
@@ -101,6 +129,7 @@ password_capture_count=0
 password_validation_count=0
 capture_sudo_password() {
   password_capture_count=$((password_capture_count + 1))
+  SUDO_ASKPASS_PASSWORD="fixture password"
 }
 validate_sudo_askpass() {
   password_validation_count=$((password_validation_count + 1))
@@ -112,9 +141,12 @@ authenticate_sudo_askpass >"$TMP_DIR/auth.out" 2>"$TMP_DIR/auth.err"
   fail "SUDO_ASKPASS did not retry one rejected password"
 grep -F 'Password was not accepted. Try again.' "$TMP_DIR/auth.err" >/dev/null ||
   fail "SUDO_ASKPASS retry did not explain the rejected password"
+stop_sudo_password_broker
 
 password_capture_count=0
 password_validation_count=0
+start_sudo_password_broker() { :; }
+stop_sudo_password_broker() { :; }
 validate_sudo_askpass() {
   password_validation_count=$((password_validation_count + 1))
   return 1

@@ -44,7 +44,10 @@ SELECTED_LANGUAGES=()
 SELECTED_PROFILE_PACKAGES=()
 AT_EXIT=""
 SUDO_ASKPASS=""
-SUDO_ASKPASS_KEYCHAIN_SERVICE=""
+SUDO_ASKPASS_DIR=""
+SUDO_ASKPASS_FIFO=""
+SUDO_ASKPASS_BROKER_PID=""
+SUDO_ASKPASS_PASSWORD=""
 DOTFILES_USE_SUDO_ASKPASS=false
 SUDO_KEEPALIVE_PID=""
 SELECTED_PROFILE_BREWFILE=""
@@ -1019,7 +1022,7 @@ print_install_plan() {
   list_tool_installers
 
   if [[ "$DRY_RUN" == true ]]; then
-    note "Dry run: exiting before sudo, keychain, Homebrew, mas, cleanup, Stow, chsh, mkdir, or install-marker changes."
+    note "Dry run: exiting before sudo, credential broker, Homebrew, mas, cleanup, Stow, chsh, mkdir, or install-marker changes."
   fi
 }
 
@@ -1086,30 +1089,124 @@ load_homebrew() {
 }
 
 capture_sudo_password() {
-  # security -i tokenizes double-quoted strings with \\ and \" as the only
-  # escapes; single quotes cannot safely wrap arbitrary passwords.
-  (
-    builtin read -r -s -p "Password: "
-    REPLY="${REPLY//\\/\\\\}"
-    REPLY="${REPLY//\"/\\\"}"
-    builtin echo "add-generic-password -U -s '${SUDO_ASKPASS_KEYCHAIN_SERVICE}' -a '${USER}' -w \"${REPLY}\""
-  ) | /usr/bin/security -i
+  IFS= builtin read -r -s -p "Password: " SUDO_ASKPASS_PASSWORD
   printf "\n"
 }
 
+sudo_password_broker_running() {
+  [[ -n "$SUDO_ASKPASS_BROKER_PID" ]] &&
+    /bin/kill -0 "$SUDO_ASKPASS_BROKER_PID" >/dev/null 2>&1
+}
+
+stop_sudo_password_broker() {
+  local broker_pid="$SUDO_ASKPASS_BROKER_PID"
+
+  if [[ -n "$broker_pid" ]]; then
+    /bin/kill "$broker_pid" >/dev/null 2>&1 || true
+    wait "$broker_pid" 2>/dev/null || true
+  fi
+  SUDO_ASKPASS_BROKER_PID=""
+}
+
+cleanup_sudo_askpass_transport() {
+  local askpass_dir="$SUDO_ASKPASS_DIR"
+
+  stop_sudo_password_broker
+  if [[ -d "$askpass_dir" ]]; then
+    case "$askpass_dir" in
+    */dotfiles-askpass.*) /bin/rm -rf "$askpass_dir" ;;
+    *)
+      printf 'Error: refusing to remove unexpected SUDO_ASKPASS directory: %s\n' \
+        "$askpass_dir" >&2
+      return 1
+      ;;
+    esac
+  fi
+}
+
+start_sudo_password_broker() {
+  local password="$1"
+
+  stop_sudo_password_broker
+  (
+    trap 'exit 0' HUP INT TERM
+    while true; do
+      printf '%s\n' "$password" 2>/dev/null >"$SUDO_ASKPASS_FIFO" || exit 0
+    done
+  ) &
+  SUDO_ASKPASS_BROKER_PID="$!"
+}
+
+initialize_sudo_askpass_transport() {
+  SUDO_ASKPASS_DIR="$(/usr/bin/mktemp -d "${TMPDIR:-/tmp}/dotfiles-askpass.XXXXXX")"
+  SUDO_ASKPASS_FIFO="$SUDO_ASKPASS_DIR/password"
+  SUDO_ASKPASS="$SUDO_ASKPASS_DIR/askpass"
+
+  /bin/chmod 700 "$SUDO_ASKPASS_DIR"
+  /usr/bin/mkfifo "$SUDO_ASKPASS_FIFO"
+  /bin/chmod 600 "$SUDO_ASKPASS_FIFO"
+
+  {
+    printf '%s\n' '#!/bin/sh'
+    cat <<'EOF'
+askpass_dir="$(CDPATH= cd "$(/usr/bin/dirname "$0")" && pwd)" || exit 1
+lock_dir="$askpass_dir/reader-lock"
+password_fifo="$askpass_dir/password"
+
+attempt=0
+while ! /bin/mkdir "$lock_dir" 2>/dev/null; do
+  attempt=$((attempt + 1))
+  if [ "$attempt" -ge 200 ]; then
+    printf 'dotfiles askpass: timed out waiting for the credential broker\n' >&2
+    exit 1
+  fi
+  /bin/sleep 0.05
+done
+
+cleanup() {
+  /bin/rmdir "$lock_dir" >/dev/null 2>&1 || true
+}
+trap cleanup EXIT HUP INT TERM
+
+IFS= read -r password <"$password_fifo"
+printf '%s\n' "$password"
+EOF
+  } >"$SUDO_ASKPASS"
+
+  /bin/chmod 700 "$SUDO_ASKPASS"
+  export SUDO_ASKPASS
+
+  at_exit "
+cleanup_sudo_askpass_transport
+  "
+}
+
 validate_sudo_askpass() {
+  sudo_password_broker_running || return 1
   /usr/bin/sudo -A -kv 2>/dev/null
 }
 
 authenticate_sudo_askpass() {
   local attempt=1
+  local restore_xtrace=false
 
   while [[ "$attempt" -le "$SUDO_ASKPASS_MAX_ATTEMPTS" ]]; do
     capture_sudo_password
+    if [[ "$-" == *x* ]]; then
+      restore_xtrace=true
+      set +x
+    fi
+    start_sudo_password_broker "$SUDO_ASKPASS_PASSWORD"
+    SUDO_ASKPASS_PASSWORD=""
+    if [[ "$restore_xtrace" == true ]]; then
+      set -x
+      restore_xtrace=false
+    fi
     if validate_sudo_askpass; then
       return 0
     fi
 
+    stop_sudo_password_broker
     if [[ "$attempt" -lt "$SUDO_ASKPASS_MAX_ATTEMPTS" ]]; then
       printf 'Password was not accepted. Try again.\n' >&2
     fi
@@ -1132,33 +1229,9 @@ ensure_sudo_askpass_ready() {
   authenticate_sudo_askpass
 }
 
-sudo_askpass_keychain_service() {
-  printf 'dotfiles.install.%s' "$$"
-}
-
 setup_sudo_askpass() {
-  SUDO_ASKPASS_KEYCHAIN_SERVICE="$(sudo_askpass_keychain_service)"
-
-  at_exit "
-printf '\e[0;33mRemoving dotfiles keychain entry ...\e[0m\n'
-/usr/bin/security delete-generic-password -s '${SUDO_ASKPASS_KEYCHAIN_SERVICE}' -a '${USER}' >/dev/null 2>&1 || true
-  "
-
-  SUDO_ASKPASS="$(/usr/bin/mktemp)"
+  initialize_sudo_askpass_transport
   printf "SUDO_ASKPASS: %s\n" "$SUDO_ASKPASS"
-
-  at_exit "
-printf '\e[0;33mDeleting SUDO_ASKPASS script ...\e[0m\n'
-/bin/rm -f '${SUDO_ASKPASS}'
-  "
-
-  {
-    echo "#!/bin/sh"
-    echo "/usr/bin/security find-generic-password -s '${SUDO_ASKPASS_KEYCHAIN_SERVICE}' -a '${USER}' -w"
-  } >"${SUDO_ASKPASS}"
-
-  /bin/chmod +x "${SUDO_ASKPASS}"
-  export SUDO_ASKPASS
 
   authenticate_sudo_askpass
   DOTFILES_USE_SUDO_ASKPASS=true
@@ -1174,7 +1247,7 @@ prepare_install_session() {
   ensure_xcode_command_line_tools
 
   # Turn fatal signals into a normal exit so the at_exit cleanup
-  # (keychain entry, askpass script, temp Brewfiles) still runs.
+  # (credential broker, temporary files, temp Brewfiles) still runs.
   trap 'exit 129' HUP INT TERM
 
   start_install_caffeinate

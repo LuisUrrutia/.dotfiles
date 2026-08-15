@@ -72,9 +72,11 @@ For a real interactive install, the first user-facing prerequisites are Full
 Disk Access, Xcode Command Line Tools, and validated sudo credentials, in that
 order. Missing Full Disk Access defaults to exiting before package selection;
 missing Command Line Tools starts Apple's installer and exits. Sudo
-authentication allows three attempts through the same temporary Keychain-backed
-`SUDO_ASKPASS` path. Each install run owns a distinct Keychain service, and
-package retries revalidate it and request the password again if it disappeared.
+authentication allows three attempts through one protected per-run
+`SUDO_ASKPASS` broker. The credential stays only in broker memory, and helper
+requests are serialized so parallel Homebrew casks each receive one complete
+response. Package retries revalidate the broker and request the password again
+if it stopped.
 
 The Bootstrapper then probes GitHub web, Git, and release-download routes in
 parallel. An interactive operator may accept a temporary Cloudflare WARP
@@ -94,6 +96,9 @@ curl retries per download by default, and the outer Bundle loop makes at most
 five attempts with 5, 10, 20, and 30 second waits. Persistent failures are
 collected across Brewfiles and block cleanup, Tool Installers, first-run tasks,
 Fish setup, and the install marker.
+
+The Core Brewfile selects the owned Raycast beta only on Tahoe and uses stable
+Raycast on older supported macOS versions.
 
 Tool List discovers executable Tool Installers immediately below the tools
 root and prints their exact names in stable lexical order. Tool Apply accepts

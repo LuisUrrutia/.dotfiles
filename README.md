@@ -53,9 +53,9 @@ The Bootstrapper is not just a symlink script. It:
 - checks Xcode Command Line Tools second; when missing, it starts Apple's
   installer and exits before any package work
 - requests the sudo password only after those prerequisites and validates it,
-  allowing up to three attempts without exposing it outside the temporary
-  per-run Keychain entry; package retries revalidate that entry and ask again
-  if macOS no longer makes it available
+  allowing up to three attempts; a protected per-run broker keeps it only in
+  memory and serializes concurrent Homebrew `SUDO_ASKPASS` requests, while
+  package retries revalidate the broker and ask again if it stops
 - probes GitHub web, Git, and release-download routes in parallel; if they are
   unavailable during an interactive fresh install, it can install an official,
   signed Cloudflare WARP consumer tunnel without an account and wait for you to
@@ -66,6 +66,8 @@ The Bootstrapper is not just a symlink script. It:
 - installs the full Xcode app on the first run
 - installs `brewfiles/core` plus a temporary Brewfile assembled from
   `brewfiles/profiles/<profile>` files based on your answers or `--profile`
+- installs the Raycast beta on Tahoe and stable Raycast on older supported
+  macOS versions
 - runs Brew Bundle in parallel, gives Homebrew five chances to finish incomplete
   entries with longer backoff and additional curl retries, and makes the final
   attempt sequential for both installs and downloads to reduce network pressure
