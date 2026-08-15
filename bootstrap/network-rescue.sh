@@ -83,8 +83,8 @@ warp_package_is_trusted() {
     return 1
   fi
 
-  /usr/bin/grep -F \
-    "Developer ID Installer: Cloudflare, Inc. ($NETWORK_RESCUE_WARP_TEAM_ID)" \
+  /usr/bin/grep -E \
+    "Developer ID Installer: .+ \\($NETWORK_RESCUE_WARP_TEAM_ID\\)[[:space:]]*$" \
     <<<"$signature" >/dev/null
 }
 

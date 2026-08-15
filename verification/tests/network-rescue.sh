@@ -120,11 +120,12 @@ set -e
 
 warp_package_signature() {
   printf '%s\n' \
-    'Developer ID Installer: Cloudflare, Inc. (68WVV388M8)' \
-    'Status: signed by a developer certificate issued by Apple for distribution'
+    'Status: signed by a developer certificate issued by Apple for distribution' \
+    'Certificate Chain:' \
+    ' 1. Developer ID Installer: Cloudflare Inc. (68WVV388M8)'
 }
 warp_package_is_trusted "$TMP_DIR/Cloudflare_WARP.pkg" ||
-  fail "official Cloudflare package signature was rejected"
+  fail "current official Cloudflare package signature was rejected"
 
 warp_package_signature() {
   printf '%s\n' 'Developer ID Installer: Example Corp (AAAAAAAAAA)'
