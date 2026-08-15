@@ -21,6 +21,26 @@ require_brew_bin() {
   fi
 }
 
+# Load the complete mise-managed environment into the current Bash process.
+# Use after tools/mise/install.sh so later installers never depend on a shell
+# restart or interactive shell configuration.
+load_mise_environment() {
+  local mise_path="${HOMEBREW_PREFIX:?HOMEBREW_PREFIX is not set}/bin/mise"
+  local mise_environment=""
+
+  if [[ ! -x "$mise_path" ]]; then
+    echo "Error: mise not found after its Tool Installer completed" >&2
+    return 1
+  fi
+
+  if ! mise_environment="$("$mise_path" env -s bash)"; then
+    echo "Error: mise could not provide the Bootstrapper environment" >&2
+    return 1
+  fi
+
+  eval "$mise_environment"
+}
+
 # Check if a Homebrew opt package exists, warn and exit 0 if not
 # Usage: require_brew_opt <package_name>
 # Sets: opt_path variable with full path to package

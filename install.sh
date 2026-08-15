@@ -1435,6 +1435,7 @@ run_tool_installers() {
   # mise owns the shared runtime and portable CLI toolchain required by later
   # Tool Installers, so the Bootstrapper establishes it first.
   run_tool "mise"
+  load_mise_environment
 
   for tool_dir in "$DOTFILES/tools"/*; do
     if [[ -d "$tool_dir" ]]; then

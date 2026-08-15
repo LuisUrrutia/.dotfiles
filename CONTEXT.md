@@ -130,6 +130,9 @@ _Avoid_: Defensive coding, error suppression
 - The **Bootstrapper** installs Homebrew packages from **Brewfiles**, runs **Tool Installers**, and stows **Stowed Config** into `$HOME`.
 - The **Bootstrapper** establishes a **Connectivity Rescue** before package
   selection and retains it through every networked installer.
+- The **Bootstrapper** loads environments established during the current run
+  before invoking dependent **Tool Installers**; it never relies on restarting
+  the terminal or loading interactive shell configuration.
 - Every persistent package has one **Package Owner**; ownership changes install
   and verify the replacement before retiring the former owner.
 - Each **Tool Directory** owns its own **Tool Installer** and any **Stowed Config** for that tool.
