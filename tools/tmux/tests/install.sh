@@ -23,6 +23,16 @@ legacy_plugin="$TMP_DIR/home/.tmux/plugins/tmux-resurrect"
 mkdir -p "$fake_bin" "$managed_bin" "$legacy_plugin/.git"
 cp "$ROOT_DIR/tools/tmux/config/.tmux.conf" "$TMP_DIR/home/.tmux.conf"
 
+plugin_urls="$TMP_DIR/plugin-urls"
+/usr/bin/sed -n "s/.*@plugin[[:space:]]*'\\([^']*\\)'.*/\\1/p" \
+  "$TMP_DIR/home/.tmux.conf" >"$plugin_urls"
+[[ -s "$plugin_urls" ]] || fail "tmux config did not declare any TPack plugins"
+while IFS= read -r plugin_url; do
+  printf '%s\n' "$plugin_url" |
+    /usr/bin/grep -Eq '^https://[^/@[:space:]]+/[^@[:space:]]+$' ||
+    fail "TPack plugin must use a credential-free full HTTPS URL: $plugin_url"
+done <"$plugin_urls"
+
 cat >"$fake_bin/stow" <<'EOF'
 #!/usr/bin/env bash
 set -euo pipefail
@@ -52,11 +62,6 @@ if [[ "$*" == "--version" ]]; then
 elif [[ "$*" == *"config --get remote.origin.url"* ]]; then
   printf 'https://legacy-user@github.com/tmux-plugins/tmux-resurrect\n'
 elif [[ "$*" == *"clone"* ]]; then
-  if [[ "${TPACK_GIT_EXPECT_CLEAN_URL:-false}" == true &&
-    "$*" == *"https://github.com/tmux-plugins/tmux-resurrect"* &&
-    "$*" != *"@github.com"* ]]; then
-    exit 0
-  fi
   printf "fatal: destination path 'tmux-resurrect' already exists and is not an empty directory.\n" >&2
   printf 'fatal: unable to access https://secret-token@github.com/example/plugin\n' >&2
   exit 128
@@ -104,48 +109,6 @@ fi
 EOF
 
 chmod +x "$fake_bin"/* "$managed_bin/tpack"
-
-wrapper_log_dir="$TMP_DIR/wrapper-logs"
-set +e
-CALL_LOG="$call_log" \
-  TPACK_GIT_EXPECT_CLEAN_URL=true \
-  DOTFILES_TPACK_REAL_GIT="$fake_bin/git" \
-  DOTFILES_TPACK_GIT_LOG_DIR="$wrapper_log_dir" \
-  "$ROOT_DIR/tools/tmux/tpack-bin/git" clone --single-branch \
-  'https://git::@github.com/tmux-plugins/tmux-resurrect' \
-  "$TMP_DIR/wrapper-clone" >/dev/null 2>&1
-wrapper_status=$?
-set -e
-[[ "$wrapper_status" -eq 0 ]] ||
-  fail "TPack Git credential placeholder was not converted to a clean URL"
-grep -F 'clone --single-branch https://github.com/tmux-plugins/tmux-resurrect' \
-  "$call_log" >/dev/null ||
-  fail "TPack Git wrapper did not pass the clean URL to Git"
-! grep -F 'git clone --single-branch https://git::@github.com/' \
-  "$call_log" >/dev/null ||
-  fail "TPack Git wrapper passed the credential placeholder to Git"
-grep -F 'git_rewrite=tpack-credential-placeholder-removed' \
-  "$wrapper_log_dir"/git-command-*.log >/dev/null ||
-  fail "TPack Git log did not explain the URL rewrite"
-
-set +e
-CALL_LOG="$call_log" \
-  TPACK_GIT_EXPECT_CLEAN_URL=true \
-  DOTFILES_TPACK_REAL_GIT="$fake_bin/git" \
-  DOTFILES_TPACK_GIT_LOG_DIR="$wrapper_log_dir" \
-  "$ROOT_DIR/tools/tmux/tpack-bin/git" clone --single-branch \
-  'https://other-user@github.com/tmux-plugins/tmux-resurrect' \
-  "$TMP_DIR/foreign-userinfo-clone" >/dev/null 2>&1
-foreign_userinfo_status=$?
-set -e
-[[ "$foreign_userinfo_status" -eq 128 ]] ||
-  fail "TPack Git wrapper rewrote foreign URL userinfo"
-rewrite_count="$(
-  grep -h -c '^git_rewrite=' "$wrapper_log_dir"/git-command-*.log |
-    /usr/bin/awk '{ total += $1 } END { print total + 0 }'
-)"
-[[ "$rewrite_count" -eq 1 ]] ||
-  fail "TPack Git wrapper rewrote more than its exact placeholder"
 
 run_install() {
   local attempt_file="$1"
