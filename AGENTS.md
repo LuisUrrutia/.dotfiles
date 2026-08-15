@@ -59,6 +59,17 @@ that as config drift: inspect and diff it, back it up, then require an explicit
 capture or discard decision. Blind `stow --adopt` and overwriting unknown live
 targets are unsafe.
 
+For a real interactive Bootstrapper run, the first user-facing prerequisites
+are Full Disk Access, Xcode Command Line Tools, and validated sudo credentials,
+in that order. Missing Full Disk Access defaults to an early exit; missing
+Command Line Tools starts Apple's installer and exits. The operator can finish
+the macOS flow and rerun without wasting installation work.
+
+Run each Brewfile with Bundle-owned parallelism and bounded whole-Brewfile
+retries; installed entries make retries incremental. A final Bundle failure may
+continue to other Brewfiles, but blocks cleanup, Tool Installers, first-run
+tasks, and the install marker.
+
 ### Ownership
 
 The Bootstrapper orchestrates Tool Installers. A `tools/<tool>/install.sh`

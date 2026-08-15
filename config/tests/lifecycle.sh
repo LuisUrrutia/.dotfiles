@@ -42,6 +42,7 @@ printf '%s\n' '^/\.config/fixture/ignored\.txt$' >"$FIXTURE_ROOT/tools/fixture/c
 git -C "$FIXTURE_ROOT" init -q
 git -C "$FIXTURE_ROOT" config user.name Fixture
 git -C "$FIXTURE_ROOT" config user.email fixture@example.com
+git -C "$FIXTURE_ROOT" config commit.gpgsign false
 git -C "$FIXTURE_ROOT" add dotfiles config/run.sh tools/fixture/config
 git -C "$FIXTURE_ROOT" reset -q tools/fixture/config/.config/fixture/untracked.txt
 git -C "$FIXTURE_ROOT" commit -qm fixture

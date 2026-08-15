@@ -31,6 +31,7 @@ printf '%s\n' tracked >"$FIXTURE_ROOT/tools/fixture/config/.config/fixture/setti
 git -C "$FIXTURE_ROOT" init -q
 git -C "$FIXTURE_ROOT" config user.name Fixture
 git -C "$FIXTURE_ROOT" config user.email fixture@example.com
+git -C "$FIXTURE_ROOT" config commit.gpgsign false
 git -C "$FIXTURE_ROOT" add config/run.sh tools/fixture/config
 git -C "$FIXTURE_ROOT" commit -qm fixture
 

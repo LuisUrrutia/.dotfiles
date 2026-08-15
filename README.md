@@ -47,14 +47,24 @@ The Bootstrapper is not just a symlink script. It:
 - refuses to run as root or outside macOS
 - supports `--dry-run` so you can inspect the plan before sudo, Homebrew,
   cleanup, Stow, shell changes, directory creation, or install-marker writes
+- checks Full Disk Access first; when it is missing, it opens System Settings
+  and asks to exit by default so you can grant it, restart the terminal, and
+  rerun
+- checks Xcode Command Line Tools second; when missing, it starts Apple's
+  installer and exits before any package work
+- requests the sudo password only after those prerequisites and validates it,
+  allowing up to three attempts without exposing it outside the temporary
+  Keychain entry
 - asks plain-language questions, shows the packages/apps behind each yes, then
   maps the answers to optional profile Brewfiles
-- prompts for your password, stores it temporarily in Keychain, and removes it
-  on exit
 - installs Homebrew if missing, otherwise updates and upgrades it
-- installs Xcode on the first run
+- installs the full Xcode app on the first run
 - installs `brewfiles/core` plus a temporary Brewfile assembled from
   `brewfiles/profiles/<profile>` files based on your answers or `--profile`
+- runs Brew Bundle in parallel, retries unfinished entries twice after transient
+  failures, and makes the final retry sequential to reduce network pressure
+- stops before cleanup, Tool Installers, Fish, and the install marker when any
+  Brewfile still fails after its retries
 - creates `$HOME/.config` and `$HOME/Projects`
 - runs tool setup scripts after package install; each script applies config only
   when its app or dependency is available, with Fish saved for last because it

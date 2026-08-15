@@ -68,6 +68,20 @@ delegates a valid operational invocation to the Bootstrapper without changing
 argument order or meaning. There is no redundant `plan` command; preview is
 `dotfiles install --dry-run`.
 
+For a real interactive install, the first user-facing prerequisites are Full
+Disk Access, Xcode Command Line Tools, and validated sudo credentials, in that
+order. Missing Full Disk Access defaults to exiting before package selection;
+missing Command Line Tools starts Apple's installer and exits. Sudo
+authentication allows three attempts through the same temporary Keychain-backed
+`SUDO_ASKPASS` path.
+
+Each Brewfile first uses `brew bundle install --jobs=auto`. Transient failures
+retry the whole idempotent Brewfile, so installed entries are skipped and
+unfinished entries retain Bundle-owned dependency handling. The final bounded
+retry uses one job to reduce network concurrency. Persistent failures are
+collected across Brewfiles and block cleanup, Tool Installers, first-run tasks,
+Fish setup, and the install marker.
+
 Tool List discovers executable Tool Installers immediately below the tools
 root and prints their exact names in stable lexical order. Tool Apply accepts
 one discovered name and no additional arguments. It runs the complete Tool

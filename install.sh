@@ -48,6 +48,8 @@ DOTFILES_USE_SUDO_ASKPASS=false
 SUDO_KEEPALIVE_PID=""
 SELECTED_PROFILE_BREWFILE=""
 BREW_BUNDLE_FAILURES=()
+BREW_BUNDLE_MAX_ATTEMPTS=3
+SUDO_ASKPASS_MAX_ATTEMPTS=3
 
 usage() {
   local profile=""
@@ -217,6 +219,36 @@ check_full_disk_access() {
   fi
 
   note "Continuing without Full Disk Access; sandboxed app settings will be skipped."
+}
+
+has_xcode_command_line_tools() {
+  /usr/bin/xcrun --find clang >/dev/null 2>&1
+}
+
+request_xcode_command_line_tools() {
+  /usr/bin/xcode-select --install
+}
+
+ensure_xcode_command_line_tools() {
+  if has_xcode_command_line_tools; then
+    return 0
+  fi
+
+  section "Xcode Command Line Tools"
+  say "Xcode Command Line Tools are required before Homebrew and the rest of the bootstrap."
+
+  if ! is_interactive; then
+    say "Error: install Xcode Command Line Tools with 'xcode-select --install', then rerun ./install.sh." >&2
+    return 1
+  fi
+
+  if request_xcode_command_line_tools; then
+    say "Apple's Command Line Tools installer is now open."
+  else
+    note "The installer may already be open. Finish it before continuing."
+  fi
+  say "Finish the installation, then rerun ./install.sh."
+  exit 0
 }
 
 at_exit() {
@@ -950,6 +982,11 @@ print_install_plan() {
   else
     plan_value "Full Disk Access" "missing (sandboxed app settings would be skipped)"
   fi
+  if has_xcode_command_line_tools; then
+    plan_value "Xcode Command Line Tools" "installed"
+  else
+    plan_value "Xcode Command Line Tools" "missing (required before installation)"
+  fi
 
   subsection "Brewfiles"
   plan_value "Core Brewfile" "$DOTFILES/brewfiles/core"
@@ -966,7 +1003,7 @@ print_install_plan() {
   else
     plan_value "Upgrade existing packages" "$RUN_BREW_UPGRADE"
   fi
-  plan_value "Xcode setup" "$RUN_XCODE_SETUP"
+  plan_value "Full Xcode app setup" "$RUN_XCODE_SETUP"
   plan_value "Run Homebrew cleanup" "$RUN_CLEANUP"
   plan_value "Tool configs/macOS settings" "$RUN_TOOL_INSTALLERS"
   plan_value "Fish setup" "$RUN_FISH_SETUP"
@@ -1043,7 +1080,7 @@ load_homebrew() {
   fi
 }
 
-setup_sudo_askpass() {
+capture_sudo_password() {
   # security -i tokenizes double-quoted strings with \\ and \" as the only
   # escapes; single quotes cannot safely wrap arbitrary passwords.
   (
@@ -1053,6 +1090,33 @@ setup_sudo_askpass() {
     builtin echo "add-generic-password -U -s 'dotfiles' -a '${USER}' -w \"${REPLY}\""
   ) | /usr/bin/security -i
   printf "\n"
+}
+
+validate_sudo_askpass() {
+  /usr/bin/sudo -A -kv 2>/dev/null
+}
+
+authenticate_sudo_askpass() {
+  local attempt=1
+
+  while [[ "$attempt" -le "$SUDO_ASKPASS_MAX_ATTEMPTS" ]]; do
+    capture_sudo_password
+    if validate_sudo_askpass; then
+      return 0
+    fi
+
+    if [[ "$attempt" -lt "$SUDO_ASKPASS_MAX_ATTEMPTS" ]]; then
+      printf 'Password was not accepted. Try again.\n' >&2
+    fi
+    attempt=$((attempt + 1))
+  done
+
+  printf 'Error: sudo password was not accepted after %s attempts.\n' \
+    "$SUDO_ASKPASS_MAX_ATTEMPTS" >&2
+  return 1
+}
+
+setup_sudo_askpass() {
 
   at_exit "
 printf '\e[0;33mRemoving dotfiles keychain entry ...\e[0m\n'
@@ -1075,16 +1139,26 @@ printf '\e[0;33mDeleting SUDO_ASKPASS script ...\e[0m\n'
   /bin/chmod +x "${SUDO_ASKPASS}"
   export SUDO_ASKPASS
 
-  if /usr/bin/sudo -A -kv 2>/dev/null; then
-    DOTFILES_USE_SUDO_ASKPASS=true
-  else
-    DOTFILES_USE_SUDO_ASKPASS=false
-    printf '\e[0;33mSUDO_ASKPASS helper failed; removing keychain entry and falling back to interactive sudo.\e[0m\n' 1>&2
-    /usr/bin/security delete-generic-password -s 'dotfiles' -a "${USER}" >/dev/null 2>&1 || true
-    /usr/bin/sudo -v
-  fi
-
+  authenticate_sudo_askpass
+  DOTFILES_USE_SUDO_ASKPASS=true
   export DOTFILES_USE_SUDO_ASKPASS
+}
+
+start_install_caffeinate() {
+  /usr/bin/caffeinate -dimu -w $$ &
+}
+
+prepare_install_session() {
+  check_full_disk_access
+  ensure_xcode_command_line_tools
+
+  # Turn fatal signals into a normal exit so the at_exit cleanup
+  # (keychain entry, askpass script, temp Brewfiles) still runs.
+  trap 'exit 129' HUP INT TERM
+
+  start_install_caffeinate
+  setup_sudo_askpass
+  start_sudo_keepalive
 }
 
 start_sudo_keepalive() {
@@ -1159,13 +1233,33 @@ run_brew_bundle_install() {
   local label="$1"
   local brewfile="$2"
   local source_label="${3:-$brewfile}"
+  local attempt=1
+  local jobs="auto"
 
-  if brew bundle install --jobs=auto --file "$brewfile"; then
-    return 0
-  fi
+  while [[ "$attempt" -le "$BREW_BUNDLE_MAX_ATTEMPTS" ]]; do
+    if [[ "$attempt" -eq "$BREW_BUNDLE_MAX_ATTEMPTS" ]]; then
+      jobs="1"
+    fi
+
+    if brew bundle install --jobs="$jobs" --file "$brewfile"; then
+      return 0
+    fi
+
+    if [[ "$attempt" -lt "$BREW_BUNDLE_MAX_ATTEMPTS" ]]; then
+      note "Homebrew bundle failed for $label (attempt $attempt/$BREW_BUNDLE_MAX_ATTEMPTS); retrying unfinished entries."
+      brew_bundle_retry_delay "$attempt"
+    fi
+    attempt=$((attempt + 1))
+  done
 
   BREW_BUNDLE_FAILURES+=("$label: $source_label")
-  note "Homebrew bundle failed for $label from $source_label; continuing with remaining install steps."
+  note "Homebrew bundle failed for $label after $BREW_BUNDLE_MAX_ATTEMPTS attempts; continuing only with remaining Brewfiles."
+}
+
+brew_bundle_retry_delay() {
+  local failed_attempt="$1"
+
+  /bin/sleep "$((failed_attempt * 2))"
 }
 
 print_brew_bundle_failures() {
@@ -1174,11 +1268,23 @@ print_brew_bundle_failures() {
   brew_bundle_failed || return 0
 
   section "Homebrew bundle failures"
-  say "Some Brewfiles failed. The rest of the installer continued."
+  say "Some Brewfiles still failed after retrying. Dependent setup was not run."
   for failure in "${BREW_BUNDLE_FAILURES[@]}"; do
     say "  - $failure"
   done
   say "Review the Homebrew output above, then rerun ./install.sh after fixing those packages."
+}
+
+install_declared_packages_and_dependents() {
+  install_packages
+  if brew_bundle_failed; then
+    print_brew_bundle_failures
+    return 1
+  fi
+
+  run_cleanup
+  run_tool_installers
+  run_first_run_tasks
 }
 
 run_cleanup() {
@@ -1255,6 +1361,15 @@ print_next_steps() {
   cat "$DOTFILES/POST_INSTALL.md"
 }
 
+configure_and_print_install_plan() {
+  detect_state
+  configure_machine_environment
+  configure_install_plan
+  configure_cleanup_plan
+  configure_system_plan
+  print_install_plan
+}
+
 main() {
   init_profile_order
   parse_args "$@"
@@ -1270,26 +1385,14 @@ main() {
   fi
 
   load_tool_library
-  detect_state
-  configure_machine_environment
-  configure_install_plan
-  configure_cleanup_plan
-  configure_system_plan
-  print_install_plan
 
   if [[ "$DRY_RUN" == true ]]; then
+    configure_and_print_install_plan
     exit 0
   fi
 
-  check_full_disk_access
-
-  # Turn fatal signals into a normal exit so the at_exit cleanup
-  # (keychain entry, askpass script, temp Brewfiles) still runs.
-  trap 'exit 129' HUP INT TERM
-
-  /usr/bin/caffeinate -dimu -w $$ &
-  setup_sudo_askpass
-  start_sudo_keepalive
+  prepare_install_session
+  configure_and_print_install_plan
   load_homebrew
   install_homebrew
   load_homebrew
@@ -1306,16 +1409,7 @@ main() {
     fi
   fi
 
-  install_packages
-  run_cleanup
-  run_tool_installers
-  run_first_run_tasks
-  print_brew_bundle_failures
-
-  if brew_bundle_failed; then
-    print_next_steps
-    exit 1
-  fi
+  install_declared_packages_and_dependents
 
   mkdir -p "$(dirname "$INSTALLED_MARKER")"
   touch "$INSTALLED_MARKER"
