@@ -54,15 +54,21 @@ The Bootstrapper is not just a symlink script. It:
   installer and exits before any package work
 - requests the sudo password only after those prerequisites and validates it,
   allowing up to three attempts without exposing it outside the temporary
-  Keychain entry
+  per-run Keychain entry; package retries revalidate that entry and ask again
+  if macOS no longer makes it available
+- probes GitHub web, Git, and release-download routes in parallel; if they are
+  unavailable during an interactive fresh install, it can install an official,
+  signed Cloudflare WARP consumer tunnel without an account and wait for you to
+  connect it before continuing
 - asks plain-language questions, shows the packages/apps behind each yes, then
   maps the answers to optional profile Brewfiles
 - installs Homebrew if missing, otherwise updates and upgrades it
 - installs the full Xcode app on the first run
 - installs `brewfiles/core` plus a temporary Brewfile assembled from
   `brewfiles/profiles/<profile>` files based on your answers or `--profile`
-- runs Brew Bundle in parallel, retries unfinished entries twice after transient
-  failures, and makes the final retry sequential to reduce network pressure
+- runs Brew Bundle in parallel, gives Homebrew five chances to finish incomplete
+  entries with longer backoff and additional curl retries, and makes the final
+  attempt sequential for both installs and downloads to reduce network pressure
 - stops before cleanup, Tool Installers, Fish, and the install marker when any
   Brewfile still fails after its retries
 - creates `$HOME/.config` and `$HOME/Projects`
@@ -76,6 +82,13 @@ The Bootstrapper is not just a symlink script. It:
 - writes an install marker to `~/.local/state/dotfiles/installed` so first-run
   work does not repeat (a legacy repo-local `.installed` file is still honored
   and cleaned up)
+
+Cloudflare WARP is a temporary Connectivity Rescue, not a persistent package
+managed by a Brewfile. An existing WARP installation is reused and preserved.
+When the Bootstrapper installs WARP, it records that ownership, keeps the tunnel
+available across failed runs so the install can be retried, and removes it only
+after every networked phase succeeds. Non-interactive installs fail with a
+clear network error instead of installing or opening an app.
 
 Several tool installers have real side effects: macOS defaults, shell
 registration, tmux plugin setup, service starts, generated completions,

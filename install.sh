@@ -44,11 +44,13 @@ SELECTED_LANGUAGES=()
 SELECTED_PROFILE_PACKAGES=()
 AT_EXIT=""
 SUDO_ASKPASS=""
+SUDO_ASKPASS_KEYCHAIN_SERVICE=""
 DOTFILES_USE_SUDO_ASKPASS=false
 SUDO_KEEPALIVE_PID=""
 SELECTED_PROFILE_BREWFILE=""
 BREW_BUNDLE_FAILURES=()
-BREW_BUNDLE_MAX_ATTEMPTS=3
+BREW_BUNDLE_MAX_ATTEMPTS=5
+BREW_CURL_RETRIES=5
 SUDO_ASKPASS_MAX_ATTEMPTS=3
 
 usage() {
@@ -257,6 +259,9 @@ at_exit() {
   # shellcheck disable=SC2064
   trap "${AT_EXIT}" EXIT
 }
+
+# shellcheck disable=SC1091
+source "$DOTFILES/bootstrap/network-rescue.sh"
 
 parse_args() {
   while (($#)); do
@@ -1087,7 +1092,7 @@ capture_sudo_password() {
     builtin read -r -s -p "Password: "
     REPLY="${REPLY//\\/\\\\}"
     REPLY="${REPLY//\"/\\\"}"
-    builtin echo "add-generic-password -U -s 'dotfiles' -a '${USER}' -w \"${REPLY}\""
+    builtin echo "add-generic-password -U -s '${SUDO_ASKPASS_KEYCHAIN_SERVICE}' -a '${USER}' -w \"${REPLY}\""
   ) | /usr/bin/security -i
   printf "\n"
 }
@@ -1116,11 +1121,27 @@ authenticate_sudo_askpass() {
   return 1
 }
 
+ensure_sudo_askpass_ready() {
+  [[ "$DOTFILES_USE_SUDO_ASKPASS" == true ]] || return 0
+
+  if validate_sudo_askpass; then
+    return 0
+  fi
+
+  note "The temporary sudo credential is no longer available; please enter the password again."
+  authenticate_sudo_askpass
+}
+
+sudo_askpass_keychain_service() {
+  printf 'dotfiles.install.%s' "$$"
+}
+
 setup_sudo_askpass() {
+  SUDO_ASKPASS_KEYCHAIN_SERVICE="$(sudo_askpass_keychain_service)"
 
   at_exit "
 printf '\e[0;33mRemoving dotfiles keychain entry ...\e[0m\n'
-/usr/bin/security delete-generic-password -s 'dotfiles' -a '${USER}' >/dev/null 2>&1 || true
+/usr/bin/security delete-generic-password -s '${SUDO_ASKPASS_KEYCHAIN_SERVICE}' -a '${USER}' >/dev/null 2>&1 || true
   "
 
   SUDO_ASKPASS="$(/usr/bin/mktemp)"
@@ -1133,7 +1154,7 @@ printf '\e[0;33mDeleting SUDO_ASKPASS script ...\e[0m\n'
 
   {
     echo "#!/bin/sh"
-    echo "/usr/bin/security find-generic-password -s 'dotfiles' -a '${USER}' -w"
+    echo "/usr/bin/security find-generic-password -s '${SUDO_ASKPASS_KEYCHAIN_SERVICE}' -a '${USER}' -w"
   } >"${SUDO_ASKPASS}"
 
   /bin/chmod +x "${SUDO_ASKPASS}"
@@ -1235,18 +1256,24 @@ run_brew_bundle_install() {
   local source_label="${3:-$brewfile}"
   local attempt=1
   local jobs="auto"
+  local download_concurrency="${HOMEBREW_DOWNLOAD_CONCURRENCY:-auto}"
 
   while [[ "$attempt" -le "$BREW_BUNDLE_MAX_ATTEMPTS" ]]; do
     if [[ "$attempt" -eq "$BREW_BUNDLE_MAX_ATTEMPTS" ]]; then
       jobs="1"
+      download_concurrency="1"
     fi
 
-    if brew bundle install --jobs="$jobs" --file "$brewfile"; then
+    ensure_sudo_askpass_ready
+    if HOMEBREW_CURL_RETRIES="${HOMEBREW_CURL_RETRIES:-$BREW_CURL_RETRIES}" \
+      HOMEBREW_DOWNLOAD_CONCURRENCY="$download_concurrency" \
+      brew bundle install --jobs="$jobs" --file "$brewfile"; then
       return 0
     fi
 
     if [[ "$attempt" -lt "$BREW_BUNDLE_MAX_ATTEMPTS" ]]; then
       note "Homebrew bundle failed for $label (attempt $attempt/$BREW_BUNDLE_MAX_ATTEMPTS); retrying unfinished entries."
+      ensure_bootstrap_connectivity
       brew_bundle_retry_delay "$attempt"
     fi
     attempt=$((attempt + 1))
@@ -1258,8 +1285,15 @@ run_brew_bundle_install() {
 
 brew_bundle_retry_delay() {
   local failed_attempt="$1"
+  local delay=30
 
-  /bin/sleep "$((failed_attempt * 2))"
+  case "$failed_attempt" in
+  1) delay=5 ;;
+  2) delay=10 ;;
+  3) delay=20 ;;
+  esac
+
+  /bin/sleep "$delay"
 }
 
 print_brew_bundle_failures() {
@@ -1392,6 +1426,7 @@ main() {
   fi
 
   prepare_install_session
+  ensure_bootstrap_connectivity
   configure_and_print_install_plan
   load_homebrew
   install_homebrew
@@ -1410,6 +1445,7 @@ main() {
   fi
 
   install_declared_packages_and_dependents
+  finish_network_rescue
 
   mkdir -p "$(dirname "$INSTALLED_MARKER")"
   touch "$INSTALLED_MARKER"

@@ -5,6 +5,7 @@ set -euo pipefail
 cd "$DOTFILES"
 
 /bin/bash verification/tests/bootstrap.sh
+/bin/bash verification/tests/network-rescue.sh
 /bin/bash install.sh --dry-run
 /bin/bash install.sh --dry-run --core-only
 /bin/bash install.sh --dry-run --all-profiles

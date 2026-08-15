@@ -73,12 +73,25 @@ Disk Access, Xcode Command Line Tools, and validated sudo credentials, in that
 order. Missing Full Disk Access defaults to exiting before package selection;
 missing Command Line Tools starts Apple's installer and exits. Sudo
 authentication allows three attempts through the same temporary Keychain-backed
-`SUDO_ASKPASS` path.
+`SUDO_ASKPASS` path. Each install run owns a distinct Keychain service, and
+package retries revalidate it and request the password again if it disappeared.
+
+The Bootstrapper then probes GitHub web, Git, and release-download routes in
+parallel. An interactive operator may accept a temporary Cloudflare WARP
+Connectivity Rescue when those routes are unavailable. The adapter downloads
+the official consumer package, verifies its Cloudflare installer signature,
+installs it, verifies the application signature, and waits for the operator to
+accept the privacy notice and connect; no account is required. A pre-existing
+WARP installation remains user-owned. A Bootstrapper-owned installation stays
+available after a failed run and is removed only after all networked phases
+succeed. Non-interactive execution fails instead of mutating system networking.
 
 Each Brewfile first uses `brew bundle install --jobs=auto`. Transient failures
 retry the whole idempotent Brewfile, so installed entries are skipped and
 unfinished entries retain Bundle-owned dependency handling. The final bounded
-retry uses one job to reduce network concurrency. Persistent failures are
+retry uses one install job and one download at a time. Homebrew receives five
+curl retries per download by default, and the outer Bundle loop makes at most
+five attempts with 5, 10, 20, and 30 second waits. Persistent failures are
 collected across Brewfiles and block cleanup, Tool Installers, first-run tasks,
 Fish setup, and the install marker.
 

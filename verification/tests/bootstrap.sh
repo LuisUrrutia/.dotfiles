@@ -24,6 +24,9 @@ export DOTFILES DOTFILES_INSTALL_NO_MAIN
 # shellcheck disable=SC1090,SC1091
 source "$INSTALL"
 
+[[ "$(sudo_askpass_keychain_service)" == "dotfiles.install.$$" ]] ||
+  fail "SUDO_ASKPASS did not use a per-run Keychain service"
+
 clt_request_log="$TMP_DIR/clt-request.log"
 set +e
 (
@@ -79,18 +82,20 @@ orchestration_log="$TMP_DIR/orchestration.log"
   uname() { printf '%s\n' Darwin; }
   load_tool_library() { :; }
   prepare_install_session() { printf '%s\n' prerequisites >>"$orchestration_log"; }
+  ensure_bootstrap_connectivity() { printf '%s\n' connectivity >>"$orchestration_log"; }
   configure_and_print_install_plan() { printf '%s\n' selection >>"$orchestration_log"; }
   load_homebrew() { :; }
   install_homebrew() { printf '%s\n' homebrew >>"$orchestration_log"; }
   install_declared_packages_and_dependents() { printf '%s\n' bundles >>"$orchestration_log"; }
+  finish_network_rescue() { printf '%s\n' network-finish >>"$orchestration_log"; }
   print_next_steps() { :; }
   INSTALLED_MARKER="$TMP_DIR/installed"
   LEGACY_INSTALLED_MARKER="$TMP_DIR/legacy-installed"
   RUN_XCODE_SETUP=false
   main
 )
-[[ "$(<"$orchestration_log")" == $'prerequisites\nselection\nhomebrew\nbundles' ]] ||
-  fail "package selection or installation ran before early prerequisites"
+[[ "$(<"$orchestration_log")" == $'prerequisites\nconnectivity\nselection\nhomebrew\nbundles\nnetwork-finish' ]] ||
+  fail "network rescue did not wrap every networked bootstrap phase"
 
 password_capture_count=0
 password_validation_count=0
@@ -123,12 +128,45 @@ set -e
   fail "SUDO_ASKPASS did not stop after three rejected passwords"
 
 BREW_BUNDLE_FAILURES=()
+DOTFILES_USE_SUDO_ASKPASS=true
+credential_valid=true
+brew_attempt_count=0
+password_capture_count=0
+password_validation_count=0
+ensure_bootstrap_connectivity() { :; }
+brew_bundle_retry_delay() { :; }
+brew() {
+  brew_attempt_count=$((brew_attempt_count + 1))
+  if [[ "$brew_attempt_count" -eq 1 ]]; then
+    credential_valid=false
+    return 1
+  fi
+  [[ "$credential_valid" == true ]]
+}
+validate_sudo_askpass() {
+  password_validation_count=$((password_validation_count + 1))
+  [[ "$credential_valid" == true ]]
+}
+authenticate_sudo_askpass() {
+  password_capture_count=$((password_capture_count + 1))
+  credential_valid=true
+}
+run_brew_bundle_install "askpass fixture" "$TMP_DIR/Brewfile" \
+  >"$TMP_DIR/brew-askpass.out" 2>"$TMP_DIR/brew-askpass.err"
+[[ "${#BREW_BUNDLE_FAILURES[@]}" -eq 0 && "$password_capture_count" -eq 1 ]] ||
+  fail "Brew Bundle retry did not recover an unavailable SUDO_ASKPASS credential"
+
+BREW_BUNDLE_FAILURES=()
+DOTFILES_USE_SUDO_ASKPASS=false
+unset HOMEBREW_CURL_RETRIES HOMEBREW_DOWNLOAD_CONCURRENCY
 brew_attempt_count=0
 brew_jobs_log="$TMP_DIR/brew-jobs.log"
+brew_env_log="$TMP_DIR/brew-env.log"
 brew_bundle_retry_delay() { :; }
 brew() {
   brew_attempt_count=$((brew_attempt_count + 1))
   printf '%s\n' "$*" >>"$brew_jobs_log"
+  printf '%s|%s\n' "$HOMEBREW_CURL_RETRIES" "$HOMEBREW_DOWNLOAD_CONCURRENCY" >>"$brew_env_log"
   [[ "$brew_attempt_count" -ge 2 ]]
 }
 
@@ -137,24 +175,31 @@ run_brew_bundle_install "core packages" "$TMP_DIR/Brewfile" \
 [[ "$brew_attempt_count" -eq 2 ]] || fail "transient Brew Bundle failure was not retried"
 [[ "${#BREW_BUNDLE_FAILURES[@]}" -eq 0 ]] ||
   fail "successful Brew Bundle retry remained marked failed"
+[[ "$(<"$brew_env_log")" == $'5|auto\n5|auto' ]] ||
+  fail "parallel Brew Bundle attempts did not strengthen Homebrew download retries"
 [[ "$(<"$brew_jobs_log")" == $'bundle install --jobs=auto --file '"$TMP_DIR"$'/Brewfile\nbundle install --jobs=auto --file '"$TMP_DIR"'/Brewfile' ]] ||
   fail "transient Brew Bundle retry did not preserve parallel jobs"
 
 BREW_BUNDLE_FAILURES=()
 brew_attempt_count=0
 : >"$brew_jobs_log"
+: >"$brew_env_log"
 brew() {
   brew_attempt_count=$((brew_attempt_count + 1))
   printf '%s\n' "$*" >>"$brew_jobs_log"
+  printf '%s|%s\n' "$HOMEBREW_CURL_RETRIES" "$HOMEBREW_DOWNLOAD_CONCURRENCY" >>"$brew_env_log"
   return 1
 }
 run_brew_bundle_install "core packages" "$TMP_DIR/Brewfile" \
   >"$TMP_DIR/brew-failed.out" 2>"$TMP_DIR/brew-failed.err"
-[[ "$brew_attempt_count" -eq 3 ]] || fail "persistent Brew Bundle failure did not exhaust retries"
+[[ "$brew_attempt_count" -eq "$BREW_BUNDLE_MAX_ATTEMPTS" ]] ||
+  fail "persistent Brew Bundle failure did not exhaust retries"
 [[ "${#BREW_BUNDLE_FAILURES[@]}" -eq 1 ]] ||
   fail "persistent Brew Bundle failure was not recorded"
 [[ "$(tail -n 1 "$brew_jobs_log")" == "bundle install --jobs=1 --file $TMP_DIR/Brewfile" ]] ||
-  fail "final Brew Bundle retry did not reduce network concurrency"
+  fail "final Brew Bundle retry did not reduce install concurrency"
+[[ "$(tail -n 1 "$brew_env_log")" == "5|1" ]] ||
+  fail "final Brew Bundle retry did not reduce download concurrency"
 
 dependent_log="$TMP_DIR/dependents.log"
 install_packages() {
