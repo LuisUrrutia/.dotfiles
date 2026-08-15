@@ -169,23 +169,8 @@ activate_warp_rescue() {
 }
 
 ensure_bootstrap_connectivity() {
-  if github_connectivity_available; then
-    return 0
-  fi
-
   section "Connectivity rescue"
-  say "GitHub web, Git, or release downloads are not reliably reachable."
-
-  if ! is_interactive; then
-    say "Error: connect through a working network or VPN, then rerun ./install.sh." >&2
-    return 1
-  fi
-
-  if ! ask_yes_no \
-    "Use temporary Cloudflare WARP connectivity rescue for this install?" "y"; then
-    say "Error: network rescue was declined; package installation cannot continue reliably." >&2
-    return 1
-  fi
+  say "Cloudflare WARP protects every networked phase of this install."
 
   if warp_app_installed; then
     if ! warp_app_is_trusted; then
@@ -193,7 +178,16 @@ ensure_bootstrap_connectivity() {
       return 1
     fi
   else
+    if ! is_interactive; then
+      say "Error: Cloudflare WARP must be installed interactively before this install can continue." >&2
+      return 1
+    fi
     install_warp_rescue
+  fi
+
+  if ! warp_is_active && ! is_interactive; then
+    say "Error: connect Cloudflare WARP, then rerun ./install.sh." >&2
+    return 1
   fi
 
   activate_warp_rescue

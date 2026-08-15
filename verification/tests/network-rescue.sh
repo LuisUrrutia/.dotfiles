@@ -51,52 +51,53 @@ install_warp_rescue >"$TMP_DIR/install.out" 2>"$TMP_DIR/install.err"
 source "$ROOT_DIR/bootstrap/network-rescue.sh"
 
 : >"$rescue_log"
-github_connectivity_available() { return 0; }
-ask_yes_no() { fail "healthy connectivity prompted for network rescue"; }
-install_warp_rescue() { fail "healthy connectivity installed WARP"; }
-activate_warp_rescue() { fail "healthy connectivity activated WARP"; }
+github_connectivity_available() { printf '%s\n' probe >>"$rescue_log"; }
+is_interactive() { return 0; }
+ask_yes_no() { fail "mandatory WARP policy still asked whether to use WARP"; }
+warp_app_installed() { return 1; }
+warp_is_active() { return 1; }
+install_warp_rescue() { printf '%s\n' install >>"$rescue_log"; }
+activate_warp_rescue() { printf '%s\n' activate >>"$rescue_log"; }
 ensure_bootstrap_connectivity
+[[ "$(<"$rescue_log")" == $'install\nactivate\nprobe' ]] ||
+  fail "normal install did not force WARP before checking GitHub connectivity"
 
-github_connectivity_available() { return 1; }
+: >"$rescue_log"
+github_connectivity_available() { fail "non-interactive install probed GitHub without WARP"; }
 is_interactive() { return 1; }
+warp_app_installed() { return 1; }
+install_warp_rescue() { fail "non-interactive install tried to install WARP"; }
 set +e
 ensure_bootstrap_connectivity >"$TMP_DIR/noninteractive.out" 2>"$TMP_DIR/noninteractive.err"
 noninteractive_status=$?
 set -e
 [[ "$noninteractive_status" -eq 1 ]] ||
-  fail "non-interactive bootstrap continued with unavailable GitHub connectivity"
-
-is_interactive() { return 0; }
-ask_yes_no() { return 1; }
-set +e
-ensure_bootstrap_connectivity >"$TMP_DIR/declined.out" 2>"$TMP_DIR/declined.err"
-declined_status=$?
-set -e
-[[ "$declined_status" -eq 1 ]] || fail "declined network rescue continued bootstrap"
-
-probe_count=0
-github_connectivity_available() {
-  probe_count=$((probe_count + 1))
-  [[ "$probe_count" -ge 2 ]]
-}
-ask_yes_no() { return 0; }
-warp_app_installed() { return 1; }
-install_warp_rescue() { printf '%s\n' install >>"$rescue_log"; }
-activate_warp_rescue() { printf '%s\n' activate >>"$rescue_log"; }
-ensure_bootstrap_connectivity >"$TMP_DIR/rescued.out" 2>"$TMP_DIR/rescued.err"
-[[ "$(<"$rescue_log")" == $'install\nactivate' ]] ||
-  fail "fresh rescue did not install and activate WARP before retrying GitHub"
+  fail "non-interactive bootstrap continued without WARP"
+grep -F 'WARP must be installed interactively' "$TMP_DIR/noninteractive.err" >/dev/null ||
+  fail "non-interactive bootstrap did not explain the mandatory WARP requirement"
 
 : >"$rescue_log"
-probe_count=0
+github_connectivity_available() { printf '%s\n' probe >>"$rescue_log"; }
+is_interactive() { return 1; }
 warp_app_installed() { return 0; }
 warp_app_is_trusted() { return 0; }
+warp_is_active() { return 0; }
 install_warp_rescue() { fail "existing WARP installation was replaced"; }
+activate_warp_rescue() { printf '%s\n' activate >>"$rescue_log"; }
 ensure_bootstrap_connectivity >"$TMP_DIR/existing.out" 2>"$TMP_DIR/existing.err"
-[[ "$(<"$rescue_log")" == activate ]] ||
-  fail "existing WARP installation was not reused"
+[[ "$(<"$rescue_log")" == $'activate\nprobe' ]] ||
+  fail "active existing WARP installation was not reused before the GitHub probe"
 
-probe_count=0
+: >"$rescue_log"
+warp_is_active() { return 1; }
+activate_warp_rescue() { fail "inactive WARP was opened during a non-interactive install"; }
+set +e
+ensure_bootstrap_connectivity >"$TMP_DIR/inactive.out" 2>"$TMP_DIR/inactive.err"
+inactive_status=$?
+set -e
+[[ "$inactive_status" -eq 1 ]] ||
+  fail "non-interactive bootstrap continued with inactive WARP"
+
 warp_app_is_trusted() { return 1; }
 activate_warp_rescue() { fail "untrusted existing WARP application was opened"; }
 set +e
@@ -105,6 +106,17 @@ untrusted_app_status=$?
 set -e
 [[ "$untrusted_app_status" -eq 1 ]] ||
   fail "existing WARP application with a foreign signature was accepted"
+
+warp_app_is_trusted() { return 0; }
+warp_is_active() { return 0; }
+github_connectivity_available() { return 1; }
+activate_warp_rescue() { :; }
+set +e
+ensure_bootstrap_connectivity >"$TMP_DIR/unreachable.out" 2>"$TMP_DIR/unreachable.err"
+unreachable_status=$?
+set -e
+[[ "$unreachable_status" -eq 1 ]] ||
+  fail "bootstrap continued when GitHub remained unavailable through WARP"
 
 warp_package_signature() {
   printf '%s\n' \

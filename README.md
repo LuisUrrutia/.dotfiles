@@ -56,10 +56,9 @@ The Bootstrapper is not just a symlink script. It:
   allowing up to three attempts; a protected per-run broker keeps it only in
   memory and serializes concurrent Homebrew `SUDO_ASKPASS` requests, while
   package retries revalidate the broker and ask again if it stops
-- probes GitHub web, Git, and release-download routes in parallel; if they are
-  unavailable during an interactive fresh install, it can install an official,
-  signed Cloudflare WARP consumer tunnel without an account and wait for you to
-  connect it before continuing
+- requires an official, signed Cloudflare WARP consumer tunnel for every normal
+  install, waits for you to connect it when necessary, then probes GitHub web,
+  Git, and release-download routes in parallel through the tunnel
 - asks plain-language questions, shows the packages/apps behind each yes, then
   maps the answers to optional profile Brewfiles
 - installs Homebrew if missing, otherwise updates and upgrades it
@@ -89,8 +88,9 @@ Cloudflare WARP is a temporary Connectivity Rescue, not a persistent package
 managed by a Brewfile. An existing WARP installation is reused and preserved.
 When the Bootstrapper installs WARP, it records that ownership, keeps the tunnel
 available across failed runs so the install can be retried, and removes it only
-after every networked phase succeeds. Non-interactive installs fail with a
-clear network error instead of installing or opening an app.
+after every networked phase succeeds. Non-interactive installs proceed only
+when a trusted WARP installation is already connected; otherwise they fail
+instead of installing or opening an app.
 
 Several tool installers have real side effects: macOS defaults, shell
 registration, tmux plugin setup, service starts, generated completions,
