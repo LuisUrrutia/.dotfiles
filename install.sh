@@ -1363,6 +1363,8 @@ run_brew_bundle_install() {
       download_concurrency="1"
     fi
 
+    github_phase_preflight "Homebrew $label" 0 \
+      "Homebrew uses formulae.brew.sh, GHCR, vendor downloads, and Git taps; its exact HTTP count is dynamic and it reserves 0 GitHub core API requests."
     ensure_sudo_askpass_ready
     if HOMEBREW_CURL_RETRIES="${HOMEBREW_CURL_RETRIES:-$BREW_CURL_RETRIES}" \
       HOMEBREW_DOWNLOAD_CONCURRENCY="$download_concurrency" \
@@ -1454,12 +1456,23 @@ load_tool_library() {
 run_tool_installers() {
   local tool_dir=""
   local tool_name=""
+  local mise_aqua_count=""
+  local mise_github_count=""
+  local mise_required_budget=""
+  local tmux_git_sources=""
+  local vim_git_sources=""
+  local vim_parser_sources=""
 
   load_tool_library
   mkdir -p "$HOME/.config"
 
   # mise owns the shared runtime and portable CLI toolchain required by later
   # Tool Installers, so the Bootstrapper establishes it first.
+  mise_aqua_count="$(mise_github_backend_count aqua)"
+  mise_github_count="$(mise_github_backend_count github)"
+  mise_required_budget="$(mise_github_api_required_budget)"
+  github_phase_preflight "mise" "$mise_required_budget" \
+    "mise declares $mise_aqua_count Aqua and $mise_github_count GitHub release tools; measured clean installs reserve $mise_required_budget core API requests." true
   run_tool "mise"
   load_mise_environment
 
@@ -1467,6 +1480,16 @@ run_tool_installers() {
     if [[ -d "$tool_dir" ]]; then
       tool_name="$(basename "$tool_dir")"
       [[ "$tool_name" == "fish" || "$tool_name" == "mise" ]] && continue
+      if [[ "$tool_name" == "tmux" ]]; then
+        tmux_git_sources="$(tmux_github_git_source_count)"
+        github_phase_preflight "Tmux plugins" 0 \
+          "TPack will synchronize $tmux_git_sources Git repositories; Git transport does not consume GitHub core API requests."
+      elif [[ "$tool_name" == "vim" ]]; then
+        vim_git_sources="$(vim_github_git_source_count)"
+        vim_parser_sources="$(vim_treesitter_parser_source_count)"
+        github_phase_preflight "Vim plugins" 0 \
+          "Neovim will synchronize $vim_git_sources Git repositories and $vim_parser_sources Treesitter parser sources; these do not reserve GitHub core API requests."
+      fi
       run_tool "$tool_name"
     fi
   done
@@ -1529,6 +1552,8 @@ main() {
   ensure_bootstrap_connectivity
   configure_and_print_install_plan
   load_homebrew
+  github_phase_preflight "Homebrew bootstrap" 0 \
+    "Homebrew bootstrap/update uses Git, formulae.brew.sh, and GHCR; it reserves 0 GitHub core API requests."
   install_homebrew
   load_homebrew
   load_tool_library

@@ -58,8 +58,7 @@ The Bootstrapper is not just a symlink script. It:
   package retries revalidate the broker and ask again if it stops
 - requires an official, signed Cloudflare WARP consumer tunnel for every normal
   install, waits for you to connect it when necessary, then probes GitHub web,
-  Git, and release-download routes in parallel through the tunnel and verifies
-  that the shared WARP exit still has enough GitHub API requests for mise
+  Git, and release-download routes in parallel through the tunnel
 - asks plain-language questions, shows the packages/apps behind each yes, then
   maps the answers to optional profile Brewfiles
 - installs Homebrew if missing, otherwise updates and upgrades it
@@ -94,10 +93,15 @@ when a trusted WARP installation is already connected; otherwise they fail
 instead of installing or opening an app.
 
 WARP exit IPs are shared, so their unauthenticated GitHub API budget can already
-be exhausted on a fresh Mac. Before package work, the Bootstrapper queries
-`https://api.github.com/rate_limit`, reports the remaining core budget and its
-reset time, and stops early when the declared mise tools cannot be resolved
-reliably within that budget.
+be exhausted on a fresh Mac. The Bootstrapper checks WARP, GitHub routes, and
+`https://api.github.com/rate_limit` immediately before Homebrew, mise, TPack,
+and Neovim instead of treating the install as one network phase. Homebrew uses
+its own JSON API, GHCR, vendor downloads, and Git taps; TPack and Neovim use Git
+and direct downloads, so none reserves GitHub core API requests. The current
+mise configuration is different: measured clean installs need 10 core requests
+per Aqua tool and 12 per GitHub tool, or 84 total. Because that exceeds the
+anonymous limit, an interactive bootstrap uses `gh auth login` once and mise
+reuses the securely stored GitHub CLI credential without tracking a token.
 
 Several tool installers have real side effects: macOS defaults, shell
 registration, tmux plugin setup, service starts, generated completions,

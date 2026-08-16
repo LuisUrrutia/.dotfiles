@@ -136,6 +136,7 @@ orchestration_log="$TMP_DIR/orchestration.log"
   load_tool_library() { :; }
   prepare_install_session() { printf '%s\n' prerequisites >>"$orchestration_log"; }
   ensure_bootstrap_connectivity() { printf '%s\n' connectivity >>"$orchestration_log"; }
+  github_phase_preflight() { printf 'preflight-%s\n' "$1" >>"$orchestration_log"; }
   configure_and_print_install_plan() { printf '%s\n' selection >>"$orchestration_log"; }
   load_homebrew() { :; }
   install_homebrew() { printf '%s\n' homebrew >>"$orchestration_log"; }
@@ -148,8 +149,8 @@ orchestration_log="$TMP_DIR/orchestration.log"
   RUN_XCODE_SETUP=true
   main
 )
-[[ "$(<"$orchestration_log")" == $'prerequisites\nconnectivity\nselection\nhomebrew\nxcode\nbundles\nnetwork-finish' ]] ||
-  fail "Xcode did not finish before package and Tool Installer work"
+[[ "$(<"$orchestration_log")" == $'prerequisites\nconnectivity\nselection\npreflight-Homebrew bootstrap\nhomebrew\nxcode\nbundles\nnetwork-finish' ]] ||
+  fail "Homebrew was not preflighted or Xcode did not finish before dependent work"
 
 password_capture_count=0
 password_validation_count=0
@@ -192,6 +193,7 @@ brew_attempt_count=0
 password_capture_count=0
 password_validation_count=0
 ensure_bootstrap_connectivity() { :; }
+github_phase_preflight() { :; }
 brew_bundle_retry_delay() { :; }
 brew() {
   brew_attempt_count=$((brew_attempt_count + 1))

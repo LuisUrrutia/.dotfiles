@@ -66,6 +66,10 @@ source "$ROOT_DIR/install.sh"
 TOOLS_LIB_LOADED=true
 bootstrap_tool_log="$TMP_DIR/bootstrap-tools.log"
 
+github_phase_preflight() {
+  printf 'preflight %s %s\n' "$1" "$2" >>"$bootstrap_tool_log"
+}
+
 # Called indirectly by run_tool_installers from the sourced Bootstrapper.
 # shellcheck disable=SC2329
 run_tool() {
@@ -86,7 +90,13 @@ run_tool() {
 
 run_tool_installers
 
-[[ "$(head -n 1 "$bootstrap_tool_log")" == mise ]] ||
+[[ "$(head -n 2 "$bootstrap_tool_log")" == $'preflight mise 84\nmise' ]] ||
   fail "Bootstrapper did not establish mise before other Tool Installers"
+grep -F -B 1 -x 'tmux' "$bootstrap_tool_log" |
+  grep -F -x 'preflight Tmux plugins 0' >/dev/null ||
+  fail "Bootstrapper did not preflight GitHub immediately before Tmux"
+grep -F -B 1 -x 'vim' "$bootstrap_tool_log" |
+  grep -F -x 'preflight Vim plugins 0' >/dev/null ||
+  fail "Bootstrapper did not preflight GitHub immediately before Vim"
 
 printf 'mise environment test: passed\n'

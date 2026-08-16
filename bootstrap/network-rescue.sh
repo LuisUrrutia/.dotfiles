@@ -10,7 +10,8 @@ NETWORK_RESCUE_WARP_BUNDLE_ID="com.cloudflare.1dot1dot1dot1.macos"
 NETWORK_RESCUE_MARKER="${XDG_STATE_HOME:-$HOME/.local/state}/dotfiles/network-rescue-warp"
 NETWORK_RESCUE_TEMP_DIR=""
 GITHUB_API_RATE_LIMIT_URL="https://api.github.com/rate_limit"
-GITHUB_API_BUDGET_MARGIN=2
+GITHUB_API_AQUA_TOOL_BUDGET=10
+GITHUB_API_GITHUB_TOOL_BUDGET=12
 
 github_web_connectivity_available() {
   /usr/bin/curl --head --location --silent --show-error \
@@ -51,6 +52,27 @@ github_connectivity_available() {
 }
 
 github_api_rate_limit_response() {
+  local token=""
+
+  if [[ -n "${MISE_GITHUB_TOKEN:-}" ]]; then
+    token="$MISE_GITHUB_TOKEN"
+  elif [[ -n "${GITHUB_API_TOKEN:-}" ]]; then
+    token="$GITHUB_API_TOKEN"
+  elif [[ -n "${GITHUB_TOKEN:-}" ]]; then
+    token="$GITHUB_TOKEN"
+  fi
+
+  if command -v gh >/dev/null 2>&1; then
+    if [[ -n "$token" ]]; then
+      GH_TOKEN="$token" gh api rate_limit
+      return
+    fi
+    if gh auth status --hostname github.com >/dev/null 2>&1; then
+      gh api rate_limit
+      return
+    fi
+  fi
+
   /usr/bin/curl --fail --silent --show-error \
     --connect-timeout 8 --max-time 20 \
     --header 'Accept: application/vnd.github+json' \
@@ -66,25 +88,89 @@ github_api_rate_limit_value() {
     /usr/bin/plutil -extract "resources.core.$field" raw - 2>/dev/null
 }
 
-github_api_required_budget() {
+mise_github_backend_count() {
+  local backend="$1"
   local mise_config="$DOTFILES/tools/mise/config/.config/mise/config.toml"
-  local github_release_sources=0
+  local count=0
 
   if [[ -f "$mise_config" ]]; then
-    github_release_sources="$(
-      /usr/bin/grep -Ec '^"(aqua|github):' "$mise_config" || true
+    count="$(
+      /usr/bin/grep -Ec "^\"${backend}:" "$mise_config" || true
     )"
   fi
-  printf '%s\n' "$((github_release_sources + GITHUB_API_BUDGET_MARGIN))"
+  printf '%s\n' "$count"
+}
+
+mise_github_api_required_budget() {
+  local aqua_count=""
+  local github_count=""
+
+  aqua_count="$(mise_github_backend_count aqua)"
+  github_count="$(mise_github_backend_count github)"
+  printf '%s\n' "$((
+    aqua_count * GITHUB_API_AQUA_TOOL_BUDGET +
+      github_count * GITHUB_API_GITHUB_TOOL_BUDGET
+  ))"
+}
+
+tmux_github_git_source_count() {
+  local tmux_config="$DOTFILES/tools/tmux/config/.tmux.conf"
+
+  if [[ ! -f "$tmux_config" ]]; then
+    printf '0\n'
+    return
+  fi
+  /usr/bin/sed -n \
+    "s|.*@plugin[[:space:]]*'https://github.com/\([^']*\)'.*|\1|p" \
+    "$tmux_config" | /usr/bin/sort -u | /usr/bin/wc -l | /usr/bin/tr -d ' '
+}
+
+vim_github_git_source_count() {
+  local plugins_dir="$DOTFILES/tools/vim/config/.config/nvim/lua/plugins"
+  local lazy_config="$DOTFILES/tools/vim/config/.config/nvim/lua/config/lazy.lua"
+  local plugin_count=0
+  local lazy_count=0
+
+  if [[ -d "$plugins_dir" ]]; then
+    plugin_count="$(
+      {
+        /usr/bin/grep -Eho \
+          "['\"][A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+['\"]" \
+          "$plugins_dir"/*.lua 2>/dev/null || true
+      } | /usr/bin/sed -E "s/['\"]//g" | /usr/bin/sort -u |
+        /usr/bin/wc -l | /usr/bin/tr -d ' '
+    )"
+  fi
+  if [[ -f "$lazy_config" ]] &&
+    /usr/bin/grep -F 'https://github.com/folke/lazy.nvim.git' \
+      "$lazy_config" >/dev/null; then
+    lazy_count=1
+  fi
+  printf '%s\n' "$((plugin_count + lazy_count))"
+}
+
+vim_treesitter_parser_source_count() {
+  local treesitter_config="$DOTFILES/tools/vim/config/.config/nvim/lua/config/treesitter.lua"
+
+  if [[ ! -f "$treesitter_config" ]]; then
+    printf '0\n'
+    return
+  fi
+  /usr/bin/awk '
+    /^M\.parsers = \{/ { in_parsers = 1; next }
+    in_parsers && /^}/ { print count + 0; exit }
+    in_parsers && /^[[:space:]]*'\''[A-Za-z0-9_-]+'\''[,]?[[:space:]]*$/ { count++ }
+  ' "$treesitter_config"
 }
 
 github_api_budget_available() {
+  local phase="$1"
+  local required="$2"
   local response=""
   local remaining=""
   local limit=""
   local reset=""
   local reset_display=""
-  local required=""
 
   if ! response="$(github_api_rate_limit_response)"; then
     say "Error: could not read GitHub API rate limits through Cloudflare WARP." >&2
@@ -94,8 +180,6 @@ github_api_budget_available() {
   remaining="$(github_api_rate_limit_value "$response" remaining || true)"
   limit="$(github_api_rate_limit_value "$response" limit || true)"
   reset="$(github_api_rate_limit_value "$response" reset || true)"
-  required="$(github_api_required_budget)"
-
   if [[ ! "$remaining" =~ ^[0-9]+$ || ! "$limit" =~ ^[0-9]+$ ||
     ! "$reset" =~ ^[0-9]+$ || ! "$required" =~ ^[0-9]+$ ]]; then
     say "Error: GitHub returned an unreadable API rate-limit response." >&2
@@ -104,12 +188,78 @@ github_api_budget_available() {
 
   reset_display="$(/bin/date -r "$reset" '+%Y-%m-%d %H:%M:%S %z' 2>/dev/null || printf 'unknown')"
   if [[ "$remaining" -lt "$required" ]]; then
-    say "Error: GitHub API rate limit through WARP is $remaining/$limit; this install requires at least $required." >&2
+    say "Error: GitHub API rate limit through WARP is $remaining/$limit; $phase needs $required core API requests." >&2
+    if [[ "$limit" -lt "$required" ]]; then
+      say "Authenticated GitHub access is required for this phase; the anonymous limit cannot satisfy it." >&2
+    fi
     say "Rate limit resets at $reset_display (epoch $reset). Rerun ./install.sh after that time." >&2
     return 1
   fi
 
-  say "GitHub API rate limit through WARP: $remaining/$limit remaining (minimum required: $required)."
+  say "GitHub API through WARP: $remaining/$limit remaining; $phase needs $required core API requests."
+}
+
+github_authentication_available() {
+  [[ -n "${MISE_GITHUB_TOKEN:-}" || -n "${GITHUB_API_TOKEN:-}" ||
+    -n "${GITHUB_TOKEN:-}" ]] ||
+    (command -v gh >/dev/null 2>&1 &&
+      gh auth status --hostname github.com >/dev/null 2>&1)
+}
+
+ensure_mise_github_authentication() {
+  local required=""
+  local aqua_count=""
+  local github_count=""
+
+  github_authentication_available && return 0
+
+  required="$(mise_github_api_required_budget)"
+  aqua_count="$(mise_github_backend_count aqua)"
+  github_count="$(mise_github_backend_count github)"
+  if ! command -v gh >/dev/null 2>&1; then
+    say "Error: GitHub CLI is required before mise can authenticate." >&2
+    return 1
+  fi
+  if ! is_interactive; then
+    say "Error: mise needs authenticated GitHub access; run 'gh auth login' or provide MISE_GITHUB_TOKEN." >&2
+    return 1
+  fi
+
+  section "GitHub authentication"
+  say "mise declares $aqua_count Aqua and $github_count GitHub release tools."
+  say "Their measured clean-install budget is $required core API requests, above GitHub's anonymous limit."
+  say "GitHub CLI will open the browser once and store the token in the macOS credential store."
+  gh auth login --hostname github.com --web --git-protocol ssh --skip-ssh-key
+  if ! gh auth status --hostname github.com >/dev/null 2>&1; then
+    say "Error: GitHub authentication did not complete." >&2
+    return 1
+  fi
+}
+
+github_phase_preflight() {
+  local phase="$1"
+  local required="$2"
+  local traffic_summary="$3"
+  local require_authentication="${4:-false}"
+
+  section "GitHub preflight: $phase"
+  if ! warp_is_active; then
+    if ! is_interactive; then
+      say "Error: Cloudflare WARP disconnected before $phase." >&2
+      return 1
+    fi
+    note "Cloudflare WARP disconnected before $phase; reconnecting it now."
+    activate_warp_rescue
+  fi
+  if ! github_connectivity_available; then
+    say "Error: GitHub routes are not reliable enough to start $phase." >&2
+    return 1
+  fi
+  say "$traffic_summary"
+  if [[ "$require_authentication" == true ]]; then
+    ensure_mise_github_authentication
+  fi
+  github_api_budget_available "$phase" "$required"
 }
 
 warp_app_installed() {
@@ -260,8 +410,6 @@ ensure_bootstrap_connectivity() {
     say "Error: GitHub is still not reliably reachable through Cloudflare WARP." >&2
     return 1
   fi
-
-  github_api_budget_available
 
   say "GitHub connectivity recovered through Cloudflare WARP."
 }

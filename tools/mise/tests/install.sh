@@ -125,6 +125,10 @@ grep -F 'preserving legacy Homebrew packages' "$TMP_DIR/missing-tpack/stderr" >/
 grep -F '"github:tmuxpack/tpack" = "latest"' \
   "$ROOT_DIR/tools/mise/config/.config/mise/config.toml" >/dev/null ||
   fail "TPack is not declared in the mise-owned portable toolchain"
+# shellcheck disable=SC2016 # The tracked command must retain mise's runtime variable.
+grep -F 'credential_command = '\''gh auth token --hostname "$MISE_CREDENTIAL_HOST"'\''' \
+  "$ROOT_DIR/tools/mise/config/.config/mise/config.toml" >/dev/null ||
+  fail "mise cannot reuse GitHub CLI authentication from the macOS Keychain"
 ! grep -F 'tmuxpack/tpack/tpack' "$ROOT_DIR/brewfiles/core" >/dev/null ||
   fail "TPack still has a duplicate Homebrew owner"
 

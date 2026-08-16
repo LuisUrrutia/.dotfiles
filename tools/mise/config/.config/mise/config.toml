@@ -1,6 +1,9 @@
 [settings]
 idiomatic_version_file_enable_tools = ["node", "python"]
 
+[settings.github]
+credential_command = 'gh auth token --hostname "$MISE_CREDENTIAL_HOST"'
+
 [tools]
 "aqua:anthropics/claude-code" = "latest"
 "aqua:dlvhdr/gh-dash" = "latest"
