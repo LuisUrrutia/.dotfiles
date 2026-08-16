@@ -101,7 +101,12 @@ and direct downloads, so none reserves GitHub core API requests. The current
 mise configuration is different: measured clean installs need 10 core requests
 per Aqua tool and 12 per GitHub tool, or 84 total. Because that exceeds the
 anonymous limit, an interactive bootstrap uses `gh auth login` once and mise
-reuses the securely stored GitHub CLI credential without tracking a token.
+reuses the securely stored GitHub CLI credential without tracking a token. If
+a phase has a sufficient maximum limit but too few requests remain, the
+Bootstrapper waits in interruptible one-minute intervals until GitHub's reported
+reset, checks the shared WARP quota again, and resumes automatically. It fails
+immediately when the session's maximum limit cannot satisfy the phase, because
+waiting cannot replace the required authentication.
 
 Several tool installers have real side effects: macOS defaults, shell
 registration, tmux plugin setup, service starts, generated completions,

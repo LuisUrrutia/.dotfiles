@@ -83,6 +83,66 @@ grep -F 'mise needs 84 core API requests' "$TMP_DIR/rate-exhausted.err" >/dev/nu
 grep -F '1786880472' "$TMP_DIR/rate-exhausted.err" >/dev/null ||
   fail "exhausted GitHub rate limit did not report its reset"
 
+rate_response_count_file="$TMP_DIR/rate-response-count"
+rate_now_file="$TMP_DIR/rate-now"
+printf '0\n' >"$rate_response_count_file"
+printf '1000\n' >"$rate_now_file"
+github_api_rate_limit_response() {
+  local response_count=""
+
+  response_count="$(<"$rate_response_count_file")"
+  response_count=$((response_count + 1))
+  printf '%s\n' "$response_count" >"$rate_response_count_file"
+  if [[ "$response_count" -eq 1 ]]; then
+    printf '%s\n' \
+      '{"resources":{"core":{"limit":5000,"remaining":20,"reset":1125}}}'
+  else
+    printf '%s\n' \
+      '{"resources":{"core":{"limit":5000,"remaining":4990,"reset":4725}}}'
+  fi
+}
+github_epoch_now() {
+  printf '%s\n' "$(<"$rate_now_file")"
+}
+github_rate_limit_sleep() {
+  local sleep_seconds="$1"
+  local now=""
+
+  printf '%s\n' "$sleep_seconds" >>"$TMP_DIR/rate-sleeps"
+  now="$(<"$rate_now_file")"
+  printf '%s\n' "$((now + sleep_seconds))" >"$rate_now_file"
+}
+github_api_budget_available "mise" 84 \
+  >"$TMP_DIR/rate-wait.out" 2>"$TMP_DIR/rate-wait.err" ||
+  fail "Bootstrapper did not resume after GitHub reset a recoverable quota"
+[[ "$(<"$rate_response_count_file")" -eq 2 ]] ||
+  fail "GitHub quota was not queried again after its reset"
+[[ "$(<"$TMP_DIR/rate-sleeps")" == $'60\n60\n10' ]] ||
+  fail "GitHub quota wait was not split into interruptible one-minute intervals"
+grep -F 'Waiting until its reset' "$TMP_DIR/rate-wait.out" >/dev/null ||
+  fail "recoverable GitHub quota did not explain that Bootstrapper would wait"
+grep -F 'Press Ctrl-C to stop' "$TMP_DIR/rate-wait.out" >/dev/null ||
+  fail "GitHub quota wait did not explain how to interrupt it"
+grep -F '4990/5000' "$TMP_DIR/rate-wait.out" >/dev/null ||
+  fail "GitHub quota was not reported after the reset"
+
+printf '0\n' >"$rate_response_count_file"
+printf '1000\n' >"$rate_now_file"
+github_rate_limit_sleep() {
+  return 1
+}
+set +e
+github_api_budget_available "mise" 84 \
+  >"$TMP_DIR/rate-interrupted.out" 2>"$TMP_DIR/rate-interrupted.err"
+rate_interrupted_status=$?
+set -e
+[[ "$rate_interrupted_status" -eq 1 ]] ||
+  fail "Bootstrapper ignored an interrupted GitHub quota wait"
+[[ "$(<"$rate_response_count_file")" -eq 1 ]] ||
+  fail "Bootstrapper queried GitHub again after its quota wait was interrupted"
+grep -F 'wait was interrupted' "$TMP_DIR/rate-interrupted.err" >/dev/null ||
+  fail "interrupted GitHub quota wait did not explain why Bootstrapper stopped"
+
 github_api_rate_limit_response() {
   printf '%s\n' \
     '{"resources":{"core":{"limit":5000,"remaining":4990,"reset":1786880472}}}'

@@ -163,6 +163,47 @@ vim_treesitter_parser_source_count() {
   ' "$treesitter_config"
 }
 
+github_epoch_now() {
+  /bin/date '+%s'
+}
+
+github_rate_limit_sleep() {
+  /bin/sleep "$1"
+}
+
+wait_for_github_api_reset() {
+  local phase="$1"
+  local reset="$2"
+  local reset_display="$3"
+  local now=""
+  local deadline=""
+  local wait_seconds=""
+  local sleep_seconds=""
+
+  deadline=$((reset + 5))
+  say "Waiting until its reset at $reset_display (epoch $reset) before $phase. Press Ctrl-C to stop."
+  while :; do
+    now="$(github_epoch_now)"
+    if [[ ! "$now" =~ ^[0-9]+$ ]]; then
+      say "Error: could not determine the current time while waiting for GitHub." >&2
+      return 1
+    fi
+
+    wait_seconds=$((deadline - now))
+    if [[ "$wait_seconds" -le 0 ]]; then
+      return 0
+    fi
+    sleep_seconds="$wait_seconds"
+    if [[ "$sleep_seconds" -gt 60 ]]; then
+      sleep_seconds=60
+    fi
+    if ! github_rate_limit_sleep "$sleep_seconds"; then
+      say "Error: GitHub rate-limit wait was interrupted before $phase." >&2
+      return 1
+    fi
+  done
+}
+
 github_api_budget_available() {
   local phase="$1"
   local required="$2"
@@ -172,31 +213,39 @@ github_api_budget_available() {
   local reset=""
   local reset_display=""
 
-  if ! response="$(github_api_rate_limit_response)"; then
-    say "Error: could not read GitHub API rate limits through Cloudflare WARP." >&2
-    return 1
-  fi
-
-  remaining="$(github_api_rate_limit_value "$response" remaining || true)"
-  limit="$(github_api_rate_limit_value "$response" limit || true)"
-  reset="$(github_api_rate_limit_value "$response" reset || true)"
-  if [[ ! "$remaining" =~ ^[0-9]+$ || ! "$limit" =~ ^[0-9]+$ ||
-    ! "$reset" =~ ^[0-9]+$ || ! "$required" =~ ^[0-9]+$ ]]; then
-    say "Error: GitHub returned an unreadable API rate-limit response." >&2
-    return 1
-  fi
-
-  reset_display="$(/bin/date -r "$reset" '+%Y-%m-%d %H:%M:%S %z' 2>/dev/null || printf 'unknown')"
-  if [[ "$remaining" -lt "$required" ]]; then
-    say "Error: GitHub API rate limit through WARP is $remaining/$limit; $phase needs $required core API requests." >&2
-    if [[ "$limit" -lt "$required" ]]; then
-      say "Authenticated GitHub access is required for this phase; the anonymous limit cannot satisfy it." >&2
+  while :; do
+    if ! response="$(github_api_rate_limit_response)"; then
+      say "Error: could not read GitHub API rate limits through Cloudflare WARP." >&2
+      return 1
     fi
-    say "Rate limit resets at $reset_display (epoch $reset). Rerun ./install.sh after that time." >&2
-    return 1
-  fi
 
-  say "GitHub API through WARP: $remaining/$limit remaining; $phase needs $required core API requests."
+    remaining="$(github_api_rate_limit_value "$response" remaining || true)"
+    limit="$(github_api_rate_limit_value "$response" limit || true)"
+    reset="$(github_api_rate_limit_value "$response" reset || true)"
+    if [[ ! "$remaining" =~ ^[0-9]+$ || ! "$limit" =~ ^[0-9]+$ ||
+      ! "$reset" =~ ^[0-9]+$ || ! "$required" =~ ^[0-9]+$ ]]; then
+      say "Error: GitHub returned an unreadable API rate-limit response." >&2
+      return 1
+    fi
+
+    if [[ "$remaining" -ge "$required" ]]; then
+      say "GitHub API through WARP: $remaining/$limit remaining; $phase needs $required core API requests."
+      return 0
+    fi
+
+    reset_display="$(/bin/date -r "$reset" '+%Y-%m-%d %H:%M:%S %z' 2>/dev/null || printf 'unknown')"
+    if [[ "$limit" -lt "$required" ]]; then
+      say "Error: GitHub API rate limit through WARP is $remaining/$limit; $phase needs $required core API requests." >&2
+      say "Authenticated GitHub access is required for this phase; the anonymous limit cannot satisfy it." >&2
+      say "Rate limit resets at $reset_display (epoch $reset), but waiting cannot raise this session's $limit-request limit." >&2
+      return 1
+    fi
+
+    say "GitHub API through WARP is $remaining/$limit; $phase needs $required core API requests."
+    if ! wait_for_github_api_reset "$phase" "$reset" "$reset_display"; then
+      return 1
+    fi
+  done
 }
 
 github_authentication_available() {
