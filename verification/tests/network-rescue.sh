@@ -50,8 +50,35 @@ install_warp_rescue >"$TMP_DIR/install.out" 2>"$TMP_DIR/install.err"
 # shellcheck disable=SC1091
 source "$ROOT_DIR/bootstrap/network-rescue.sh"
 
+github_api_rate_limit_response() {
+  printf '%s\n' \
+    '{"resources":{"core":{"limit":60,"remaining":0,"reset":1786880472}}}'
+}
+set +e
+github_api_budget_available \
+  >"$TMP_DIR/rate-exhausted.out" 2>"$TMP_DIR/rate-exhausted.err"
+rate_exhausted_status=$?
+set -e
+[[ "$rate_exhausted_status" -eq 1 ]] ||
+  fail "Bootstrapper continued with an exhausted GitHub API rate limit"
+grep -F '0/60' "$TMP_DIR/rate-exhausted.err" >/dev/null ||
+  fail "exhausted GitHub rate limit did not report the available budget"
+grep -F '1786880472' "$TMP_DIR/rate-exhausted.err" >/dev/null ||
+  fail "exhausted GitHub rate limit did not report its reset"
+
+github_api_rate_limit_response() {
+  printf '%s\n' \
+    '{"resources":{"core":{"limit":60,"remaining":20,"reset":1786880472}}}'
+}
+github_api_budget_available \
+  >"$TMP_DIR/rate-available.out" 2>"$TMP_DIR/rate-available.err" ||
+  fail "Bootstrapper rejected a sufficient GitHub API budget"
+grep -F '20/60' "$TMP_DIR/rate-available.out" >/dev/null ||
+  fail "available GitHub rate limit was not reported"
+
 : >"$rescue_log"
 github_connectivity_available() { printf '%s\n' probe >>"$rescue_log"; }
+github_api_budget_available() { printf '%s\n' rate-limit >>"$rescue_log"; }
 is_interactive() { return 0; }
 ask_yes_no() { fail "mandatory WARP policy still asked whether to use WARP"; }
 warp_app_installed() { return 1; }
@@ -59,8 +86,8 @@ warp_is_active() { return 1; }
 install_warp_rescue() { printf '%s\n' install >>"$rescue_log"; }
 activate_warp_rescue() { printf '%s\n' activate >>"$rescue_log"; }
 ensure_bootstrap_connectivity
-[[ "$(<"$rescue_log")" == $'install\nactivate\nprobe' ]] ||
-  fail "normal install did not force WARP before checking GitHub connectivity"
+[[ "$(<"$rescue_log")" == $'install\nactivate\nprobe\nrate-limit' ]] ||
+  fail "normal install did not validate GitHub connectivity and API budget through WARP"
 
 : >"$rescue_log"
 github_connectivity_available() { fail "non-interactive install probed GitHub without WARP"; }
@@ -85,8 +112,8 @@ warp_is_active() { return 0; }
 install_warp_rescue() { fail "existing WARP installation was replaced"; }
 activate_warp_rescue() { printf '%s\n' activate >>"$rescue_log"; }
 ensure_bootstrap_connectivity >"$TMP_DIR/existing.out" 2>"$TMP_DIR/existing.err"
-[[ "$(<"$rescue_log")" == $'activate\nprobe' ]] ||
-  fail "active existing WARP installation was not reused before the GitHub probe"
+[[ "$(<"$rescue_log")" == $'activate\nprobe\nrate-limit' ]] ||
+  fail "active existing WARP installation was not reused before GitHub preflights"
 
 : >"$rescue_log"
 warp_is_active() { return 1; }

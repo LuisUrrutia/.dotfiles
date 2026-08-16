@@ -9,6 +9,8 @@ NETWORK_RESCUE_WARP_TEAM_ID="68WVV388M8"
 NETWORK_RESCUE_WARP_BUNDLE_ID="com.cloudflare.1dot1dot1dot1.macos"
 NETWORK_RESCUE_MARKER="${XDG_STATE_HOME:-$HOME/.local/state}/dotfiles/network-rescue-warp"
 NETWORK_RESCUE_TEMP_DIR=""
+GITHUB_API_RATE_LIMIT_URL="https://api.github.com/rate_limit"
+GITHUB_API_BUDGET_MARGIN=2
 
 github_web_connectivity_available() {
   /usr/bin/curl --head --location --silent --show-error \
@@ -46,6 +48,68 @@ github_connectivity_available() {
   wait "$git_pid" || status=1
   wait "$release_pid" || status=1
   return "$status"
+}
+
+github_api_rate_limit_response() {
+  /usr/bin/curl --fail --silent --show-error \
+    --connect-timeout 8 --max-time 20 \
+    --header 'Accept: application/vnd.github+json' \
+    --header 'X-GitHub-Api-Version: 2022-11-28' \
+    "$GITHUB_API_RATE_LIMIT_URL"
+}
+
+github_api_rate_limit_value() {
+  local response="$1"
+  local field="$2"
+
+  printf '%s' "$response" |
+    /usr/bin/plutil -extract "resources.core.$field" raw - 2>/dev/null
+}
+
+github_api_required_budget() {
+  local mise_config="$DOTFILES/tools/mise/config/.config/mise/config.toml"
+  local github_release_sources=0
+
+  if [[ -f "$mise_config" ]]; then
+    github_release_sources="$(
+      /usr/bin/grep -Ec '^"(aqua|github):' "$mise_config" || true
+    )"
+  fi
+  printf '%s\n' "$((github_release_sources + GITHUB_API_BUDGET_MARGIN))"
+}
+
+github_api_budget_available() {
+  local response=""
+  local remaining=""
+  local limit=""
+  local reset=""
+  local reset_display=""
+  local required=""
+
+  if ! response="$(github_api_rate_limit_response)"; then
+    say "Error: could not read GitHub API rate limits through Cloudflare WARP." >&2
+    return 1
+  fi
+
+  remaining="$(github_api_rate_limit_value "$response" remaining || true)"
+  limit="$(github_api_rate_limit_value "$response" limit || true)"
+  reset="$(github_api_rate_limit_value "$response" reset || true)"
+  required="$(github_api_required_budget)"
+
+  if [[ ! "$remaining" =~ ^[0-9]+$ || ! "$limit" =~ ^[0-9]+$ ||
+    ! "$reset" =~ ^[0-9]+$ || ! "$required" =~ ^[0-9]+$ ]]; then
+    say "Error: GitHub returned an unreadable API rate-limit response." >&2
+    return 1
+  fi
+
+  reset_display="$(/bin/date -r "$reset" '+%Y-%m-%d %H:%M:%S %z' 2>/dev/null || printf 'unknown')"
+  if [[ "$remaining" -lt "$required" ]]; then
+    say "Error: GitHub API rate limit through WARP is $remaining/$limit; this install requires at least $required." >&2
+    say "Rate limit resets at $reset_display (epoch $reset). Rerun ./install.sh after that time." >&2
+    return 1
+  fi
+
+  say "GitHub API rate limit through WARP: $remaining/$limit remaining (minimum required: $required)."
 }
 
 warp_app_installed() {
@@ -196,6 +260,8 @@ ensure_bootstrap_connectivity() {
     say "Error: GitHub is still not reliably reachable through Cloudflare WARP." >&2
     return 1
   fi
+
+  github_api_budget_available
 
   say "GitHub connectivity recovered through Cloudflare WARP."
 }

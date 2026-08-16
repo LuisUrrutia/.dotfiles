@@ -99,6 +99,31 @@ EOF
 cmp -s "$TMP_DIR/expected-session.log" "$session_log" ||
   fail "early prerequisites do not run as FDA, Command Line Tools, then sudo"
 
+xcode_setup_log="$TMP_DIR/xcode-setup.log"
+xcode_developer_fixture="$TMP_DIR/Xcode.app/Contents/Developer"
+mkdir -p "$xcode_developer_fixture"
+set +e
+(
+  xcode_developer_dir() { printf '%s\n' "$xcode_developer_fixture"; }
+  brew() { printf 'brew %s\n' "$*" >>"$xcode_setup_log"; }
+  mas() { printf 'mas %s\n' "$*" >>"$xcode_setup_log"; }
+  sudo_askpass() { printf 'sudo %s\n' "$*" >>"$xcode_setup_log"; }
+  setup_full_xcode
+) >"$TMP_DIR/xcode-setup.out" 2>"$TMP_DIR/xcode-setup.err"
+xcode_setup_status=$?
+set -e
+[[ "$xcode_setup_status" -eq 0 ]] ||
+  fail "full Xcode setup did not select and initialize the installed app"
+cat >"$TMP_DIR/expected-xcode-setup.log" <<EOF
+brew install mas
+mas install 497799835
+sudo /usr/bin/xcode-select --switch $xcode_developer_fixture
+sudo /usr/bin/xcodebuild -license accept
+sudo /usr/bin/xcodebuild -runFirstLaunch
+EOF
+cmp -s "$TMP_DIR/expected-xcode-setup.log" "$xcode_setup_log" ||
+  fail "full Xcode setup ran in the wrong order"
+
 orchestration_log="$TMP_DIR/orchestration.log"
 (
   DOTFILES_INSTALL_NO_MAIN=true
@@ -114,16 +139,17 @@ orchestration_log="$TMP_DIR/orchestration.log"
   configure_and_print_install_plan() { printf '%s\n' selection >>"$orchestration_log"; }
   load_homebrew() { :; }
   install_homebrew() { printf '%s\n' homebrew >>"$orchestration_log"; }
+  setup_full_xcode() { printf '%s\n' xcode >>"$orchestration_log"; }
   install_declared_packages_and_dependents() { printf '%s\n' bundles >>"$orchestration_log"; }
   finish_network_rescue() { printf '%s\n' network-finish >>"$orchestration_log"; }
   print_next_steps() { :; }
   INSTALLED_MARKER="$TMP_DIR/installed"
   LEGACY_INSTALLED_MARKER="$TMP_DIR/legacy-installed"
-  RUN_XCODE_SETUP=false
+  RUN_XCODE_SETUP=true
   main
 )
-[[ "$(<"$orchestration_log")" == $'prerequisites\nconnectivity\nselection\nhomebrew\nbundles\nnetwork-finish' ]] ||
-  fail "network rescue did not wrap every networked bootstrap phase"
+[[ "$(<"$orchestration_log")" == $'prerequisites\nconnectivity\nselection\nhomebrew\nxcode\nbundles\nnetwork-finish' ]] ||
+  fail "Xcode did not finish before package and Tool Installer work"
 
 password_capture_count=0
 password_validation_count=0

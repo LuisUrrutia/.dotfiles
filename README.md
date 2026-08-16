@@ -58,7 +58,8 @@ The Bootstrapper is not just a symlink script. It:
   package retries revalidate the broker and ask again if it stops
 - requires an official, signed Cloudflare WARP consumer tunnel for every normal
   install, waits for you to connect it when necessary, then probes GitHub web,
-  Git, and release-download routes in parallel through the tunnel
+  Git, and release-download routes in parallel through the tunnel and verifies
+  that the shared WARP exit still has enough GitHub API requests for mise
 - asks plain-language questions, shows the packages/apps behind each yes, then
   maps the answers to optional profile Brewfiles
 - installs Homebrew if missing, otherwise updates and upgrades it
@@ -91,6 +92,12 @@ available across failed runs so the install can be retried, and removes it only
 after every networked phase succeeds. Non-interactive installs proceed only
 when a trusted WARP installation is already connected; otherwise they fail
 instead of installing or opening an app.
+
+WARP exit IPs are shared, so their unauthenticated GitHub API budget can already
+be exhausted on a fresh Mac. Before package work, the Bootstrapper queries
+`https://api.github.com/rate_limit`, reports the remaining core budget and its
+reset time, and stops early when the declared mise tools cannot be resolved
+reliably within that budget.
 
 Several tool installers have real side effects: macOS defaults, shell
 registration, tmux plugin setup, service starts, generated completions,

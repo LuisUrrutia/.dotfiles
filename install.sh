@@ -256,6 +256,32 @@ ensure_xcode_command_line_tools() {
   exit 0
 }
 
+xcode_developer_dir() {
+  printf '%s\n' '/Applications/Xcode.app/Contents/Developer'
+}
+
+setup_full_xcode() {
+  local developer_dir=""
+
+  section "Xcode"
+  brew install mas
+  if ! mas install 497799835; then
+    note "mas could not install Xcode (are you signed in to the App Store?); skipping Xcode setup."
+    note "Install Xcode from the App Store, then rerun ./install.sh."
+    return 0
+  fi
+
+  developer_dir="$(xcode_developer_dir)"
+  if [[ ! -d "$developer_dir" ]]; then
+    say "Error: Xcode installation completed but its Developer directory is missing: $developer_dir" >&2
+    return 1
+  fi
+
+  sudo_askpass /usr/bin/xcode-select --switch "$developer_dir"
+  sudo_askpass /usr/bin/xcodebuild -license accept
+  sudo_askpass /usr/bin/xcodebuild -runFirstLaunch
+}
+
 at_exit() {
   AT_EXIT+="${AT_EXIT:+$'\n'}"
   AT_EXIT+="${*?}"
@@ -1508,14 +1534,7 @@ main() {
   load_tool_library
 
   if [[ "$RUN_XCODE_SETUP" == true ]]; then
-    section "Xcode"
-    brew install mas
-    if mas install 497799835; then
-      sudo_askpass xcodebuild -license accept
-    else
-      note "mas could not install Xcode (are you signed in to the App Store?); skipping Xcode setup."
-      note "Install Xcode from the App Store, then run: sudo xcodebuild -license accept"
-    fi
+    setup_full_xcode
   fi
 
   install_declared_packages_and_dependents
