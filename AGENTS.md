@@ -73,9 +73,9 @@ continue to other Brewfiles, but blocks cleanup, Tool Installers, first-run
 tasks, and the install marker.
 
 Connectivity Rescue is temporary Bootstrapper state. Preserve an existing
-RiseupVPN installation, verify the official signed installer before execution,
-retain a managed rescue across failed runs, and remove it only after every
-networked phase succeeds.
+RiseupVPN installation, require the pinned native ARM payload, retain a managed
+rescue across failed runs, and remove it only after every networked phase
+succeeds. Keep this pre-Homebrew path Rosetta-free.
 
 ### Ownership
 

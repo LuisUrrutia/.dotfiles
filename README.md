@@ -56,10 +56,9 @@ The Bootstrapper is not just a symlink script. It:
   allowing up to three attempts; a protected per-run broker keeps it only in
   memory and serializes concurrent Homebrew `SUDO_ASKPASS` requests, while
   package retries revalidate the broker and ask again if it stops
-- requires RiseupVPN for every normal install, verifies the official
-  LEAP-signed installer before executing it, waits for you to connect, then
-  probes GitHub web, Git, and release-download routes in parallel through the
-  tunnel
+- requires RiseupVPN for every normal install, verifies a pinned official ARM
+  image and its native payload without Rosetta, waits for you to connect, then
+  probes GitHub web, Git, and release-download routes in parallel
 - asks plain-language questions, shows the packages/apps behind each yes, then
   maps the answers to optional profile Brewfiles
 - installs Homebrew if missing, otherwise updates and upgrades it
@@ -86,15 +85,19 @@ The Bootstrapper is not just a symlink script. It:
   and cleaned up)
 
 RiseupVPN is a temporary Connectivity Rescue, not a persistent package managed
-by a Brewfile. It needs no account. An existing installation with the expected
-bundle and executable layout is reused and preserved. When the Bootstrapper
-installs RiseupVPN, it verifies the downloaded disk image and the LEAP-signed
-installer before execution, records its ownership, keeps the tunnel available
-across failed runs, and removes it only after every networked phase succeeds.
-The application distributed inside that installer has no independently
-verifiable code signature, so existing installations receive a structural
-check rather than a misleading signature guarantee. Non-interactive installs
-proceed only when an expected RiseupVPN installation is already connected.
+by a Brewfile. It needs no account. The Bootstrapper uses LEAP's pinned
+`aarch64` image because the stable download and even the ARM image's Qt wrapper
+are Intel-only. It never executes that wrapper or installs Rosetta. Instead, it
+verifies the image checksum, safely extracts the payload with macOS `bsdtar`,
+and requires the app, privileged helper, OpenVPN client, and lifecycle hook to
+support `arm64` before copying anything into `/Applications`.
+
+An existing native installation with the expected bundle is reused and
+preserved. When the Bootstrapper installs RiseupVPN, it records that ownership,
+keeps the tunnel available across failed runs, and uses the extracted ARM
+lifecycle hook to remove both the helper and application only after every
+networked phase succeeds. Non-interactive installs proceed only when an
+expected native installation is already connected.
 
 VPN exit IPs are shared, so their unauthenticated GitHub API budget can already
 be exhausted on a fresh Mac. The Bootstrapper checks RiseupVPN, GitHub routes,

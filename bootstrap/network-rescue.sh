@@ -5,9 +5,11 @@
 
 NETWORK_RESCUE_RISEUP_ROOT="/Applications/RiseupVPN"
 NETWORK_RESCUE_RISEUP_APP="$NETWORK_RESCUE_RISEUP_ROOT/RiseupVPN.app"
-NETWORK_RESCUE_RISEUP_DOWNLOAD_URL="https://downloads.leap.se/RiseupVPN/osx/RiseupVPN-OSX-latest.dmg"
-NETWORK_RESCUE_RISEUP_TEAM_ID="SB5RR8K33W"
-NETWORK_RESCUE_RISEUP_BUNDLE_ID="se.leap.bitmask"
+NETWORK_RESCUE_RISEUP_POST_INSTALL="$NETWORK_RESCUE_RISEUP_ROOT/post-install"
+NETWORK_RESCUE_RISEUP_DOWNLOAD_URL="https://downloads.leap.se/RiseupVPN/osx/beta/RiseupVPN-installer-0.25.8-aarch64.dmg"
+NETWORK_RESCUE_RISEUP_SHA256="4e6fb5d66efaab819821483235c7d3141ceca7dbba9b2d39b8b70f4963bd8b98"
+NETWORK_RESCUE_RISEUP_BUNDLE_ID="se.leap.riseup-vpn"
+NETWORK_RESCUE_LEGACY_RISEUP_BUNDLE_ID="se.leap.bitmask"
 NETWORK_RESCUE_MARKER="${XDG_STATE_HOME:-$HOME/.local/state}/dotfiles/network-rescue-riseupvpn"
 LEGACY_NETWORK_RESCUE_WARP_APP="/Applications/Cloudflare WARP.app"
 LEGACY_NETWORK_RESCUE_WARP_MARKER="${XDG_STATE_HOME:-$HOME/.local/state}/dotfiles/network-rescue-warp"
@@ -301,6 +303,20 @@ riseupvpn_image_is_valid() {
   /usr/bin/hdiutil verify "$1" >/dev/null
 }
 
+riseupvpn_image_sha256() {
+  /usr/bin/shasum -a 256 "$1" | /usr/bin/awk '{ print $1 }'
+}
+
+riseupvpn_image_is_expected() {
+  local checksum=""
+
+  riseupvpn_image_is_valid "$1" || return 1
+  if ! checksum="$(riseupvpn_image_sha256 "$1")"; then
+    return 1
+  fi
+  [[ "$checksum" == "$NETWORK_RESCUE_RISEUP_SHA256" ]]
+}
+
 mount_riseupvpn_image() {
   /usr/bin/hdiutil attach -readonly -nobrowse -mountpoint "$2" "$1" >/dev/null
 }
@@ -309,7 +325,7 @@ unmount_riseupvpn_image() {
   /usr/bin/hdiutil detach "$1" >/dev/null
 }
 
-find_riseupvpn_installer() {
+find_riseupvpn_payload_container() {
   local mount_dir="$1"
   local installer=""
   local installers=()
@@ -323,70 +339,127 @@ find_riseupvpn_installer() {
   printf '%s\n' "${installers[0]}"
 }
 
-riseupvpn_installer_codesign_valid() {
-  /usr/bin/codesign --verify --deep --strict "$1" >/dev/null 2>&1
+riseupvpn_archive_offsets() {
+  LC_ALL=C /usr/bin/grep -aob $'7z\xbc\xaf\x27\x1c' "$1" |
+    LC_ALL=C /usr/bin/sed 's/:.*//'
 }
 
-riseupvpn_installer_signature() {
-  /usr/bin/codesign -dv --verbose=4 "$1" 2>&1
+riseupvpn_archive_paths_are_safe() {
+  local archive="$1"
+  local entry=""
+
+  /usr/bin/bsdtar -tf "$archive" >/dev/null || return 1
+  while IFS= read -r entry; do
+    case "$entry" in
+    /* | ../* | */../* | */..)
+      return 1
+      ;;
+    esac
+  done < <(/usr/bin/bsdtar -tf "$archive")
 }
 
-riseupvpn_installer_is_trusted() {
-  local installer="$1"
-  local signature=""
+extract_riseupvpn_payload() {
+  local container="$1"
+  local payload_dir="$2"
+  local metadata_dir="$3"
+  local data_file="$container/Contents/Resources/installer.dat"
+  local payload_archive="$NETWORK_RESCUE_TEMP_DIR/payload.7z"
+  local metadata_archive="$NETWORK_RESCUE_TEMP_DIR/metadata.7z"
+  local offset=""
+  local offsets=()
 
-  riseupvpn_installer_codesign_valid "$installer" || return 1
-  if ! signature="$(riseupvpn_installer_signature "$installer")"; then
-    return 1
-  fi
+  [[ -f "$data_file" ]] || return 1
+  while IFS= read -r offset; do
+    [[ "$offset" =~ ^[0-9]+$ ]] || return 1
+    offsets+=("$offset")
+  done < <(riseupvpn_archive_offsets "$data_file")
+  [[ "${#offsets[@]}" -eq 2 ]] || return 1
 
-  /usr/bin/grep -F \
-    "Authority=Developer ID Application: LEAP Encryption Access Project ($NETWORK_RESCUE_RISEUP_TEAM_ID)" \
-    <<<"$signature" >/dev/null &&
-    /usr/bin/grep -F "TeamIdentifier=$NETWORK_RESCUE_RISEUP_TEAM_ID" \
-      <<<"$signature" >/dev/null
+  /usr/bin/tail -c "+$((offsets[0] + 1))" "$data_file" >"$payload_archive"
+  /usr/bin/tail -c "+$((offsets[1] + 1))" "$data_file" >"$metadata_archive"
+  riseupvpn_archive_paths_are_safe "$payload_archive" || return 1
+  riseupvpn_archive_paths_are_safe "$metadata_archive" || return 1
+
+  /bin/mkdir -p "$payload_dir" "$metadata_dir"
+  /usr/bin/bsdtar -xf "$payload_archive" -C "$payload_dir"
+  /usr/bin/bsdtar -xf "$metadata_archive" -C "$metadata_dir"
 }
 
 riseupvpn_bundle_identifier() {
+  local app="${1:-$NETWORK_RESCUE_RISEUP_APP}"
+
   /usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' \
-    "$NETWORK_RESCUE_RISEUP_APP/Contents/Info.plist" 2>/dev/null
+    "$app/Contents/Info.plist" 2>/dev/null
 }
 
 riseupvpn_bundle_executable() {
+  local app="${1:-$NETWORK_RESCUE_RISEUP_APP}"
+
   /usr/libexec/PlistBuddy -c 'Print :CFBundleExecutable' \
-    "$NETWORK_RESCUE_RISEUP_APP/Contents/Info.plist" 2>/dev/null
+    "$app/Contents/Info.plist" 2>/dev/null
 }
 
-riseupvpn_app_layout_is_expected() {
+riseupvpn_binary_architectures() {
+  /usr/bin/lipo -archs "$1" 2>/dev/null
+}
+
+riseupvpn_binary_supports_arm64() {
+  local architectures=""
+
+  if ! architectures="$(riseupvpn_binary_architectures "$1")"; then
+    return 1
+  fi
+  [[ " $architectures " == *' arm64 '* ]]
+}
+
+riseupvpn_app_payload_is_expected() {
+  local app="$1"
   local bundle_identifier=""
   local bundle_executable=""
 
-  riseupvpn_app_installed || return 1
-  if ! bundle_identifier="$(riseupvpn_bundle_identifier)"; then
+  [[ -d "$app" ]] || return 1
+  if ! bundle_identifier="$(riseupvpn_bundle_identifier "$app")"; then
     return 1
   fi
-  if ! bundle_executable="$(riseupvpn_bundle_executable)"; then
+  if ! bundle_executable="$(riseupvpn_bundle_executable "$app")"; then
     return 1
   fi
-  [[ "$bundle_identifier" == "$NETWORK_RESCUE_RISEUP_BUNDLE_ID" ]] &&
-    [[ -n "$bundle_executable" ]] &&
-    [[ -x "$NETWORK_RESCUE_RISEUP_APP/Contents/MacOS/$bundle_executable" ]]
+  [[ "$bundle_identifier" == "$NETWORK_RESCUE_RISEUP_BUNDLE_ID" ]] || return 1
+  [[ -n "$bundle_executable" ]] || return 1
+  riseupvpn_binary_supports_arm64 "$app/Contents/MacOS/$bundle_executable" &&
+    riseupvpn_binary_supports_arm64 "$app/bitmask-helper" &&
+    riseupvpn_binary_supports_arm64 "$app/openvpn.leap"
 }
 
-run_riseupvpn_installer() {
-  local installer="$1"
-  local executable_name=""
-  local executable=""
+riseupvpn_native_payload_is_expected() {
+  riseupvpn_app_payload_is_expected "$1" &&
+    [[ -x "$2" ]] &&
+    riseupvpn_binary_supports_arm64 "$2"
+}
 
-  executable_name="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleExecutable' \
-    "$installer/Contents/Info.plist" 2>/dev/null)" || return 1
-  executable="$installer/Contents/MacOS/$executable_name"
-  [[ -x "$executable" ]] || return 1
+riseupvpn_app_layout_is_expected() {
+  riseupvpn_app_payload_is_expected "$NETWORK_RESCUE_RISEUP_APP"
+}
 
-  sudo_askpass "$executable" \
-    --root "$NETWORK_RESCUE_RISEUP_ROOT" \
-    --accept-messages --accept-licenses --confirm-command \
-    install bitmaskvpn
+run_riseupvpn_post_install() {
+  sudo_askpass "$NETWORK_RESCUE_RISEUP_POST_INSTALL" \
+    -action post-install -appname RiseupVPN \
+    -socket-uid "$(/usr/bin/id -u)" -socket-gid "$(/usr/bin/id -g)"
+}
+
+run_riseupvpn_post_uninstall() {
+  sudo_askpass "$NETWORK_RESCUE_RISEUP_POST_INSTALL" \
+    -action uninstall -stage uninstall -appname RiseupVPN
+}
+
+copy_riseupvpn_native_payload() {
+  local source_app="$1"
+  local source_post_install="$2"
+
+  sudo_askpass /bin/mkdir -p "$NETWORK_RESCUE_RISEUP_ROOT"
+  sudo_askpass /usr/bin/ditto "$source_app" "$NETWORK_RESCUE_RISEUP_APP"
+  sudo_askpass /usr/bin/install -m 0755 \
+    "$source_post_install" "$NETWORK_RESCUE_RISEUP_POST_INSTALL"
 }
 
 mark_riseupvpn_rescue_managed() {
@@ -396,10 +469,16 @@ mark_riseupvpn_rescue_managed() {
 
 install_riseupvpn_rescue() {
   local image=""
-  local installer=""
+  local container=""
+  local payload_dir=""
+  local metadata_dir=""
+  local source_app=""
+  local source_post_install=""
 
   NETWORK_RESCUE_TEMP_DIR="$(/usr/bin/mktemp -d)"
   NETWORK_RESCUE_MOUNT_DIR="$NETWORK_RESCUE_TEMP_DIR/mount"
+  payload_dir="$NETWORK_RESCUE_TEMP_DIR/payload"
+  metadata_dir="$NETWORK_RESCUE_TEMP_DIR/metadata"
   image="$NETWORK_RESCUE_TEMP_DIR/RiseupVPN.dmg"
   /bin/mkdir -p "$NETWORK_RESCUE_MOUNT_DIR"
   at_exit "
@@ -412,23 +491,32 @@ fi
   say "Downloading the official RiseupVPN rescue image..."
   download_riseupvpn_image "$image"
 
-  if ! riseupvpn_image_is_valid "$image"; then
-    say "Error: the RiseupVPN disk image failed verification; refusing to install it." >&2
+  if ! riseupvpn_image_is_expected "$image"; then
+    say "Error: the RiseupVPN ARM disk image failed its integrity or pinned checksum verification." >&2
     return 1
   fi
 
   mount_riseupvpn_image "$image" "$NETWORK_RESCUE_MOUNT_DIR"
-  if ! installer="$(find_riseupvpn_installer "$NETWORK_RESCUE_MOUNT_DIR")"; then
-    say "Error: the RiseupVPN disk image does not contain exactly one expected installer." >&2
+  if ! container="$(find_riseupvpn_payload_container "$NETWORK_RESCUE_MOUNT_DIR")"; then
+    say "Error: the RiseupVPN disk image does not contain exactly one expected payload container." >&2
     return 1
   fi
-  if ! riseupvpn_installer_is_trusted "$installer"; then
-    say "Error: the RiseupVPN installer signature is not trusted; refusing to execute it." >&2
+  if ! extract_riseupvpn_payload "$container" "$payload_dir" "$metadata_dir"; then
+    say "Error: the pinned RiseupVPN ARM payload could not be extracted safely." >&2
+    return 1
+  fi
+  source_app="$payload_dir/RiseupVPN.app"
+  source_post_install="$metadata_dir/post-install"
+  if ! riseupvpn_native_payload_is_expected "$source_app" "$source_post_install"; then
+    say "Error: the RiseupVPN payload is not the expected native ARM application." >&2
     return 1
   fi
 
-  say "Installing temporary RiseupVPN connectivity rescue..."
-  run_riseupvpn_installer "$installer"
+  say "Installing the native ARM RiseupVPN connectivity rescue without Rosetta..."
+  prepare_riseupvpn_install_target
+  mark_riseupvpn_rescue_managed
+  copy_riseupvpn_native_payload "$source_app" "$source_post_install"
+  run_riseupvpn_post_install
   unmount_riseupvpn_image "$NETWORK_RESCUE_MOUNT_DIR"
   NETWORK_RESCUE_MOUNT_DIR=""
 
@@ -436,8 +524,6 @@ fi
     say "Error: installed RiseupVPN application has an unexpected layout." >&2
     return 1
   fi
-
-  mark_riseupvpn_rescue_managed
 }
 
 activate_riseupvpn_rescue() {
@@ -499,16 +585,45 @@ migrate_legacy_warp_rescue() {
   uninstall_legacy_warp_rescue
 }
 
+managed_legacy_riseupvpn_rescue_exists() {
+  local bundle_identifier=""
+
+  riseupvpn_rescue_is_managed || return 1
+  riseupvpn_app_installed || return 1
+  bundle_identifier="$(riseupvpn_bundle_identifier || true)"
+  [[ "$bundle_identifier" == "$NETWORK_RESCUE_LEGACY_RISEUP_BUNDLE_ID" ]]
+}
+
 ensure_bootstrap_connectivity() {
   section "Connectivity rescue"
   say "RiseupVPN protects every networked phase of this install."
 
-  migrate_legacy_warp_rescue
-
   if riseupvpn_app_installed; then
-    if ! riseupvpn_app_layout_is_expected; then
-      say "Error: the existing RiseupVPN application has an unexpected layout; refusing to open it." >&2
-      return 1
+    if managed_legacy_riseupvpn_rescue_exists; then
+      if ! is_interactive; then
+        say "Error: the managed Intel RiseupVPN rescue must be replaced interactively." >&2
+        return 1
+      fi
+      note "Replacing the managed Intel RiseupVPN rescue with its native ARM build."
+      install_riseupvpn_rescue
+    elif ! riseupvpn_app_layout_is_expected; then
+      if ! riseupvpn_rescue_is_managed; then
+        say "Error: the existing RiseupVPN application has an unexpected layout; refusing to open it." >&2
+        return 1
+      fi
+      if ! is_interactive; then
+        say "Error: the incomplete managed RiseupVPN rescue must be repaired interactively." >&2
+        return 1
+      fi
+      note "Repairing the incomplete managed RiseupVPN ARM rescue."
+      install_riseupvpn_rescue
+    elif riseupvpn_rescue_is_managed; then
+      if [[ ! -x "$NETWORK_RESCUE_RISEUP_POST_INSTALL" ]] ||
+        ! riseupvpn_binary_supports_arm64 "$NETWORK_RESCUE_RISEUP_POST_INSTALL"; then
+        say "Error: the managed RiseupVPN ARM helper installer is unavailable." >&2
+        return 1
+      fi
+      run_riseupvpn_post_install
     fi
   else
     if ! is_interactive; then
@@ -517,6 +632,10 @@ ensure_bootstrap_connectivity() {
     fi
     install_riseupvpn_rescue
   fi
+
+  # Keep an older managed rescue available while downloading RiseupVPN, then
+  # remove it before activating the replacement tunnel.
+  migrate_legacy_warp_rescue
 
   if ! riseupvpn_is_active && ! is_interactive; then
     say "Error: connect RiseupVPN, then rerun ./install.sh." >&2
@@ -538,22 +657,76 @@ quit_riseupvpn() {
     >/dev/null 2>&1 || true
 }
 
-uninstall_riseupvpn_rescue() {
+uninstall_legacy_riseupvpn_rescue() {
   local uninstaller="$NETWORK_RESCUE_RISEUP_ROOT/uninstall.app/Contents/MacOS/uninstall"
 
-  if ! riseupvpn_app_installed && [[ ! -d "$NETWORK_RESCUE_RISEUP_ROOT" ]]; then
-    /bin/rm -f "$NETWORK_RESCUE_MARKER"
-    return 0
-  fi
   if [[ ! -x "$uninstaller" ]]; then
-    say "Error: the RiseupVPN uninstaller is unavailable." >&2
+    say "Error: the managed legacy RiseupVPN uninstaller is unavailable." >&2
     return 1
   fi
 
   quit_riseupvpn
   sudo_askpass "$uninstaller" \
     --accept-messages --confirm-command purge
+}
+
+uninstall_native_riseupvpn_rescue() {
+  if [[ "$NETWORK_RESCUE_RISEUP_ROOT" != "/Applications/RiseupVPN" ||
+    "$NETWORK_RESCUE_RISEUP_APP" != "$NETWORK_RESCUE_RISEUP_ROOT/RiseupVPN.app" ]]; then
+    say "Error: refusing to remove an unexpected RiseupVPN path." >&2
+    return 1
+  fi
+
+  quit_riseupvpn
+  if [[ -x "$NETWORK_RESCUE_RISEUP_POST_INSTALL" ]]; then
+    if ! riseupvpn_binary_supports_arm64 "$NETWORK_RESCUE_RISEUP_POST_INSTALL"; then
+      say "Error: the managed RiseupVPN uninstall hook is not native ARM." >&2
+      return 1
+    fi
+    if riseupvpn_app_installed; then
+      run_riseupvpn_post_uninstall
+    fi
+  fi
+
+  sudo_askpass /bin/rm -rf "$NETWORK_RESCUE_RISEUP_ROOT"
+}
+
+uninstall_riseupvpn_rescue() {
+  local bundle_identifier=""
+
+  if ! riseupvpn_app_installed && [[ ! -d "$NETWORK_RESCUE_RISEUP_ROOT" ]]; then
+    /bin/rm -f "$NETWORK_RESCUE_MARKER"
+    return 0
+  fi
+
+  if riseupvpn_app_installed; then
+    bundle_identifier="$(riseupvpn_bundle_identifier || true)"
+    case "$bundle_identifier" in
+    "$NETWORK_RESCUE_RISEUP_BUNDLE_ID")
+      uninstall_native_riseupvpn_rescue
+      ;;
+    "$NETWORK_RESCUE_LEGACY_RISEUP_BUNDLE_ID")
+      uninstall_legacy_riseupvpn_rescue
+      ;;
+    *)
+      say "Error: refusing to remove an unexpected RiseupVPN application." >&2
+      return 1
+      ;;
+    esac
+  else
+    uninstall_native_riseupvpn_rescue
+  fi
+
   /bin/rm -f "$NETWORK_RESCUE_MARKER"
+}
+
+prepare_riseupvpn_install_target() {
+  [[ ! -e "$NETWORK_RESCUE_RISEUP_ROOT" ]] && return 0
+  if ! riseupvpn_rescue_is_managed; then
+    say "Error: $NETWORK_RESCUE_RISEUP_ROOT already exists and is not managed by this Bootstrapper." >&2
+    return 1
+  fi
+  uninstall_riseupvpn_rescue
 }
 
 finish_network_rescue() {

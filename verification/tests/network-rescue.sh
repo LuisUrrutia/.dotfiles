@@ -33,6 +33,9 @@ source "$INSTALL"
 rescue_log="$TMP_DIR/rescue.log"
 : >"$rescue_log"
 
+[[ "$NETWORK_RESCUE_RISEUP_DOWNLOAD_URL" == *'-aarch64.dmg' ]] ||
+  fail "Apple Silicon bootstrap selected a non-native RiseupVPN artifact"
+
 NETWORK_RESCUE_MARKER="$TMP_DIR/state/network-rescue-riseupvpn"
 mark_riseupvpn_rescue_managed
 riseupvpn_rescue_is_managed || fail "managed rescue marker was not persisted"
@@ -40,19 +43,22 @@ rm -f "$NETWORK_RESCUE_MARKER"
 
 at_exit() { :; }
 download_riseupvpn_image() { printf '%s\n' download >>"$rescue_log"; }
-riseupvpn_image_is_valid() { printf '%s\n' image-verify >>"$rescue_log"; }
+riseupvpn_image_is_expected() { printf '%s\n' image-verify >>"$rescue_log"; }
 mount_riseupvpn_image() { printf '%s\n' mount >>"$rescue_log"; }
-find_riseupvpn_installer() {
+find_riseupvpn_payload_container() {
   printf '%s\n' find >>"$rescue_log"
   printf '%s\n' "$TMP_DIR/RiseupVPN-installer.app"
 }
-riseupvpn_installer_is_trusted() { printf '%s\n' installer-signature >>"$rescue_log"; }
-run_riseupvpn_installer() { printf '%s\n' installer >>"$rescue_log"; }
+extract_riseupvpn_payload() { printf '%s\n' extract >>"$rescue_log"; }
+riseupvpn_native_payload_is_expected() { printf '%s\n' arm64-verify >>"$rescue_log"; }
+prepare_riseupvpn_install_target() { printf '%s\n' prepare >>"$rescue_log"; }
+copy_riseupvpn_native_payload() { printf '%s\n' copy >>"$rescue_log"; }
+run_riseupvpn_post_install() { printf '%s\n' post-install >>"$rescue_log"; }
 unmount_riseupvpn_image() { printf '%s\n' unmount >>"$rescue_log"; }
 riseupvpn_app_layout_is_expected() { printf '%s\n' app-layout >>"$rescue_log"; }
 mark_riseupvpn_rescue_managed() { printf '%s\n' marker >>"$rescue_log"; }
 install_riseupvpn_rescue >"$TMP_DIR/install.out" 2>"$TMP_DIR/install.err"
-[[ "$(<"$rescue_log")" == $'download\nimage-verify\nmount\nfind\ninstaller-signature\ninstaller\nunmount\napp-layout\nmarker' ]] ||
+[[ "$(<"$rescue_log")" == $'download\nimage-verify\nmount\nfind\nextract\narm64-verify\nprepare\nmarker\ncopy\npost-install\nunmount\napp-layout' ]] ||
   fail "RiseupVPN rescue was not verified, installed, and recorded in order"
 
 # Restore the production adapter before testing its independent branches.
@@ -200,7 +206,7 @@ riseupvpn_is_active() { return 1; }
 install_riseupvpn_rescue() { printf '%s\n' install >>"$rescue_log"; }
 activate_riseupvpn_rescue() { printf '%s\n' activate >>"$rescue_log"; }
 ensure_bootstrap_connectivity
-[[ "$(<"$rescue_log")" == $'legacy-uninstall\ninstall\nactivate\nprobe' ]] ||
+[[ "$(<"$rescue_log")" == $'install\nlegacy-uninstall\nactivate\nprobe' ]] ||
   fail "normal install did not migrate WARP, establish RiseupVPN, and validate GitHub routes"
 
 : >"$rescue_log"
@@ -240,6 +246,20 @@ set -e
 [[ "$inactive_status" -eq 1 ]] ||
   fail "non-interactive bootstrap continued with inactive RiseupVPN"
 
+: >"$rescue_log"
+is_interactive() { return 0; }
+riseupvpn_rescue_is_managed() { return 0; }
+riseupvpn_app_layout_is_expected() { return 1; }
+install_riseupvpn_rescue() { printf '%s\n' repair >>"$rescue_log"; }
+riseupvpn_is_active() { return 1; }
+activate_riseupvpn_rescue() { printf '%s\n' activate >>"$rescue_log"; }
+github_connectivity_available() { printf '%s\n' probe >>"$rescue_log"; }
+ensure_bootstrap_connectivity >"$TMP_DIR/repair.out" 2>"$TMP_DIR/repair.err"
+[[ "$(<"$rescue_log")" == $'repair\nactivate\nprobe' ]] ||
+  fail "incomplete managed RiseupVPN rescue was not repaired"
+
+is_interactive() { return 1; }
+riseupvpn_rescue_is_managed() { return 1; }
 riseupvpn_app_layout_is_expected() { return 1; }
 activate_riseupvpn_rescue() { fail "unexpected existing RiseupVPN application was opened"; }
 set +e
@@ -260,53 +280,56 @@ set -e
 [[ "$unreachable_status" -eq 1 ]] ||
   fail "bootstrap continued when GitHub remained unavailable through RiseupVPN"
 
-# Restore production trust and layout checks after orchestration test doubles.
+# Restore production integrity and layout checks after orchestration test doubles.
 # shellcheck disable=SC1091
 source "$ROOT_DIR/bootstrap/network-rescue.sh"
 
-riseupvpn_installer_codesign_valid() { return 0; }
-riseupvpn_installer_signature() {
-  printf '%s\n' \
-    'Authority=Developer ID Application: LEAP Encryption Access Project (SB5RR8K33W)' \
-    'TeamIdentifier=SB5RR8K33W'
-}
-riseupvpn_installer_is_trusted "$TMP_DIR/RiseupVPN-installer.app" ||
-  fail "current official RiseupVPN installer signature was rejected"
-
-riseupvpn_installer_signature() {
-  printf '%s\n' \
-    'Authority=Developer ID Application: Example Corp (AAAAAAAAAA)' \
-    'TeamIdentifier=AAAAAAAAAA'
-}
+riseupvpn_image_is_valid() { return 0; }
+riseupvpn_image_sha256() { printf '%s\n' "$NETWORK_RESCUE_RISEUP_SHA256"; }
+riseupvpn_image_is_expected "$TMP_DIR/RiseupVPN-aarch64.dmg" ||
+  fail "pinned RiseupVPN ARM image checksum was rejected"
+riseupvpn_image_sha256() { printf '%s\n' aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa; }
 set +e
-riseupvpn_installer_is_trusted "$TMP_DIR/RiseupVPN-installer.app" >/dev/null 2>&1
-untrusted_status=$?
+riseupvpn_image_is_expected "$TMP_DIR/RiseupVPN-aarch64.dmg" >/dev/null 2>&1
+unexpected_checksum_status=$?
 set -e
-[[ "$untrusted_status" -eq 1 ]] || fail "foreign package signature was accepted"
-
-installer_fixture="$TMP_DIR/RiseupVPN-installer-0.24.8.app"
-mkdir -p "$installer_fixture/Contents/MacOS"
-/usr/bin/plutil -create xml1 "$installer_fixture/Contents/Info.plist"
-/usr/bin/plutil -insert CFBundleExecutable -string riseup-installer \
-  "$installer_fixture/Contents/Info.plist"
-touch "$installer_fixture/Contents/MacOS/riseup-installer"
-chmod +x "$installer_fixture/Contents/MacOS/riseup-installer"
-sudo_askpass() { printf '%s\n' "$@" >"$TMP_DIR/installer-args"; }
-run_riseupvpn_installer "$installer_fixture"
-[[ "$(<"$TMP_DIR/installer-args")" == "$installer_fixture/Contents/MacOS/riseup-installer"$'\n--root\n/Applications/RiseupVPN\n--accept-messages\n--accept-licenses\n--confirm-command\ninstall\nbitmaskvpn' ]] ||
-  fail "RiseupVPN installer did not receive the non-interactive Qt command"
+[[ "$unexpected_checksum_status" -eq 1 ]] ||
+  fail "RiseupVPN image with an unexpected checksum was accepted"
 
 NETWORK_RESCUE_RISEUP_APP="$TMP_DIR/RiseupVPN/RiseupVPN.app"
+NETWORK_RESCUE_RISEUP_POST_INSTALL="$TMP_DIR/RiseupVPN/post-install"
 mkdir -p "$NETWORK_RESCUE_RISEUP_APP/Contents/MacOS"
 /usr/bin/plutil -create xml1 "$NETWORK_RESCUE_RISEUP_APP/Contents/Info.plist"
-/usr/bin/plutil -insert CFBundleIdentifier -string se.leap.bitmask \
+/usr/bin/plutil -insert CFBundleIdentifier -string se.leap.riseup-vpn \
   "$NETWORK_RESCUE_RISEUP_APP/Contents/Info.plist"
-/usr/bin/plutil -insert CFBundleExecutable -string RiseupVPN \
+/usr/bin/plutil -insert CFBundleExecutable -string riseup-vpn \
   "$NETWORK_RESCUE_RISEUP_APP/Contents/Info.plist"
-touch "$NETWORK_RESCUE_RISEUP_APP/Contents/MacOS/RiseupVPN"
-chmod +x "$NETWORK_RESCUE_RISEUP_APP/Contents/MacOS/RiseupVPN"
+touch "$NETWORK_RESCUE_RISEUP_APP/Contents/MacOS/riseup-vpn"
+touch "$NETWORK_RESCUE_RISEUP_APP/bitmask-helper"
+touch "$NETWORK_RESCUE_RISEUP_APP/openvpn.leap"
+touch "$NETWORK_RESCUE_RISEUP_POST_INSTALL"
+chmod +x \
+  "$NETWORK_RESCUE_RISEUP_APP/Contents/MacOS/riseup-vpn" \
+  "$NETWORK_RESCUE_RISEUP_APP/bitmask-helper" \
+  "$NETWORK_RESCUE_RISEUP_APP/openvpn.leap" \
+  "$NETWORK_RESCUE_RISEUP_POST_INSTALL"
+riseupvpn_binary_architectures() { printf '%s\n' arm64; }
+riseupvpn_native_payload_is_expected \
+  "$NETWORK_RESCUE_RISEUP_APP" "$NETWORK_RESCUE_RISEUP_POST_INSTALL" ||
+  fail "native ARM RiseupVPN payload was rejected"
 riseupvpn_app_layout_is_expected ||
   fail "expected RiseupVPN application layout was rejected"
+
+riseupvpn_binary_architectures() { printf '%s\n' x86_64; }
+set +e
+riseupvpn_native_payload_is_expected \
+  "$NETWORK_RESCUE_RISEUP_APP" "$NETWORK_RESCUE_RISEUP_POST_INSTALL"
+intel_payload_status=$?
+set -e
+[[ "$intel_payload_status" -eq 1 ]] ||
+  fail "Intel-only RiseupVPN payload was accepted on Apple Silicon"
+
+riseupvpn_binary_architectures() { printf '%s\n' arm64; }
 /usr/bin/plutil -replace CFBundleIdentifier -string com.example.foreign \
   "$NETWORK_RESCUE_RISEUP_APP/Contents/Info.plist"
 set +e
@@ -315,6 +338,27 @@ unexpected_layout_status=$?
 set -e
 [[ "$unexpected_layout_status" -eq 1 ]] ||
   fail "foreign application bundle was accepted as RiseupVPN"
+
+NETWORK_RESCUE_RISEUP_ROOT="/Applications/RiseupVPN"
+NETWORK_RESCUE_RISEUP_APP="$NETWORK_RESCUE_RISEUP_ROOT/RiseupVPN.app"
+NETWORK_RESCUE_RISEUP_POST_INSTALL="$NETWORK_RESCUE_RISEUP_ROOT/post-install"
+: >"$TMP_DIR/native-install-args"
+sudo_askpass() {
+  printf '%s\n' -- "$@" >>"$TMP_DIR/native-install-args"
+}
+copy_riseupvpn_native_payload \
+  "$TMP_DIR/source/RiseupVPN.app" "$TMP_DIR/source/post-install"
+run_riseupvpn_post_install
+run_riseupvpn_post_uninstall
+grep -F '/usr/bin/ditto' "$TMP_DIR/native-install-args" >/dev/null ||
+  fail "native RiseupVPN application was not copied without its Intel wrapper"
+grep -F -- '-action' "$TMP_DIR/native-install-args" >/dev/null ||
+  fail "native RiseupVPN post-install hook was not invoked"
+grep -F -- 'uninstall' "$TMP_DIR/native-install-args" >/dev/null ||
+  fail "native RiseupVPN helper cleanup hook was not invoked"
+if grep -F -- '--accept-licenses' "$TMP_DIR/native-install-args" >/dev/null; then
+  fail "Intel Qt installer was still invoked for RiseupVPN"
+fi
 
 : >"$rescue_log"
 riseupvpn_rescue_is_managed() { return 0; }
