@@ -65,9 +65,15 @@ export DOTFILES_INSTALL_NO_MAIN=true
 source "$ROOT_DIR/install.sh"
 TOOLS_LIB_LOADED=true
 bootstrap_tool_log="$TMP_DIR/bootstrap-tools.log"
+mise_attempts=0
 
 github_phase_preflight() {
   printf 'preflight %s %s\n' "$1" "$2" >>"$bootstrap_tool_log"
+}
+
+github_api_rate_limit_exhausted() {
+  printf '%s\n' exhausted >>"$bootstrap_tool_log"
+  return 0
 }
 
 # Called indirectly by run_tool_installers from the sourced Bootstrapper.
@@ -76,8 +82,12 @@ run_tool() {
   local tool="$1"
 
   if [[ "$tool" == mise ]]; then
+    mise_attempts=$((mise_attempts + 1))
     ! command -v fresh-tool >/dev/null 2>&1 ||
       fail "fresh tool was available before the mise Tool Installer"
+    printf '%s\n' "$tool" >>"$bootstrap_tool_log"
+    [[ "$mise_attempts" -gt 1 ]]
+    return
   else
     command -v fresh-tool >/dev/null 2>&1 ||
       fail "$tool ran before the Bootstrapper loaded the mise environment"
@@ -90,13 +100,30 @@ run_tool() {
 
 run_tool_installers
 
-[[ "$(head -n 2 "$bootstrap_tool_log")" == $'preflight mise 84\nmise' ]] ||
-  fail "Bootstrapper did not establish mise before other Tool Installers"
+[[ "$(head -n 6 "$bootstrap_tool_log")" == \
+  $'preflight mise 1\nmise\nexhausted\npreflight mise retry 1\nmise\nai' ]] ||
+  fail "Bootstrapper did not wait and retry an anonymously rate-limited mise install"
 grep -F -B 1 -x 'tmux' "$bootstrap_tool_log" |
   grep -F -x 'preflight Tmux plugins 0' >/dev/null ||
   fail "Bootstrapper did not preflight GitHub immediately before Tmux"
 grep -F -B 1 -x 'vim' "$bootstrap_tool_log" |
   grep -F -x 'preflight Vim plugins 0' >/dev/null ||
   fail "Bootstrapper did not preflight GitHub immediately before Vim"
+
+: >"$bootstrap_tool_log"
+mise_attempts=0
+github_api_rate_limit_exhausted() {
+  return 1
+}
+run_tool() {
+  [[ "$1" == mise ]] || fail "Tool Installers continued after an unrelated mise failure"
+  return 7
+}
+set +e
+run_mise_tool_installer
+mise_failure_status=$?
+set -e
+[[ "$mise_failure_status" -eq 7 ]] ||
+  fail "unrelated mise failure did not preserve its original status"
 
 printf 'mise environment test: passed\n'

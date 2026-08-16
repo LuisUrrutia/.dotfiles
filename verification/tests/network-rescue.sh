@@ -54,8 +54,6 @@ github_api_rate_limit_response() {
   printf '%s\n' \
     '{"resources":{"core":{"limit":60,"remaining":0,"reset":1786880472}}}'
 }
-[[ "$(mise_github_api_required_budget)" -eq 84 ]] ||
-  fail "mise GitHub API budget does not match the declared backends"
 [[ "$(tmux_github_git_source_count)" -eq 4 ]] ||
   fail "Tmux Git source count does not match its declared plugins"
 [[ "$(vim_github_git_source_count)" -eq 27 ]] ||
@@ -70,16 +68,16 @@ grep -F 'Homebrew needs 0 core API requests' "$TMP_DIR/rate-homebrew.out" >/dev/
   fail "Homebrew preflight did not explain its GitHub core API requirement"
 
 set +e
-github_api_budget_available "mise" 84 \
+github_api_budget_available "oversized phase" 84 \
   >"$TMP_DIR/rate-exhausted.out" 2>"$TMP_DIR/rate-exhausted.err"
 rate_exhausted_status=$?
 set -e
 [[ "$rate_exhausted_status" -eq 1 ]] ||
-  fail "Bootstrapper continued without mise's GitHub API budget"
+  fail "Bootstrapper continued with an impossible GitHub API budget"
 grep -F '0/60' "$TMP_DIR/rate-exhausted.err" >/dev/null ||
   fail "exhausted GitHub rate limit did not report the available budget"
-grep -F 'mise needs 84 core API requests' "$TMP_DIR/rate-exhausted.err" >/dev/null ||
-  fail "exhausted GitHub rate limit did not report mise's phase budget"
+grep -F 'oversized phase needs 84 core API requests' "$TMP_DIR/rate-exhausted.err" >/dev/null ||
+  fail "exhausted GitHub rate limit did not report the impossible phase budget"
 grep -F '1786880472' "$TMP_DIR/rate-exhausted.err" >/dev/null ||
   fail "exhausted GitHub rate limit did not report its reset"
 
@@ -95,10 +93,10 @@ github_api_rate_limit_response() {
   printf '%s\n' "$response_count" >"$rate_response_count_file"
   if [[ "$response_count" -eq 1 ]]; then
     printf '%s\n' \
-      '{"resources":{"core":{"limit":5000,"remaining":20,"reset":1125}}}'
+      '{"resources":{"core":{"limit":60,"remaining":0,"reset":1125}}}'
   else
     printf '%s\n' \
-      '{"resources":{"core":{"limit":5000,"remaining":4990,"reset":4725}}}'
+      '{"resources":{"core":{"limit":60,"remaining":59,"reset":4725}}}'
   fi
 }
 github_epoch_now() {
@@ -112,7 +110,7 @@ github_rate_limit_sleep() {
   now="$(<"$rate_now_file")"
   printf '%s\n' "$((now + sleep_seconds))" >"$rate_now_file"
 }
-github_api_budget_available "mise" 84 \
+github_api_budget_available "mise" 1 \
   >"$TMP_DIR/rate-wait.out" 2>"$TMP_DIR/rate-wait.err" ||
   fail "Bootstrapper did not resume after GitHub reset a recoverable quota"
 [[ "$(<"$rate_response_count_file")" -eq 2 ]] ||
@@ -123,7 +121,7 @@ grep -F 'Waiting until its reset' "$TMP_DIR/rate-wait.out" >/dev/null ||
   fail "recoverable GitHub quota did not explain that Bootstrapper would wait"
 grep -F 'Press Ctrl-C to stop' "$TMP_DIR/rate-wait.out" >/dev/null ||
   fail "GitHub quota wait did not explain how to interrupt it"
-grep -F '4990/5000' "$TMP_DIR/rate-wait.out" >/dev/null ||
+grep -F '59/60' "$TMP_DIR/rate-wait.out" >/dev/null ||
   fail "GitHub quota was not reported after the reset"
 
 printf '0\n' >"$rate_response_count_file"
@@ -132,7 +130,7 @@ github_rate_limit_sleep() {
   return 1
 }
 set +e
-github_api_budget_available "mise" 84 \
+github_api_budget_available "mise" 1 \
   >"$TMP_DIR/rate-interrupted.out" 2>"$TMP_DIR/rate-interrupted.err"
 rate_interrupted_status=$?
 set -e
@@ -145,47 +143,38 @@ grep -F 'wait was interrupted' "$TMP_DIR/rate-interrupted.err" >/dev/null ||
 
 github_api_rate_limit_response() {
   printf '%s\n' \
-    '{"resources":{"core":{"limit":5000,"remaining":4990,"reset":1786880472}}}'
+    '{"resources":{"core":{"limit":60,"remaining":59,"reset":1786880472}}}'
 }
-github_api_budget_available "mise" 84 \
+github_api_budget_available "mise" 1 \
   >"$TMP_DIR/rate-available.out" 2>"$TMP_DIR/rate-available.err" ||
   fail "Bootstrapper rejected a sufficient GitHub API budget"
-grep -F '4990/5000' "$TMP_DIR/rate-available.out" >/dev/null ||
+grep -F '59/60' "$TMP_DIR/rate-available.out" >/dev/null ||
   fail "available GitHub rate limit was not reported"
 
-unset MISE_GITHUB_TOKEN GITHUB_API_TOKEN GITHUB_TOKEN
-github_auth_ready=false
-gh() {
-  if [[ "$*" == "auth status --hostname github.com" ]]; then
-    [[ "$github_auth_ready" == true ]]
-    return
-  fi
-  if [[ "$*" == "auth login --hostname github.com --web --git-protocol ssh --skip-ssh-key" ]]; then
-    printf '%s\n' "$*" >>"$rescue_log"
-    github_auth_ready=true
-    return
-  fi
-  return 1
+github_api_rate_limit_response() {
+  printf '%s\n' \
+    '{"resources":{"core":{"limit":60,"remaining":0,"reset":1786880472}}}'
 }
-is_interactive() { return 0; }
-: >"$rescue_log"
-ensure_mise_github_authentication \
-  >"$TMP_DIR/auth.out" 2>"$TMP_DIR/auth.err" ||
-  fail "interactive bootstrap could not establish GitHub CLI authentication"
-[[ "$(<"$rescue_log")" == 'auth login --hostname github.com --web --git-protocol ssh --skip-ssh-key' ]] ||
-  fail "GitHub CLI authentication did not use the bounded browser flow"
+github_api_rate_limit_exhausted ||
+  fail "exhausted GitHub core quota was not detected after an install failure"
+github_api_rate_limit_response() {
+  printf '%s\n' \
+    '{"resources":{"core":{"limit":60,"remaining":1,"reset":1786880472}}}'
+}
+if github_api_rate_limit_exhausted; then
+  fail "available GitHub core quota was misclassified as exhausted"
+fi
 
 : >"$rescue_log"
 warp_is_active() { printf '%s\n' warp >>"$rescue_log"; }
 github_connectivity_available() { printf '%s\n' probe >>"$rescue_log"; }
-ensure_mise_github_authentication() { printf '%s\n' auth >>"$rescue_log"; }
 github_api_budget_available() {
   printf 'budget %s %s\n' "$1" "$2" >>"$rescue_log"
 }
-github_phase_preflight "mise" 84 \
-  "6 aqua tools and 2 github tools" true
-[[ "$(<"$rescue_log")" == $'warp\nprobe\nauth\nbudget mise 84' ]] ||
-  fail "mise preflight did not validate WARP, routes, authentication, and budget in order"
+github_phase_preflight "mise" 1 \
+  "6 aqua tools and 2 github tools"
+[[ "$(<"$rescue_log")" == $'warp\nprobe\nbudget mise 1' ]] ||
+  fail "mise preflight did not validate WARP, routes, and anonymous budget in order"
 
 # Restore the production adapter before testing WARP orchestration.
 # shellcheck disable=SC1091

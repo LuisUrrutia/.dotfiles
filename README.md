@@ -97,16 +97,16 @@ be exhausted on a fresh Mac. The Bootstrapper checks WARP, GitHub routes, and
 `https://api.github.com/rate_limit` immediately before Homebrew, mise, TPack,
 and Neovim instead of treating the install as one network phase. Homebrew uses
 its own JSON API, GHCR, vendor downloads, and Git taps; TPack and Neovim use Git
-and direct downloads, so none reserves GitHub core API requests. The current
-mise configuration is different: measured clean installs need 10 core requests
-per Aqua tool and 12 per GitHub tool, or 84 total. Because that exceeds the
-anonymous limit, an interactive bootstrap uses `gh auth login` once and mise
-reuses the securely stored GitHub CLI credential without tracking a token. If
-a phase has a sufficient maximum limit but too few requests remain, the
-Bootstrapper waits in interruptible one-minute intervals until GitHub's reported
-reset, checks the shared WARP quota again, and resumes automatically. It fails
-immediately when the session's maximum limit cannot satisfy the phase, because
-waiting cannot replace the required authentication.
+and direct downloads, so none reserves GitHub core API requests. mise releases
+use mise's shared version cache first and only fall back to GitHub's API when
+necessary. The Bootstrapper therefore does not require a GitHub login during a
+fresh install; mise automatically reuses an existing token or GitHub CLI
+session when one is already available. If the anonymous quota is exhausted
+before mise, the Bootstrapper waits in interruptible one-minute intervals until
+GitHub's reported reset. If mise consumes the final requests and fails, the
+Bootstrapper confirms the exhausted quota, waits, rechecks WARP and GitHub
+routes, then retries the incomplete toolchain without discarding tools that
+already installed successfully.
 
 Several tool installers have real side effects: macOS defaults, shell
 registration, tmux plugin setup, service starts, generated completions,

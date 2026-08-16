@@ -1453,12 +1453,30 @@ load_tool_library() {
   TOOLS_LIB_LOADED=true
 }
 
+run_mise_tool_installer() {
+  local mise_status=0
+
+  while :; do
+    if run_tool "mise"; then
+      return 0
+    else
+      mise_status=$?
+    fi
+
+    if ! github_api_rate_limit_exhausted; then
+      return "$mise_status"
+    fi
+    note "mise exhausted GitHub's core API quota; waiting for its reset before retrying the incomplete toolchain."
+    github_phase_preflight "mise retry" 1 \
+      "mise keeps completed tools and will retry only the remaining toolchain work."
+  done
+}
+
 run_tool_installers() {
   local tool_dir=""
   local tool_name=""
   local mise_aqua_count=""
   local mise_github_count=""
-  local mise_required_budget=""
   local tmux_git_sources=""
   local vim_git_sources=""
   local vim_parser_sources=""
@@ -1470,10 +1488,9 @@ run_tool_installers() {
   # Tool Installers, so the Bootstrapper establishes it first.
   mise_aqua_count="$(mise_github_backend_count aqua)"
   mise_github_count="$(mise_github_backend_count github)"
-  mise_required_budget="$(mise_github_api_required_budget)"
-  github_phase_preflight "mise" "$mise_required_budget" \
-    "mise declares $mise_aqua_count Aqua and $mise_github_count GitHub release tools; measured clean installs reserve $mise_required_budget core API requests." true
-  run_tool "mise"
+  github_phase_preflight "mise" 1 \
+    "mise will install $mise_aqua_count Aqua and $mise_github_count GitHub release tools; its shared version cache avoids most GitHub API calls."
+  run_mise_tool_installer
   load_mise_environment
 
   for tool_dir in "$DOTFILES/tools"/*; do
