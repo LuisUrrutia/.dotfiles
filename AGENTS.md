@@ -72,9 +72,10 @@ retries; installed entries make retries incremental. A final Bundle failure may
 continue to other Brewfiles, but blocks cleanup, Tool Installers, first-run
 tasks, and the install marker.
 
-Connectivity Rescue is temporary Bootstrapper state. Preserve existing WARP,
-verify downloaded and installed signatures, retain a managed rescue across
-failed runs, and remove it only after every networked phase succeeds.
+Connectivity Rescue is temporary Bootstrapper state. Preserve an existing
+RiseupVPN installation, verify the official signed installer before execution,
+retain a managed rescue across failed runs, and remove it only after every
+networked phase succeeds.
 
 ### Ownership
 

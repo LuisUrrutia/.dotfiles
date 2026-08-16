@@ -56,9 +56,10 @@ The Bootstrapper is not just a symlink script. It:
   allowing up to three attempts; a protected per-run broker keeps it only in
   memory and serializes concurrent Homebrew `SUDO_ASKPASS` requests, while
   package retries revalidate the broker and ask again if it stops
-- requires an official, signed Cloudflare WARP consumer tunnel for every normal
-  install, waits for you to connect it when necessary, then probes GitHub web,
-  Git, and release-download routes in parallel through the tunnel
+- requires RiseupVPN for every normal install, verifies the official
+  LEAP-signed installer before executing it, waits for you to connect, then
+  probes GitHub web, Git, and release-download routes in parallel through the
+  tunnel
 - asks plain-language questions, shows the packages/apps behind each yes, then
   maps the answers to optional profile Brewfiles
 - installs Homebrew if missing, otherwise updates and upgrades it
@@ -84,29 +85,32 @@ The Bootstrapper is not just a symlink script. It:
   work does not repeat (a legacy repo-local `.installed` file is still honored
   and cleaned up)
 
-Cloudflare WARP is a temporary Connectivity Rescue, not a persistent package
-managed by a Brewfile. An existing WARP installation is reused and preserved.
-When the Bootstrapper installs WARP, it records that ownership, keeps the tunnel
-available across failed runs so the install can be retried, and removes it only
-after every networked phase succeeds. Non-interactive installs proceed only
-when a trusted WARP installation is already connected; otherwise they fail
-instead of installing or opening an app.
+RiseupVPN is a temporary Connectivity Rescue, not a persistent package managed
+by a Brewfile. It needs no account. An existing installation with the expected
+bundle and executable layout is reused and preserved. When the Bootstrapper
+installs RiseupVPN, it verifies the downloaded disk image and the LEAP-signed
+installer before execution, records its ownership, keeps the tunnel available
+across failed runs, and removes it only after every networked phase succeeds.
+The application distributed inside that installer has no independently
+verifiable code signature, so existing installations receive a structural
+check rather than a misleading signature guarantee. Non-interactive installs
+proceed only when an expected RiseupVPN installation is already connected.
 
-WARP exit IPs are shared, so their unauthenticated GitHub API budget can already
-be exhausted on a fresh Mac. The Bootstrapper checks WARP, GitHub routes, and
-`https://api.github.com/rate_limit` immediately before Homebrew, mise, TPack,
-and Neovim instead of treating the install as one network phase. Homebrew uses
-its own JSON API, GHCR, vendor downloads, and Git taps; TPack and Neovim use Git
-and direct downloads, so none reserves GitHub core API requests. mise releases
-use mise's shared version cache first and only fall back to GitHub's API when
-necessary. The Bootstrapper therefore does not require a GitHub login during a
-fresh install; mise automatically reuses an existing token or GitHub CLI
-session when one is already available. If the anonymous quota is exhausted
-before mise, the Bootstrapper waits in interruptible one-minute intervals until
-GitHub's reported reset. If mise consumes the final requests and fails, the
-Bootstrapper confirms the exhausted quota, waits, rechecks WARP and GitHub
-routes, then retries the incomplete toolchain without discarding tools that
-already installed successfully.
+VPN exit IPs are shared, so their unauthenticated GitHub API budget can already
+be exhausted on a fresh Mac. The Bootstrapper checks RiseupVPN, GitHub routes,
+and `https://api.github.com/rate_limit` immediately before Homebrew, mise,
+TPack, and Neovim instead of treating the install as one network phase.
+Homebrew uses its own JSON API, GHCR, vendor downloads, and Git taps; TPack and
+Neovim use Git and direct downloads, so none reserves GitHub core API requests.
+mise releases use mise's shared version cache first and only fall back to
+GitHub's API when necessary. The Bootstrapper therefore does not require a
+GitHub login during a fresh install; mise automatically reuses an existing
+token or GitHub CLI session when one is already available. If the anonymous
+quota is exhausted before mise, the Bootstrapper waits in interruptible
+one-minute intervals until GitHub's reported reset. If mise consumes the final
+requests and fails, the Bootstrapper confirms the exhausted quota, waits,
+rechecks RiseupVPN and GitHub routes, then retries the incomplete toolchain
+without discarding tools that already installed successfully.
 
 Several tool installers have real side effects: macOS defaults, shell
 registration, tmux plugin setup, service starts, generated completions,

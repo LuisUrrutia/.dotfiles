@@ -78,15 +78,15 @@ requests are serialized so parallel Homebrew casks each receive one complete
 response. Package retries revalidate the broker and request the password again
 if it stopped.
 
-The Bootstrapper then probes GitHub web, Git, and release-download routes in
-parallel. An interactive operator may accept a temporary Cloudflare WARP
-Connectivity Rescue when those routes are unavailable. The adapter downloads
-the official consumer package, verifies its Cloudflare installer signature,
-installs it, verifies the application signature, and waits for the operator to
-accept the privacy notice and connect; no account is required. A pre-existing
-WARP installation remains user-owned. A Bootstrapper-owned installation stays
-available after a failed run and is removed only after all networked phases
-succeed. Non-interactive execution fails instead of mutating system networking.
+The Bootstrapper establishes a temporary RiseupVPN Connectivity Rescue before
+probing GitHub web, Git, and release-download routes in parallel. The adapter
+downloads the official disk image, verifies its integrity and LEAP-signed
+installer, installs it headlessly, then waits for the operator to connect; no
+account is required. A pre-existing RiseupVPN installation remains user-owned.
+A Bootstrapper-owned installation stays available after a failed run and is
+removed only after all networked phases succeed. A managed WARP rescue left by
+an earlier Bootstrapper is removed during migration. Non-interactive execution
+fails instead of installing or opening a VPN application.
 
 Each Brewfile first uses `brew bundle install --jobs=auto`. Transient failures
 retry the whole idempotent Brewfile, so installed entries are skipped and

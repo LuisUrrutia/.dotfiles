@@ -8,6 +8,9 @@ INSTALL="$ROOT_DIR/install.sh"
 TMP_DIR="$(mktemp -d)"
 
 cleanup() {
+  if [[ -n "${NETWORK_RESCUE_MOUNT_DIR:-}" ]]; then
+    /usr/bin/hdiutil detach "$NETWORK_RESCUE_MOUNT_DIR" >/dev/null 2>&1 || true
+  fi
   if [[ -n "${NETWORK_RESCUE_TEMP_DIR:-}" ]]; then
     rm -rf "$NETWORK_RESCUE_TEMP_DIR"
   fi
@@ -30,21 +33,27 @@ source "$INSTALL"
 rescue_log="$TMP_DIR/rescue.log"
 : >"$rescue_log"
 
-NETWORK_RESCUE_MARKER="$TMP_DIR/state/network-rescue-warp"
-mark_warp_rescue_managed
-warp_rescue_is_managed || fail "managed rescue marker was not persisted"
+NETWORK_RESCUE_MARKER="$TMP_DIR/state/network-rescue-riseupvpn"
+mark_riseupvpn_rescue_managed
+riseupvpn_rescue_is_managed || fail "managed rescue marker was not persisted"
 rm -f "$NETWORK_RESCUE_MARKER"
 
 at_exit() { :; }
-download_warp_package() { printf '%s\n' download >>"$rescue_log"; }
-warp_package_is_trusted() { printf '%s\n' package-signature >>"$rescue_log"; }
-run_warp_package_installer() { printf '%s\n' installer >>"$rescue_log"; }
-warp_app_installed() { printf '%s\n' app-installed >>"$rescue_log"; }
-warp_app_is_trusted() { printf '%s\n' app-signature >>"$rescue_log"; }
-mark_warp_rescue_managed() { printf '%s\n' marker >>"$rescue_log"; }
-install_warp_rescue >"$TMP_DIR/install.out" 2>"$TMP_DIR/install.err"
-[[ "$(<"$rescue_log")" == $'download\npackage-signature\ninstaller\napp-installed\napp-signature\nmarker' ]] ||
-  fail "WARP rescue was not downloaded, verified, installed, and recorded in order"
+download_riseupvpn_image() { printf '%s\n' download >>"$rescue_log"; }
+riseupvpn_image_is_valid() { printf '%s\n' image-verify >>"$rescue_log"; }
+mount_riseupvpn_image() { printf '%s\n' mount >>"$rescue_log"; }
+find_riseupvpn_installer() {
+  printf '%s\n' find >>"$rescue_log"
+  printf '%s\n' "$TMP_DIR/RiseupVPN-installer.app"
+}
+riseupvpn_installer_is_trusted() { printf '%s\n' installer-signature >>"$rescue_log"; }
+run_riseupvpn_installer() { printf '%s\n' installer >>"$rescue_log"; }
+unmount_riseupvpn_image() { printf '%s\n' unmount >>"$rescue_log"; }
+riseupvpn_app_layout_is_expected() { printf '%s\n' app-layout >>"$rescue_log"; }
+mark_riseupvpn_rescue_managed() { printf '%s\n' marker >>"$rescue_log"; }
+install_riseupvpn_rescue >"$TMP_DIR/install.out" 2>"$TMP_DIR/install.err"
+[[ "$(<"$rescue_log")" == $'download\nimage-verify\nmount\nfind\ninstaller-signature\ninstaller\nunmount\napp-layout\nmarker' ]] ||
+  fail "RiseupVPN rescue was not verified, installed, and recorded in order"
 
 # Restore the production adapter before testing its independent branches.
 # shellcheck disable=SC1091
@@ -166,117 +175,158 @@ if github_api_rate_limit_exhausted; then
 fi
 
 : >"$rescue_log"
-warp_is_active() { printf '%s\n' warp >>"$rescue_log"; }
+riseupvpn_is_active() { printf '%s\n' riseupvpn >>"$rescue_log"; }
 github_connectivity_available() { printf '%s\n' probe >>"$rescue_log"; }
 github_api_budget_available() {
   printf 'budget %s %s\n' "$1" "$2" >>"$rescue_log"
 }
 github_phase_preflight "mise" 1 \
   "6 aqua tools and 2 github tools"
-[[ "$(<"$rescue_log")" == $'warp\nprobe\nbudget mise 1' ]] ||
-  fail "mise preflight did not validate WARP, routes, and anonymous budget in order"
+[[ "$(<"$rescue_log")" == $'riseupvpn\nprobe\nbudget mise 1' ]] ||
+  fail "mise preflight did not validate RiseupVPN, routes, and anonymous budget in order"
 
-# Restore the production adapter before testing WARP orchestration.
+# Restore the production adapter before testing RiseupVPN orchestration.
 # shellcheck disable=SC1091
 source "$ROOT_DIR/bootstrap/network-rescue.sh"
 
 : >"$rescue_log"
 github_connectivity_available() { printf '%s\n' probe >>"$rescue_log"; }
 is_interactive() { return 0; }
-ask_yes_no() { fail "mandatory WARP policy still asked whether to use WARP"; }
-warp_app_installed() { return 1; }
-warp_is_active() { return 1; }
-install_warp_rescue() { printf '%s\n' install >>"$rescue_log"; }
-activate_warp_rescue() { printf '%s\n' activate >>"$rescue_log"; }
+ask_yes_no() { fail "mandatory RiseupVPN policy still asked whether to use it"; }
+legacy_warp_rescue_is_managed() { return 0; }
+uninstall_legacy_warp_rescue() { printf '%s\n' legacy-uninstall >>"$rescue_log"; }
+riseupvpn_app_installed() { return 1; }
+riseupvpn_is_active() { return 1; }
+install_riseupvpn_rescue() { printf '%s\n' install >>"$rescue_log"; }
+activate_riseupvpn_rescue() { printf '%s\n' activate >>"$rescue_log"; }
 ensure_bootstrap_connectivity
-[[ "$(<"$rescue_log")" == $'install\nactivate\nprobe' ]] ||
-  fail "normal install did not establish WARP and validate GitHub routes"
+[[ "$(<"$rescue_log")" == $'legacy-uninstall\ninstall\nactivate\nprobe' ]] ||
+  fail "normal install did not migrate WARP, establish RiseupVPN, and validate GitHub routes"
 
 : >"$rescue_log"
-github_connectivity_available() { fail "non-interactive install probed GitHub without WARP"; }
+github_connectivity_available() { fail "non-interactive install probed GitHub without RiseupVPN"; }
 is_interactive() { return 1; }
-warp_app_installed() { return 1; }
-install_warp_rescue() { fail "non-interactive install tried to install WARP"; }
+legacy_warp_rescue_is_managed() { return 1; }
+riseupvpn_app_installed() { return 1; }
+install_riseupvpn_rescue() { fail "non-interactive install tried to install RiseupVPN"; }
 set +e
 ensure_bootstrap_connectivity >"$TMP_DIR/noninteractive.out" 2>"$TMP_DIR/noninteractive.err"
 noninteractive_status=$?
 set -e
 [[ "$noninteractive_status" -eq 1 ]] ||
-  fail "non-interactive bootstrap continued without WARP"
-grep -F 'WARP must be installed interactively' "$TMP_DIR/noninteractive.err" >/dev/null ||
-  fail "non-interactive bootstrap did not explain the mandatory WARP requirement"
+  fail "non-interactive bootstrap continued without RiseupVPN"
+grep -F 'RiseupVPN must be installed interactively' "$TMP_DIR/noninteractive.err" >/dev/null ||
+  fail "non-interactive bootstrap did not explain the mandatory RiseupVPN requirement"
 
 : >"$rescue_log"
 github_connectivity_available() { printf '%s\n' probe >>"$rescue_log"; }
 is_interactive() { return 1; }
-warp_app_installed() { return 0; }
-warp_app_is_trusted() { return 0; }
-warp_is_active() { return 0; }
-install_warp_rescue() { fail "existing WARP installation was replaced"; }
-activate_warp_rescue() { printf '%s\n' activate >>"$rescue_log"; }
+riseupvpn_app_installed() { return 0; }
+riseupvpn_app_layout_is_expected() { return 0; }
+riseupvpn_is_active() { return 0; }
+install_riseupvpn_rescue() { fail "existing RiseupVPN installation was replaced"; }
+activate_riseupvpn_rescue() { printf '%s\n' activate >>"$rescue_log"; }
 ensure_bootstrap_connectivity >"$TMP_DIR/existing.out" 2>"$TMP_DIR/existing.err"
 [[ "$(<"$rescue_log")" == $'activate\nprobe' ]] ||
-  fail "active existing WARP installation was not reused before GitHub routes"
+  fail "active existing RiseupVPN installation was not reused before GitHub routes"
 
 : >"$rescue_log"
-warp_is_active() { return 1; }
-activate_warp_rescue() { fail "inactive WARP was opened during a non-interactive install"; }
+riseupvpn_is_active() { return 1; }
+activate_riseupvpn_rescue() { fail "inactive RiseupVPN was opened during a non-interactive install"; }
 set +e
 ensure_bootstrap_connectivity >"$TMP_DIR/inactive.out" 2>"$TMP_DIR/inactive.err"
 inactive_status=$?
 set -e
 [[ "$inactive_status" -eq 1 ]] ||
-  fail "non-interactive bootstrap continued with inactive WARP"
+  fail "non-interactive bootstrap continued with inactive RiseupVPN"
 
-warp_app_is_trusted() { return 1; }
-activate_warp_rescue() { fail "untrusted existing WARP application was opened"; }
+riseupvpn_app_layout_is_expected() { return 1; }
+activate_riseupvpn_rescue() { fail "unexpected existing RiseupVPN application was opened"; }
 set +e
-ensure_bootstrap_connectivity >"$TMP_DIR/untrusted-app.out" 2>"$TMP_DIR/untrusted-app.err"
-untrusted_app_status=$?
+ensure_bootstrap_connectivity >"$TMP_DIR/unexpected-app.out" 2>"$TMP_DIR/unexpected-app.err"
+unexpected_app_status=$?
 set -e
-[[ "$untrusted_app_status" -eq 1 ]] ||
-  fail "existing WARP application with a foreign signature was accepted"
+[[ "$unexpected_app_status" -eq 1 ]] ||
+  fail "existing RiseupVPN application with an unexpected layout was accepted"
 
-warp_app_is_trusted() { return 0; }
-warp_is_active() { return 0; }
+riseupvpn_app_layout_is_expected() { return 0; }
+riseupvpn_is_active() { return 0; }
 github_connectivity_available() { return 1; }
-activate_warp_rescue() { :; }
+activate_riseupvpn_rescue() { :; }
 set +e
 ensure_bootstrap_connectivity >"$TMP_DIR/unreachable.out" 2>"$TMP_DIR/unreachable.err"
 unreachable_status=$?
 set -e
 [[ "$unreachable_status" -eq 1 ]] ||
-  fail "bootstrap continued when GitHub remained unavailable through WARP"
+  fail "bootstrap continued when GitHub remained unavailable through RiseupVPN"
 
-warp_package_signature() {
+# Restore production trust and layout checks after orchestration test doubles.
+# shellcheck disable=SC1091
+source "$ROOT_DIR/bootstrap/network-rescue.sh"
+
+riseupvpn_installer_codesign_valid() { return 0; }
+riseupvpn_installer_signature() {
   printf '%s\n' \
-    'Status: signed by a developer certificate issued by Apple for distribution' \
-    'Certificate Chain:' \
-    ' 1. Developer ID Installer: Cloudflare Inc. (68WVV388M8)'
+    'Authority=Developer ID Application: LEAP Encryption Access Project (SB5RR8K33W)' \
+    'TeamIdentifier=SB5RR8K33W'
 }
-warp_package_is_trusted "$TMP_DIR/Cloudflare_WARP.pkg" ||
-  fail "current official Cloudflare package signature was rejected"
+riseupvpn_installer_is_trusted "$TMP_DIR/RiseupVPN-installer.app" ||
+  fail "current official RiseupVPN installer signature was rejected"
 
-warp_package_signature() {
-  printf '%s\n' 'Developer ID Installer: Example Corp (AAAAAAAAAA)'
+riseupvpn_installer_signature() {
+  printf '%s\n' \
+    'Authority=Developer ID Application: Example Corp (AAAAAAAAAA)' \
+    'TeamIdentifier=AAAAAAAAAA'
 }
 set +e
-warp_package_is_trusted "$TMP_DIR/Cloudflare_WARP.pkg" >/dev/null 2>&1
+riseupvpn_installer_is_trusted "$TMP_DIR/RiseupVPN-installer.app" >/dev/null 2>&1
 untrusted_status=$?
 set -e
 [[ "$untrusted_status" -eq 1 ]] || fail "foreign package signature was accepted"
 
-: >"$rescue_log"
-warp_rescue_is_managed() { return 0; }
-uninstall_warp_rescue() { printf '%s\n' uninstall >>"$rescue_log"; }
-finish_network_rescue
-[[ "$(<"$rescue_log")" == uninstall ]] ||
-  fail "Bootstrapper-owned WARP installation was not removed after success"
+installer_fixture="$TMP_DIR/RiseupVPN-installer-0.24.8.app"
+mkdir -p "$installer_fixture/Contents/MacOS"
+/usr/bin/plutil -create xml1 "$installer_fixture/Contents/Info.plist"
+/usr/bin/plutil -insert CFBundleExecutable -string riseup-installer \
+  "$installer_fixture/Contents/Info.plist"
+touch "$installer_fixture/Contents/MacOS/riseup-installer"
+chmod +x "$installer_fixture/Contents/MacOS/riseup-installer"
+sudo_askpass() { printf '%s\n' "$@" >"$TMP_DIR/installer-args"; }
+run_riseupvpn_installer "$installer_fixture"
+[[ "$(<"$TMP_DIR/installer-args")" == "$installer_fixture/Contents/MacOS/riseup-installer"$'\n--root\n/Applications/RiseupVPN\n--accept-messages\n--accept-licenses\n--confirm-command\ninstall\nbitmaskvpn' ]] ||
+  fail "RiseupVPN installer did not receive the non-interactive Qt command"
+
+NETWORK_RESCUE_RISEUP_APP="$TMP_DIR/RiseupVPN/RiseupVPN.app"
+mkdir -p "$NETWORK_RESCUE_RISEUP_APP/Contents/MacOS"
+/usr/bin/plutil -create xml1 "$NETWORK_RESCUE_RISEUP_APP/Contents/Info.plist"
+/usr/bin/plutil -insert CFBundleIdentifier -string se.leap.bitmask \
+  "$NETWORK_RESCUE_RISEUP_APP/Contents/Info.plist"
+/usr/bin/plutil -insert CFBundleExecutable -string RiseupVPN \
+  "$NETWORK_RESCUE_RISEUP_APP/Contents/Info.plist"
+touch "$NETWORK_RESCUE_RISEUP_APP/Contents/MacOS/RiseupVPN"
+chmod +x "$NETWORK_RESCUE_RISEUP_APP/Contents/MacOS/RiseupVPN"
+riseupvpn_app_layout_is_expected ||
+  fail "expected RiseupVPN application layout was rejected"
+/usr/bin/plutil -replace CFBundleIdentifier -string com.example.foreign \
+  "$NETWORK_RESCUE_RISEUP_APP/Contents/Info.plist"
+set +e
+riseupvpn_app_layout_is_expected
+unexpected_layout_status=$?
+set -e
+[[ "$unexpected_layout_status" -eq 1 ]] ||
+  fail "foreign application bundle was accepted as RiseupVPN"
 
 : >"$rescue_log"
-warp_rescue_is_managed() { return 1; }
-uninstall_warp_rescue() { fail "pre-existing WARP installation was removed"; }
+riseupvpn_rescue_is_managed() { return 0; }
+uninstall_riseupvpn_rescue() { printf '%s\n' uninstall >>"$rescue_log"; }
 finish_network_rescue
-[[ ! -s "$rescue_log" ]] || fail "unmanaged WARP changed during cleanup"
+[[ "$(<"$rescue_log")" == uninstall ]] ||
+  fail "Bootstrapper-owned RiseupVPN installation was not removed after success"
+
+: >"$rescue_log"
+riseupvpn_rescue_is_managed() { return 1; }
+uninstall_riseupvpn_rescue() { fail "pre-existing RiseupVPN installation was removed"; }
+finish_network_rescue
+[[ ! -s "$rescue_log" ]] || fail "unmanaged RiseupVPN changed during cleanup"
 
 printf 'network rescue test: passed\n'
