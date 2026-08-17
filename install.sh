@@ -47,6 +47,7 @@ SUDO_ASKPASS=""
 SUDO_ASKPASS_DIR=""
 SUDO_ASKPASS_FIFO=""
 SUDO_ASKPASS_BROKER_PID=""
+SUDO_ASKPASS_BROKER_PID_FILE=""
 SUDO_ASKPASS_PASSWORD=""
 DOTFILES_USE_SUDO_ASKPASS=false
 SUDO_KEEPALIVE_PID=""
@@ -55,6 +56,7 @@ BREW_BUNDLE_FAILURES=()
 BREW_BUNDLE_MAX_ATTEMPTS=5
 BREW_CURL_RETRIES=5
 SUDO_ASKPASS_MAX_ATTEMPTS=3
+SUDO_ASKPASS_RESPONSE_TIMEOUT_SECONDS=5
 
 usage() {
   local profile=""
@@ -1120,13 +1122,21 @@ capture_sudo_password() {
 }
 
 sudo_password_broker_running() {
-  [[ -n "$SUDO_ASKPASS_BROKER_PID" ]] &&
-    /bin/kill -0 "$SUDO_ASKPASS_BROKER_PID" >/dev/null 2>&1
+  local recorded_pid=""
+
+  [[ -n "$SUDO_ASKPASS_BROKER_PID" ]] || return 1
+  [[ -r "$SUDO_ASKPASS_BROKER_PID_FILE" ]] || return 1
+  IFS= read -r recorded_pid <"$SUDO_ASKPASS_BROKER_PID_FILE" || return 1
+  [[ "$recorded_pid" == "$SUDO_ASKPASS_BROKER_PID" ]] || return 1
+  /bin/kill -0 "$SUDO_ASKPASS_BROKER_PID" >/dev/null 2>&1
 }
 
 stop_sudo_password_broker() {
   local broker_pid="$SUDO_ASKPASS_BROKER_PID"
 
+  if [[ -n "$SUDO_ASKPASS_BROKER_PID_FILE" ]]; then
+    /bin/rm -f "$SUDO_ASKPASS_BROKER_PID_FILE"
+  fi
   if [[ -n "$broker_pid" ]]; then
     /bin/kill "$broker_pid" >/dev/null 2>&1 || true
     wait "$broker_pid" 2>/dev/null || true
@@ -1156,16 +1166,32 @@ start_sudo_password_broker() {
   stop_sudo_password_broker
   (
     trap 'exit 0' HUP INT TERM
+    trap '' PIPE
     while true; do
-      printf '%s\n' "$password" 2>/dev/null >"$SUDO_ASKPASS_FIFO" || exit 0
+      if ! printf '%s\n' "$password" 2>/dev/null >"$SUDO_ASKPASS_FIFO"; then
+        [[ -p "$SUDO_ASKPASS_FIFO" ]] || exit 0
+      fi
     done
   ) &
   SUDO_ASKPASS_BROKER_PID="$!"
+  if ! printf '%s\n' "$SUDO_ASKPASS_BROKER_PID" \
+    >"$SUDO_ASKPASS_BROKER_PID_FILE" ||
+    ! /bin/chmod 600 "$SUDO_ASKPASS_BROKER_PID_FILE"; then
+    stop_sudo_password_broker
+    return 1
+  fi
 }
 
 initialize_sudo_askpass_transport() {
+  if [[ ! "$SUDO_ASKPASS_RESPONSE_TIMEOUT_SECONDS" =~ ^[1-9][0-9]*$ ]]; then
+    printf 'Error: invalid SUDO_ASKPASS response timeout: %s\n' \
+      "$SUDO_ASKPASS_RESPONSE_TIMEOUT_SECONDS" >&2
+    return 1
+  fi
+
   SUDO_ASKPASS_DIR="$(/usr/bin/mktemp -d "${TMPDIR:-/tmp}/dotfiles-askpass.XXXXXX")"
   SUDO_ASKPASS_FIFO="$SUDO_ASKPASS_DIR/password"
+  SUDO_ASKPASS_BROKER_PID_FILE="$SUDO_ASKPASS_DIR/broker-pid"
   SUDO_ASKPASS="$SUDO_ASKPASS_DIR/askpass"
 
   /bin/chmod 700 "$SUDO_ASKPASS_DIR"
@@ -1174,16 +1200,32 @@ initialize_sudo_askpass_transport() {
 
   {
     printf '%s\n' '#!/bin/sh'
+    printf 'response_timeout=%s\n' "$SUDO_ASKPASS_RESPONSE_TIMEOUT_SECONDS"
     cat <<'EOF'
 askpass_dir="$(CDPATH= cd "$(/usr/bin/dirname "$0")" && pwd)" || exit 1
 lock_dir="$askpass_dir/reader-lock"
 password_fifo="$askpass_dir/password"
+broker_pid_file="$askpass_dir/broker-pid"
+
+credential_broker_running() {
+  broker_pid=""
+  [ -r "$broker_pid_file" ] || return 1
+  IFS= read -r broker_pid <"$broker_pid_file" || return 1
+  case "$broker_pid" in
+  '' | *[!0-9]*) return 1 ;;
+  esac
+  /bin/kill -0 "$broker_pid" >/dev/null 2>&1
+}
 
 attempt=0
 while ! /bin/mkdir "$lock_dir" 2>/dev/null; do
+  if ! credential_broker_running; then
+    printf 'dotfiles askpass: credential broker is unavailable\n' >&2
+    exit 1
+  fi
   attempt=$((attempt + 1))
   if [ "$attempt" -ge 200 ]; then
-    printf 'dotfiles askpass: timed out waiting for the credential broker\n' >&2
+    printf 'dotfiles askpass: timed out waiting for another credential reader\n' >&2
     exit 1
   fi
   /bin/sleep 0.05
@@ -1192,9 +1234,29 @@ done
 cleanup() {
   /bin/rmdir "$lock_dir" >/dev/null 2>&1 || true
 }
-trap cleanup EXIT HUP INT TERM
+trap cleanup EXIT
+trap 'exit 129' HUP
+trap 'exit 130' INT
+trap 'exit 143' TERM
 
-IFS= read -r password <"$password_fifo"
+if ! credential_broker_running; then
+  printf 'dotfiles askpass: credential broker is unavailable\n' >&2
+  exit 1
+fi
+
+# Opening both ends prevents the shell from blocking before read can enforce
+# its timeout. Only the broker writes, so this process cannot consume its own
+# data.
+if ! exec 3<>"$password_fifo"; then
+  printf 'dotfiles askpass: credential channel is unavailable\n' >&2
+  exit 1
+fi
+if ! IFS= read -r -t "$response_timeout" password <&3; then
+  printf 'dotfiles askpass: credential broker did not respond\n' >&2
+  exit 1
+fi
+exec 3>&-
+
 printf '%s\n' "$password"
 EOF
   } >"$SUDO_ASKPASS"

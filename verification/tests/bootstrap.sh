@@ -6,8 +6,18 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 INSTALL="$ROOT_DIR/install.sh"
 TMP_DIR="$(mktemp -d)"
+UNRESPONSIVE_BROKER_PID=""
+UNRESPONSIVE_ASKPASS_PID=""
 
 cleanup() {
+  if [[ -n "$UNRESPONSIVE_ASKPASS_PID" ]]; then
+    kill -KILL "$UNRESPONSIVE_ASKPASS_PID" >/dev/null 2>&1 || true
+    wait "$UNRESPONSIVE_ASKPASS_PID" 2>/dev/null || true
+  fi
+  if [[ -n "$UNRESPONSIVE_BROKER_PID" ]]; then
+    kill -KILL "$UNRESPONSIVE_BROKER_PID" >/dev/null 2>&1 || true
+    wait "$UNRESPONSIVE_BROKER_PID" 2>/dev/null || true
+  fi
   rm -rf "$TMP_DIR"
 }
 
@@ -27,6 +37,7 @@ source "$INSTALL"
 at_exit() { :; }
 original_tmpdir="${TMPDIR:-}"
 TMPDIR="$TMP_DIR"
+SUDO_ASKPASS_RESPONSE_TIMEOUT_SECONDS=1
 initialize_sudo_askpass_transport
 if [[ -n "$original_tmpdir" ]]; then
   TMPDIR="$original_tmpdir"
@@ -54,6 +65,44 @@ stop_sudo_password_broker
 if /bin/kill -0 "$broker_pid" >/dev/null 2>&1; then
   fail "SUDO_ASKPASS credential broker survived cleanup"
 fi
+
+# A live process can outlast a broken credential-serving loop. The askpass
+# helper must time out its FIFO read and release the reader lock instead of
+# blocking later Homebrew workers behind it indefinitely.
+/bin/sleep 30 &
+UNRESPONSIVE_BROKER_PID="$!"
+printf '%s\n' "$UNRESPONSIVE_BROKER_PID" >"$SUDO_ASKPASS_DIR/broker-pid"
+set +e
+"$SUDO_ASKPASS" >"$TMP_DIR/unresponsive-askpass.out" \
+  2>"$TMP_DIR/unresponsive-askpass.err" &
+UNRESPONSIVE_ASKPASS_PID="$!"
+askpass_finished=false
+for _ in {1..40}; do
+  if ! /bin/kill -0 "$UNRESPONSIVE_ASKPASS_PID" >/dev/null 2>&1; then
+    askpass_finished=true
+    break
+  fi
+  /bin/sleep 0.05
+done
+if [[ "$askpass_finished" == true ]]; then
+  wait "$UNRESPONSIVE_ASKPASS_PID"
+  unresponsive_askpass_status=$?
+  UNRESPONSIVE_ASKPASS_PID=""
+else
+  unresponsive_askpass_status=124
+fi
+set -e
+[[ "$unresponsive_askpass_status" -eq 1 ]] ||
+  fail "SUDO_ASKPASS remained blocked when its credential broker stopped responding"
+[[ ! -d "$SUDO_ASKPASS_DIR/reader-lock" ]] ||
+  fail "unresponsive SUDO_ASKPASS reader retained the shared lock"
+grep -F 'credential broker did not respond' \
+  "$TMP_DIR/unresponsive-askpass.err" >/dev/null ||
+  fail "unresponsive SUDO_ASKPASS reader did not explain its timeout"
+kill "$UNRESPONSIVE_BROKER_PID"
+wait "$UNRESPONSIVE_BROKER_PID" 2>/dev/null || true
+UNRESPONSIVE_BROKER_PID=""
+rm -f "$SUDO_ASKPASS_DIR/broker-pid"
 
 clt_request_log="$TMP_DIR/clt-request.log"
 set +e
