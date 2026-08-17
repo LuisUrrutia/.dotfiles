@@ -105,6 +105,20 @@ cleanup() {
   fi
 }
 
+wait_for_process_group() {
+  local group_pid="$1"
+  local attempt=0
+
+  while kill -0 -- "-$group_pid" 2>/dev/null; do
+    if [[ "$attempt" -ge 250 ]]; then
+      kill -KILL -- "-$group_pid" 2>/dev/null || true
+      return 1
+    fi
+    /bin/sleep 0.02
+    attempt=$((attempt + 1))
+  done
+}
+
 interrupt() {
   local signal_name="$1"
   local exit_status="$2"
@@ -119,6 +133,10 @@ interrupt() {
   for pid in "${ACTIVE_PIDS[@]}"; do
     [[ -n "$pid" ]] || continue
     wait "$pid" 2>/dev/null || true
+  done
+  for pid in "${ACTIVE_PIDS[@]}"; do
+    [[ -n "$pid" ]] || continue
+    wait_for_process_group "$pid" || true
   done
   cleanup
   exit "$exit_status"

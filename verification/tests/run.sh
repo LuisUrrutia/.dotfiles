@@ -136,7 +136,7 @@ grep -F '[verify] dispatcher: passed' "$TMP_DIR/success.out" >/dev/null ||
 rm -f "$release_file"
 printf '%s\n' \
   '#!/usr/bin/env bash' \
-  "trap 'printf \"%s\\\\n\" stopped >\"\$VERIFY_CHILD_STOPPED\"; exit 143' TERM" \
+  "trap '/bin/sleep 0.2; printf \"%s\\\\n\" stopped >\"\$VERIFY_CHILD_STOPPED\"; exit 143' TERM" \
   'printf "%s\n" ready >"$VERIFY_SIGNAL_READY"' \
   'while :; do /bin/sleep 1; done' \
   >"$fixture/signal-child.sh"
