@@ -5,43 +5,84 @@ source "${DOTFILES:-$HOME/.dotfiles}/tools/lib.sh"
 
 macos_error_count=0
 macos_step_failed=0
-macos_last_error=""
-macos_error_log="${DOTFILES_MACOS_ERROR_LOG:-${XDG_STATE_HOME:-$HOME/.local/state}/dotfiles/macos-install.log}"
+macos_install_log="${DOTFILES_MACOS_INSTALL_LOG:-${XDG_STATE_HOME:-$HOME/.local/state}/dotfiles/macos-install.log}"
 macos_failed_steps=()
 macos_skipped_settings=()
+macos_log_pipe_dir=""
+macos_log_tee_pids=()
 
-setup_macos_error_log() {
+# Bash re-fires ERR for every enclosing function that returns a failed status
+# as its own last command, and does not refresh BASH_COMMAND for those fires,
+# so they replay whatever conditional the handler ran last. Closing the handler
+# with this marker makes the replays identifiable. It has to be a conditional:
+# bash restores BASH_COMMAND after a simple command like `:`, so a simple
+# command leaves the real failure in place and the replay looks genuine.
+macos_trap_marker='[[ macos_error_trap == macos_error_trap ]]'
+
+setup_macos_log() {
   local log_dir
 
-  log_dir="$(dirname "$macos_error_log")"
-  if mkdir -p "$log_dir" && : >>"$macos_error_log"; then
-    printf '\n[%s] Starting macOS setup\n' "$(date '+%Y-%m-%d %H:%M:%S')" >>"$macos_error_log"
-    exec 3>&2
-    exec 2> >(tee -a "$macos_error_log" >&3)
-    echo "Logging macOS setup errors to $macos_error_log" >&2
-  else
-    echo "Warning: unable to write macOS setup error log at $macos_error_log" >&2
-    macos_error_log=""
+  log_dir="$(dirname "$macos_install_log")"
+  if ! mkdir -p "$log_dir" || ! : >>"$macos_install_log"; then
+    echo "Warning: unable to write the macOS setup log at $macos_install_log" >&2
+    macos_install_log=""
+    return 0
   fi
+
+  printf '\n[%s] Starting macOS setup\n' "$(date '+%Y-%m-%d %H:%M:%S')" >>"$macos_install_log"
+
+  # Named pipes rather than process substitution: bash 3.2 is the only bash on
+  # a stock macOS and does not publish a process substitution's PID, so there
+  # would be no way to drain the writers before the script exits. Two writers
+  # means stdout and stderr can interleave in the file; order within stderr,
+  # where the warnings and the failing commands' own output land, is total.
+  macos_log_pipe_dir="$(mktemp -d)"
+  mkfifo "$macos_log_pipe_dir/stdout" "$macos_log_pipe_dir/stderr"
+  exec 3>&1 4>&2
+  tee -a "$macos_install_log" <"$macos_log_pipe_dir/stdout" >&3 &
+  macos_log_tee_pids+=("$!")
+  tee -a "$macos_install_log" <"$macos_log_pipe_dir/stderr" >&4 &
+  macos_log_tee_pids+=("$!")
+  exec 1>"$macos_log_pipe_dir/stdout" 2>"$macos_log_pipe_dir/stderr"
+  trap close_macos_log EXIT
+
+  echo "Logging macOS setup output to $macos_install_log" >&2
+}
+
+close_macos_log() {
+  [[ -n "$macos_log_pipe_dir" ]] || return 0
+
+  exec 1>&3 2>&4
+  exec 3>&- 4>&-
+  wait "${macos_log_tee_pids[@]}" 2>/dev/null || true
+  rm -rf "$macos_log_pipe_dir"
+  macos_log_pipe_dir=""
 }
 
 log_macos_command_error() {
   local step_name="$1"
   local status="$2"
   local command="$3"
-  local message
+  local frames=""
+  local index
 
-  command="${command//$'\n'/ }"
-  message="Warning: macOS setup step '$step_name' failed with exit $status: $command"
+  # See macos_trap_marker: a replayed fire reports a failure that was already
+  # logged deeper in the call stack, under a command name that is no longer
+  # the one that failed.
+  [[ "$command" == "$macos_trap_marker" ]] && return 0
 
-  if [[ "$macos_last_error" == "$message" ]]; then
-    return 0
-  fi
+  # sudo_askpass and friends end in a bare `return`, so the command alone does
+  # not identify the failure; the call chain does. A line number would not:
+  # bash 3.2 reports a function's definition line here, not the failing one.
+  for ((index = 1; index < ${#FUNCNAME[@]}; index++)); do
+    [[ "${FUNCNAME[index]}" == run_macos_step ]] && break
+    frames="${frames:+$frames<-}${FUNCNAME[index]}"
+  done
 
-  macos_last_error="$message"
   macos_step_failed=1
   macos_error_count=$((macos_error_count + 1))
-  echo "$message" >&2
+  printf "Warning: macOS setup step '%s' failed with exit %s in %s: %s\n" \
+    "$step_name" "$status" "${frames:-$step_name}" "${command//$'\n'/ }" >&2
 }
 
 run_macos_step() {
@@ -49,11 +90,11 @@ run_macos_step() {
   local step_status
 
   macos_step_failed=0
-  macos_last_error=""
 
   set +eE
   set -E
-  trap 'log_macos_command_error "$step_name" "$?" "$BASH_COMMAND"' ERR
+  # The trailing conditional is macos_trap_marker; keep the two literals equal.
+  trap 'log_macos_command_error "$step_name" "$?" "$BASH_COMMAND"; [[ macos_error_trap == macos_error_trap ]]' ERR
   "$step_name"
   step_status=$?
   trap - ERR
@@ -105,9 +146,13 @@ summarize_macos_errors() {
   fi
 
   echo "Warning: macOS setup completed with $macos_error_count logged error(s)." >&2
-  echo "Failed macOS setup steps: ${macos_failed_steps[*]}" >&2
-  if [[ -n "$macos_error_log" ]]; then
-    echo "Review the macOS setup log: $macos_error_log" >&2
+  # bash 3.2 treats an empty array as unset under `set -u`, so expanding it
+  # unguarded would abort the summary instead of printing it
+  if [[ "${#macos_failed_steps[@]}" -gt 0 ]]; then
+    echo "Failed macOS setup steps: ${macos_failed_steps[*]}" >&2
+  fi
+  if [[ -n "$macos_install_log" ]]; then
+    echo "Review the macOS setup log: $macos_install_log" >&2
   fi
 }
 
@@ -299,7 +344,8 @@ configure_dock_menu_bar() {
   # Ventura+ follows the Language & Region setting; Show24Hour is the
   # pre-Ventura key, kept for older machines
   defaults write NSGlobalDomain AppleICUForce24HourTime -bool true
-  defaults write com.apple.menuextra.clock Show24Hour -int 1
+  defaults_try "24-hour menu bar clock (pre-Ventura key)" \
+    write com.apple.menuextra.clock Show24Hour -int 1
 
   # Don't show siri in menubar to save space
   defaults write com.apple.Siri StatusMenuVisible -int 0
@@ -426,20 +472,22 @@ configure_application_settings() {
   defaults write com.apple.CrashReporter DialogType -string "developer"
 
   # Prevent Time Machine from prompting to use new hard drives as backup volume
-  defaults write com.apple.TimeMachine DoNotOfferNewDisksForBackup -bool true
+  defaults_try "Time Machine new-disk prompt" \
+    write com.apple.TimeMachine DoNotOfferNewDisksForBackup -bool true
 
   # Automatically quit printer app once the print jobs complete
   defaults write com.apple.print.PrintingPrefs "Quit When Finished" -bool true
 
-  # Disable send and reply animations in Mail.app
-  defaults write com.apple.mail DisableReplyAnimations -bool true
-  defaults write com.apple.mail DisableSendAnimations -bool true
-
-  # Copy email addresses as plain addresses in Mail.app
-  defaults write com.apple.mail AddressesIncludeNameOnPasteboard -bool false
-
-  # Disable inline attachment previews in Mail.app
-  defaults write com.apple.mail DisableInlineAttachmentViewing -bool true
+  # Mail is sandboxed, so these need Full Disk Access; without it they are
+  # recorded as skips rather than failing the whole step
+  defaults_try "Mail send and reply animations" \
+    write com.apple.mail DisableReplyAnimations -bool true
+  defaults_try "Mail send animations" \
+    write com.apple.mail DisableSendAnimations -bool true
+  defaults_try "Mail plain address pasteboard" \
+    write com.apple.mail AddressesIncludeNameOnPasteboard -bool false
+  defaults_try "Mail inline attachment previews" \
+    write com.apple.mail DisableInlineAttachmentViewing -bool true
 
   # Disabling password hints on the lock screen (security improvement)
   defaults write com.apple.loginwindow RetriesUntilHint -int 0
@@ -508,7 +556,10 @@ restart_affected_services() {
 }
 
 main() {
-  setup_macos_error_log
+  setup_macos_log
+  # Reports the missing permission and opens the pane; the sandboxed-app
+  # settings below degrade to skips either way
+  request_full_disk_access || true
   run_macos_step close_system_settings
   run_macos_step configure_hostname
   run_macos_step configure_keyboard_input
@@ -523,6 +574,7 @@ main() {
   run_macos_step configure_remote_access
   run_macos_step restart_affected_services
   summarize_macos_errors
+  close_macos_log
 }
 
 if [[ "${DOTFILES_MACOS_NO_MAIN:-false}" != true ]]; then
