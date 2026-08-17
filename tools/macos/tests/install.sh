@@ -102,6 +102,15 @@ defaults_try "unwritable test domain" \
 [[ "${#macos_skipped_settings[@]}" -eq 1 ]] ||
   fail "a failed best-effort setting was not recorded as a skip"
 
+# configure_screen_lock prompts for the account password, so it has to bow out
+# cleanly when nothing can answer the prompt rather than hanging the install
+reset_macos_counters
+run_macos_step configure_screen_lock </dev/null 2>/dev/null
+[[ "$macos_error_count" -eq 0 ]] ||
+  fail "the screen lock step reported an error with no terminal to prompt on"
+[[ "${#macos_failed_steps[@]}" -eq 0 ]] ||
+  fail "the screen lock step was marked failed with no terminal to prompt on"
+
 # The log captures stdout as well as stderr; it is an install log, not an
 # error log, and command output is what explains a failure
 log_dir="$(mktemp -d)"

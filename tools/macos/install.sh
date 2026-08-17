@@ -245,11 +245,6 @@ configure_screen_display() {
   # Jump to spot that's clicked when clicking on scroll bars
   defaults write -g AppleScrollerPagingBehavior -int 1
 
-  # Require password immediately after sleep or screen saver begins
-  # Enhances security by requiring immediate authentication
-  defaults write com.apple.screensaver askForPassword -int 1
-  defaults write com.apple.screensaver askForPasswordDelay -int 0
-
   # Saves screenshots into its own folder
   mkdir -p "${HOME}/Pictures/Screenshots"
   defaults write com.apple.screencapture location -string "${HOME}/Pictures/Screenshots"
@@ -263,6 +258,33 @@ configure_screen_display() {
   # Set screen saver to start before display sleep to avoid warning
   # Default screen saver start time: 15 minutes (900 seconds)
   defaults -currentHost write com.apple.screensaver idleTime -int 900
+}
+
+configure_screen_lock() {
+  ###############################################################################
+  # Screen Lock                                                                 #
+  ###############################################################################
+
+  # Require the password immediately once the screen saver or display sleep
+  # starts. Sonoma stopped consulting com.apple.screensaver's askForPassword
+  # and askForPasswordDelay, so writing them looked like it worked while the
+  # machine kept whatever delay it already had. sysadminctl is the supported
+  # path, and it wants the account password rather than sudo rights.
+  local delay
+
+  delay="$(sysadminctl -screenLock status 2>&1 |
+    sed -n 's/.*screenLock delay is \([0-9]*\) seconds.*/\1/p')"
+  if [[ "$delay" == "0" ]]; then
+    return 0
+  fi
+
+  if [[ ! -t 0 ]]; then
+    echo "Skipping screen lock delay: sysadminctl needs an interactive terminal to prompt for the account password" >&2
+    return 0
+  fi
+
+  echo "Setting the screen lock delay to immediate; sysadminctl will ask for your account password." >&2
+  sysadminctl -screenLock immediate -password -
 }
 
 configure_finder_files() {
@@ -318,9 +340,6 @@ configure_finder_files() {
 
   # Avoid writing .DS_Store files to network volumes
   defaults write com.apple.desktopservices DSDontWriteNetworkStores -bool true
-
-  # Avoid writing .DS_Store files to USB volumes
-  defaults write com.apple.desktopservices DSDontWriteUSBStores -bool true
 }
 
 configure_dock_menu_bar() {
@@ -334,18 +353,11 @@ configure_dock_menu_bar() {
   # Auto hide dock to maximize screen real estate
   defaults write com.apple.dock autohide -bool true
 
-  # Don't rearrange Spaces based on usage
-  # Keeps your workspace arrangement consistent
-  defaults write com.apple.dock "mru-spaces" -bool false
-
   defaults write com.apple.dock "expose-group-apps" -bool true
 
-  # Show 24 hours clock instead of 12-hour format
-  # Ventura+ follows the Language & Region setting; Show24Hour is the
-  # pre-Ventura key, kept for older machines
+  # Show 24 hours clock instead of 12-hour format. This is the system-wide
+  # override the Language & Region pane writes; the menu bar clock follows it.
   defaults write NSGlobalDomain AppleICUForce24HourTime -bool true
-  defaults_try "24-hour menu bar clock (pre-Ventura key)" \
-    write com.apple.menuextra.clock Show24Hour -int 1
 
   # Don't show siri in menubar to save space
   defaults write com.apple.Siri StatusMenuVisible -int 0
@@ -365,19 +377,22 @@ configure_updates_security() {
   # System Updates & Security                                                   #
   ###############################################################################
 
-  # Enable automatic software update checks
+  # Enable automatic software update checks. softwareupdated reads these from
+  # the system domain, so they go there with sudo; the same keys in the
+  # per-user domain are inert. AutomaticCheckEnabled and ScheduleFrequency do
+  # not exist in the system domain at all, and this CLI covers the check.
   softwareupdate --schedule on
-  defaults write com.apple.SoftwareUpdate AutomaticCheckEnabled -bool true
-
-  # Check for software updates daily, not just once per week
-  defaults write com.apple.SoftwareUpdate ScheduleFrequency -int 1
 
   # Download newly available updates in background
-  defaults write com.apple.SoftwareUpdate AutomaticDownload -int 1
+  sudo_askpass defaults write /Library/Preferences/com.apple.SoftwareUpdate \
+    AutomaticDownload -bool true
 
   # Install System data files & security updates automatically
   # Critical for maintaining system security
-  defaults write com.apple.SoftwareUpdate CriticalUpdateInstall -int 1
+  sudo_askpass defaults write /Library/Preferences/com.apple.SoftwareUpdate \
+    ConfigDataInstall -bool true
+  sudo_askpass defaults write /Library/Preferences/com.apple.SoftwareUpdate \
+    CriticalUpdateInstall -bool true
 
   # Turn on app auto-update for App Store apps
   defaults write com.apple.commerce AutoUpdate -bool true
@@ -455,11 +470,6 @@ configure_application_settings() {
 
   # Expand save panels by default to expose paths and advanced options
   defaults write NSGlobalDomain NSNavPanelExpandedStateForSaveMode -bool true
-  defaults write NSGlobalDomain NSNavPanelExpandedStateForSaveMode2 -bool true
-
-  # Expand print panels by default to expose advanced options
-  defaults write NSGlobalDomain PMPrintingExpandedStateForPrint -bool true
-  defaults write NSGlobalDomain PMPrintingExpandedStateForPrint2 -bool true
 
   # Use plain text by default in TextEdit
   defaults write com.apple.TextEdit RichText -int 0
@@ -475,17 +485,8 @@ configure_application_settings() {
   defaults_try "Time Machine new-disk prompt" \
     write com.apple.TimeMachine DoNotOfferNewDisksForBackup -bool true
 
-  # Automatically quit printer app once the print jobs complete
-  defaults write com.apple.print.PrintingPrefs "Quit When Finished" -bool true
-
-  # Mail is sandboxed, so these need Full Disk Access; without it they are
-  # recorded as skips rather than failing the whole step
-  defaults_try "Mail send and reply animations" \
-    write com.apple.mail DisableReplyAnimations -bool true
-  defaults_try "Mail send animations" \
-    write com.apple.mail DisableSendAnimations -bool true
-  defaults_try "Mail plain address pasteboard" \
-    write com.apple.mail AddressesIncludeNameOnPasteboard -bool false
+  # Mail is sandboxed, so this needs Full Disk Access; without it it is
+  # recorded as a skip rather than failing the whole step
   defaults_try "Mail inline attachment previews" \
     write com.apple.mail DisableInlineAttachmentViewing -bool true
 
@@ -549,8 +550,10 @@ restart_affected_services() {
   # Restart affected services to apply changes immediately; killall exits
   # non-zero when a process isn't running (headless or SSH sessions), which
   # isn't an error here
+  # ControlCenter owns the menu bar on Ventura and later, so the Siri,
+  # Spotlight and battery-percentage settings above need it restarted too
   local app
-  for app in SystemUIServer Dock Finder; do
+  for app in ControlCenter SystemUIServer Dock Finder; do
     killall "$app" 2>/dev/null || true
   done
 }
@@ -564,6 +567,7 @@ main() {
   run_macos_step configure_hostname
   run_macos_step configure_keyboard_input
   run_macos_step configure_screen_display
+  run_macos_step configure_screen_lock
   run_macos_step configure_finder_files
   run_macos_step configure_dock_menu_bar
   run_macos_step configure_updates_security
