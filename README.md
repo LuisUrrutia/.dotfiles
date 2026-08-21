@@ -415,6 +415,10 @@ interactive abbreviations for the canonical commands.
 - Fish has abbreviations for Git, Docker, Brew, common cleanup,
   iCloud/Obsidian paths, and WorkTrunk shell integration. `halp` and `cheat`
   show local command notes inspired by ChristianLempa's cheat-sheets.
+- `skill-link [directory]` points `~/.agents/skills` and `~/.claude/skills` at a
+  skill you are developing, so edits take effect without reinstalling. It
+  defaults to the current directory, requires a `SKILL.md`, and moves an
+  installed copy that differs to `~/.agents/skills-backups` before linking.
 - Ghostty uses Catppuccin, Monaspice Nerd Font, shell integration, and a
   global quick-terminal toggle on `super+backquote`.
 - Starship shows Git, runtimes, Docker, AWS, Google Cloud, duration, status,
