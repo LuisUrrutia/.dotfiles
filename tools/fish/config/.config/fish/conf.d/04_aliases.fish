@@ -2,7 +2,7 @@ status is-interactive; or return
 
 if command -q eza
     alias ls 'eza --icons --color=auto --group-directories-first --octal-permissions'
-    alias ll 'ls --git -alhF'
+    alias ll 'ls --git -alh --classify=auto'
     alias tree 'ls --tree'
 end
 
