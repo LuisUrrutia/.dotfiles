@@ -9,50 +9,19 @@ end
 if command -q nvim
     alias vim nvim
 end
+
 if command -q uvx
-    alias frida "uvx --from frida-tools frida"
-    alias frida-ls "uvx --from frida-tools frida-ls"
-    alias frida-trace "uvx --from frida-tools frida-trace"
-    alias frida-ps "uvx --from frida-tools frida-ps"
-    alias frida-discover "uvx --from frida-tools frida-discover"
-    alias frida-kill "uvx --from frida-tools frida-kill"
-    alias frida-pull "uvx --from frida-tools frida-pull"
-    alias frida-push "uvx --from frida-tools frida-push"
-    alias frida-ls-devices "uvx --from frida-tools frida-ls-devices"
+    for frida_tool in frida frida-ls frida-trace frida-ps frida-discover frida-kill frida-pull frida-push frida-ls-devices
+        alias $frida_tool "uvx --from frida-tools $frida_tool"
+    end
 
     alias llama "uvx --from llama-stack llama"
 end
 
-function clean-rust -d "Remove Rust game cache"
-    set -l rust_cache "$TMPDIR/../C/com.Facepunch-Studios-LTD.Rust"
-
-    if not test -e "$rust_cache"
-        echo "Error: Rust cache not found: $rust_cache"
-        return 1
-    end
-
-    command rm -rf -- "$rust_cache"
-end
-
 if command -q lsof
-    function ports -d "List listening TCP ports"
-        if test (count $argv) -gt 1; or begin
-                test (count $argv) -eq 1
-                and not string match -qr '^[0-9]+$' -- $argv[1]
-            end
-            echo "Usage: ports [port]"
-            return 1
-        end
-
-        if test (count $argv) -eq 0
-            command lsof -nP -iTCP -sTCP:LISTEN
-        else
-            command lsof -nP -iTCP -sTCP:LISTEN | command grep -E "(:|\*)$argv[1]( |\$)"
-        end
-    end
-
     alias netcons 'lsof -i'
 end
+
 # A real CLI in PATH wins; the app bundle is only the fallback.
 if not command -q tailscale; and test -x /Applications/Tailscale.app/Contents/MacOS/Tailscale
     alias tailscale '/Applications/Tailscale.app/Contents/MacOS/Tailscale'
