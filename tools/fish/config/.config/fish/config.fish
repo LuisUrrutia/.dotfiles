@@ -1,6 +1,7 @@
 set -q LANG; or set -gx LANG en_US.UTF-8
 set -q PAGER; or set -gx PAGER less
 set -q XDG_CONFIG_HOME; or set -gx XDG_CONFIG_HOME "$HOME/.config"
+set -q TLRC_CONFIG; or set -gx TLRC_CONFIG "$XDG_CONFIG_HOME/tlrc/config.toml"
 
 if status is-interactive
     test -f ~/secrets.fish; and source ~/secrets.fish

@@ -118,7 +118,6 @@ abbr -a -- clean-js "fd -I -t d '^(node_modules|build|dist)\$' -x rm -rf {}"
 
 # ip
 abbr -a -- localip 'ipconfig getifaddr en0'
-abbr -a -- myip 'curl -s https://api.ipify.org && echo'
 abbr -a -- captive 'open -a Safari http://captive.apple.com'
 
 # utilities

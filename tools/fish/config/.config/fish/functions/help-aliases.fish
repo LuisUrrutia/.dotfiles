@@ -49,7 +49,7 @@ function help-aliases -d "Show useful shell aliases and abbreviations"
 
     printf '\n%s\n' Network
     printf '  %-12s %s\n' localip "show en0 local IP"
-    printf '  %-12s %s\n' myip/ip "show public IP"
+    printf '  %-12s %s\n' ip "show public IP"
     printf '  %-12s %s\n' ports "list listening ports"
     printf '  %-12s %s\n' fip "forward localhost ports over SSH; use --list to inspect"
     printf '  %-12s %s\n' killport "confirm before killing a port listener"

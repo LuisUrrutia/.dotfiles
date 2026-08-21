@@ -1,7 +1,7 @@
 status is-interactive; or return
 
 if command -q eza
-    alias ls 'eza --icons --color=auto --group-directories-first --octal-permissions'
+    alias ls 'eza --icons=auto --color=auto --group-directories-first --octal-permissions'
     alias ll 'ls --git -alh --classify=auto'
     alias tree 'ls --tree'
 end
@@ -9,12 +9,6 @@ end
 if command -q nvim
     alias vim nvim
 end
-alias f 'open -a Finder ./'
-
-if command -q tldr
-    alias tldr 'tldr --config ~/.config/tlrc/config.toml'
-end
-
 if command -q uvx
     alias frida "uvx --from frida-tools frida"
     alias frida-ls "uvx --from frida-tools frida-ls"
@@ -40,12 +34,6 @@ function clean-rust -d "Remove Rust game cache"
     command rm -rf -- "$rust_cache"
 end
 
-if command -q dig
-    alias ip 'dig +short myip.opendns.com @resolver1.opendns.com || curl https://checkip.amazonaws.com'
-else if command -q curl
-    alias ip 'curl https://checkip.amazonaws.com'
-end
-
 if command -q lsof
     function ports -d "List listening TCP ports"
         if test (count $argv) -gt 1; or begin
@@ -65,8 +53,8 @@ if command -q lsof
 
     alias netcons 'lsof -i'
 end
-alias flushdns 'dscacheutil -flushcache && sudo killall -HUP mDNSResponder'
-if test -x /Applications/Tailscale.app/Contents/MacOS/Tailscale
+# A real CLI in PATH wins; the app bundle is only the fallback.
+if not command -q tailscale; and test -x /Applications/Tailscale.app/Contents/MacOS/Tailscale
     alias tailscale '/Applications/Tailscale.app/Contents/MacOS/Tailscale'
 end
 
@@ -76,10 +64,6 @@ end
 
 if command -q gsed
     alias sed gsed
-end
-
-if command -q gtar
-    alias tar gtar
 end
 
 if command -q ggrep
