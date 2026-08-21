@@ -15,7 +15,8 @@ Load only the source relevant to the current branch of work:
   Read it before adding, removing, or migrating persistent software.
 - `.editorconfig`: formatting and indentation. It is the formatting source of
   truth.
-- `.github/workflows/ci.yml`: complete validation inventory and command shapes.
+- `.github/workflows/ci.yml`: CI events, runner, and Verification Toolchain
+  provisioning. `verification/groups/` holds the checks it runs.
 - `dotfiles` and `cli/*.sh`: root routing, public grammar, help, and thin
   adapter boundaries.
 - `install.sh` and `bootstrap/`: fresh-Mac orchestration and temporary
