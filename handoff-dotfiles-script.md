@@ -477,9 +477,10 @@ the grammar and dynamic Tool/Config candidates.
 
 ### CI
 
-- CI runs one job on the fixed `macos-15` image for pull requests, pushes to
-  the main branch, and manual dispatch. Superseded runs for the same workflow
-  and target are cancelled. The job timeout is 15 minutes.
+- CI runs one job on the fixed `macos-26` image for pull requests, pushes to
+  the main branch, and manual dispatch. Superseded pull-request runs are
+  cancelled; main-branch runs reach a conclusion. The job timeout is 15
+  minutes.
 - The job checks out the tested ref with a reviewed full-SHA-pinned Action,
   keeps the same-line release comment, and disables persisted credentials.
 - The workflow declares no permissions globally and grants only read access to
