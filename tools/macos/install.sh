@@ -8,6 +8,7 @@ macos_step_failed=0
 macos_install_log="${DOTFILES_MACOS_INSTALL_LOG:-${XDG_STATE_HOME:-$HOME/.local/state}/dotfiles/macos-install.log}"
 macos_failed_steps=()
 macos_skipped_settings=()
+macos_needs_full_disk_access=false
 macos_log_pipe_dir=""
 macos_log_tee_pids=()
 
@@ -123,17 +124,27 @@ defaults_try() {
   echo "Skipped: $description (defaults $*)" >&2
 }
 
-request_full_disk_access() {
-  # Full Disk Access can't be granted programmatically (TCC forbids it by
-  # design). The most we can do is open the right Settings pane. macOS also
-  # requires restarting the terminal app after granting, so sandboxed-app
-  # settings apply on the next run.
+# Full Disk Access can't be granted programmatically (TCC forbids it by
+# design), so the most this script can do is warn and point at the pane. The
+# warning goes first, to explain the skips that follow, but the pane only
+# opens once every step has run: close_system_settings quits System Settings
+# on the very next line, and a Settings window left open for the rest of the
+# run can overwrite what the steps below write.
+warn_missing_full_disk_access() {
   has_full_disk_access && return 0
 
+  macos_needs_full_disk_access=true
   echo "Warning: this terminal lacks Full Disk Access; sandboxed app settings (Safari, Messages) will be skipped." >&2
-  echo "Grant it in the Settings pane that just opened, restart your terminal, and re-run this script." >&2
+  echo "The Settings pane to grant it opens at the end of this run." >&2
+}
+
+open_full_disk_access_pane() {
+  [[ "$macos_needs_full_disk_access" == true ]] || return 0
+
+  # macOS also requires restarting the terminal app after granting, so
+  # sandboxed-app settings only apply on the next run
+  echo "Grant Full Disk Access in the Settings pane that just opened, restart your terminal, and re-run this script." >&2
   open "x-apple.systempreferences:com.apple.preference.security?Privacy_AllFiles" 2>/dev/null || true
-  return 1
 }
 
 summarize_macos_errors() {
@@ -633,9 +644,9 @@ restart_affected_services() {
 
 main() {
   setup_macos_log
-  # Reports the missing permission and opens the pane; the sandboxed-app
-  # settings below degrade to skips either way
-  request_full_disk_access || true
+  # Reports the missing permission up front so the skips below read as
+  # expected; the pane to grant it opens after the last step
+  warn_missing_full_disk_access
   run_macos_step close_system_settings
   run_macos_step configure_hostname
   run_macos_step configure_keyboard_input
@@ -652,6 +663,7 @@ main() {
   run_macos_step configure_remote_access
   run_macos_step restart_affected_services
   summarize_macos_errors
+  open_full_disk_access_pane
   close_macos_log
 }
 

@@ -148,6 +148,36 @@ unset -f defaults_try
 # shellcheck disable=SC1090
 source "$ROOT_DIR/tools/macos/install.sh"
 
+# request_full_disk_access used to open the Settings pane and then have
+# close_system_settings quit it on the very next line of main, so the pane the
+# warning points at was gone before anyone could use it. Warning and pane are
+# now separate calls, at opposite ends of the run.
+opened_panes=""
+open() { opened_panes="${opened_panes}$* "; }
+has_full_disk_access() { return 1; }
+
+macos_needs_full_disk_access=false
+warn_missing_full_disk_access 2>/dev/null
+[[ "$macos_needs_full_disk_access" == true ]] ||
+  fail "a missing Full Disk Access permission went unrecorded"
+[[ -z "$opened_panes" ]] ||
+  fail "the Settings pane opened early, where close_system_settings closes it"
+
+open_full_disk_access_pane 2>/dev/null
+[[ "$opened_panes" == *Privacy_AllFiles* ]] ||
+  fail "the Full Disk Access pane never opened at the end of the run"
+
+# Nothing should open when the permission is already granted
+has_full_disk_access() { return 0; }
+macos_needs_full_disk_access=false
+opened_panes=""
+warn_missing_full_disk_access 2>/dev/null
+open_full_disk_access_pane 2>/dev/null
+[[ -z "$opened_panes" ]] ||
+  fail "a Settings pane opened even though Full Disk Access was granted"
+
+unset -f open has_full_disk_access
+
 # The log captures stdout as well as stderr; it is an install log, not an
 # error log, and command output is what explains a failure
 log_dir="$(mktemp -d)"
