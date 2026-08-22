@@ -3,7 +3,7 @@
 # shellcheck disable=SC1091
 source "${DOTFILES:-$HOME/.dotfiles}/tools/lib.sh"
 
-if ! app_exists Raycast && ! app_exists "Raycast Beta"; then
+if ! app_exists Raycast; then
   echo "Warning: Raycast not found, skipping" >&2
   exit 0
 fi
