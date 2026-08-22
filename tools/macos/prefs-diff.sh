@@ -397,6 +397,19 @@ def load_plist(path):
         return plistlib.load(handle)
 
 
+# Every row has to carry exactly as many fields as there are columns. The
+# unreadable-plist and non-dict-root rows used to append the path
+# unconditionally, which overran the column widths and aborted the whole
+# listing whenever a single plist failed to parse.
+def make_row(scope, domain, key_path, kind, path, preview=""):
+    row = [scope, domain, key_path, kind]
+    if show_values:
+        row.append(preview)
+    if show_paths:
+        row.append(path)
+    return row
+
+
 def collect_rows():
     locations = [
         ("user", os.path.join(home, "Library/Preferences/*.plist"), False),
@@ -412,20 +425,22 @@ def collect_rows():
             try:
                 plist = load_plist(path)
             except Exception as error:
-                yield [scope, domain, "<unreadable>", type(error).__name__, path]
+                yield make_row(scope, domain, "<unreadable>", type(error).__name__, path)
                 continue
 
             if not isinstance(plist, dict):
-                yield [scope, domain, "<root>", value_kind(plist), path]
+                yield make_row(scope, domain, "<root>", value_kind(plist), path)
                 continue
 
             for key_path, value in flatten("", plist):
-                row = [scope, domain, key_path, value_kind(value)]
-                if show_values:
-                    row.append(preview_value(key_path, value))
-                if show_paths:
-                    row.append(path)
-                yield row
+                yield make_row(
+                    scope,
+                    domain,
+                    key_path,
+                    value_kind(value),
+                    path,
+                    preview_value(key_path, value) if show_values else "",
+                )
 
 
 columns = ["scope", "domain", "key", "type"]
