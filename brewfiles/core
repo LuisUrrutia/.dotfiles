@@ -132,6 +132,7 @@ cask "tailscale-app" # Mesh VPN client
 cask "veracrypt"     # Disk encryption
 cask "macfuse"       # File system integration
 cask "sshfs-mac"     # Mount remote filesystems over SSH (needs macfuse)
+cask "autofirma"     # Spanish government digital signature
 
 # ------------------------------------------------------------------------------
 # Web Browsers
@@ -147,8 +148,7 @@ cask "figma" # Interface design
 # ------------------------------------------------------------------------------
 # Productivity
 # ------------------------------------------------------------------------------
-cask "LuisUrrutia/tap/raycast@beta", trusted: true if MacOS.version >= :tahoe # Next-generation Raycast beta
-cask "raycast" if MacOS.version < :tahoe # Stable Raycast for older macOS versions
+cask "raycast"      # Launcher and command palette
 cask "obsidian"     # Markdown knowledge base
 cask "cadran"       # Desktop clock rendered behind icons
 cask "cleanshot"                   # Screen capture

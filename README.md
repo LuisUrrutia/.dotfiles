@@ -65,8 +65,6 @@ The Bootstrapper is not just a symlink script. It:
 - installs the full Xcode app on the first run
 - installs `brewfiles/core` plus a temporary Brewfile assembled from
   `brewfiles/profiles/<profile>` files based on your answers or `--profile`
-- installs the Raycast beta on Tahoe and stable Raycast on older supported
-  macOS versions
 - runs Brew Bundle in parallel, gives Homebrew five chances to finish incomplete
   entries with longer backoff and additional curl retries, and makes the final
   attempt sequential for both installs and downloads to reduce network pressure

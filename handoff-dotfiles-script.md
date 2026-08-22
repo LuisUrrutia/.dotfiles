@@ -100,9 +100,6 @@ five attempts with 5, 10, 20, and 30 second waits. Persistent failures are
 collected across Brewfiles and block cleanup, Tool Installers, first-run tasks,
 Fish setup, and the install marker.
 
-The Core Brewfile selects the owned Raycast beta only on Tahoe and uses stable
-Raycast on older supported macOS versions.
-
 Tool List discovers executable Tool Installers immediately below the tools
 root and prints their exact names in stable lexical order. Tool Apply accepts
 one discovered name and no additional arguments. It runs the complete Tool
