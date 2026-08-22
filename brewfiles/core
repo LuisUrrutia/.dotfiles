@@ -132,6 +132,7 @@ cask "tailscale-app" # Mesh VPN client
 cask "veracrypt"     # Disk encryption
 cask "macfuse"       # File system integration
 cask "sshfs-mac"     # Mount remote filesystems over SSH (needs macfuse)
+cask "autofirma"     # Spanish government digital signature
 
 # ------------------------------------------------------------------------------
 # Web Browsers
