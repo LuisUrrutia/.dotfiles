@@ -111,6 +111,43 @@ run_macos_step configure_screen_lock </dev/null 2>/dev/null
 [[ "${#macos_failed_steps[@]}" -eq 0 ]] ||
   fail "the screen lock step was marked failed with no terminal to prompt on"
 
+# The delete-conversation shortcut is matched against the menu title macOS
+# displays, so it has to cover more than English, and it has to survive ChatKit
+# moving: an empty -dict-add would delete the key instead of adding to it.
+reset_macos_counters
+captured_dict_args=()
+defaults_try() { captured_dict_args=("$@"); }
+
+DOTFILES_CHATKIT_LOCTABLE="/nonexistent/ChatKit.loctable"
+configure_messages_shortcuts
+[[ "${#captured_dict_args[@]}" -gt 4 ]] ||
+  fail "a missing ChatKit loctable left the shortcut dict empty"
+[[ "${captured_dict_args[*]}" == *"Eliminar conversación…"* ]] ||
+  fail "the fallback shortcut titles cover only English"
+
+DOTFILES_CHATKIT_LOCTABLE=""
+if [[ -r "/System/iOSSupport/System/Library/PrivateFrameworks/ChatKit.framework/Versions/A/Resources/ChatKit.loctable" ]] && command -v jq >/dev/null 2>&1; then
+  configure_messages_shortcuts
+  # Messages switches to the plural title once several conversations are
+  # selected, so binding only the singular loses the shortcut for bulk deletes
+  [[ "${captured_dict_args[*]}" == *"Delete Conversation…"* ]] ||
+    fail "the shortcut dict omitted the singular English menu title"
+  [[ "${captured_dict_args[*]}" == *"Delete Conversations…"* ]] ||
+    fail "the shortcut dict omitted the plural English menu title"
+  [[ "${captured_dict_args[*]}" == *"Eliminar conversación…"* ]] ||
+    fail "the shortcut dict omitted the Spanish menu title"
+fi
+
+# Every title has to be followed by its shortcut; an odd count means a title
+# would silently become the value of the one before it
+shortcut_pair_count=$((${#captured_dict_args[@]} - 5))
+[[ $((shortcut_pair_count % 2)) -eq 0 ]] ||
+  fail "the shortcut dict has a title without a key equivalent"
+
+unset -f defaults_try
+# shellcheck disable=SC1090
+source "$ROOT_DIR/tools/macos/install.sh"
+
 # The log captures stdout as well as stderr; it is an install log, not an
 # error log, and command output is what explains a failure
 log_dir="$(mktemp -d)"

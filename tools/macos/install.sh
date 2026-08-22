@@ -532,6 +532,69 @@ configure_keyboard_shortcuts() {
   "
 }
 
+# Emits every localized title Messages can show for its delete-conversation
+# menu items, one per line. Read from ChatKit rather than hardcoded so a new
+# Apple locale or a reworded menu item keeps working without a dotfiles edit.
+messages_delete_titles() {
+  local loctable="${DOTFILES_CHATKIT_LOCTABLE:-/System/iOSSupport/System/Library/PrivateFrameworks/ChatKit.framework/Versions/A/Resources/ChatKit.loctable}"
+
+  [[ -r "$loctable" ]] || return 0
+  command -v jq >/dev/null 2>&1 || return 0
+
+  # LocProvenance sits alongside the language dictionaries and is not one, so
+  # the object filter has to come before the key lookups
+  plutil -convert json -o - "$loctable" 2>/dev/null | jq -r '
+    [ .[]
+      | select(type == "object")
+      | (.DELETE_CONVERSATION_ELLIPSIS, .DELETE_CONVERSATIONS_ELLIPSIS) ]
+    | map(select(type == "string"))
+    | unique
+    | .[]
+  ' 2>/dev/null
+}
+
+configure_messages_shortcuts() {
+  ###############################################################################
+  # Messages                                                                    #
+  ###############################################################################
+
+  # Conversation > Delete Conversation ships without a shortcut, and
+  # NSUserKeyEquivalents matches menu items by the title the user sees, so the
+  # binding has to cover every language macOS might run in. Both the singular
+  # and plural titles are bound: Messages swaps to the plural as soon as more
+  # than one conversation is selected, and a missing entry drops the shortcut
+  # exactly when deleting in bulk.
+  # NSBackspaceCharacter (0x08) is the character AppKit draws as the erase-left
+  # glyph, so this reads as Command-Delete, matching Finder's Move to Trash.
+  local shortcut=$'@\b'
+  local title
+  local -a pairs=()
+
+  while IFS= read -r title; do
+    if [[ -n "$title" ]]; then
+      pairs+=("$title" "$shortcut")
+    fi
+  done < <(messages_delete_titles)
+
+  # ChatKit is a private framework and can move between macOS releases. An
+  # empty -dict-add would take the key with it, so fall back to the languages
+  # this machine actually runs in instead of writing nothing.
+  if [[ "${#pairs[@]}" -eq 0 ]]; then
+    pairs=(
+      "Delete Conversation…" "$shortcut"
+      "Delete Conversations…" "$shortcut"
+      "Eliminar conversación…" "$shortcut"
+      "Eliminar conversaciones…" "$shortcut"
+    )
+  fi
+
+  # Messages is sandboxed, so this needs Full Disk Access; without it it is
+  # recorded as a skip rather than failing the whole step. -dict-add merges,
+  # leaving any shortcut added from System Settings in place.
+  defaults_try "Messages delete-conversation shortcut" \
+    write com.apple.MobileSMS NSUserKeyEquivalents -dict-add "${pairs[@]}"
+}
+
 configure_remote_access() {
   ###############################################################################
   # Remote Access & Management                                                  #
@@ -575,6 +638,7 @@ main() {
   run_macos_step configure_power_management
   run_macos_step configure_application_settings
   run_macos_step configure_keyboard_shortcuts
+  run_macos_step configure_messages_shortcuts
   run_macos_step configure_remote_access
   run_macos_step restart_affected_services
   summarize_macos_errors
