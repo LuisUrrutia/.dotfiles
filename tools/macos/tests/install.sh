@@ -102,6 +102,23 @@ defaults_try "unwritable test domain" \
 [[ "${#macos_skipped_settings[@]}" -eq 1 ]] ||
   fail "a failed best-effort setting was not recorded as a skip"
 
+# What defaults printed is the only thing separating a missing permission from
+# a malformed invocation. Without it in the message, a typo in these flags is
+# indistinguishable from an expected TCC denial.
+reset_macos_counters
+skip_log="$(mktemp)"
+defaults_try "unwritable test domain" \
+  write /nonexistent/macos-install-test SomeKey -bool true 2>"$skip_log"
+skip_output="$(cat "$skip_log")"
+defaults_try "malformed invocation" \
+  write com.apple.finder MacosInstallTestKey -notaflag true 2>>"$skip_log"
+malformed_output="$(sed -n '2p' "$skip_log")"
+rm -f "$skip_log"
+[[ "$skip_output" == *"Could not write domain"* ]] ||
+  fail "the skip message dropped the error defaults reported"
+[[ "$malformed_output" != *"Could not write domain"* ]] ||
+  fail "a malformed invocation was reported as a permission failure"
+
 # configure_screen_lock prompts for the account password, so it has to bow out
 # cleanly when nothing can answer the prompt rather than hanging the install
 reset_macos_counters

@@ -115,13 +115,18 @@ run_macos_step() {
 defaults_try() {
   local description="$1"
   shift
+  local error_output
 
-  if defaults "$@" 2>/dev/null; then
+  if error_output="$(defaults "$@" 2>&1)"; then
     return 0
   fi
 
   macos_skipped_settings+=("$description")
-  echo "Skipped: $description (defaults $*)" >&2
+  # What `defaults` printed is the only thing separating a missing permission
+  # from a malformed invocation here. Dropping it made a typo in these flags
+  # read exactly like a TCC denial, so a real bug in this file would be
+  # filed away as an expected skip.
+  echo "Skipped: $description (defaults $*): ${error_output//$'\n'/ }" >&2
 }
 
 # Full Disk Access can't be granted programmatically (TCC forbids it by
