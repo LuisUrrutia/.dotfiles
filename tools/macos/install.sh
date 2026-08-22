@@ -619,6 +619,16 @@ restart_affected_services() {
   for app in ControlCenter SystemUIServer Dock Finder; do
     killall "$app" 2>/dev/null || true
   done
+
+  # Symbolic hotkeys are read at login and none of the processes above reloads
+  # them, so a shortcut disabled in configure_keyboard_shortcuts stays live
+  # until the next login. activateSettings is what System Settings itself uses
+  # to apply them in place. Best effort for the same reason as the killalls:
+  # failing here only defers the change to the next login.
+  local activate_settings="/System/Library/PrivateFrameworks/SystemAdministration.framework/Resources/activateSettings"
+  if [[ -x "$activate_settings" ]]; then
+    "$activate_settings" -u 2>/dev/null || true
+  fi
 }
 
 main() {
