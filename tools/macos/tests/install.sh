@@ -195,6 +195,25 @@ open_full_disk_access_pane 2>/dev/null
 
 unset -f open has_full_disk_access
 
+# A step defined but never registered in main() is dead code that still looks
+# live: it passes shellcheck, and its own assertions keep passing, while none
+# of its settings are ever applied.
+install_script="$ROOT_DIR/tools/macos/install.sh"
+defined_steps="$(grep -oE '^configure_[a-z_]+\(\)' "$install_script" | sed 's/()//' | sort)"
+registered_steps="$(sed -n '/^main() {/,/^}/p' "$install_script" |
+  grep -oE 'run_macos_step [a-z_]+' | awk '{print $2}' | sort)"
+
+unregistered="$(comm -23 <(printf '%s\n' "$defined_steps") <(printf '%s\n' "$registered_steps"))"
+[[ -z "$unregistered" ]] ||
+  fail "configure steps never run from main(): ${unregistered//$'\n'/ }"
+
+# shellcheck disable=SC1090
+source "$ROOT_DIR/tools/macos/install.sh"
+for step in $registered_steps; do
+  declare -f "$step" >/dev/null ||
+    fail "main() runs '$step', which is not defined"
+done
+
 # The log captures stdout as well as stderr; it is an install log, not an
 # error log, and command output is what explains a failure
 log_dir="$(mktemp -d)"
