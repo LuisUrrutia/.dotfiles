@@ -526,6 +526,18 @@ configure_keyboard_shortcuts() {
   # Keyboard Shortcuts Customization                                            #
   ###############################################################################
 
+  # Disable the double-Command Type to Siri shortcut and its opt-in prompt.
+  defaults write com.apple.Siri ConfirmSiriInvokedViaEitherCmdTwice -bool false
+  defaults write com.apple.symbolichotkeys.plist AppleSymbolicHotKeys -dict-add 176 "
+    <dict>
+      <key>enabled</key><false/>
+      <key>value</key>
+      <dict>
+        <key>type</key><string>SAE1.0</string>
+      </dict>
+    </dict>
+  "
+
   # Keyboard > Shortcuts > Spotlight > Show Spotlight search, disable
   # Note: Replacing it with Raycast https://raycastapp.notion.site/Hotkey-56103210375b4fc78b63a7c5e7075fb7
   defaults write com.apple.symbolichotkeys.plist AppleSymbolicHotKeys -dict-add 64 "

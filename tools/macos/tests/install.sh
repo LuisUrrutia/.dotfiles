@@ -128,6 +128,17 @@ run_macos_step configure_screen_lock </dev/null 2>/dev/null
 [[ "${#macos_failed_steps[@]}" -eq 0 ]] ||
   fail "the screen lock step was marked failed with no terminal to prompt on"
 
+captured_defaults_calls=""
+defaults() { captured_defaults_calls="${captured_defaults_calls}$*\n"; }
+configure_keyboard_shortcuts
+[[ "$captured_defaults_calls" == *"com.apple.Siri ConfirmSiriInvokedViaEitherCmdTwice -bool false"* ]] ||
+  fail "the Type to Siri opt-in prompt was not disabled"
+[[ "$captured_defaults_calls" == *"AppleSymbolicHotKeys -dict-add 176"* ]] ||
+  fail "the double-Command Type to Siri shortcut was not disabled"
+[[ "$captured_defaults_calls" == *"SAE1.0"* ]] ||
+  fail "the Type to Siri shortcut omitted its symbolic-hotkey type"
+unset -f defaults
+
 # The delete-conversation shortcut is matched against the menu title macOS
 # displays, so it has to cover more than English, and it has to survive ChatKit
 # moving: an empty -dict-add would delete the key instead of adding to it.
