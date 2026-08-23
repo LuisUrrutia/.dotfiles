@@ -220,28 +220,6 @@ The legacy `tools/git/config/.gitconfig` path is intentionally local-only and
 ignored by Git. Keep it on disk if you want a machine-specific file there, but do
 not track it as shared repo config.
 
-After the dotfiles are installed and 1Password CLI is signed in, install a local
-SSH key from a 1Password SSH key item whenever you need it:
-
-```sh
-install-ssh-key-from-1password \
-  --private-key-ref "op://Private/SSH/GitHub/private key?ssh-format=openssh" \
-  --public-key-ref "op://Private/SSH/GitHub/public key" \
-  --git-signing-key
-
-install-ssh-key-from-1password
-```
-
-The command writes the key to `~/.ssh/id_ed25519`, refuses to overwrite a
-different existing key unless `--force` is passed, and leaves Git untouched
-unless the installed key is confirmed as the Git SSH signing key. Pass
-`--git-signing-key` for non-interactive installs, or answer yes to the signing
-prompt in the interactive flow. Only then does the command remove any global
-`gpg.ssh.program` value so Git signs with the local key instead of the
-1Password SSH signer. When you omit `--private-key-ref`, it lists 1Password SSH
-Key items, prompts you to choose one, asks for the local basename with
-`id_ed25519` as the default, then asks whether that key is your Git signing key.
-
 Install or re-run one tool config:
 
 ```sh

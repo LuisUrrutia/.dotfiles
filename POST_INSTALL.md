@@ -8,7 +8,6 @@ file at the end of a run.
   Raycast Settings > Advanced.
 - Set up 1Password:
   - Save the Recovery Key.
-  - Run `install-ssh-key-from-1password` if you want a local SSH key.
   - Settings > Touch ID > Enable Apple Watch.
   - 1Password > Settings > Apple Watch.
 - Complete CleanShot setup.
