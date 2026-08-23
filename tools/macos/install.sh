@@ -420,6 +420,19 @@ configure_updates_security() {
   sudo_askpass /usr/libexec/ApplicationFirewall/socketfilterfw --setblockall off --setallowsigned off --setallowsignedapp off --setstealthmode on --setglobalstate on
 }
 
+# Enables FileVault and puts the recovery key in the given file, and nowhere
+# else. fdesetup prints the key to stdout exactly once, so it used to be teed
+# to both the file and stdout; but this script's stdout is copied into the
+# setup log, which is not protected the way the umask protects the key file.
+# That left an unprotected second copy of the key that nothing ever told you
+# to delete. Opening the redirect up front also means a missing Desktop fails
+# before the disk is encrypted rather than after, when the key is already gone.
+write_filevault_recovery_key() {
+  local key_file="$1"
+
+  (umask 177 && sudo_askpass fdesetup enable -user "$(whoami)" >"$key_file")
+}
+
 configure_filevault() {
   ###############################################################################
   # FileVault Disk Encryption                                                   #
@@ -436,13 +449,11 @@ configure_filevault() {
     return 0
   fi
 
-  # fdesetup prints the recovery key to stdout exactly once; save a copy so
-  # it doesn't get lost in the scrollback
   local key_file="$HOME/Desktop/FileVault Recovery Key.txt"
 
-  echo "Enabling FileVault; the recovery key will also be saved to: $key_file" >&2
-  if (umask 177 && sudo_askpass fdesetup enable -user "$(whoami)" | tee "$key_file"); then
-    echo "IMPORTANT: store the FileVault recovery key in your password manager, then delete '$key_file'." >&2
+  echo "Enabling FileVault; the recovery key will be written to: $key_file" >&2
+  if write_filevault_recovery_key "$key_file"; then
+    echo "IMPORTANT: the recovery key exists only in '$key_file'. Move it to your password manager, then delete the file." >&2
   else
     rm -f "$key_file"
     echo "Warning: FileVault enablement failed" >&2

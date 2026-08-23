@@ -214,6 +214,35 @@ for step in $registered_steps; do
     fail "main() runs '$step', which is not defined"
 done
 
+# The recovery key must reach the key file and nothing else. This script's
+# stdout is copied into the setup log, which is world-readable, so a key
+# echoed to stdout leaves an unprotected second copy behind.
+key_dir="$(mktemp -d)"
+key_file="$key_dir/FileVault Recovery Key.txt"
+# shellcheck disable=SC2329  # called indirectly, through the function under test
+fdesetup() { printf 'Recovery key = TEST-KEY-DO-NOT-LOG\n'; }
+sudo_askpass() { "$@"; }
+
+key_stdout="$(write_filevault_recovery_key "$key_file")"
+[[ "$key_stdout" != *TEST-KEY-DO-NOT-LOG* ]] ||
+  fail "the FileVault recovery key reached stdout, which the setup log captures"
+grep -q "TEST-KEY-DO-NOT-LOG" "$key_file" ||
+  fail "the FileVault recovery key never reached the key file"
+[[ "$(stat -f '%Sp' "$key_file")" == "-rw-------" ]] ||
+  fail "the FileVault key file is readable by more than its owner"
+
+# A key file that cannot be opened has to fail before fdesetup encrypts the
+# disk, not after, when the key it printed is already unrecoverable
+# shellcheck disable=SC2329  # must stay uncalled; that is what is asserted
+fdesetup() { fail "fdesetup ran even though the key file could not be opened"; }
+! write_filevault_recovery_key "$key_dir/missing/key.txt" 2>/dev/null ||
+  fail "an unwritable key file was reported as a successful enablement"
+
+rm -rf "$key_dir"
+unset -f fdesetup sudo_askpass
+# shellcheck disable=SC1090
+source "$ROOT_DIR/tools/macos/install.sh"
+
 # The log captures stdout as well as stderr; it is an install log, not an
 # error log, and command output is what explains a failure
 log_dir="$(mktemp -d)"
