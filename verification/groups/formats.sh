@@ -7,6 +7,12 @@ cd "$DOTFILES"
 python3 verification/check-configs.py
 taplo check .config/wt.toml
 
+ruby_bin="$(brew --prefix ruby)/bin/ruby"
+if [[ ! -x "$ruby_bin" ]]; then
+  printf 'formats: Homebrew Ruby not found: %s\n' "$ruby_bin" >&2
+  exit 1
+fi
+
 while IFS= read -r -d '' config_file; do
   taplo check "$config_file"
 done < <(find tools -path '*/config/*' -type f -name '*.toml' -print0)
@@ -16,7 +22,7 @@ while IFS= read -r -d '' config_file; do
   yaml_files+=("$config_file")
 done < <(find tools -path '*/config/*' -type f \( -name '*.yaml' -o -name '*.yml' \) -print0)
 if ((${#yaml_files[@]} > 0)); then
-  ruby -e 'require "yaml"; ARGV.each { |path| YAML.safe_load(File.read(path), [], [], true, path) }' \
+  "$ruby_bin" -e 'require "yaml"; ARGV.each { |path| Psych.parse_stream(File.read(path)) }' \
     "${yaml_files[@]}"
 fi
 

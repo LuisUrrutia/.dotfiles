@@ -17,6 +17,12 @@ cleanup() {
 
 trap cleanup EXIT
 
+mkdir -p "$TMP_DIR/bin"
+for fake_command in magick eza ggrep; do
+  printf '%s\n' '#!/usr/bin/env bash' 'exit 0' >"$TMP_DIR/bin/$fake_command"
+  chmod +x "$TMP_DIR/bin/$fake_command"
+done
+
 fail() {
   printf 'Fish validation test: %s\n' "$*" >&2
   exit 1
@@ -38,9 +44,9 @@ grep -F 'positive integer' "$TMP_DIR/imgoptimize.err" >/dev/null ||
   fail "imgoptimize did not explain its dimension constraint"
 
 touch "$TMP_DIR/input.png"
-if IMG2JPG="$IMG2JPG" INPUT_IMAGE="$TMP_DIR/input.png" \
+if PATH="$TMP_DIR/bin:$PATH" IMG2JPG="$IMG2JPG" INPUT_IMAGE="$TMP_DIR/input.png" \
   "$FISH" --no-config -c \
-  'function magick; return 0; end; source "$IMG2JPG"; img2jpg --max-width 0 "$INPUT_IMAGE"' \
+  'source "$IMG2JPG"; img2jpg --max-width 0 "$INPUT_IMAGE"' \
   >"$TMP_DIR/img2jpg.out" 2>"$TMP_DIR/img2jpg.err"; then
   fail "img2jpg accepted a zero dimension"
 fi
@@ -50,6 +56,6 @@ grep -F 'positive integer' "$TMP_DIR/img2jpg.err" >/dev/null ||
 if grep -Eq '^[[:space:]]*alias[[:space:]]' "$CLI_ABBRS"; then
   fail "interactive CLI policy still defines global aliases"
 fi
-CLI_ABBRS="$CLI_ABBRS" "$FISH" --no-config --interactive -c \
+PATH="$TMP_DIR/bin:$PATH" CLI_ABBRS="$CLI_ABBRS" "$FISH" --no-config --interactive -c \
   'source "$CLI_ABBRS"; abbr -q ls; and abbr -q grep' </dev/null ||
   fail "interactive CLI abbreviations were not registered"
