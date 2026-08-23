@@ -363,6 +363,50 @@ test("bluetooth manager requests Bluetooth permission at startup", function()
     assert_false(with_user_env, "blueutil permission probe should not use user shell env")
 end)
 
+test("bluetooth manager cancels a pending reconnect on a new sleep cycle", function()
+    local hs = build_hs()
+    hs.json.next_value = {
+        { address = "aa-bb-cc-dd-ee-ff" },
+    }
+
+    local bluetooth_sleep_manager = load_module("modules.bluetooth_sleep_manager")
+    bluetooth_sleep_manager.start()
+
+    hs.caffeinate.callback(hs.caffeinate.watcher.systemWillSleep)
+    hs.caffeinate.callback(hs.caffeinate.watcher.systemDidWake)
+    local stale_timer = hs.timers[1]
+
+    hs.caffeinate.callback(hs.caffeinate.watcher.systemWillSleep)
+    assert_truthy(stale_timer.stopped, "a new sleep cycle should cancel the pending reconnect")
+
+    hs.caffeinate.callback(hs.caffeinate.watcher.systemDidWake)
+    stale_timer:fire()
+    assert_equal(count_connects(hs), 0, "a stale timer should not reconnect while the machine sleeps")
+
+    hs.timers[2]:fire()
+    assert_equal(count_connects(hs), 1, "the current wake cycle should reconnect the remembered device")
+end)
+
+test("bluetooth manager stop cancels a pending reconnect", function()
+    local hs = build_hs()
+    hs.json.next_value = {
+        { address = "aa-bb-cc-dd-ee-ff" },
+    }
+
+    local bluetooth_sleep_manager = load_module("modules.bluetooth_sleep_manager")
+    bluetooth_sleep_manager.start()
+
+    hs.caffeinate.callback(hs.caffeinate.watcher.systemWillSleep)
+    hs.caffeinate.callback(hs.caffeinate.watcher.systemDidWake)
+    local pending_timer = hs.timers[1]
+
+    bluetooth_sleep_manager.stop()
+    assert_truthy(pending_timer.stopped, "stop should cancel the pending reconnect")
+
+    pending_timer:fire()
+    assert_equal(count_connects(hs), 0, "a stopped manager should not reconnect devices")
+end)
+
 test("bluetooth utility resolves blueutil from the Intel Homebrew prefix", function()
     local hs = build_hs()
     hs.fs.files = { ["/usr/local/bin/blueutil"] = true }
@@ -417,6 +461,22 @@ test("bluetooth utility validates addresses and ignores failed blueutil output",
         return call.type == "execute" or call.type == "task"
     end)
     assert_equal(shell_calls, 1, "invalid addresses should not execute shell commands")
+end)
+
+test("bluetooth utility filters malformed connected-device records", function()
+    local hs = build_hs()
+    hs.json.next_value = {
+        { address = "aa-bb-cc-dd-ee-ff", name = "Headphones" },
+        { address = "invalid" },
+        {},
+        "not a device",
+    }
+    local bluetooth = load_module("utils.bluetooth")
+
+    local devices = bluetooth.connected_devices()
+
+    assert_equal(#devices, 1, "only records with valid Bluetooth addresses should be returned")
+    assert_equal(devices[1].address, "aa-bb-cc-dd-ee-ff")
 end)
 
 test("caffeinate at home enables only on home wifi and AC power", function()
@@ -572,6 +632,29 @@ test("bindings only keeps Hammerspoon hotkeys", function()
     assert_equal(hs.calls[2].key, "f12")
     assert_false(read_file("tools/hammerspoon/config/.hammerspoon/bindings.lua"):find("yabai"),
         "bindings should not reference yabai")
+end)
+
+test("Hammerspoon shutdown stops every managed module", function()
+    local hs = build_hs()
+    unload_modules()
+
+    local bluetooth_stops = 0
+    local caffeinate_stops = 0
+    package.loaded["modules.bluetooth_sleep_manager"] = {
+        start = function() end,
+        stop = function() bluetooth_stops = bluetooth_stops + 1 end,
+    }
+    package.loaded["modules.caffeinate_at_home"] = {
+        start = function() end,
+        stop = function() caffeinate_stops = caffeinate_stops + 1 end,
+    }
+    package.loaded.bindings = { bind = function() end }
+
+    dofile(root .. "/tools/hammerspoon/config/.hammerspoon/init.lua")
+    hs.shutdownCallback()
+
+    assert_equal(bluetooth_stops, 1, "shutdown should stop the Bluetooth manager")
+    assert_equal(caffeinate_stops, 1, "shutdown should stop the caffeinate manager")
 end)
 
 local failures = 0

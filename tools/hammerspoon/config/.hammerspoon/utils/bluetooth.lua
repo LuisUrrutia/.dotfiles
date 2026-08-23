@@ -80,7 +80,16 @@ function lib.connected_devices()
         return {}
     end
 
-    return devices
+    local valid_devices = {}
+    for _, device in ipairs(devices) do
+        if type(device) == "table" and valid_device_id(device.address) then
+            table.insert(valid_devices, device)
+        else
+            log.w("Ignoring malformed device from blueutil --connected")
+        end
+    end
+
+    return valid_devices
 end
 
 -- Check if specific device is connected

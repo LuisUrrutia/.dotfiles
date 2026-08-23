@@ -7,6 +7,7 @@ local caffeinate_at_home = require('modules.caffeinate_at_home')
 caffeinate_at_home.start({ 'Shadow', 'Monarch' })
 
 hs.shutdownCallback = function()
+    bluetooth_sleep_manager.stop()
     caffeinate_at_home.stop()
 end
 

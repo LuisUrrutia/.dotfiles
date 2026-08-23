@@ -23,6 +23,18 @@ local caffeinate_watcher = nil
 
 local reconnect_previous
 
+local function stop_reconnect_timer()
+    if reconnect_timer then
+        reconnect_timer:stop()
+        reconnect_timer = nil
+    end
+end
+
+local function schedule_reconnect(callback)
+    stop_reconnect_timer()
+    reconnect_timer = hs.timer.doAfter(RECONNECT_DELAY, callback)
+end
+
 local function has_previous_connected()
     return next(previous_connected) ~= nil
 end
@@ -38,7 +50,7 @@ local function retry_or_give_up(reason)
     end
 
     log.w(reason .. "; retrying in " .. RECONNECT_DELAY .. "s")
-    reconnect_timer = hs.timer.doAfter(RECONNECT_DELAY, reconnect_previous)
+    schedule_reconnect(reconnect_previous)
 end
 
 -- Drop devices that reconnected; retry the rest until attempts run out
@@ -77,13 +89,16 @@ reconnect_previous = function()
     end
 
     -- Give the async connects time to settle before checking for stragglers
-    reconnect_timer = hs.timer.doAfter(RECONNECT_DELAY, verify_reconnect)
+    schedule_reconnect(verify_reconnect)
 end
 
 local function watch(eventType)
     if (eventType == hs.caffeinate.watcher.systemWillSleep) then
         -- Store and disconnect all currently connected devices
         -- when the machine goes to sleep
+
+        stop_reconnect_timer()
+        reconnect_attempts = 0
 
         if (not bluetooth.is_powered_on()) then
             return
@@ -107,7 +122,7 @@ local function watch(eventType)
         -- when the machine wakes up
         if has_previous_connected() and not reconnect_timer then
             reconnect_attempts = 0
-            reconnect_timer = hs.timer.doAfter(RECONNECT_DELAY, reconnect_previous)
+            schedule_reconnect(reconnect_previous)
         end
     end
 end
@@ -129,10 +144,7 @@ end
 -- Stop the Bluetooth sleep manager
 -- @return nil
 function mod.stop()
-    if reconnect_timer then
-        reconnect_timer:stop()
-        reconnect_timer = nil
-    end
+    stop_reconnect_timer()
 
     if caffeinate_watcher then
         caffeinate_watcher:stop()
