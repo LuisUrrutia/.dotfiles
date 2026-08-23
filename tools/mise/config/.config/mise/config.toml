@@ -22,7 +22,6 @@ node = "lts"
 "npm:clawpatch" = "latest"
 "npm:skills" = "latest"
 opencode = "latest"
-pi = "latest"
 "pipx:httpie" = "latest"
 "pipx:pre-commit" = { version = "latest", uvx_args = "--with pre-commit-uv" }
 pnpm = "latest"

@@ -57,13 +57,15 @@ printf '%s\n' \
   'if [[ "${UPDATE_SCENARIO:-}" == rustup-fails && "$tool" == rustup ]]; then exit 14; fi' \
   'if [[ "${UPDATE_SCENARIO:-}" == signal && "$tool" == brew && "${1:-}" == update ]]; then' \
   '  trap '\''printf "TERM\n" >"$SIGNAL_RESULT"; exit 143'\'' TERM' \
-  '  printf "ready\n" >"$SIGNAL_READY"' \
-  '  while :; do /bin/sleep 1; done' \
+  '  /bin/sleep 30 &' \
+  '  signal_child=$!' \
+  '  printf "ready %s\n" "$signal_child" >"$SIGNAL_READY"' \
+  '  wait "$signal_child"' \
   'fi' \
   'exit 0' \
   >"$FAKE_BIN/fake-tool"
 chmod +x "$FAKE_BIN/fake-tool"
-for tool in brew mise rustup mas nvim pi skills mo fish; do
+for tool in brew mise rustup mas nvim skills tpack tldr mo fish; do
   ln -s fake-tool "$FAKE_BIN/$tool"
 done
 
@@ -75,9 +77,10 @@ run_scenario() {
   local log_file="$scenario_dir/tools.log"
   local output_file="$scenario_dir/output.log"
 
-  mkdir -p "$home_dir/.cache/opencode" "$home_dir/.config/fish/functions" "$state_dir"
+  mkdir -p "$home_dir/.config/fish/functions" "$home_dir/.config/tlrc" "$state_dir"
   : >"$home_dir/.config/fish/fish_plugins"
   : >"$home_dir/.config/fish/functions/fisher.fish"
+  : >"$home_dir/.config/tlrc/config.toml"
   : >"$log_file"
 
   set +e
@@ -144,7 +147,7 @@ for nvim_stage in plugins blink parsers; do
   elif [[ "$nvim_stage" == blink ]]; then
     [[ "$SCENARIO_LOG" != *treesitter* ]] || fail "Neovim parsers ran after blink.cmp failure"
   fi
-  [[ "$SCENARIO_LOG" == *'pi update extensions'* ]] || fail "Neovim $nvim_stage failure stopped Pi"
+  [[ "$SCENARIO_LOG" == *'skills update --yes'* ]] || fail "Neovim $nvim_stage failure stopped Skills"
 done
 
 run_scenario all-pass
@@ -162,9 +165,10 @@ assert_log_order "$TMP_DIR/all-pass/tools.log" \
   'nvim --headless +Lazy! sync +qa' \
   "nvim --headless +lua if not require('config.blink').ensure() then vim.cmd.cquit() end +qa" \
   "nvim --headless +lua require('config.treesitter').install() +qa" \
-  'pi update extensions' \
   'skills list -g' \
   'skills update --yes' \
+  'tpack update all' \
+  'tldr --config' \
   'mo clean' \
   'fish --no-config --command'
 [[ "$SCENARIO_OUTPUT" == *'[update] Homebrew: completed'* ]] || fail "Homebrew completion is missing"
@@ -208,7 +212,7 @@ missing_state="$TMP_DIR/missing/state"
 mkdir -p "$missing_home" "$missing_state"
 PATH="/usr/bin:/bin" HOME="$missing_home" XDG_STATE_HOME="$missing_state" \
   "$FIXTURE_ROOT/dotfiles" update >"$TMP_DIR/missing.out"
-for expected in Homebrew mise rustup 'App Store' Neovim 'Pi extensions' 'OpenCode cache' Skills 'Mole clean' 'Fish plugins'; do
+for expected in Homebrew mise rustup 'App Store' Neovim Skills 'TPack plugins' 'tlrc pages' 'Mole clean' 'Fish plugins'; do
   grep -qF "[update] $expected: skipped" "$TMP_DIR/missing.out" || fail "missing $expected was not skipped"
 done
 
@@ -251,7 +255,7 @@ PATH="$FAKE_BIN:/usr/bin:/bin" HOME="$signal_home" XDG_STATE_HOME="$signal_state
   SIGNAL_READY="$signal_ready" SIGNAL_RESULT="$signal_result" \
   "$FIXTURE_ROOT/dotfiles" update --ignore-schedule >"$TMP_DIR/signal.out" 2>&1 &
 signal_coordinator_pid=$!
-IFS= read -r signal_message <"$signal_ready"
+IFS=' ' read -r signal_message signal_child_pid <"$signal_ready"
 [[ "$signal_message" == ready ]] || fail "signal fixture did not start the active child"
 kill -TERM "$signal_coordinator_pid"
 set +e
@@ -260,3 +264,6 @@ signal_status=$?
 set -e
 [[ "$signal_status" -eq 143 ]] || fail "Update did not preserve TERM status"
 [[ "$(<"$signal_result")" == TERM ]] || fail "Update did not forward TERM to the active child"
+if kill -0 "$signal_child_pid" 2>/dev/null; then
+  fail "Update left an active grandchild after TERM"
+fi

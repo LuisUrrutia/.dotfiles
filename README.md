@@ -355,7 +355,7 @@ supports contextual help, for example `dotfiles help config repair`.
 # Deterministic, offline repository checks
 dotfiles verify
 
-# Update installed package managers, tools, plugins, and caches
+# Update installed package managers, tools, plugins, and reference data
 dotfiles update
 dotfiles update --ignore-schedule
 
@@ -368,8 +368,10 @@ dotfiles backup all
 Update keeps Homebrew work daily-gated and Mole cleanup weekly-gated unless
 `--ignore-schedule` is used. It updates toward current versions without
 reconciling Brewfile membership, removing manually installed software, or
-changing this Git repository. Fish keeps `upd` and `backup-configs` as
-interactive abbreviations for the canonical commands.
+changing this Git repository. It is also the only owner of periodic Neovim,
+TPack, Fish, Skills, and tlrc updates; their installers only establish declared
+state. Fish keeps `upd` and `backup-configs` as interactive abbreviations for
+the canonical commands.
 
 - Fish has abbreviations for Git, Docker, Brew, common cleanup,
   iCloud/Obsidian paths, and WorkTrunk shell integration. `halp` and `cheat`

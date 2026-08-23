@@ -5,20 +5,31 @@ set -euo pipefail
 IGNORE_SCHEDULE=false
 ACTIVE_PID=""
 CHILD_STATUS=0
+PROCESS_GROUP_PYTHON=""
 TARGET_NAMES=(
   "Homebrew"
   "mise"
   "rustup"
   "App Store"
   "Neovim"
-  "Pi extensions"
-  "OpenCode cache"
   "Skills"
+  "TPack plugins"
+  "tlrc pages"
   "Mole clean"
   "Fish plugins"
 )
 TARGET_OUTCOMES=()
 TARGET_REASONS=()
+TARGET_HOMEBREW=0
+TARGET_MISE=1
+TARGET_RUSTUP=2
+TARGET_APP_STORE=3
+TARGET_NEOVIM=4
+TARGET_SKILLS=5
+TARGET_TPACK=6
+TARGET_TLRC=7
+TARGET_MOLE=8
+TARGET_FISH=9
 
 usage() {
   printf 'Usage: dotfiles update [--ignore-schedule]\n'
@@ -61,32 +72,68 @@ set_result() {
 interrupt() {
   local signal_name="$1"
   local exit_status="$2"
+  local active_pid="$ACTIVE_PID"
 
   trap - HUP INT TERM
-  if [[ -n "$ACTIVE_PID" ]]; then
-    kill -s "$signal_name" "$ACTIVE_PID" 2>/dev/null || true
-    wait "$ACTIVE_PID" 2>/dev/null || true
+  if [[ -n "$active_pid" ]]; then
+    terminate_process_group "$signal_name" "$active_pid"
+    wait "$active_pid" 2>/dev/null || true
   fi
   exit "$exit_status"
 }
 
-run_child() {
-  "$@" &
+process_group_exists() {
+  kill -0 -- "-$1" 2>/dev/null
+}
+
+terminate_process_group() {
+  local signal_name="$1"
+  local group_pid="$2"
+  local attempt=0
+
+  if ! kill -s "$signal_name" -- "-$group_pid" 2>/dev/null; then
+    kill -s "$signal_name" "$group_pid" 2>/dev/null || true
+  fi
+
+  while process_group_exists "$group_pid" && [[ "$attempt" -lt 50 ]]; do
+    /bin/sleep 0.02
+    attempt=$((attempt + 1))
+  done
+  if process_group_exists "$group_pid"; then
+    kill -KILL -- "-$group_pid" 2>/dev/null || true
+  fi
+}
+
+start_child() {
+  "$PROCESS_GROUP_PYTHON" -c \
+    'import os, sys; os.setsid(); os.execvp(sys.argv[1], sys.argv[1:])' \
+    "$@" &
   ACTIVE_PID="$!"
+}
+
+run_child() {
+  local child_pid=""
+
+  start_child "$@"
+  child_pid="$ACTIVE_PID"
   set +e
-  wait "$ACTIVE_PID"
+  wait "$child_pid"
   CHILD_STATUS=$?
   set -e
+  terminate_process_group TERM "$child_pid"
   ACTIVE_PID=""
 }
 
 run_child_quiet() {
-  "$@" >/dev/null 2>&1 &
-  ACTIVE_PID="$!"
+  local child_pid=""
+
+  start_child "$@" >/dev/null 2>&1
+  child_pid="$ACTIVE_PID"
   set +e
-  wait "$ACTIVE_PID"
+  wait "$child_pid"
   CHILD_STATUS=$?
   set -e
+  terminate_process_group TERM "$child_pid"
   ACTIVE_PID=""
 }
 
@@ -108,7 +155,7 @@ write_stamp() {
 }
 
 update_homebrew() {
-  local index=0
+  local index="$TARGET_HOMEBREW"
   local stamp="$STATE_DIR/brew"
   local step=""
 
@@ -149,7 +196,7 @@ update_homebrew() {
 }
 
 update_mise() {
-  local index=1
+  local index="$TARGET_MISE"
   if ! command -v mise >/dev/null 2>&1; then set_result "$index" skipped "not found"; return; fi
   run_child mise upgrade --yes
   if [[ "$CHILD_STATUS" -ne 0 ]]; then set_result "$index" failed "upgrade, status $CHILD_STATUS"; return; fi
@@ -159,21 +206,21 @@ update_mise() {
 }
 
 update_rustup() {
-  local index=2
+  local index="$TARGET_RUSTUP"
   if ! command -v rustup >/dev/null 2>&1; then set_result "$index" skipped "not found"; return; fi
   run_child rustup update
   if [[ "$CHILD_STATUS" -eq 0 ]]; then set_result "$index" completed; else set_result "$index" failed "status $CHILD_STATUS"; fi
 }
 
 update_app_store() {
-  local index=3
+  local index="$TARGET_APP_STORE"
   if ! command -v mas >/dev/null 2>&1; then set_result "$index" skipped "mas not found"; return; fi
   run_child mas upgrade
   if [[ "$CHILD_STATUS" -eq 0 ]]; then set_result "$index" completed; else set_result "$index" failed "status $CHILD_STATUS"; fi
 }
 
 update_neovim() {
-  local index=4
+  local index="$TARGET_NEOVIM"
   if ! command -v nvim >/dev/null 2>&1; then set_result "$index" skipped "not found"; return; fi
   run_child nvim --headless "+Lazy! sync" +qa
   if [[ "$CHILD_STATUS" -ne 0 ]]; then set_result "$index" failed "plugins, status $CHILD_STATUS"; return; fi
@@ -184,23 +231,8 @@ update_neovim() {
   set_result "$index" completed
 }
 
-update_pi() {
-  local index=5
-  if ! command -v pi >/dev/null 2>&1; then set_result "$index" skipped "pi not found"; return; fi
-  run_child pi update extensions
-  if [[ "$CHILD_STATUS" -eq 0 ]]; then set_result "$index" completed; else set_result "$index" failed "status $CHILD_STATUS"; fi
-}
-
-update_opencode_cache() {
-  local index=6
-  local cache="$HOME/.cache/opencode"
-  if [[ ! -d "$cache" ]]; then set_result "$index" skipped "not present"; return; fi
-  run_child /bin/rm -rf "$cache"
-  if [[ "$CHILD_STATUS" -eq 0 ]]; then set_result "$index" completed; else set_result "$index" failed "status $CHILD_STATUS"; fi
-}
-
 update_skills() {
-  local index=7
+  local index="$TARGET_SKILLS"
   if ! command -v skills >/dev/null 2>&1; then set_result "$index" skipped "not found"; return; fi
   run_child_quiet skills list -g
   if [[ "$CHILD_STATUS" -ne 0 ]]; then set_result "$index" warning "unable to list installed skills"; return; fi
@@ -208,8 +240,24 @@ update_skills() {
   if [[ "$CHILD_STATUS" -eq 0 ]]; then set_result "$index" completed; else set_result "$index" failed "status $CHILD_STATUS"; fi
 }
 
+update_tpack() {
+  local index="$TARGET_TPACK"
+  if ! command -v tpack >/dev/null 2>&1; then set_result "$index" skipped "not found"; return; fi
+  run_child tpack update all
+  if [[ "$CHILD_STATUS" -eq 0 ]]; then set_result "$index" completed; else set_result "$index" failed "status $CHILD_STATUS"; fi
+}
+
+update_tlrc() {
+  local index="$TARGET_TLRC"
+  local config="${XDG_CONFIG_HOME:-$HOME/.config}/tlrc/config.toml"
+  if ! command -v tldr >/dev/null 2>&1; then set_result "$index" skipped "tldr not found"; return; fi
+  if [[ ! -f "$config" ]]; then set_result "$index" skipped "config not found"; return; fi
+  run_child tldr --config "$config" --update
+  if [[ "$CHILD_STATUS" -eq 0 ]]; then set_result "$index" completed; else set_result "$index" failed "status $CHILD_STATUS"; fi
+}
+
 update_mole() {
-  local index=8
+  local index="$TARGET_MOLE"
   local stamp="$STATE_DIR/mole-clean"
   if ! command -v mo >/dev/null 2>&1; then set_result "$index" skipped "mo not found"; return; fi
   if [[ "$IGNORE_SCHEDULE" != true ]] && stamp_is_recent "$stamp" 604800; then
@@ -222,7 +270,7 @@ update_mole() {
 }
 
 update_fish_plugins() {
-  local index=9
+  local index="$TARGET_FISH"
   local fish_config="${XDG_CONFIG_HOME:-$HOME/.config}/fish"
   local manifest="$fish_config/fish_plugins"
   local fisher_file="$fish_config/functions/fisher.fish"
@@ -259,6 +307,10 @@ print_summary() {
 
 main() {
   parse_args "$@"
+  if ! PROCESS_GROUP_PYTHON="$(command -v python3)"; then
+    printf 'dotfiles update: Python 3 is required to supervise updater process groups\n' >&2
+    exit 1
+  fi
   STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/dotfiles/update"
   trap 'interrupt HUP 129' HUP
   trap 'interrupt INT 130' INT
@@ -269,9 +321,9 @@ main() {
   update_rustup
   update_app_store
   update_neovim
-  update_pi
-  update_opencode_cache
   update_skills
+  update_tpack
+  update_tlrc
   update_mole
   update_fish_plugins
   print_summary

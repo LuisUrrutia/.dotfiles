@@ -1,7 +1,7 @@
 [cache]
 dir = "~/Library/Caches/tlrc"
 mirror = "https://github.com/tldr-pages/tldr/releases/latest/download"
-auto_update = true
+auto_update = false
 defer_auto_update = false
 max_age = 336
 languages = ["en", "es"]

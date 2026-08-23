@@ -20,10 +20,6 @@ tools/opencode/config/.config/opencode/package-lock.json
 tools/opencode/config/.config/opencode/bun.lock
 tools/opencode/config/.config/opencode/skills/*
 
-# Pi generated state (skills installed via the skills CLI)
-tools/pi/config/.pi/agent/.agents/
-tools/pi/config/.pi/agent/skills-lock.json
-
 # cc-safety-net runtime state (guard: must never land in the stow package;
 # rulebooks under rules/ ARE tracked, only the lock file is generated)
 tools/cc-safety-net/config/.cc-safety-net/cache/
