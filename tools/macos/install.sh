@@ -24,7 +24,8 @@ setup_macos_log() {
   local log_dir
 
   log_dir="$(dirname "$macos_install_log")"
-  if ! mkdir -p "$log_dir" || ! : >>"$macos_install_log"; then
+  if ! mkdir -p "$log_dir" || ! chmod 700 "$log_dir" || \
+    ! : >>"$macos_install_log" || ! chmod 600 "$macos_install_log"; then
     echo "Warning: unable to write the macOS setup log at $macos_install_log" >&2
     macos_install_log=""
     return 0
@@ -105,6 +106,10 @@ run_macos_step() {
   if [[ "$macos_step_failed" -ne 0 || "$step_status" -ne 0 ]]; then
     macos_failed_steps+=("$step_name")
   fi
+
+  # macOS preferences are independent. Record this step and let later settings
+  # continue; summarize_macos_errors exposes the aggregate at the end.
+  return 0
 }
 
 # Best-effort `defaults` write for settings that need extra permissions

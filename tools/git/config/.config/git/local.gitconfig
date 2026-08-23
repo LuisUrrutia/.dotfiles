@@ -131,6 +131,6 @@
   detachedHead = false
   resolveConflict = false
 [help]
-  autocorrect = prompt
+  autocorrect = never
 [web]
   browser = open

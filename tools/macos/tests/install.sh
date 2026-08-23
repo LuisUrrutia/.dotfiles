@@ -48,8 +48,11 @@ deep_log="$(mktemp)"
 # not a command substitution: that would run the step in a subshell and lose
 # the counters it is asserting on
 run_macos_step step_with_deep_failure 2>"$deep_log"
+deep_step_status=$?
 deep_output="$(cat "$deep_log")"
 rm -f "$deep_log"
+[[ "$deep_step_status" -eq 0 ]] ||
+  fail "a logged macOS preference failure escaped the step boundary"
 [[ "$macos_error_count" -eq 1 ]] ||
   fail "one deep failure logged $macos_error_count errors instead of one"
 [[ "$deep_output" != *macos_error_trap* ]] ||
@@ -226,6 +229,19 @@ registered_steps="$(sed -n '/^main() {/,/^}/p' "$install_script" |
 unregistered="$(comm -23 <(printf '%s\n' "$defined_steps") <(printf '%s\n' "$registered_steps"))"
 [[ -z "$unregistered" ]] ||
   fail "configure steps never run from main(): ${unregistered//$'\n'/ }"
+
+log_fixture_dir="$(mktemp -d)"
+macos_install_log="$log_fixture_dir/logs/macos-install.log"
+macos_log_pipe_dir=""
+macos_log_tee_pids=()
+setup_macos_log
+echo "log permission fixture"
+close_macos_log
+[[ "$(stat -f '%Sp' "$log_fixture_dir/logs")" == "drwx------" ]] ||
+  fail "the macOS log directory is accessible to other users"
+[[ "$(stat -f '%Sp' "$macos_install_log")" == "-rw-------" ]] ||
+  fail "the macOS setup log is accessible to other users"
+rm -rf "$log_fixture_dir"
 
 # shellcheck disable=SC1090
 source "$ROOT_DIR/tools/macos/install.sh"
