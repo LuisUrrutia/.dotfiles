@@ -209,6 +209,7 @@ cask "zoom"        # Video conferencing
 # ------------------------------------------------------------------------------
 # AI Tools
 # ------------------------------------------------------------------------------
+cask "chatgpt"  # ChatGPT desktop app
 cask "claude"   # AI assistant desktop app
 cask "codexbar" # Menu bar usage monitor for AI coding tools
 cask "granola"  # AI-powered meeting notepad
