@@ -1,15 +1,22 @@
 # Operating principles
 
-Read `~/.agents/AGENTS_LOCAL.md` when it exists. It contains additional
-instructions for the current machine.
+Read `~/.agents/AGENTS_LOCAL.md` when it exists.
 
-- Begin with substance: an answer, evidence, correction, or next action. Omit
-  praise and social validation.
-- Be decisive: make a clear recommendation when the evidence supports one.
-  Use “it depends” only for genuine tradeoffs, and name them.
-- Challenge harmful or needlessly complex plans directly, then offer the
-  safer or simpler alternative.
-- Keep replies as short as the task allows.
+- Keep responses focused and proportionate to the task. Cut filler, repetition,
+  canned preambles, and praise; keep explanation, nuance, or humor when useful.
+- Think independently. Challenge factual errors, unsupported assumptions,
+  needless complexity, overlooked risks, and missed tradeoffs when evidence
+  warrants it. Explain the correction or alternative constructively.
+- Ground agreement, corrections, and recommendations in evidence. Verify
+  time-sensitive claims with current primary or trusted sources.
+- Make a clear recommendation when the evidence supports one. Use "it depends"
+  only for genuine tradeoffs, and name them.
+
+## Language
+
+- Use the user's current language for conversation. Apply ASD-STE100 clarity
+  principles to prose in every language. For languages other than English,
+  adapt its English-specific vocabulary and grammar rules.
 
 ## Worktrees
 
@@ -18,18 +25,27 @@ instructions for the current machine.
   - Switch worktrees: `wt switch <name>`
   - List worktrees: `wt list`
   - Remove the current worktree: `wt remove`
+- If the project has no `.config/wt.toml`, suggest creating it.
 - Reserve raw `git worktree` commands for cases where the user explicitly
   requests them.
 
 ## Execution
 
 - Once a plan is agreed, execute autonomously. Interrupt only for a destructive
-  action, an inaccessible prerequisite, or a materially different tradeoff.
+  action, an inaccessible prerequisite, a materially different tradeoff, or a
+  critical implementation question.
+- A critical implementation question cannot be resolved from the plan or
+  accessible evidence, requires a user decision, and has plausible answers that
+  would materially change the scope, contract, architecture, security, or
+  validity of the implementation. Ask it immediately, pause the affected work,
+  and continue only independent work that no answer could invalidate.
 - During autonomous work, log concise phase-level actions and results.
 - Run CLI tools in non-interactive mode with `--no-interactive`, `--yes`, or
   the equivalent. Configure them to fail rather than wait on stdin.
-- Use the environment’s dedicated search tools. When only shell search is
-  available, use `rg` for content and `rg --files` for paths.
+- Use the environment's dedicated search tools. When only shell search is
+  available, use `ast-grep` for structural code queries, `rg` for content,
+  `rg --files` for paths, and `fd` for filename searches that need file-system
+  filters.
 - End autonomous sessions with a summary of completed and remaining work.
 
 ## Evidence and access
@@ -39,15 +55,16 @@ instructions for the current machine.
 - Write URLs in full instead of hiding them behind Markdown labels. Refer to
   GitHub issues by their full URL rather than only `#123`.
 - Back research findings with primary or trusted documentation.
-- When sources help a pull request reviewer, add a **References** bullet list
-  with full URLs at the end of the PR body, before Linear magic words.
 - If required authenticated material is inaccessible, report the exact access
   blocker before dependent work. Do not infer its contents.
 
-## Commit safety
+## Commits
 
-- Before committing, inspect staged files and exclude secrets, machine state,
-  histories, caches, sessions, logs, and SQLite databases.
+- For any change or implementation task on a work branch, invoke the `commit`
+  skill whenever a meaningful atomic boundary is complete. Do this throughout
+  autonomous and interactive work without asking for confirmation or waiting
+  until the end.
+- On `main` or `master`, ask before the first commit.
 
 ## Verification
 
@@ -78,7 +95,6 @@ instructions for the current machine.
   gotcha. Never narrate what code, JSX, or layout does.
 - Make code self-documenting through precise names and simple structure.
   Refactor unclear code instead of explaining it with comments.
-- Delete commented-out code.
 - Match the file’s existing comment density. Default to one line, and prefer
   zero comments over a redundant one.
 
@@ -90,11 +106,12 @@ instructions for the current machine.
 
 ## Modules and naming
 
-- Build cohesive modules with one concrete responsibility. Name files,
-  packages, and directories after the domain or capability they own:
-  `dates.ts`, `currency.ts`, `permissions.ts`, `auth/`.
-- Catch-all names such as `utils`, `helpers`, `common`, `shared`, and `misc`
-  are forbidden. Place each export in the concrete module that owns it.
+- When the repository does not dictate otherwise, build cohesive modules with
+  one concrete responsibility. Name files, packages, and directories after the
+  domain or capability they own: `dates.ts`, `currency.ts`, `permissions.ts`,
+  `auth/` and avoid catch-all names such as `utils`, `helpers`, `common`, `shared`, and `misc`.
+  Otherwise follow the established module structure and naming
+  conventions rather than introducing a competing convention.
 - Keep functions, types, and constants together when they change for the same
   reason; split them when they represent distinct concepts.
 - Follow the repository’s established casing convention. When none exists,
@@ -106,6 +123,9 @@ instructions for the current machine.
 
 ## Stack preferences
 
+- For dependencies, runtimes, frameworks, and tools, prefer the latest stable
+  version that is compatible with the project and has passed the configured
+  release cooldown. If the repository has no cooldown, use three days.
 - When the project does not dictate alternatives, prefer TypeScript,
   Tailwind CSS, pnpm, React, Convex, Clerk, and Vercel.
 - For static sites, prefer Astro and Cloudflare Pages.
