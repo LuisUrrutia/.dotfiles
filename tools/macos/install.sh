@@ -571,6 +571,16 @@ configure_keyboard_shortcuts() {
   "
 }
 
+configure_login_items() {
+  osascript -e '
+    tell application "System Events"
+      if exists login item "DisplayLink Manager" then
+        delete login item "DisplayLink Manager"
+      end if
+    end tell
+  '
+}
+
 # Emits every localized title Messages can show for its delete-conversation
 # menu items, one per line. Read from ChatKit rather than hardcoded so a new
 # Apple locale or a reworded menu item keeps working without a dotfiles edit.
@@ -687,6 +697,7 @@ main() {
   run_macos_step configure_power_management
   run_macos_step configure_application_settings
   run_macos_step configure_keyboard_shortcuts
+  run_macos_step configure_login_items
   run_macos_step configure_messages_shortcuts
   run_macos_step configure_remote_access
   run_macos_step restart_affected_services

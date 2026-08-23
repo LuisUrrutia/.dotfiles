@@ -139,6 +139,15 @@ configure_keyboard_shortcuts
   fail "the Type to Siri shortcut omitted its symbolic-hotkey type"
 unset -f defaults
 
+captured_osascript=""
+osascript() { captured_osascript="$*"; }
+configure_login_items
+[[ "$captured_osascript" == *'exists login item "DisplayLink Manager"'* ]] ||
+  fail "the DisplayLink login item removal was not guarded for an absent item"
+[[ "$captured_osascript" == *'delete login item "DisplayLink Manager"'* ]] ||
+  fail "the DisplayLink login item was not removed"
+unset -f osascript
+
 # The delete-conversation shortcut is matched against the menu title macOS
 # displays, so it has to cover more than English, and it has to survive ChatKit
 # moving: an empty -dict-add would delete the key instead of adding to it.
