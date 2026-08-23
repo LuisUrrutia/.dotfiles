@@ -6,10 +6,13 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 export DOTFILES="${DOTFILES:-$SCRIPT_DIR}"
 
 # shellcheck source=bootstrap/install-options.sh
+# shellcheck disable=SC1091
 source "$DOTFILES/bootstrap/install-options.sh"
 # shellcheck source=bootstrap/profiles.sh
+# shellcheck disable=SC1091
 source "$DOTFILES/bootstrap/profiles.sh"
 # shellcheck source=tools/catalog.sh
+# shellcheck disable=SC1091
 source "$DOTFILES/tools/catalog.sh"
 
 MACHINES_DIR="$DOTFILES/machines"
