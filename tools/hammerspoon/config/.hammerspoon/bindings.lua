@@ -20,7 +20,7 @@ end
 
 function mod.bind()
     for _, binding in ipairs(hyper_bindings) do
-       bind(hyper_key, binding)
+        bind(hyper_key, binding)
     end
 end
 

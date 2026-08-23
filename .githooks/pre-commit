@@ -6,8 +6,8 @@
 set -euo pipefail
 
 if ! command -v gitleaks >/dev/null 2>&1; then
-  echo "pre-commit: gitleaks not found; skipping staged secret scan" >&2
-  exit 0
+  echo "pre-commit: gitleaks is required; install the Verification Toolchain first" >&2
+  exit 1
 fi
 
 exec gitleaks git --staged --redact --no-banner

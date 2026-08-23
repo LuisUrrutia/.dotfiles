@@ -24,7 +24,7 @@ fixture="$TMP_DIR/fixture"
 mkdir -p "$fixture/groups"
 printf '%s\n' missing-verifier-one missing-verifier-two >"$fixture/requirements"
 
-for group in workflow security shell bootstrap lua fish brewfiles stow dispatcher; do
+for group in workflow security formats shell bootstrap lua fish brewfiles stow dispatcher; do
   printf '%s\n' \
     '#!/usr/bin/env bash' \
     'printf "%s\n" "$0" >>"$VERIFY_STARTED_LOG"' \
@@ -55,7 +55,7 @@ printf '%s\n' '#!/usr/bin/env bash' 'exit 0' >"$fake_bin/fixture-verifier"
 chmod +x "$fake_bin/fixture-verifier"
 printf '%s\n' fixture-verifier >"$fixture/requirements"
 
-for group in workflow security shell bootstrap lua fish brewfiles stow dispatcher; do
+for group in workflow security formats shell bootstrap lua fish brewfiles stow dispatcher; do
   printf '%s\n' \
     '#!/usr/bin/env bash' \
     'set -euo pipefail' \
@@ -108,7 +108,7 @@ groups_status=$?
 set -e
 
 [[ "$groups_status" -eq 1 ]] || fail "offline group failure did not fail Verification"
-[[ "$(sort -u "$started_log" | wc -l | tr -d ' ')" -eq 9 ]] || fail "Verification did not continue every group"
+[[ "$(sort -u "$started_log" | wc -l | tr -d ' ')" -eq 10 ]] || fail "Verification did not continue every group"
 grep -F 'security output' "$TMP_DIR/groups.out" >/dev/null || fail "failed group log was not replayed"
 
 workflow_line="$(grep -nF '[verify] workflow: passed' "$TMP_DIR/groups.out" | cut -d: -f1)"

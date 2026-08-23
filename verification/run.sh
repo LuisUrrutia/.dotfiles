@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-VERIFY_GROUPS=(workflow security shell bootstrap lua fish brewfiles stow dispatcher)
+VERIFY_GROUPS=(workflow security formats shell bootstrap lua fish brewfiles stow dispatcher)
 RUN_DIR=""
 ACTIVE_PIDS=()
 GROUP_STATUSES=()

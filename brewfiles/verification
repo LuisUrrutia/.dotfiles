@@ -1,6 +1,9 @@
 # Verification Toolchain
 # verify-bin: actionlint
 # verify-bin: brew
+# verify-bin: check-jsonschema
+# verify-bin: editorconfig-checker
+# verify-bin: esbuild
 # verify-bin: fish
 # verify-bin: git
 # verify-bin: gitleaks
@@ -10,9 +13,13 @@
 # verify-bin: ruby
 # verify-bin: shellcheck
 # verify-bin: stow
+# verify-bin: taplo
 # verify-bin: wget
 
 brew "actionlint"
+brew "check-jsonschema"
+brew "editorconfig-checker"
+brew "esbuild"
 brew "fish"
 brew "git"
 brew "gitleaks"
@@ -22,4 +29,5 @@ brew "python"
 brew "ruby"
 brew "shellcheck"
 brew "stow"
+brew "taplo"
 brew "wget"
