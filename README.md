@@ -279,6 +279,9 @@ or `discard` to restore the tracked source; both accept `--dry-run`. Use
 `resolve <tool> <path> [--agent claude|codex]` when the right choice needs an
 interactive agent discussion. Mutating operations create timestamped safety
 backups under `${XDG_DATA_HOME:-$HOME/.local/share}/dotfiles/config-backups`.
+List them with `dotfiles config backups list`. Pruning is a dry run unless
+`--force` is explicit, for example
+`dotfiles config backups prune --keep 20 --force`.
 
 ## Repository layout
 

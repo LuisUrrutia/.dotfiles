@@ -321,3 +321,43 @@ set -e
 [[ "$resolve_nontty_status" -eq 1 ]] || fail "Resolve accepted a noninteractive invocation"
 backup_count_after="$(find "$data_home/dotfiles/config-backups" -mindepth 1 -maxdepth 1 -type d | wc -l | tr -d ' ')"
 [[ "$backup_count_after" == "$backup_count_before" ]] || fail "noninteractive Resolve created a backup"
+
+[[ "$(stat -f '%Sp' "$data_home/dotfiles/config-backups")" == "drwx------" ]] ||
+  fail "Config Lifecycle backup root is accessible to other users"
+
+retention_data="$TMP_DIR/retention-data"
+retention_root="$retention_data/dotfiles/config-backups"
+mkdir -p "$retention_root" "$TMP_DIR/retention-foreign"
+for backup_name in 20260101000000 20260201000000 20260301000000 20260401000000 20260501000000; do
+  mkdir "$retention_root/$backup_name"
+done
+mkdir "$retention_root/manual-notes"
+ln -s "$TMP_DIR/retention-foreign" "$retention_root/20200101000000"
+
+retention_list="$(HOME="$HOME_DIR" XDG_DATA_HOME="$retention_data" \
+  "$FIXTURE_ROOT/dotfiles" config backups list)"
+[[ "$retention_list" == *"$retention_root/20260501000000"* ]] ||
+  fail "Config Backup List omitted a retained backup"
+
+retention_preview="$(HOME="$HOME_DIR" XDG_DATA_HOME="$retention_data" \
+  "$FIXTURE_ROOT/dotfiles" config backups prune --keep 2)"
+[[ "$(printf '%s\n' "$retention_preview" | grep -c '^Would prune ')" -eq 3 ]] ||
+  fail "Config Backup Prune preview selected the wrong retention set"
+[[ -d "$retention_root/20260101000000" ]] || fail "Config Backup Prune preview deleted data"
+
+HOME="$HOME_DIR" XDG_DATA_HOME="$retention_data" \
+  "$FIXTURE_ROOT/dotfiles" config backups prune --keep 2 --force \
+  >"$TMP_DIR/retention-force.out"
+[[ -d "$retention_root/20260501000000" && -d "$retention_root/20260401000000" ]] ||
+  fail "Config Backup Prune removed a retained backup"
+[[ ! -e "$retention_root/20260301000000" ]] || fail "Config Backup Prune kept an expired backup"
+[[ -d "$retention_root/manual-notes" && -L "$retention_root/20200101000000" ]] ||
+  fail "Config Backup Prune removed an unowned entry"
+
+set +e
+HOME="$HOME_DIR" XDG_DATA_HOME="$retention_data" \
+  "$FIXTURE_ROOT/dotfiles" config backups prune --keep invalid \
+  >"$TMP_DIR/retention-invalid.out" 2>"$TMP_DIR/retention-invalid.err"
+retention_invalid_status=$?
+set -e
+[[ "$retention_invalid_status" -eq 2 ]] || fail "invalid backup retention did not return usage status"

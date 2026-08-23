@@ -404,7 +404,9 @@ reserve_config_backup_dir() {
   local backup=""
   local suffix=0
 
+  [[ ! -L "$root" ]] || return 1
   mkdir -p "$root" || return 1
+  chmod 700 "$root" || return 1
   timestamp="$(date '+%Y%m%d%H%M%S')" || return 1
   backup="$root/$timestamp"
 
@@ -413,7 +415,80 @@ reserve_config_backup_dir() {
     suffix=$((suffix + 1))
     backup="$root/$timestamp.$suffix"
   done
+  chmod 700 "$backup" || return 1
   printf '%s\n' "$backup"
+}
+
+config_backup_root() {
+  printf '%s\n' "${XDG_DATA_HOME:-$HOME/.local/share}/dotfiles/config-backups"
+}
+
+list_config_backups() {
+  local root=""
+
+  root="$(config_backup_root)"
+  [[ ! -L "$root" ]] || fail "backup root is an unowned symlink: $root"
+  if [[ ! -d "$root" ]]; then
+    printf 'No Config Lifecycle backups.\n'
+    return 0
+  fi
+
+  find "$root" -mindepth 1 -maxdepth 1 -type d ! -name '.*' -print | LC_ALL=C sort -r
+}
+
+prune_config_backups() {
+  local keep=20
+  local force=false
+  local argument=""
+  local root=""
+  local backup=""
+  local name=""
+  local index=0
+  local found=false
+
+  while (($#)); do
+    argument="$1"
+    shift
+    case "$argument" in
+    --keep)
+      keep="${1:-}"
+      shift || true
+      ;;
+    --keep=*) keep="${argument#--keep=}" ;;
+    --force) force=true ;;
+    *) fail "unsupported backups prune option: $argument" ;;
+    esac
+  done
+  [[ "$keep" =~ ^[0-9]+$ ]] || fail "--keep requires a non-negative integer"
+
+  root="$(config_backup_root)"
+  [[ ! -L "$root" ]] || fail "backup root is an unowned symlink: $root"
+  [[ -d "$root" ]] || {
+    printf 'No Config Lifecycle backups.\n'
+    return 0
+  }
+
+  while IFS= read -r backup; do
+    [[ -n "$backup" ]] || continue
+    name="$(basename "$backup")"
+    [[ "$name" =~ ^[0-9]{14}(\.[0-9]+)?$ && ! -L "$backup" ]] || continue
+    if [[ "$index" -ge "$keep" ]]; then
+      found=true
+      if [[ "$force" == true ]]; then
+        /bin/rm -rf -- "$backup"
+        printf 'Pruned %s\n' "$backup"
+      else
+        printf 'Would prune %s\n' "$backup"
+      fi
+    fi
+    index=$((index + 1))
+  done < <(find "$root" -mindepth 1 -maxdepth 1 -type d ! -name '.*' -print | LC_ALL=C sort -r)
+
+  if [[ "$found" != true ]]; then
+    printf 'No Config Lifecycle backups exceed retention (%s).\n' "$keep"
+  elif [[ "$force" != true ]]; then
+    printf 'Dry run only; repeat with --force to prune these backups.\n'
+  fi
 }
 
 new_safety_backup() {
@@ -777,6 +852,16 @@ main() {
   capture) content_command capture "$@" ;;
   discard) content_command discard "$@" ;;
   resolve) resolve_command "$@" ;;
+  backups)
+    case "${1:-}" in
+    list) list_config_backups ;;
+    prune)
+      shift
+      prune_config_backups "$@"
+      ;;
+    *) fail "backups requires list or prune" ;;
+    esac
+    ;;
   *) fail "unsupported config command: $command_name" ;;
   esac
 }

@@ -7,10 +7,13 @@ run_config() {
   local argument=""
   local accepts_dry_run=false
   local accepts_agent=false
+  local backup_command=""
+  local keep_value=""
   local -a original_args=("$@")
 
   if [[ "$command_name" == status || "$command_name" == diff || "$command_name" == repair ||
-    "$command_name" == capture || "$command_name" == discard || "$command_name" == resolve ]]; then
+    "$command_name" == capture || "$command_name" == discard || "$command_name" == resolve ||
+    "$command_name" == backups ]]; then
     for argument in "$@"; do
       if [[ "$argument" == -h || "$argument" == --help ]]; then
         config_command_help "$command_name"
@@ -36,6 +39,34 @@ run_config() {
     ;;
   repair | capture | discard) accepts_dry_run=true ;;
   resolve) accepts_agent=true ;;
+  backups)
+    backup_command="${2:-}"
+    case "$backup_command" in
+    list)
+      [[ "$argument_count" -eq 2 ]] || config_usage_error "backups list accepts no arguments"
+      ;;
+    prune)
+      shift 2
+      while (($#)); do
+        argument="$1"
+        shift
+        case "$argument" in
+        --keep)
+          (($#)) || config_usage_error "--keep requires a non-negative integer"
+          keep_value="$1"
+          shift
+          ;;
+        --keep=*) keep_value="${argument#--keep=}" ;;
+        --force) ;;
+        *) config_usage_error "unknown backups prune option: $argument" ;;
+        esac
+      done
+      [[ -z "$keep_value" || "$keep_value" =~ ^[0-9]+$ ]] ||
+        config_usage_error "--keep requires a non-negative integer"
+      ;;
+    *) config_usage_error "backups requires list or prune" ;;
+    esac
+    ;;
   *) config_usage_error "unknown command: $command_name" ;;
   esac
 

@@ -100,6 +100,8 @@ Commands:
   capture <tool> <path> [--dry-run]
   discard <tool> <path> [--dry-run]
   resolve <tool> <path> [--agent claude|codex]
+  backups list
+  backups prune [--keep COUNT] [--force]
 EOF
 }
 
@@ -111,6 +113,10 @@ config_command_help() {
   capture) printf 'Usage: dotfiles config capture <tool> <path> [--dry-run]\n' ;;
   discard) printf 'Usage: dotfiles config discard <tool> <path> [--dry-run]\n' ;;
   resolve) printf 'Usage: dotfiles config resolve <tool> <path> [--agent claude|codex]\n' ;;
+  backups)
+    printf 'Usage: dotfiles config backups <list|prune>\n'
+    printf '       dotfiles config backups prune [--keep COUNT] [--force]\n'
+    ;;
   *) config_help ;;
   esac
 }
@@ -177,8 +183,10 @@ run_help() {
     if [[ "$#" -eq 0 ]]; then
       config_help
     elif [[ "$#" -eq 1 && ("$1" == status || "$1" == diff || "$1" == repair ||
-      "$1" == capture || "$1" == discard || "$1" == resolve) ]]; then
+      "$1" == capture || "$1" == discard || "$1" == resolve || "$1" == backups) ]]; then
       config_command_help "$1"
+    elif [[ "$#" -eq 2 && "$1" == backups && ("$2" == list || "$2" == prune) ]]; then
+      config_command_help backups
     else
       printf 'dotfiles: unknown help path: config %s\n' "$*" >&2
       return 2
