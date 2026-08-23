@@ -3,12 +3,28 @@
 # shellcheck disable=SC1091
 source "${DOTFILES:-$HOME/.dotfiles}/tools/lib.sh"
 
+canonical_path() {
+  /usr/bin/python3 -c 'import os, sys; print(os.path.realpath(sys.argv[1]))' "$1"
+}
+
+resolved_link_target() {
+  local target="$1"
+  local current="$2"
+
+  if [[ "$current" == /* ]]; then
+    canonical_path "$current"
+  else
+    canonical_path "$(dirname "$target")/$current"
+  fi
+}
+
 is_managed_machine_source() {
   local current="$1"
   local prefix=""
   local name=""
 
-  for prefix in "$DOTFILES/machines/" "$HOME/.dotfiles/machines/"; do
+  for prefix in "$(canonical_path "$DOTFILES/machines")/" \
+    "$(canonical_path "$HOME/.dotfiles/machines")/"; do
     [[ "$current" == "$prefix"*.agents.md ]] || continue
     name="${current#"$prefix"}"
     name="${name%.agents.md}"
@@ -22,8 +38,14 @@ link_is_managed() {
   local current="$1"
   local source="$2"
   local kind="$3"
+  local target="$4"
+  local resolved_current=""
+  local resolved_source=""
 
   [[ "$current" == "$source" ]] && return 0
+  resolved_current="$(resolved_link_target "$target" "$current")"
+  [[ -z "$source" ]] || resolved_source="$(canonical_path "$source")"
+  [[ -z "$resolved_source" || "$resolved_current" != "$resolved_source" ]] || return 0
 
   case "$kind" in
   common)
@@ -34,7 +56,7 @@ link_is_managed() {
     [[ "$current" == "$HOME/.agents/AGENTS.md" ]]
     ;;
   local)
-    is_managed_machine_source "$current"
+    is_managed_machine_source "$resolved_current" || is_managed_machine_source "$current"
     ;;
   *)
     return 1
@@ -54,7 +76,7 @@ destination_is_safe() {
 
   if [[ -L "$target" ]]; then
     current="$(readlink "$target")"
-    if link_is_managed "$current" "$source" "$kind"; then
+    if link_is_managed "$current" "$source" "$kind" "$target"; then
       return 0
     fi
   fi
@@ -74,7 +96,7 @@ install_link() {
     if [[ "$current" == "$source" && -e "$target" ]]; then
       return 0
     fi
-    if link_is_managed "$current" "$source" "$kind"; then
+    if link_is_managed "$current" "$source" "$kind" "$target"; then
       rm "$target"
     fi
   fi
@@ -90,7 +112,7 @@ remove_stale_local_link() {
 
   [[ -L "$target" ]] || return 0
   current="$(readlink "$target")"
-  if link_is_managed "$current" "" local; then
+  if link_is_managed "$current" "" local "$target"; then
     rm "$target"
     printf 'Removed stale machine instructions: %s\n' "$target"
   fi
@@ -110,12 +132,17 @@ common_target="$HOME/.agents/AGENTS.md"
 codex_source="$common_target"
 codex_target="$HOME/.codex/AGENTS.md"
 local_target="$HOME/.agents/AGENTS_LOCAL.md"
-machine_hash="$(hardware_hash)"
-machine_config="$DOTFILES/machines/$machine_hash.sh"
+machine_hash=""
+machine_config=""
 local_source=""
 
-if [[ -f "$machine_config" && -f "$DOTFILES/machines/$machine_hash.agents.md" ]]; then
-  local_source="$DOTFILES/machines/$machine_hash.agents.md"
+if machine_hash="$(hardware_hash)"; then
+  machine_config="$DOTFILES/machines/$machine_hash.sh"
+  if [[ -f "$machine_config" && -f "$DOTFILES/machines/$machine_hash.agents.md" ]]; then
+    local_source="$DOTFILES/machines/$machine_hash.agents.md"
+  fi
+else
+  printf 'Warning: could not determine the hardware hash; skipping machine-local agent instructions.\n' >&2
 fi
 
 destination_is_safe "$common_source" "$common_target" common || exit 1

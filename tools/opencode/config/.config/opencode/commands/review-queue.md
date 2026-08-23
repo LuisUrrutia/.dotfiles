@@ -1,5 +1,5 @@
 ---
-description: Rank open pull requests for review
+description: Rank open pull requests for review.
 ---
 
 ## Context

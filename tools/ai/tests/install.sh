@@ -154,6 +154,32 @@ HOME="$repair_home" \
 [[ "$(readlink "$repair_home/.agents/AGENTS.md")" == "$fixture_root/tools/ai/AGENTS.md" ]] ||
   fail "known broken common link was not repaired"
 
+canonical_home="$TMP_DIR/canonical-home"
+mkdir -p "$canonical_home/.agents" "$canonical_home/.codex"
+ln -s "$fixture_root/tools/ai/../ai/AGENTS.md" "$canonical_home/.agents/AGENTS.md"
+ln -s "../.agents/AGENTS.md" "$canonical_home/.codex/AGENTS.md"
+HOME="$canonical_home" \
+  DOTFILES="$fixture_root" \
+  DOTFILES_HARDWARE_HASH_OVERRIDE=unregistered \
+  /bin/bash "$fixture_root/tools/ai/install.sh" >/dev/null
+[[ "$(readlink "$canonical_home/.agents/AGENTS.md")" == "$fixture_root/tools/ai/AGENTS.md" ]] ||
+  fail "equivalent common link was not normalized to the canonical source"
+[[ "$(readlink "$canonical_home/.codex/AGENTS.md")" == "$canonical_home/.agents/AGENTS.md" ]] ||
+  fail "equivalent Codex link was not normalized to the canonical source"
+
+hash_failure_home="$TMP_DIR/hash-failure-home"
+mkdir -p "$hash_failure_home"
+HOME="$hash_failure_home" DOTFILES="$fixture_root" \
+  /bin/bash "$fixture_root/tools/ai/install.sh" \
+  >"$TMP_DIR/hash-failure.out" 2>"$TMP_DIR/hash-failure.err" ||
+  fail "hardware-hash failure blocked common agent instructions"
+grep -F 'could not determine the hardware hash' "$TMP_DIR/hash-failure.err" >/dev/null ||
+  fail "hardware-hash failure did not emit a warning"
+[[ -L "$hash_failure_home/.agents/AGENTS.md" && -L "$hash_failure_home/.codex/AGENTS.md" ]] ||
+  fail "hardware-hash failure skipped common agent instructions"
+[[ ! -e "$hash_failure_home/.agents/AGENTS_LOCAL.md" ]] ||
+  fail "hardware-hash failure installed machine-local instructions"
+
 override_home="$TMP_DIR/override-home"
 mkdir -p "$override_home/.codex"
 printf '%s\n' '# Local override' >"$override_home/.codex/AGENTS.override.md"

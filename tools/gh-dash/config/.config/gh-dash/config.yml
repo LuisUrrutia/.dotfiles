@@ -63,10 +63,9 @@ defaults:
 keybindings:
   prs:
     - key: C
-      name: opencode review
+      name: Codex + Claude review
       command: >
-        tmux new-window -c '{{.RepoPath}}' -n "PR-{{.PrNumber}}"
-        'wt switch pr:{{.PrNumber}} -x "opencode --prompt \"@code-reviewer: review this pull request branch\""'
+        ~/.dotfiles/tools/gh-dash/review-pr.sh '{{.RepoPath}}' '{{.PrNumber}}'
     - key: W
       name: walkthrough
       command: >

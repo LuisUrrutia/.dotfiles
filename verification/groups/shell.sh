@@ -12,6 +12,7 @@ for script in \
   brewfiles/*.sh brewfiles/tests/*.sh config/*.sh config/tests/*.sh \
   maintenance/*.sh maintenance/tests/*.sh \
   tools/lib.sh tools/*/install.sh tools/*/common.sh \
+  tools/gh-dash/review-pr.sh \
   tools/*/migrate-*.sh tools/*/config/.local/bin/* tools/*/tpack-bin/* \
   tools/*/tests/*.sh \
   tools/macos/prefs-diff.sh verification/run.sh verification/groups/*.sh \

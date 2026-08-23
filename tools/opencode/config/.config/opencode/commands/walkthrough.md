@@ -1,5 +1,5 @@
 ---
-description: Explain current branch changes from a user perspective
+description: Explain current branch changes from a user perspective.
 ---
 
 ## Context
