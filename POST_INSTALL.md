@@ -15,8 +15,6 @@ file at the end of a run.
   Security > Bluetooth.
 - Allow Ghostty under System Settings > Privacy & Security > Developer Tools.
 - Run `remindctl authorize` to grant Reminders access.
-- Set Fliqlo manually as the active screensaver.
-- Install or configure Insta360 Link Controller if needed.
 - Profile-specific steps:
   - `dev`: finish Docker Desktop setup.
   - `audio`: configure SoundSource and Loopback licenses.

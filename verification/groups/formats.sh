@@ -5,6 +5,7 @@ set -euo pipefail
 cd "$DOTFILES"
 
 python3 verification/check-configs.py
+taplo check .config/wt.toml
 
 while IFS= read -r -d '' config_file; do
   taplo check "$config_file"
@@ -34,4 +35,4 @@ check-jsonschema --schemafile verification/schemas/cc-rulebook.schema.json \
   tools/cc-safety-net/config/.cc-safety-net/rules/user-rules/rulebook.json
 
 editorconfig-checker -exclude \
-  '(^|/)(archived/|tools/git/tests/migrate-config\.sh$|tools/raycast/backups/|tools/thaw/Thaw\.plist$)'
+  '(^|/)(tools/git/tests/migrate-config\.sh$|tools/raycast/backups/|tools/thaw/Thaw\.plist$)'

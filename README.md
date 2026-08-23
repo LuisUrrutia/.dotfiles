@@ -238,8 +238,9 @@ Private config, for the repo owner only:
 ./private-install.sh
 ```
 
-That script checks GitHub SSH auth, clones/pulls the private repo into
-`private/`, then runs its installer.
+That script checks GitHub SSH auth, clones or updates the private repo under
+`${XDG_DATA_HOME:-$HOME/.local/share}/dotfiles/private`, then runs its
+installer. It refuses the legacy `private/` path inside the public checkout.
 
 ## Stow notes
 
@@ -293,6 +294,7 @@ List them with `dotfiles config backups list`. Pruning is a dry run unless
 │   ├── verification      # Verification toolchain
 │   └── profiles/         # Selectable profile Brewfiles
 ├── cli/                  # Focused adapters behind the root dispatcher
+├── bootstrap/            # Bootstrap prerequisites and shared install routing
 ├── config/               # Config Lifecycle owner
 ├── maintenance/          # Update and aggregate Backup owners
 ├── machines/             # Per-machine config, named <machash>.sh
@@ -301,8 +303,8 @@ List them with `dotfiles config backups list`. Pruning is a dry run unless
 │   └── <tool>/
 │       ├── install.sh    # Tool-specific setup
 │       └── config/       # Files stowed into $HOME
+├── .config/wt.toml       # Shared WorkTrunk hooks
 ├── .githooks/            # Repo-local hooks (gitleaks pre-commit)
-├── archived/             # Old configs kept for reference
 ├── POST_INSTALL.md       # Manual post-install checklist
 ├── private-install.sh    # Owner-only private setup
 ├── verification/         # Shared local/CI Verification Suite
@@ -321,7 +323,7 @@ List them with `dotfiles config backups list`. Pruning is a dry run unless
 - macOS/system: GNU core tools, dockutil, mas, mole, Linearmouse, Thaw,
   DisplayLink, The Unarchiver
 - Automation and hotkeys: Hammerspoon, skhd
-- Apps: Dia, Raycast, 1Password, Ghostty, CleanShot, Fliqlo, IINA, Spotify,
+- Apps: Dia, Raycast, 1Password, Ghostty, CleanShot, Cadran, IINA, Spotify,
   Discord, WhatsApp, Telegram, Slack, Figma, Zoom
 - Security/networking: 1Password CLI, OpenSSH, GnuPG, YubiKey Manager,
   NordVPN, Tailscale, VeraCrypt
@@ -379,6 +381,8 @@ the canonical commands.
 - Fish has abbreviations for Git, Docker, Brew, common cleanup,
   iCloud/Obsidian paths, and WorkTrunk shell integration. `halp` and `cheat`
   show local command notes inspired by ChristianLempa's cheat-sheets.
+- WorkTrunk copies only the ignored, machine-local legacy Git config into a new
+  worktree and runs the complete Verification Suite before merge.
 - `skill-link [directory]` points `~/.agents/skills` and `~/.claude/skills` at a
   skill you are developing, so edits take effect without reinstalling. It
   defaults to the current directory, requires a `SKILL.md`, and moves an
