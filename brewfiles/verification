@@ -9,10 +9,12 @@
 # verify-bin: gitleaks
 # verify-bin: lua
 # verify-bin: luacheck
+# verify-bin: nvim
 # verify-bin: python3
 # verify-bin: ruby
 # verify-bin: shellcheck
 # verify-bin: stow
+# verify-bin: stylua
 # verify-bin: taplo
 # verify-bin: wget
 
@@ -25,9 +27,11 @@ brew "git"
 brew "gitleaks"
 brew "lua"
 brew "luacheck"
+brew "neovim"
 brew "python"
 brew "ruby"
 brew "shellcheck"
 brew "stow"
+brew "stylua"
 brew "taplo"
 brew "wget"
