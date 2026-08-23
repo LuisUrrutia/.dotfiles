@@ -38,7 +38,9 @@ return {
             "L3MON4D3/LuaSnip",
         },
         build = function()
-            require("blink.cmp").build():pwait()
+            if not require("config.blink").ensure() then
+                error("blink.cmp native library build failed")
+            end
         end,
         opts = {
             keymap = {

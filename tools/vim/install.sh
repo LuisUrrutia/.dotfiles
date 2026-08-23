@@ -19,5 +19,9 @@ stow_config vim
 PATH="$tree_sitter_bin_dir:$PATH" "$nvim_bin_path" --headless "+Lazy! sync" +qa
 PATH="$tree_sitter_bin_dir:$PATH" \
   "$nvim_bin_path" --headless \
+  "+lua if not require('config.blink').ensure() then vim.cmd.cquit() end" \
+  +qa
+PATH="$tree_sitter_bin_dir:$PATH" \
+  "$nvim_bin_path" --headless \
   "+lua if not require('config.treesitter').install() then vim.cmd.cquit() end" \
   +qa

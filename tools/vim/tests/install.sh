@@ -60,6 +60,9 @@ if [[ "${NVIM_TREESITTER_FAIL:-false}" == true &&
     exit 1
   fi
 fi
+if [[ "${NVIM_BLINK_FAIL:-false}" == true && "$*" == *"config.blink"* ]]; then
+  exit 1
+fi
 EOF
 
 chmod +x "$fake_bin"/* "$managed_bin/tree-sitter"
@@ -81,6 +84,23 @@ set -e
   fail "Neovim could not resolve the mise-owned tree-sitter"
 grep -F "nvim tree-sitter=$managed_bin/tree-sitter" "$call_log" >/dev/null ||
   fail "Neovim did not receive the mise-owned tree-sitter on PATH"
+grep -F "config.blink" "$call_log" >/dev/null ||
+  fail "installer did not verify the blink.cmp native library"
+
+set +e
+CALL_LOG="$call_log" \
+  NVIM_BLINK_FAIL=true \
+  HOME="$TMP_DIR/home" \
+  DOTFILES="$ROOT_DIR" \
+  HOMEBREW_PREFIX="$TMP_DIR/homebrew" \
+  PATH="$fake_bin:/usr/bin:/bin" \
+  /bin/bash "$ROOT_DIR/tools/vim/install.sh" \
+  >"$TMP_DIR/blink-failure.out" 2>"$TMP_DIR/blink-failure.err"
+blink_failure_status=$?
+set -e
+
+[[ "$blink_failure_status" -ne 0 ]] ||
+  fail "missing blink.cmp native library did not fail the Tool Installer"
 
 set +e
 CALL_LOG="$call_log" \
