@@ -116,14 +116,3 @@ stow_config() {
   fi
   echo "Stowed $tool config"
 }
-
-# Run a tool's install script
-# Usage: run_tool <tool_name>
-run_tool() {
-  local tool="$1"
-  local script="$DOTFILES/tools/$tool/install.sh"
-  if [[ -x "$script" ]]; then
-    echo "Configuring $tool..."
-    bash "$script"
-  fi
-}

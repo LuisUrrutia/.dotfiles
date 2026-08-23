@@ -69,10 +69,13 @@ chained_help="$(cd "$TMP_DIR" && DOTFILES=/not/the/repository "$TMP_DIR/chain/do
 
 fixture_root="$TMP_DIR/repository"
 fixture_log="$TMP_DIR/install.log"
-mkdir -p "$fixture_root/cli"
+mkdir -p "$fixture_root/cli" "$fixture_root/bootstrap" "$fixture_root/tools"
 fixture_root="$(cd "$fixture_root" && pwd -P)"
 cp "$DOTFILES_CLI" "$fixture_root/dotfiles"
 cp "$ROOT_DIR"/cli/*.sh "$fixture_root/cli/"
+cp "$ROOT_DIR/bootstrap/install-options.sh" "$ROOT_DIR/bootstrap/profiles.sh" \
+  "$fixture_root/bootstrap/"
+cp "$ROOT_DIR/tools/catalog.sh" "$fixture_root/tools/catalog.sh"
 
 printf '%s\n' \
   '#!/usr/bin/env bash' \
@@ -154,6 +157,17 @@ ln -s "$TMP_DIR/outside" "$fixture_root/tools/escape"
 
 tool_list="$("$fixture_root/dotfiles" tool list)"
 [[ "$tool_list" == $'alpha\nzeta' ]] || fail "Tool List did not return the safe executable catalog"
+
+(
+  DOTFILES="$fixture_root"
+  # shellcheck disable=SC1090
+  source "$ROOT_DIR/tools/catalog.sh"
+  run_tool non-executable
+) >"$TMP_DIR/tool-skip.out" 2>"$TMP_DIR/tool-skip.err" ||
+  fail "unavailable Tool Installer did not degrade to a warning"
+grep -F 'Warning: Tool Installer is unavailable or unsafe, skipping: non-executable' \
+  "$TMP_DIR/tool-skip.err" >/dev/null ||
+  fail "unavailable Tool Installer warning did not name the skipped tool"
 
 tool_log="$TMP_DIR/tool.log"
 set +e

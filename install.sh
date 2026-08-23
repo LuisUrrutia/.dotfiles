@@ -5,6 +5,13 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 export DOTFILES="${DOTFILES:-$SCRIPT_DIR}"
 
+# shellcheck source=bootstrap/install-options.sh
+source "$DOTFILES/bootstrap/install-options.sh"
+# shellcheck source=bootstrap/profiles.sh
+source "$DOTFILES/bootstrap/profiles.sh"
+# shellcheck source=tools/catalog.sh
+source "$DOTFILES/tools/catalog.sh"
+
 MACHINES_DIR="$DOTFILES/machines"
 
 # Machine state lives outside the repo so a re-clone or git clean does not
@@ -57,6 +64,10 @@ BREW_BUNDLE_MAX_ATTEMPTS=5
 BREW_CURL_RETRIES=5
 SUDO_ASKPASS_MAX_ATTEMPTS=3
 SUDO_ASKPASS_RESPONSE_TIMEOUT_SECONDS=5
+HOMEBREW_INSTALL_COMMIT="f4aa1b1ca5b256954dbde0315455fb259cdfc45a"
+HOMEBREW_INSTALL_SHA256="12479a24be3f5307eecac7cde670fad7118640f031229e964f544b1367b52a41"
+HOMEBREW_INSTALL_CURL="${HOMEBREW_INSTALL_CURL:-/usr/bin/curl}"
+HOMEBREW_INSTALL_SHASUM="${HOMEBREW_INSTALL_SHASUM:-/usr/bin/shasum}"
 
 usage() {
   local profile=""
@@ -295,128 +306,21 @@ at_exit() {
 source "$DOTFILES/bootstrap/github-preflight.sh"
 
 parse_args() {
-  while (($#)); do
-    case "$1" in
-    -n | --dry-run)
-      DRY_RUN=true
-      ;;
-    --all-profiles)
-      ARG_ALL_PROFILES=true
-      ;;
-    --core-only)
-      ARG_CORE_ONLY=true
-      ;;
-    --profile)
-      shift
-      if (($# == 0)) || [[ -z "$1" ]]; then
-        say "Error: --profile requires a comma-separated list" >&2
-        exit 1
-      fi
-      ARG_PROFILE_LIST="${ARG_PROFILE_LIST:+$ARG_PROFILE_LIST,}$1"
-      ;;
-    --profile=*)
-      if [[ -z "${1#--profile=}" ]]; then
-        say "Error: --profile requires a comma-separated list" >&2
-        exit 1
-      fi
-      ARG_PROFILE_LIST="${ARG_PROFILE_LIST:+$ARG_PROFILE_LIST,}${1#--profile=}"
-      ;;
-    --no-upgrade)
-      ARG_NO_UPGRADE=true
-      ;;
-    -h | --help)
-      usage
-      exit 0
-      ;;
-    *)
-      say "Error: unknown option: $1" >&2
-      usage >&2
-      exit 1
-      ;;
-    esac
-    shift
-  done
-
-  if [[ "$ARG_ALL_PROFILES" == true && "$ARG_CORE_ONLY" == true ]]; then
-    say "Error: --all-profiles and --core-only cannot be used together" >&2
-    exit 1
+  if ! parse_install_options "$@"; then
+    say "Error: $INSTALL_OPTION_ERROR" >&2
+    usage >&2
+    exit 2
+  fi
+  if [[ "$INSTALL_OPTION_HELP" == true ]]; then
+    usage
+    exit 0
   fi
 
-  if [[ "$ARG_CORE_ONLY" == true && -n "$ARG_PROFILE_LIST" ]]; then
-    say "Error: --core-only and --profile cannot be used together" >&2
-    exit 1
-  fi
-
-  if [[ "$ARG_ALL_PROFILES" == true && -n "$ARG_PROFILE_LIST" ]]; then
-    say "Error: --all-profiles and --profile cannot be used together" >&2
-    exit 1
-  fi
-}
-
-# Each brewfiles/profiles/<name> file is the single source of truth for its
-# profile: the packages plus "# label:", "# question:", "# summary:", and
-# optional "# aliases:" header metadata.
-init_profile_order() {
-  local profile_file=""
-
-  PROFILE_ORDER=()
-  for profile_file in "$DOTFILES/brewfiles/profiles"/*; do
-    [[ -f "$profile_file" ]] || continue
-    PROFILE_ORDER+=("$(basename "$profile_file")")
-  done
-
-  if ((${#PROFILE_ORDER[@]} == 0)); then
-    say "Error: no profile Brewfiles found in $DOTFILES/brewfiles/profiles" >&2
-    exit 1
-  fi
-}
-
-profile_exists() {
-  array_contains "$1" "${PROFILE_ORDER[@]}"
-}
-
-profile_metadata() {
-  local profile="$1"
-  local key="$2"
-  local profile_file="$DOTFILES/brewfiles/profiles/$profile"
-  local value=""
-
-  value="$(sed -n "s/^# ${key}: *//p" "$profile_file" 2>/dev/null | sed -n 1p)"
-  if [[ -z "$value" ]]; then
-    say "Error: profile '$profile' is missing '# ${key}:' metadata in $profile_file" >&2
-    return 1
-  fi
-
-  say "$value"
-}
-
-profile_label() {
-  profile_metadata "$1" label
-}
-
-profile_question() {
-  profile_metadata "$1" question
-}
-
-profile_brewfile() {
-  local profile="$1"
-
-  profile_exists "$profile" || return 1
-  say "$DOTFILES/brewfiles/profiles/$profile"
-}
-
-# bash 3.2 (the only bash on a fresh Mac) treats empty-array expansion as an
-# unbound variable under set -u, so callers must length-check before expanding.
-array_contains() {
-  local needle="$1"
-  local item=""
-  shift
-
-  for item in "$@"; do
-    [[ "$item" == "$needle" ]] && return 0
-  done
-
-  return 1
+  DRY_RUN="$INSTALL_OPTION_DRY_RUN"
+  ARG_ALL_PROFILES="$INSTALL_OPTION_ALL_PROFILES"
+  ARG_CORE_ONLY="$INSTALL_OPTION_CORE_ONLY"
+  ARG_PROFILE_LIST="$INSTALL_OPTION_PROFILE_LIST"
+  ARG_NO_UPGRADE="$INSTALL_OPTION_NO_UPGRADE"
 }
 
 # Shared Brewfile entry parser. Calls <callback> once per package entry with:
@@ -635,33 +539,6 @@ print_selected_language_packages() {
   done
 
   print_profile_packages "languages" "$indent" "${packages[@]}"
-}
-
-normalize_profile() {
-  local profile="$1"
-  profile="${profile// /}"
-  profile="${profile//_/-}"
-
-  local candidate=""
-  local aliases=""
-  local alias_list=()
-
-  for candidate in "${PROFILE_ORDER[@]}"; do
-    if [[ "$profile" == "$candidate" ]]; then
-      say "$candidate"
-      return 0
-    fi
-
-    aliases="$(profile_metadata "$candidate" aliases 2>/dev/null || true)"
-    [[ -n "$aliases" ]] || continue
-    IFS=', ' read -r -a alias_list <<<"$aliases"
-    if ((${#alias_list[@]} > 0)) && array_contains "$profile" "${alias_list[@]}"; then
-      say "$candidate"
-      return 0
-    fi
-  done
-
-  return 1
 }
 
 profile_selected() {
@@ -1359,10 +1236,41 @@ start_sudo_keepalive() {
   "
 }
 
+install_homebrew_from_official_commit() {
+  local installer=""
+  local actual_sha256=""
+  local install_status=0
+
+  installer="$(/usr/bin/mktemp "${TMPDIR:-/tmp}/homebrew-install.XXXXXX")"
+  at_exit "
+/bin/rm -f '${installer}'
+  "
+
+  "$HOMEBREW_INSTALL_CURL" \
+    --fail --location --silent --show-error \
+    --proto '=https' --tlsv1.2 \
+    --output "$installer" \
+    "https://raw.githubusercontent.com/Homebrew/install/$HOMEBREW_INSTALL_COMMIT/install.sh"
+
+  actual_sha256="$("$HOMEBREW_INSTALL_SHASUM" -a 256 "$installer" | /usr/bin/awk '{print $1}')"
+  if [[ "$actual_sha256" != "$HOMEBREW_INSTALL_SHA256" ]]; then
+    say "Error: downloaded Homebrew installer checksum did not match the pinned release." >&2
+    return 1
+  fi
+
+  if NONINTERACTIVE=1 /bin/bash "$installer"; then
+    install_status=0
+  else
+    install_status=$?
+  fi
+  /bin/rm -f "$installer"
+  return "$install_status"
+}
+
 install_homebrew() {
   if ! command -v brew >/dev/null 2>&1 && [[ ! -x "/opt/homebrew/bin/brew" ]]; then
     say "Installing Homebrew..."
-    NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+    install_homebrew_from_official_commit
     return
   fi
 
@@ -1426,7 +1334,8 @@ run_brew_bundle_install() {
     fi
 
     github_phase_preflight "Homebrew $label" 0 \
-      "Homebrew uses formulae.brew.sh, GHCR, vendor downloads, and Git taps; its exact HTTP count is dynamic and it reserves 0 GitHub core API requests."
+      "Homebrew uses formulae.brew.sh, GHCR, vendor downloads, and Git taps; its exact HTTP count is dynamic and it reserves 0 GitHub core API requests." \
+      "web git release"
     ensure_sudo_askpass_ready
     if HOMEBREW_CURL_RETRIES="${HOMEBREW_CURL_RETRIES:-$BREW_CURL_RETRIES}" \
       HOMEBREW_DOWNLOAD_CONCURRENCY="$download_concurrency" \
@@ -1529,12 +1438,12 @@ run_mise_tool_installer() {
     fi
     note "mise exhausted GitHub's core API quota; waiting for its reset before retrying the incomplete toolchain."
     github_phase_preflight "mise retry" 1 \
-      "mise keeps completed tools and will retry only the remaining toolchain work."
+      "mise keeps completed tools and will retry only the remaining toolchain work." \
+      "web release"
   done
 }
 
 run_tool_installers() {
-  local tool_dir=""
   local tool_name=""
   local mise_aqua_count=""
   local mise_github_count=""
@@ -1550,27 +1459,27 @@ run_tool_installers() {
   mise_aqua_count="$(mise_github_backend_count aqua)"
   mise_github_count="$(mise_github_backend_count github)"
   github_phase_preflight "mise" 1 \
-    "mise will install $mise_aqua_count Aqua and $mise_github_count GitHub release tools; its shared version cache avoids most GitHub API calls."
+    "mise will install $mise_aqua_count Aqua and $mise_github_count GitHub release tools; its shared version cache avoids most GitHub API calls." \
+    "web release"
   run_mise_tool_installer
   load_mise_environment
 
-  for tool_dir in "$DOTFILES/tools"/*; do
-    if [[ -d "$tool_dir" ]]; then
-      tool_name="$(basename "$tool_dir")"
-      [[ "$tool_name" == "fish" || "$tool_name" == "mise" ]] && continue
-      if [[ "$tool_name" == "tmux" ]]; then
-        tmux_git_sources="$(tmux_github_git_source_count)"
-        github_phase_preflight "Tmux plugins" 0 \
-          "TPack will synchronize $tmux_git_sources Git repositories; Git transport does not consume GitHub core API requests."
-      elif [[ "$tool_name" == "vim" ]]; then
-        vim_git_sources="$(vim_github_git_source_count)"
-        vim_parser_sources="$(vim_treesitter_parser_source_count)"
-        github_phase_preflight "Vim plugins" 0 \
-          "Neovim will synchronize $vim_git_sources Git repositories and $vim_parser_sources Treesitter parser sources; these do not reserve GitHub core API requests."
-      fi
-      run_tool "$tool_name"
+  while IFS= read -r tool_name; do
+    [[ "$tool_name" == "fish" || "$tool_name" == "mise" ]] && continue
+    if [[ "$tool_name" == "tmux" ]]; then
+      tmux_git_sources="$(tmux_github_git_source_count)"
+      github_phase_preflight "Tmux plugins" 0 \
+        "TPack will synchronize $tmux_git_sources Git repositories; Git transport does not consume GitHub core API requests." \
+        "git"
+    elif [[ "$tool_name" == "vim" ]]; then
+      vim_git_sources="$(vim_github_git_source_count)"
+      vim_parser_sources="$(vim_treesitter_parser_source_count)"
+      github_phase_preflight "Vim plugins" 0 \
+        "Neovim will synchronize $vim_git_sources Git repositories and $vim_parser_sources Treesitter parser sources; these do not reserve GitHub core API requests." \
+        "git"
     fi
-  done
+    run_tool "$tool_name"
+  done < <(LC_ALL=C list_tools)
 }
 
 run_first_run_tasks() {
@@ -1630,7 +1539,8 @@ main() {
   configure_and_print_install_plan
   load_homebrew
   github_phase_preflight "Homebrew bootstrap" 0 \
-    "Homebrew bootstrap/update uses Git, formulae.brew.sh, and GHCR; it reserves 0 GitHub core API requests."
+    "Homebrew bootstrap/update uses Git, formulae.brew.sh, and GHCR; it reserves 0 GitHub core API requests." \
+    "web git release"
   install_homebrew
   load_homebrew
   load_tool_library

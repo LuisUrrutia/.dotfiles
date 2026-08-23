@@ -25,21 +25,33 @@ github_release_connectivity_available() {
 }
 
 github_connectivity_available() {
-  local web_pid=""
-  local git_pid=""
-  local release_pid=""
+  local route=""
+  local route_pid=""
   local status=0
+  local route_pids=()
 
-  github_web_connectivity_available &
-  web_pid="$!"
-  github_git_connectivity_available &
-  git_pid="$!"
-  github_release_connectivity_available &
-  release_pid="$!"
+  for route in "$@"; do
+    case "$route" in
+    web)
+      github_web_connectivity_available &
+      ;;
+    git)
+      github_git_connectivity_available &
+      ;;
+    release)
+      github_release_connectivity_available &
+      ;;
+    *)
+      say "Error: unknown GitHub preflight route: $route" >&2
+      return 1
+      ;;
+    esac
+    route_pids+=("$!")
+  done
 
-  wait "$web_pid" || status=1
-  wait "$git_pid" || status=1
-  wait "$release_pid" || status=1
+  for route_pid in "${route_pids[@]}"; do
+    wait "$route_pid" || status=1
+  done
   return "$status"
 }
 
@@ -248,12 +260,18 @@ github_phase_preflight() {
   local phase="$1"
   local required="$2"
   local traffic_summary="$3"
+  local routes="${4:-web git release}"
+  local route_list=()
+
+  read -r -a route_list <<<"$routes"
 
   section "GitHub preflight: $phase"
-  if ! github_connectivity_available; then
-    say "Error: GitHub routes are not reliable enough to start $phase." >&2
+  if ! github_connectivity_available "${route_list[@]}"; then
+    say "Error: the GitHub routes required by $phase are unavailable: $routes." >&2
     return 1
   fi
   say "$traffic_summary"
-  github_api_budget_available "$phase" "$required"
+  if [[ "$required" -gt 0 ]]; then
+    github_api_budget_available "$phase" "$required"
+  fi
 }

@@ -7,6 +7,7 @@ docs/superpowers/
 .omo/
 .sisyphus/
 *.bak
+/private/
 
 # machine-local legacy git identity, kept on disk but untracked
 tools/git/config/.gitconfig

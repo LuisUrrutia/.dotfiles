@@ -143,27 +143,44 @@ if github_api_rate_limit_exhausted; then
 fi
 
 : >"$preflight_log"
-github_connectivity_available() { printf '%s\n' probe >>"$preflight_log"; }
+github_connectivity_available() { printf 'routes %s\n' "$*" >>"$preflight_log"; }
 github_api_budget_available() {
   printf 'budget %s %s\n' "$1" "$2" >>"$preflight_log"
 }
 github_phase_preflight "mise" 1 \
-  "6 aqua tools and 2 github tools"
-[[ "$(<"$preflight_log")" == $'probe\nbudget mise 1' ]] ||
-  fail "mise preflight did not validate GitHub routes and the anonymous budget in order"
+  "6 aqua tools and 2 github tools" "web release"
+[[ "$(<"$preflight_log")" == $'routes web release\nbudget mise 1' ]] ||
+  fail "mise preflight did not validate only its routes and anonymous budget in order"
+
+: >"$preflight_log"
+github_phase_preflight "Tmux plugins" 0 \
+  "4 Git sources" "git"
+[[ "$(<"$preflight_log")" == 'routes git' ]] ||
+  fail "Git-only preflight performed an unrelated route or API-budget check"
+
+: >"$preflight_log"
+# shellcheck disable=SC1091
+source "$ROOT_DIR/bootstrap/github-preflight.sh"
+github_web_connectivity_available() { printf '%s\n' web >>"$preflight_log"; }
+github_git_connectivity_available() { printf '%s\n' git >>"$preflight_log"; }
+github_release_connectivity_available() { printf '%s\n' release >>"$preflight_log"; }
+github_connectivity_available git
+[[ "$(<"$preflight_log")" == git ]] ||
+  fail "GitHub route selection did not isolate the requested probe"
 
 : >"$preflight_log"
 # shellcheck disable=SC1091
 source "$ROOT_DIR/bootstrap/github-preflight.sh"
 github_connectivity_available() { return 1; }
 set +e
-github_phase_preflight "mise" 1 "6 aqua tools and 2 github tools" \
+github_phase_preflight "mise" 1 "6 aqua tools and 2 github tools" "web release" \
   >"$TMP_DIR/unreachable.out" 2>"$TMP_DIR/unreachable.err"
 unreachable_status=$?
 set -e
 [[ "$unreachable_status" -eq 1 ]] ||
   fail "preflight continued when GitHub routes were unreachable"
-grep -F 'GitHub routes are not reliable enough' "$TMP_DIR/unreachable.err" >/dev/null ||
+grep -F 'GitHub routes required by mise are unavailable: web release' \
+  "$TMP_DIR/unreachable.err" >/dev/null ||
   fail "unreachable GitHub routes did not explain why the phase stopped"
 
 printf 'github preflight test: passed\n'

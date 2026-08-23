@@ -34,6 +34,44 @@ export DOTFILES DOTFILES_INSTALL_NO_MAIN
 # shellcheck disable=SC1090,SC1091
 source "$INSTALL"
 
+homebrew_fixture_curl="$TMP_DIR/homebrew-curl"
+homebrew_fixture_shasum="$TMP_DIR/homebrew-shasum"
+homebrew_fixture_log="$TMP_DIR/homebrew-install.log"
+cat >"$homebrew_fixture_curl" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+output=""
+url=""
+while (($#)); do
+  if [[ "$1" == --output ]]; then
+    output="$2"
+    shift
+  elif [[ "$1" == https://* ]]; then
+    url="$1"
+  fi
+  shift
+done
+printf '%s\n' '#!/usr/bin/env bash' \
+  'printf "noninteractive=%s\\n" "${NONINTERACTIVE:-}" >"$HOMEBREW_FIXTURE_LOG"' >"$output"
+printf '%s\n' "$url" >"$HOMEBREW_CURL_LOG"
+EOF
+cat >"$homebrew_fixture_shasum" <<EOF
+#!/usr/bin/env bash
+printf '%s  %s\n' '$HOMEBREW_INSTALL_SHA256' "\${3:-}"
+EOF
+chmod +x "$homebrew_fixture_curl" "$homebrew_fixture_shasum"
+HOMEBREW_INSTALL_CURL="$homebrew_fixture_curl"
+HOMEBREW_INSTALL_SHASUM="$homebrew_fixture_shasum"
+HOMEBREW_FIXTURE_LOG="$homebrew_fixture_log"
+HOMEBREW_CURL_LOG="$TMP_DIR/homebrew-curl.log"
+export HOMEBREW_FIXTURE_LOG HOMEBREW_CURL_LOG
+install_homebrew_from_official_commit
+[[ "$(<"$homebrew_fixture_log")" == 'noninteractive=1' ]] ||
+  fail "pinned Homebrew installer was not executed non-interactively"
+[[ "$(<"$HOMEBREW_CURL_LOG")" == \
+  "https://raw.githubusercontent.com/Homebrew/install/$HOMEBREW_INSTALL_COMMIT/install.sh" ]] ||
+  fail "Homebrew bootstrap did not use the pinned upstream commit"
+
 at_exit() { :; }
 original_tmpdir="${TMPDIR:-}"
 TMPDIR="$TMP_DIR"

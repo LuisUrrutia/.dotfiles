@@ -1,31 +1,12 @@
 #!/usr/bin/env bash
 
-list_tools() {
-  local tool_dir=""
-  local installer=""
-
-  for tool_dir in "$DOTFILES/tools"/*; do
-    [[ -d "$tool_dir" && ! -L "$tool_dir" ]] || continue
-    installer="$tool_dir/install.sh"
-    [[ -f "$installer" && -x "$installer" && ! -L "$installer" ]] || continue
-    basename "$tool_dir"
-  done
-}
-
-tool_exists() {
-  local requested="$1"
-  local tool=""
-
-  while IFS= read -r tool; do
-    [[ "$tool" == "$requested" ]] && return 0
-  done < <(list_tools)
-  return 1
-}
-
 run_tool_command() {
   local command_name="${1:-}"
   local tool_name=""
   local argument=""
+
+  # shellcheck source=tools/catalog.sh
+  source "$DOTFILES/tools/catalog.sh"
 
   if [[ "$command_name" == list || "$command_name" == apply ]]; then
     for argument in "$@"; do

@@ -8,7 +8,7 @@ scripts=()
 for script in \
   dotfiles install.sh private-install.sh cleanup.sh machines/*.sh .githooks/* \
   cli/*.sh \
-  bootstrap/*.sh \
+  bootstrap/*.sh tools/catalog.sh \
   brewfiles/*.sh brewfiles/tests/*.sh config/*.sh config/tests/*.sh \
   maintenance/*.sh maintenance/tests/*.sh \
   tools/lib.sh tools/*/install.sh tools/*/common.sh \

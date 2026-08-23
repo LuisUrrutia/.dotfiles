@@ -18,9 +18,11 @@ EOF
 }
 
 install_help() {
-  local profile_file=""
   local profile=""
   local summary=""
+
+  # shellcheck source=bootstrap/profiles.sh
+  source "$DOTFILES/bootstrap/profiles.sh"
 
   cat <<'EOF'
 Usage: dotfiles install [options]
@@ -34,13 +36,10 @@ Options:
   -h, --help             Show this help
 EOF
 
-  if [[ -d "$DOTFILES/brewfiles/profiles" ]]; then
+  if [[ -d "$DOTFILES/brewfiles/profiles" ]] && init_profile_order; then
     printf '\nProfiles:\n'
-    for profile_file in "$DOTFILES"/brewfiles/profiles/*; do
-      [[ -f "$profile_file" ]] || continue
-      profile="$(basename "$profile_file")"
-      summary="$(sed -n 's/^# summary: *//p' "$profile_file" | sed -n '1p')"
-      [[ -n "$summary" ]] || continue
+    for profile in "${PROFILE_ORDER[@]}"; do
+      summary="$(profile_metadata "$profile" summary)"
       printf '  %-22s %s\n' "$profile" "$summary"
     done
   fi

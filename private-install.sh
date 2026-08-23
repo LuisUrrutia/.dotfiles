@@ -3,7 +3,14 @@
 source "${DOTFILES:-$HOME/.dotfiles}/tools/lib.sh"
 
 PRIVATE_REPO="git@github.com:LuisUrrutia/private.git"
-PRIVATE_DIR="$DOTFILES/private"
+PRIVATE_DIR="${DOTFILES_PRIVATE_DIR:-${XDG_DATA_HOME:-$HOME/.local/share}/dotfiles/private}"
+LEGACY_PRIVATE_DIR="$DOTFILES/private"
+
+if [[ -e "$LEGACY_PRIVATE_DIR" || -L "$LEGACY_PRIVATE_DIR" ]]; then
+  echo "Error: legacy private repository found inside the public checkout: $LEGACY_PRIVATE_DIR" >&2
+  echo "Move it to $PRIVATE_DIR before continuing." >&2
+  exit 1
+fi
 
 ssh -T git@github.com 2>&1 | grep -q "successfully authenticated" || {
   echo "Error: GitHub SSH authentication failed."
@@ -13,10 +20,11 @@ ssh -T git@github.com 2>&1 | grep -q "successfully authenticated" || {
 
 if [[ ! -d "$PRIVATE_DIR" ]]; then
   echo "Cloning private repository..."
+  mkdir -p "$(dirname "$PRIVATE_DIR")"
   git clone "$PRIVATE_REPO" "$PRIVATE_DIR"
 else
   echo "Private repository already exists. Pulling latest changes..."
-  git -C "$PRIVATE_DIR" pull
+  git -C "$PRIVATE_DIR" pull --ff-only
 fi
 
 if ! command -v stow &>/dev/null; then
