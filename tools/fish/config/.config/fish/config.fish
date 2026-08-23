@@ -42,4 +42,6 @@ else
     end
 end
 
-export PATH="$PATH:/Users/luisurrutia/.bifrost/bin"
+if test -d "$HOME/.bifrost/bin"
+    fish_add_path --append --path "$HOME/.bifrost/bin"
+end

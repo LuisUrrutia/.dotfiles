@@ -72,6 +72,10 @@ function img2jpg -d "Convert an image to an optimized JPEG"
             echo "img2jpg: max width must be a positive integer" >&2
             return 1
         end
+        if test "$resize_width" -lt 1
+            echo "img2jpg: max width must be a positive integer" >&2
+            return 1
+        end
     end
 
     set -l quality 95

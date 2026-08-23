@@ -7,6 +7,11 @@ function ports -d "List listening TCP ports"
         return 1
     end
 
+    if test (count $argv) -eq 1; and test "$argv[1]" -lt 1 -o "$argv[1]" -gt 65535
+        echo "ports: port must be between 1 and 65535" >&2
+        return 1
+    end
+
     if not command -q lsof
         echo "ports: lsof is required" >&2
         return 1

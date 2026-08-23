@@ -7,6 +7,7 @@ DOTFILES_ROOT=$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)
 FISH=/opt/homebrew/bin/fish
 CONFIG_FILE="$DOTFILES_ROOT/tools/fish/config/.config/fish/config.fish"
 VIM_FILE="$DOTFILES_ROOT/tools/fish/config/.config/fish/conf.d/02_vim.fish"
+HOMEBREW_FILE="$DOTFILES_ROOT/tools/fish/config/.config/fish/conf.d/00_homebrew.fish"
 
 tmp_dir=$(mktemp -d)
 trap 'rm -rf "$tmp_dir"' EXIT
@@ -82,3 +83,21 @@ if [[ ! -e "$secret_marker" ]]; then
   printf 'Interactive Fish did not source secrets.fish\n' >&2
   exit 1
 fi
+
+mkdir -p "$home_dir/.bifrost/bin"
+env HOME="$home_dir" PATH=/usr/bin:/bin CONFIG_FILE="$CONFIG_FILE" \
+  "$FISH" --no-config -c \
+  'source "$CONFIG_FILE"; contains -- "$HOME/.bifrost/bin" $PATH'
+
+env HOME="$home_dir" PATH=/usr/bin:/bin HOMEBREW_FILE="$HOMEBREW_FILE" \
+  HOMEBREW_PREFIX="$tmp_dir/brew" HOMEBREW_CELLAR="$tmp_dir/cellar" \
+  HOMEBREW_REPOSITORY="$tmp_dir/repository" HOMEBREW_NO_ANALYTICS=custom \
+  EXPECTED_HOMEBREW_PREFIX="$tmp_dir/brew" EXPECTED_HOMEBREW_CELLAR="$tmp_dir/cellar" \
+  EXPECTED_HOMEBREW_REPOSITORY="$tmp_dir/repository" \
+  "$FISH" --no-config -c '
+    source "$HOMEBREW_FILE"
+    test "$HOMEBREW_PREFIX" = "$EXPECTED_HOMEBREW_PREFIX"
+    and test "$HOMEBREW_CELLAR" = "$EXPECTED_HOMEBREW_CELLAR"
+    and test "$HOMEBREW_REPOSITORY" = "$EXPECTED_HOMEBREW_REPOSITORY"
+    and test "$HOMEBREW_NO_ANALYTICS" = custom
+  '

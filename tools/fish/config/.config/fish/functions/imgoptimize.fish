@@ -19,19 +19,6 @@ function imgoptimize -d "Compress and resize images to max 5K"
         return
     end
 
-    for dependency in fd sips pngquant
-        if not command -q $dependency
-            echo "Error: $dependency not found."
-            return 1
-        end
-    end
-
-    set -l jpegtran "$HOMEBREW_PREFIX/opt/mozjpeg/bin/jpegtran"
-    if not test -x "$jpegtran"
-        echo "Error: jpegtran not found at $jpegtran."
-        return 1
-    end
-
     set -l max_size 5120
     if test (count $argv) -gt 1
         echo "Usage: imgoptimize [options] [max_size]"
@@ -43,7 +30,24 @@ function imgoptimize -d "Compress and resize images to max 5K"
     end
 
     if not string match -qr '^[0-9]+$' -- "$max_size"
-        echo "Error: max_size must be a positive integer."
+        echo "Error: max_size must be a positive integer." >&2
+        return 1
+    end
+    if test "$max_size" -lt 1
+        echo "Error: max_size must be a positive integer." >&2
+        return 1
+    end
+
+    for dependency in fd sips pngquant
+        if not command -q $dependency
+            echo "Error: $dependency not found."
+            return 1
+        end
+    end
+
+    set -l jpegtran "$HOMEBREW_PREFIX/opt/mozjpeg/bin/jpegtran"
+    if not test -x "$jpegtran"
+        echo "Error: jpegtran not found at $jpegtran."
         return 1
     end
 
