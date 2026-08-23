@@ -56,9 +56,8 @@ The Bootstrapper is not just a symlink script. It:
   allowing up to three attempts; a protected per-run broker keeps it only in
   memory and serializes concurrent Homebrew `SUDO_ASKPASS` requests, while
   package retries revalidate the broker and ask again if it stops
-- requires RiseupVPN for every normal install, verifies a pinned official ARM
-  image and its native payload without Rosetta, waits for you to connect, then
-  probes GitHub web, Git, and release-download routes in parallel
+- probes GitHub web, Git, and release-download routes in parallel before each
+  networked phase
 - asks plain-language questions, shows the packages/apps behind each yes, then
   maps the answers to optional profile Brewfiles
 - installs Homebrew if missing, otherwise updates and upgrades it
@@ -82,36 +81,20 @@ The Bootstrapper is not just a symlink script. It:
   work does not repeat (a legacy repo-local `.installed` file is still honored
   and cleaned up)
 
-RiseupVPN is a temporary Connectivity Rescue, not a persistent package managed
-by a Brewfile. It needs no account. The Bootstrapper uses LEAP's pinned
-`aarch64` image because the stable download and even the ARM image's Qt wrapper
-are Intel-only. It never executes that wrapper or installs Rosetta. Instead, it
-verifies the image checksum, safely extracts the payload with macOS `bsdtar`,
-and requires the app, privileged helper, OpenVPN client, and lifecycle hook to
-support `arm64` before copying anything into `/Applications`.
-
-An existing native installation with the expected bundle is reused and
-preserved. When the Bootstrapper installs RiseupVPN, it records that ownership,
-keeps the tunnel available across failed runs, and uses the extracted ARM
-lifecycle hook to remove both the helper and application only after every
-networked phase succeeds. Non-interactive installs proceed only when an
-expected native installation is already connected.
-
-VPN exit IPs are shared, so their unauthenticated GitHub API budget can already
-be exhausted on a fresh Mac. The Bootstrapper checks RiseupVPN, GitHub routes,
-and `https://api.github.com/rate_limit` immediately before Homebrew, mise,
-TPack, and Neovim instead of treating the install as one network phase.
-Homebrew uses its own JSON API, GHCR, vendor downloads, and Git taps; TPack and
-Neovim use Git and direct downloads, so none reserves GitHub core API requests.
-mise releases use mise's shared version cache first and only fall back to
-GitHub's API when necessary. The Bootstrapper therefore does not require a
-GitHub login during a fresh install; mise automatically reuses an existing
-token or GitHub CLI session when one is already available. If the anonymous
-quota is exhausted before mise, the Bootstrapper waits in interruptible
-one-minute intervals until GitHub's reported reset. If mise consumes the final
-requests and fails, the Bootstrapper confirms the exhausted quota, waits,
-rechecks RiseupVPN and GitHub routes, then retries the incomplete toolchain
-without discarding tools that already installed successfully.
+An unauthenticated GitHub API budget can already be exhausted on a fresh Mac.
+The Bootstrapper checks GitHub routes and `https://api.github.com/rate_limit`
+immediately before Homebrew, mise, TPack, and Neovim instead of treating the
+install as one network phase. Homebrew uses its own JSON API, GHCR, vendor
+downloads, and Git taps; TPack and Neovim use Git and direct downloads, so none
+reserves GitHub core API requests. mise releases use mise's shared version cache
+first and only fall back to GitHub's API when necessary. The Bootstrapper
+therefore does not require a GitHub login during a fresh install; mise
+automatically reuses an existing token or GitHub CLI session when one is already
+available. If the anonymous quota is exhausted before mise, the Bootstrapper
+waits in interruptible one-minute intervals until GitHub's reported reset. If
+mise consumes the final requests and fails, the Bootstrapper confirms the
+exhausted quota, waits, rechecks GitHub routes, then retries the incomplete
+toolchain without discarding tools that already installed successfully.
 
 Several tool installers have real side effects: macOS defaults, shell
 registration, tmux plugin setup, service starts, generated completions,

@@ -184,21 +184,19 @@ orchestration_log="$TMP_DIR/orchestration.log"
   uname() { printf '%s\n' Darwin; }
   load_tool_library() { :; }
   prepare_install_session() { printf '%s\n' prerequisites >>"$orchestration_log"; }
-  ensure_bootstrap_connectivity() { printf '%s\n' connectivity >>"$orchestration_log"; }
   github_phase_preflight() { printf 'preflight-%s\n' "$1" >>"$orchestration_log"; }
   configure_and_print_install_plan() { printf '%s\n' selection >>"$orchestration_log"; }
   load_homebrew() { :; }
   install_homebrew() { printf '%s\n' homebrew >>"$orchestration_log"; }
   setup_full_xcode() { printf '%s\n' xcode >>"$orchestration_log"; }
   install_declared_packages_and_dependents() { printf '%s\n' bundles >>"$orchestration_log"; }
-  finish_network_rescue() { printf '%s\n' network-finish >>"$orchestration_log"; }
   print_next_steps() { :; }
   INSTALLED_MARKER="$TMP_DIR/installed"
   LEGACY_INSTALLED_MARKER="$TMP_DIR/legacy-installed"
   RUN_XCODE_SETUP=true
   main
 )
-[[ "$(<"$orchestration_log")" == $'prerequisites\nconnectivity\nselection\npreflight-Homebrew bootstrap\nhomebrew\nxcode\nbundles\nnetwork-finish' ]] ||
+[[ "$(<"$orchestration_log")" == $'prerequisites\nselection\npreflight-Homebrew bootstrap\nhomebrew\nxcode\nbundles' ]] ||
   fail "Homebrew was not preflighted or Xcode did not finish before dependent work"
 
 password_capture_count=0
@@ -241,7 +239,6 @@ credential_valid=true
 brew_attempt_count=0
 password_capture_count=0
 password_validation_count=0
-ensure_bootstrap_connectivity() { :; }
 github_phase_preflight() { :; }
 brew_bundle_retry_delay() { :; }
 brew() {

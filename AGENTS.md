@@ -19,8 +19,7 @@ Load only the source relevant to the current branch of work:
   provisioning. `verification/groups/` holds the checks it runs.
 - `dotfiles` and `cli/*.sh`: root routing, public grammar, help, and thin
   adapter boundaries.
-- `install.sh` and `bootstrap/`: fresh-Mac orchestration and temporary
-  connectivity rescue.
+- `install.sh` and `bootstrap/`: fresh-Mac orchestration and GitHub preflight.
 - `config/run.sh`, `maintenance/`, and `verification/`: lifecycle,
   maintenance, and repository-check owners.
 - `tools/lib.sh`: Shared Installer Helpers and their current interfaces.
@@ -72,11 +71,6 @@ Run each Brewfile with Bundle-owned parallelism and bounded whole-Brewfile
 retries; installed entries make retries incremental. A final Bundle failure may
 continue to other Brewfiles, but blocks cleanup, Tool Installers, first-run
 tasks, and the install marker.
-
-Connectivity Rescue is temporary Bootstrapper state. Preserve an existing
-RiseupVPN installation, require the pinned native ARM payload, retain a managed
-rescue across failed runs, and remove it only after every networked phase
-succeeds. Keep this pre-Homebrew path Rosetta-free.
 
 ### Ownership
 

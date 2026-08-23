@@ -78,18 +78,9 @@ requests are serialized so parallel Homebrew casks each receive one complete
 response. Package retries revalidate the broker and request the password again
 if it stopped.
 
-The Bootstrapper establishes a temporary RiseupVPN Connectivity Rescue before
-probing GitHub web, Git, and release-download routes in parallel. The adapter
-downloads LEAP's pinned `aarch64` disk image, verifies its checksum, extracts
-the native application and lifecycle hook without executing the Intel-only Qt
-wrapper, and validates every critical executable as ARM before installation.
-Rosetta is never installed or used. The operator then connects without an
-account. A pre-existing native installation remains user-owned. A
-Bootstrapper-owned installation stays available after a failed run and is
-removed with its ARM lifecycle hook only after all networked phases succeed. A
-managed WARP rescue left by an earlier Bootstrapper is removed during
-migration. Non-interactive execution fails instead of installing or opening a
-VPN application.
+The Bootstrapper probes GitHub web, Git, and release-download routes in
+parallel before each networked phase, and stops that phase when the routes are
+not reliable enough to start it.
 
 Each Brewfile first uses `brew bundle install --jobs=auto`. Transient failures
 retry the whole idempotent Brewfile, so installed entries are skipped and

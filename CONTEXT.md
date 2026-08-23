@@ -35,13 +35,6 @@ _Avoid_: CI dependencies, runner packages
 The root `install.sh` script that prepares a Mac, installs packages, runs tool installers, stows configs, and applies first-run setup.
 _Avoid_: Symlink script, setup helper
 
-**Connectivity Rescue**:
-A Bootstrapper-required temporary tunnel that protects every networked install
-phase before persistent networking apps are available. The Bootstrapper
-preserves a pre-existing tunnel and removes only the rescue installation it
-created, after all networked work succeeds.
-_Avoid_: Package owner, permanent VPN config
-
 **Tool Directory**:
 A directory under `tools/<tool>/` that owns one tool's installer and versioned config.
 _Avoid_: Plugin, module
@@ -128,8 +121,6 @@ _Avoid_: Defensive coding, error suppression
 - The **Dotfiles Command** exposes installation and maintenance capabilities while their existing owners retain responsibility for behavior.
 - The **Dotfiles Command** runs the **Verification Suite** using the **Verification Toolchain**; CI provisions that toolchain and invokes the same command.
 - The **Bootstrapper** installs Homebrew packages from **Brewfiles**, runs **Tool Installers**, and stows **Stowed Config** into `$HOME`.
-- The **Bootstrapper** establishes a **Connectivity Rescue** before package
-  selection and retains it through every networked installer.
 - The **Bootstrapper** loads environments established during the current run
   before invoking dependent **Tool Installers**; it never relies on restarting
   the terminal or loading interactive shell configuration.

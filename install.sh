@@ -292,7 +292,7 @@ at_exit() {
 }
 
 # shellcheck disable=SC1091
-source "$DOTFILES/bootstrap/network-rescue.sh"
+source "$DOTFILES/bootstrap/github-preflight.sh"
 
 parse_args() {
   while (($#)); do
@@ -1436,7 +1436,6 @@ run_brew_bundle_install() {
 
     if [[ "$attempt" -lt "$BREW_BUNDLE_MAX_ATTEMPTS" ]]; then
       note "Homebrew bundle failed for $label (attempt $attempt/$BREW_BUNDLE_MAX_ATTEMPTS); retrying unfinished entries."
-      ensure_bootstrap_connectivity
       brew_bundle_retry_delay "$attempt"
     fi
     attempt=$((attempt + 1))
@@ -1628,7 +1627,6 @@ main() {
   fi
 
   prepare_install_session
-  ensure_bootstrap_connectivity
   configure_and_print_install_plan
   load_homebrew
   github_phase_preflight "Homebrew bootstrap" 0 \
@@ -1642,7 +1640,6 @@ main() {
   fi
 
   install_declared_packages_and_dependents
-  finish_network_rescue
 
   mkdir -p "$(dirname "$INSTALLED_MARKER")"
   touch "$INSTALLED_MARKER"
