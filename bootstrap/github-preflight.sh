@@ -165,9 +165,16 @@ vim_treesitter_parser_source_count() {
     return
   fi
   /usr/bin/awk '
+    BEGIN { single_quote = sprintf("%c", 39) }
     /^M\.parsers = \{/ { in_parsers = 1; next }
     in_parsers && /^}/ { print count + 0; exit }
-    in_parsers && /^[[:space:]]*'\''[A-Za-z0-9_-]+'\''[,]?[[:space:]]*$/ { count++ }
+    in_parsers {
+      line = $0
+      gsub(single_quote, "\"", line)
+      if (line ~ /^[[:space:]]*"[A-Za-z0-9_-]+"[,]?[[:space:]]*$/) {
+        count++
+      }
+    }
   ' "$treesitter_config"
 }
 
