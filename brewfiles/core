@@ -211,4 +211,5 @@ cask "zoom"        # Video conferencing
 # ------------------------------------------------------------------------------
 cask "claude"   # AI assistant desktop app
 cask "codexbar" # Menu bar usage monitor for AI coding tools
+cask "granola"  # AI-powered meeting notepad
 cask "stablyai/orca/orca", trusted: true # Multi-agent orchestration app
