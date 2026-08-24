@@ -106,15 +106,51 @@ run_skill_unlink "$TMP_DIR" "$PROJECT_DIR/skills/docs" >"$TMP_DIR/installed.out"
 grep -q '^Preserved .*: not a symlink' "$TMP_DIR/installed.out" ||
   fail "the preserved installed copy was not reported"
 
+# Arrange: multiple development skills are linked in both agent directories.
+for skill in alpha beta; do
+  write_skill "$PROJECT_DIR/batch/$skill" "$skill v1"
+  ln -s "$PROJECT_DIR/batch/$skill" "$AGENTS_SKILLS/$skill"
+  ln -s "$PROJECT_DIR/batch/$skill" "$CLAUDE_SKILLS/$skill"
+done
+
+# Act: Fish expands the wildcard before calling skill-unlink.
+run_skill_unlink "$PROJECT_DIR/batch" "*" >"$TMP_DIR/batch.out" 2>&1 ||
+  fail "unlinking a wildcard batch failed: $(<"$TMP_DIR/batch.out")"
+
+# Assert: every matching development link was removed.
+for skill in alpha beta; do
+  [[ ! -e "$AGENTS_SKILLS/$skill" && ! -L "$AGENTS_SKILLS/$skill" ]] ||
+    fail "the .agents $skill link remains"
+  [[ ! -e "$CLAUDE_SKILLS/$skill" && ! -L "$CLAUDE_SKILLS/$skill" ]] ||
+    fail "the .claude $skill link remains"
+done
+
+# Arrange: an invalid file sorts before a valid linked skill.
+mkdir -p "$PROJECT_DIR/partial"
+printf 'not a directory\n' >"$PROJECT_DIR/partial/a-file"
+write_skill "$PROJECT_DIR/partial/z-valid" 'valid v1'
+ln -s "$PROJECT_DIR/partial/z-valid" "$AGENTS_SKILLS/z-valid"
+ln -s "$PROJECT_DIR/partial/z-valid" "$CLAUDE_SKILLS/z-valid"
+
+# Act: the batch reports failure but continues after the invalid path.
+if run_skill_unlink "$PROJECT_DIR/partial" "*" >"$TMP_DIR/partial.out" 2>&1; then
+  fail "a partially invalid wildcard batch succeeded"
+fi
+
+# Assert: the valid links were still removed.
+[[ ! -e "$AGENTS_SKILLS/z-valid" && ! -L "$AGENTS_SKILLS/z-valid" ]] ||
+  fail "the valid .agents link after a batch error remains"
+[[ ! -e "$CLAUDE_SKILLS/z-valid" && ! -L "$CLAUDE_SKILLS/z-valid" ]] ||
+  fail "the valid .claude link after a batch error remains"
+grep -q 'not a directory' "$TMP_DIR/partial.out" ||
+  fail "the partial batch failure was not explained"
+
 # Assert: invalid arguments are refused.
 if run_skill_unlink "$TMP_DIR" "$PROJECT_DIR/skills/nowhere" >/dev/null 2>&1; then
   fail "a missing directory was accepted"
 fi
 if run_skill_unlink "$TMP_DIR" "--bogus" >/dev/null 2>&1; then
   fail "an unknown option was accepted"
-fi
-if run_skill_unlink "$TMP_DIR" "$PROJECT_DIR/skills/pr $PROJECT_DIR/skills/docs" >/dev/null 2>&1; then
-  fail "multiple directories were accepted"
 fi
 
 printf 'skill-unlink test: ok\n'

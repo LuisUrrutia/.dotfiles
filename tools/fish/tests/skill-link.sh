@@ -103,6 +103,39 @@ run_skill_link "$PROJECT_DIR/skills/walkthrough" "" >/dev/null 2>&1 ||
 [[ "$(readlink "$AGENTS_SKILLS/walkthrough")" == "$PROJECT_DIR/skills/walkthrough" ]] ||
   fail "the default directory was not linked"
 
+# Arrange: a directory containing multiple skills for shell glob expansion.
+write_skill "$PROJECT_DIR/batch/alpha" 'alpha v1'
+write_skill "$PROJECT_DIR/batch/beta" 'beta v1'
+
+# Act: Fish expands the wildcard before calling skill-link.
+run_skill_link "$PROJECT_DIR/batch" "*" >"$TMP_DIR/batch.out" 2>&1 ||
+  fail "linking a wildcard batch failed: $(<"$TMP_DIR/batch.out")"
+
+# Assert: every expanded skill directory was linked.
+for skill in alpha beta; do
+  [[ "$(readlink "$AGENTS_SKILLS/$skill")" == "$PROJECT_DIR/batch/$skill" ]] ||
+    fail "$skill is not linked in .agents"
+  [[ "$(readlink "$CLAUDE_SKILLS/$skill")" == "$PROJECT_DIR/batch/$skill" ]] ||
+    fail "$skill is not linked in .claude"
+done
+
+# Arrange: an invalid directory sorts before a valid skill in the same batch.
+mkdir -p "$PROJECT_DIR/partial/a-docs"
+printf 'docs\n' >"$PROJECT_DIR/partial/a-docs/README.md"
+write_skill "$PROJECT_DIR/partial/z-valid" 'valid v1'
+
+# Act: the batch reports failure but continues after the invalid directory.
+if run_skill_link "$PROJECT_DIR/partial" "*" >"$TMP_DIR/partial.out" 2>&1; then
+  fail "a partially invalid wildcard batch succeeded"
+fi
+
+# Assert: the valid skill was still linked and the invalid directory was not.
+[[ "$(readlink "$AGENTS_SKILLS/z-valid")" == "$PROJECT_DIR/partial/z-valid" ]] ||
+  fail "the valid skill after a batch error was not linked"
+[[ ! -e "$AGENTS_SKILLS/a-docs" ]] || fail "the invalid batch directory was linked"
+grep -q 'no SKILL.md' "$TMP_DIR/partial.out" ||
+  fail "the partial batch failure was not explained"
+
 # Assert: a directory without a SKILL.md is refused.
 mkdir -p "$PROJECT_DIR/skills/docs"
 printf 'docs\n' >"$PROJECT_DIR/skills/docs/README.md"

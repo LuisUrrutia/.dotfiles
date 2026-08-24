@@ -1,10 +1,10 @@
 function skill-unlink -d "Remove development links from the agent skill directories"
-    set -l source_argument
+    set -l source_arguments
 
     for arg in $argv
         switch $arg
             case -h --help
-                echo "Usage: skill-unlink [directory]"
+                echo "Usage: skill-unlink [directory ...]"
                 echo "  directory        Linked skill directory (default: .)"
                 echo "  -h, --help       Show this help message"
                 echo ""
@@ -16,15 +16,24 @@ function skill-unlink -d "Remove development links from the agent skill director
                 echo "skill-unlink: unknown option '$arg'" >&2
                 return 1
             case '*'
-                if test -n "$source_argument"
-                    echo "skill-unlink: expected exactly one directory" >&2
-                    return 1
-                end
-                set source_argument $arg
+                set -a source_arguments "$arg"
         end
     end
 
-    test -n "$source_argument"; or set source_argument .
+    test (count $source_arguments) -gt 0; or set source_arguments .
+
+    set -l failed false
+
+    for source_argument in $source_arguments
+        if not __skill_unlink_one "$source_argument"
+            set failed true
+        end
+    end
+
+    test "$failed" = false
+end
+
+function __skill_unlink_one -a source_argument -d "Remove development links for one skill directory"
 
     if not test -d "$source_argument"
         echo "skill-unlink: not a directory: $source_argument" >&2

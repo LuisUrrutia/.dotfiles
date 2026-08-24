@@ -384,12 +384,13 @@ the canonical commands.
   worktree and runs the complete Verification Suite before merge.
 - OpenSSH uses local default identities for GitHub and GitLab. Every other host
   uses the 1Password SSH agent.
-- `skill-link [directory]` points `~/.agents/skills` and `~/.claude/skills` at a
-  skill you are developing, so edits take effect without reinstalling. It
-  defaults to the current directory, requires a `SKILL.md`, and moves an
-  installed copy that differs to `~/.agents/skills-backups` before linking.
-  `skill-unlink [directory]` removes only links to that directory and preserves
-  installed copies, unrelated links, and backups.
+- `skill-link [directory ...]` points `~/.agents/skills` and
+  `~/.claude/skills` at skills you are developing, so edits take effect without
+  reinstalling. It accepts shell globs, defaults to the current directory,
+  requires a `SKILL.md`, and moves an installed copy that differs to
+  `~/.agents/skills-backups` before linking. `skill-unlink [directory ...]`
+  removes only links to those directories and preserves installed copies,
+  unrelated links, and backups.
 - Ghostty uses Catppuccin, Monaspice Nerd Font, shell integration, and a
   global quick-terminal toggle on `super+backquote`.
 - Starship shows Git, runtimes, Docker, AWS, Google Cloud, duration, status,
