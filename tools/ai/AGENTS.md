@@ -20,14 +20,40 @@ Read `~/.agents/AGENTS_LOCAL.md` when it exists.
 
 ## Worktrees
 
-- Use WorkTrunk (`wt`) for the worktree lifecycle:
-  - Create a worktree and branch: `wt switch --create <name>`
+- New branches: when the user asks to work on one, create its worktree with
+  `wt switch --create <name>` and perform the work there.
+- Use WorkTrunk (`wt`) for every other worktree lifecycle operation:
   - Switch worktrees: `wt switch <name>`
   - List worktrees: `wt list`
   - Remove the current worktree: `wt remove`
 - If the project has no `.config/wt.toml`, suggest creating it.
 - Reserve raw `git worktree` commands for cases where the user explicitly
   requests them.
+
+### Orca handoff
+
+- Treat the current agent as Orca-managed when both `ORCA_WORKTREE_ID` and
+  `ORCA_TERMINAL_HANDLE` are set.
+- In an Orca-managed session, when you decide the current task needs a new
+  branch or worktree, transfer ownership before implementation:
+  1. Invoke the `orca-cli` skill. Match `ORCA_PANE_KEY` against
+     `orca worktree ps --json` and preserve that pane's `agentType` in the
+     destination:
+     - `codex`: `codex --dangerously-bypass-approvals-and-sandbox`
+     - `claude`: `claude --dangerously-skip-permissions`
+     Stop and report any other or unresolved agent type; its YOLO command is
+     undefined.
+  2. Invoke the `handoff` skill with context limited to the work requested for
+     the new branch.
+  3. Create the branch and worktree with `wt`, and resolve the destination's
+     absolute worktree path.
+  4. Use Orca only to create a terminal tab attached to that existing path,
+     start the preserved agent with its command above, and send it a prompt to
+     read the handoff document.
+  5. Report the destination worktree and terminal, then stop. The receiving
+     agent owns implementation, verification, and commits from that point.
+- WorkTrunk owns worktree creation, switching, listing, and removal. Orca owns
+  only the terminal placement for this handoff.
 
 ## Execution
 
