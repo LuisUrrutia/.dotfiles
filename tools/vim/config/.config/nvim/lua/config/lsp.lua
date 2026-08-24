@@ -1,14 +1,5 @@
 local M = {}
 
-M.servers = {
-  "rust_analyzer",
-  "lua_ls",
-  "tailwindcss",
-  "astro",
-  "docker_language_server",
-  "vtsls",
-}
-
 local function load_packages()
   require("lazy").load({ plugins = { "mason.nvim", "mason-lspconfig.nvim" } })
 
@@ -19,8 +10,9 @@ local function load_packages()
   end
 
   local mappings = require("mason-lspconfig").get_mappings().lspconfig_to_package
+  local servers = require("mason-lspconfig.settings").current.ensure_installed
   local packages = {}
-  for _, server in ipairs(M.servers) do
+  for _, server in ipairs(servers) do
     local server_name, version = server:match("^([^@]+)@?(.*)$")
     local package_name = mappings[server_name]
     if not package_name then
