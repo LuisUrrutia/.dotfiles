@@ -3,7 +3,9 @@
 set -euo pipefail
 
 DOTFILES_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
-FUNCTION_FILE="$DOTFILES_ROOT/tools/fish/config/.config/fish/functions/skill-link.fish"
+FUNCTIONS_DIR="$DOTFILES_ROOT/tools/fish/config/.config/fish/functions"
+FUNCTION_FILE="$FUNCTIONS_DIR/skill-link.fish"
+AGENT_DIRS_FILE="$FUNCTIONS_DIR/skill_agent_dirs.fish"
 COMPLETION_FILE="$DOTFILES_ROOT/tools/fish/config/.config/fish/completions/skill-link.fish"
 # Physical path: skill-link resolves its argument, and macOS puts the temporary
 # directory behind the /var -> /private/var symlink.
@@ -21,6 +23,7 @@ fail() {
 }
 
 [[ -f "$FUNCTION_FILE" ]] || fail "the function is missing"
+[[ -f "$AGENT_DIRS_FILE" ]] || fail "the agent directory function is missing"
 [[ -f "$COMPLETION_FILE" ]] || fail "the completion is missing"
 
 FAKE_HOME="$TMP_DIR/home"
@@ -34,8 +37,8 @@ mkdir -p "$FAKE_HOME"
 # Run skill-link in an isolated HOME. --no-config keeps the operator's own Fish
 # configuration out of the run.
 run_skill_link() {
-  HOME="$FAKE_HOME" FUNCTION_FILE="$FUNCTION_FILE" fish --no-config -c \
-    "source \"\$FUNCTION_FILE\"; cd \"$1\"; skill-link $2"
+  HOME="$FAKE_HOME" FUNCTIONS_DIR="$FUNCTIONS_DIR" fish --no-config -c \
+    "set -p fish_function_path \"\$FUNCTIONS_DIR\"; cd \"$1\"; skill-link $2"
 }
 
 write_skill() {

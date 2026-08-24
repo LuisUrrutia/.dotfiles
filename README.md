@@ -388,6 +388,8 @@ the canonical commands.
   skill you are developing, so edits take effect without reinstalling. It
   defaults to the current directory, requires a `SKILL.md`, and moves an
   installed copy that differs to `~/.agents/skills-backups` before linking.
+  `skill-unlink [directory]` removes only links to that directory and preserves
+  installed copies, unrelated links, and backups.
 - Ghostty uses Catppuccin, Monaspice Nerd Font, shell integration, and a
   global quick-terminal toggle on `super+backquote`.
 - Starship shows Git, runtimes, Docker, AWS, Google Cloud, duration, status,
