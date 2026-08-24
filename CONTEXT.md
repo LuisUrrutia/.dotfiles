@@ -72,7 +72,7 @@ _Avoid_: Dependency manifest, manual install list
 
 **Package Owner**:
 The single tracked manager responsible for installing and updating a persistent
-app, runtime, native utility, or portable global command.
+app, runtime, native utility, portable global command, or editor-scoped tool.
 _Avoid_: Preferred installer, duplicate fallback
 
 **Core Install**:

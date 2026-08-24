@@ -63,6 +63,27 @@ fi
 if [[ "${NVIM_BLINK_FAIL:-false}" == true && "$*" == *"config.blink"* ]]; then
   exit 1
 fi
+if [[ "${NVIM_LSP_FAIL:-false}" == true && "$*" == *"config.lsp"* ]]; then
+  exit 1
+fi
+if [[ "$*" == *"config.lsp"* ]]; then
+  mkdir -p "$HOME/.local/share/nvim/mason/bin"
+  printf '#!/usr/bin/env bash\n' >"$HOME/.local/share/nvim/mason/bin/lua-language-server"
+  chmod +x "$HOME/.local/share/nvim/mason/bin/lua-language-server"
+fi
+EOF
+
+cat >"$fake_bin/brew" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+printf 'brew %s\n' "$*" >>"$CALL_LOG"
+if [[ "${1:-}" == list && "${2:-}" == --formula && "${3:-}" == lua-language-server ]]; then
+  exit 0
+fi
+if [[ "${1:-}" == uninstall && "${2:-}" == --formula && "${3:-}" == lua-language-server ]]; then
+  exit 0
+fi
+exit 1
 EOF
 
 chmod +x "$fake_bin"/* "$managed_bin/tree-sitter"
@@ -86,6 +107,36 @@ grep -F "nvim tree-sitter=$managed_bin/tree-sitter" "$call_log" >/dev/null ||
   fail "Neovim did not receive the mise-owned tree-sitter on PATH"
 grep -F "config.blink" "$call_log" >/dev/null ||
   fail "installer did not verify the blink.cmp native library"
+grep -F "config.lsp" "$call_log" >/dev/null ||
+  fail "installer did not ensure the Mason-owned language servers"
+grep -F "brew uninstall --formula lua-language-server" "$call_log" >/dev/null ||
+  fail "installer did not retire the legacy Homebrew language server"
+lsp_line="$(grep -nF "config.lsp" "$call_log" | head -1 | cut -d: -f1)"
+uninstall_line="$(grep -nF "brew uninstall --formula lua-language-server" "$call_log" | head -1 | cut -d: -f1)"
+[[ "$lsp_line" -lt "$uninstall_line" ]] ||
+  fail "installer retired Homebrew before verifying the Mason replacement"
+! grep -F 'brew "lua-language-server"' "$ROOT_DIR/brewfiles/core" >/dev/null ||
+  fail "lua-language-server still has a duplicate Homebrew owner"
+
+missing_home="$TMP_DIR/missing-mason/home"
+missing_log="$TMP_DIR/missing-mason/calls.log"
+mkdir -p "$missing_home" "$(dirname "$missing_log")"
+set +e
+CALL_LOG="$missing_log" \
+  HOME="$missing_home" \
+  DOTFILES="$ROOT_DIR" \
+  HOMEBREW_PREFIX="$TMP_DIR/homebrew" \
+  PATH="$fake_bin:/usr/bin:/bin" \
+  /bin/bash "$ROOT_DIR/tools/vim/migrate-legacy.sh" \
+  >"$TMP_DIR/missing-mason/stdout" 2>"$TMP_DIR/missing-mason/stderr"
+missing_mason_status=$?
+set -e
+[[ "$missing_mason_status" -ne 0 ]] ||
+  fail "missing Mason replacement did not stop the legacy migration"
+grep -F "preserving the legacy Homebrew formula" "$TMP_DIR/missing-mason/stderr" >/dev/null ||
+  fail "missing Mason replacement did not explain the safe fallback"
+[[ ! -s "$missing_log" ]] ||
+  fail "legacy Homebrew formula was inspected before Mason ownership was proven"
 
 set +e
 CALL_LOG="$call_log" \
@@ -101,6 +152,21 @@ set -e
 
 [[ "$blink_failure_status" -ne 0 ]] ||
   fail "missing blink.cmp native library did not fail the Tool Installer"
+
+set +e
+CALL_LOG="$call_log" \
+  NVIM_LSP_FAIL=true \
+  HOME="$TMP_DIR/home" \
+  DOTFILES="$ROOT_DIR" \
+  HOMEBREW_PREFIX="$TMP_DIR/homebrew" \
+  PATH="$fake_bin:/usr/bin:/bin" \
+  /bin/bash "$ROOT_DIR/tools/vim/install.sh" \
+  >"$TMP_DIR/lsp-failure.out" 2>"$TMP_DIR/lsp-failure.err"
+lsp_failure_status=$?
+set -e
+
+[[ "$lsp_failure_status" -ne 0 ]] ||
+  fail "failed Mason language server installation did not fail the Tool Installer"
 
 set +e
 CALL_LOG="$call_log" \

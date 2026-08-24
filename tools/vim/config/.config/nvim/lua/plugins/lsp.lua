@@ -5,14 +5,7 @@ return {
     "mason-org/mason-lspconfig.nvim",
     opts = {
       automatic_enable = true,
-      ensure_installed = {
-        "rust_analyzer",
-        "lua_ls",
-        "tailwindcss",
-        "astro",
-        "docker_language_server",
-        "vtsls",
-      },
+      ensure_installed = require("config.lsp").servers,
     },
     dependencies = {
       "mason-org/mason.nvim",

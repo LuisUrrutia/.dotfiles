@@ -1390,8 +1390,8 @@ install_declared_packages_and_dependents() {
     return 1
   fi
 
-  run_cleanup
   run_tool_installers
+  run_cleanup
   run_first_run_tasks
 }
 

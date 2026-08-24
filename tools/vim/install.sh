@@ -23,5 +23,10 @@ PATH="$tree_sitter_bin_dir:$PATH" \
   +qa
 PATH="$tree_sitter_bin_dir:$PATH" \
   "$nvim_bin_path" --headless \
+  "+lua if not require('config.lsp').ensure() then vim.cmd.cquit() end" \
+  +qa
+/bin/bash "$DOTFILES/tools/vim/migrate-legacy.sh"
+PATH="$tree_sitter_bin_dir:$PATH" \
+  "$nvim_bin_path" --headless \
   "+lua if not require('config.treesitter').install() then vim.cmd.cquit() end" \
   +qa
