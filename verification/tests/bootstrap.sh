@@ -34,6 +34,26 @@ export DOTFILES DOTFILES_INSTALL_NO_MAIN
 # shellcheck disable=SC1090,SC1091
 source "$INSTALL"
 
+(
+  FIRST_RUN=true
+  MACHINE_XCODE_SETUP=false
+
+  configure_system_plan
+
+  [[ "$RUN_XCODE_SETUP" == false ]] ||
+    fail "unregistered first run enabled the machine-only Xcode setup"
+)
+
+(
+  FIRST_RUN=true
+  MACHINE_XCODE_SETUP=true
+
+  configure_system_plan
+
+  [[ "$RUN_XCODE_SETUP" == true ]] ||
+    fail "registered first run omitted its requested Xcode setup"
+)
+
 homebrew_fixture_curl="$TMP_DIR/homebrew-curl"
 homebrew_fixture_shasum="$TMP_DIR/homebrew-shasum"
 homebrew_fixture_log="$TMP_DIR/homebrew-install.log"

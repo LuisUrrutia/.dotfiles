@@ -35,6 +35,7 @@ MACHINE_NAME=""
 MACHINE_HOSTNAME=""
 MACHINE_INSTALL_MODE=""
 MACHINE_PROFILES=""
+MACHINE_XCODE_SETUP=false
 MACHINE_GIT_USER_NAME=""
 MACHINE_GIT_USER_EMAIL=""
 MACHINE_GIT_SIGNING_KEY=""
@@ -127,6 +128,7 @@ reset_machine_config() {
   MACHINE_HOSTNAME=""
   MACHINE_INSTALL_MODE=""
   MACHINE_PROFILES=""
+  MACHINE_XCODE_SETUP=false
   MACHINE_GIT_USER_NAME=""
   MACHINE_GIT_USER_EMAIL=""
   MACHINE_GIT_SIGNING_KEY=""
@@ -785,14 +787,23 @@ configure_cleanup_plan() {
 configure_system_plan() {
   RUN_TOOL_INSTALLERS=true
   RUN_BREW_UPGRADE=true
+  RUN_XCODE_SETUP=false
 
   if [[ "$ARG_NO_UPGRADE" == true ]]; then
     RUN_BREW_UPGRADE=false
   fi
 
+  case "$MACHINE_XCODE_SETUP" in
+  true | false) ;;
+  *)
+    say "Error: invalid Xcode setup value for machine '${MACHINE_ID:-registered}': $MACHINE_XCODE_SETUP" >&2
+    exit 1
+    ;;
+  esac
+
   if [[ "$FIRST_RUN" == true ]]; then
     RUN_PROJECTS_SETUP=true
-    RUN_XCODE_SETUP=true
+    RUN_XCODE_SETUP="$MACHINE_XCODE_SETUP"
     RUN_FISH_SETUP=true
   fi
 }

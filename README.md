@@ -61,7 +61,8 @@ The Bootstrapper is not just a symlink script. It:
 - asks plain-language questions, shows the packages/apps behind each yes, then
   maps the answers to optional profile Brewfiles
 - installs Homebrew if missing, otherwise updates and upgrades it
-- installs the full Xcode app on the first run
+- installs the full Xcode app through `mas` on the first run only when the
+  active Machine Config opts in
 - installs `brewfiles/core` plus a temporary Brewfile assembled from
   `brewfiles/profiles/<profile>` files based on your answers or `--profile`
 - runs Brew Bundle in parallel, gives Homebrew five chances to finish incomplete
@@ -168,6 +169,7 @@ MACHINE_NAME="Work Laptop"
 MACHINE_HOSTNAME="work-laptop"
 MACHINE_INSTALL_MODE="selected"
 MACHINE_PROFILES="dev,languages"
+MACHINE_XCODE_SETUP=false
 MACHINE_GIT_USER_NAME="Your Name"
 MACHINE_GIT_USER_EMAIL="you@example.com"
 ```
@@ -180,6 +182,8 @@ Supported variables:
 - `MACHINE_INSTALL_MODE`: `all`, `core`, or `selected`
 - `MACHINE_PROFILES`: comma-separated profile flags when
   `MACHINE_INSTALL_MODE="selected"`
+- `MACHINE_XCODE_SETUP`: `true` to install and initialize the full Xcode app
+  through `mas` on this machine's first run; defaults to `false`
 - `MACHINE_GIT_USER_NAME` and `MACHINE_GIT_USER_EMAIL`: written to
   machine-local `~/.gitconfig`
 - `MACHINE_GIT_SIGNING_KEY`: optional SSH signing key path or public key
