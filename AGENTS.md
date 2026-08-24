@@ -7,12 +7,10 @@ configuration in `tools/<tool>/config` and links it into `$HOME`.
 
 Load only the source relevant to the current branch of work:
 
-- `README.md`: installation, profiles, machines, repository layout, and
-  user-facing workflows.
+- `README.md`: installation, profiles, machines, package ownership, repository
+  layout, and user-facing workflows.
 - `CONTEXT.md`: domain language. Read it before architecture, diagnosis, TDD,
   or issue-writing work; keep glossary definitions there.
-- `docs/adr/0001-own-portable-global-clis-with-mise.md`: package ownership.
-  Read it before adding, removing, or migrating persistent software.
 - `.editorconfig`: formatting and indentation. It is the formatting source of
   truth.
 - `.github/workflows/ci.yml`: CI events, runner, and Verification Toolchain

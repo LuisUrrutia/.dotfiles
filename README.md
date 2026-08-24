@@ -348,9 +348,7 @@ remain project-local, and no command has two package managers.
 Versions follow moving channels such as `latest`, `lts`, or a major release;
 the repo does not record exact installed versions. During an ownership change,
 the Bootstrapper installs and verifies the replacement before removing a known
-legacy package. See
-[ADR 0001](docs/adr/0001-own-portable-global-clis-with-mise.md) for the complete
-decision.
+legacy package.
 
 ## Notable workflows
 
@@ -421,8 +419,7 @@ Edit the files under `tools/<tool>/config`, then run
 `dotfiles config repair <tool>` or re-run that Tool Installer. When an app has
 replaced a symlink, inspect it with `dotfiles config diff` and choose Capture or
 Discard explicitly. Declare persistent packages according to
-[ADR 0001](docs/adr/0001-own-portable-global-clis-with-mise.md) instead of
-installing them only by hand.
+[Package ownership](#package-ownership) instead of installing them only by hand.
 
 Secrets and private credentials belong outside the public repo. Use
 `private-install.sh` for owner-only setup instead of committing tokens,
