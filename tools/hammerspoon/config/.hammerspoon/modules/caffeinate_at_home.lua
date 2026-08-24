@@ -28,11 +28,6 @@ local function is_on_ac_power()
 end
 
 local function request_location_services()
-    local status = hs.location.authorizationStatus()
-    if status ~= "authorized" then
-        log.w("Location Services status is " .. status .. "; macOS may hide the current WiFi SSID from Hammerspoon")
-    end
-
     hs.location.get()
 end
 

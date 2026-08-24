@@ -69,7 +69,17 @@ local function build_hs()
 
     function hs.logger.new(name, level)
         table.insert(hs.calls, { type = "logger", name = name, level = level })
-        return { d = function(...) end, i = function(...) end, w = function(...) end, e = function(...) end }
+
+        local function record_log(log_level, message)
+            table.insert(hs.calls, { type = "log", level = log_level, message = message })
+        end
+
+        return {
+            d = function(message) record_log("debug", message) end,
+            i = function(message) record_log("info", message) end,
+            w = function(message) record_log("warning", message) end,
+            e = function(message) record_log("error", message) end,
+        }
     end
 
     function hs.caffeinate.set(kind, value, ac_and_battery)
@@ -528,6 +538,27 @@ test("caffeinate at home requests location before checking wifi", function()
     assert_truthy(wifi_lookup_index, "start should check the current WiFi network")
     assert_truthy(location_get_index < wifi_lookup_index, "Location Services should be requested before WiFi lookup")
     assert_equal(disabled, 2, "unavailable SSID should allow system and display idle")
+end)
+
+test("caffeinate at home ignores transient startup authorization status", function()
+    local hs = build_hs()
+    hs.location.status = "undefined"
+    hs.wifi.current = "Shadow"
+    local caffeinate_at_home = load_module("modules.caffeinate_at_home")
+
+    caffeinate_at_home.start({ "Shadow" })
+
+    local location_warnings = 0
+    for _, call in ipairs(hs.calls) do
+        local is_location_warning = call.type == "log"
+            and call.level == "warning"
+            and call.message:find("Location Services status", 1, true)
+        if is_location_warning then
+            location_warnings = location_warnings + 1
+        end
+    end
+
+    assert_equal(location_warnings, 0, "transient startup authorization should not emit a warning")
 end)
 
 test("caffeinate at home debounces transient nil SSIDs", function()
