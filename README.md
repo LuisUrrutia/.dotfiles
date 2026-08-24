@@ -384,6 +384,8 @@ the canonical commands.
   show local command notes inspired by ChristianLempa's cheat-sheets.
 - WorkTrunk copies only the ignored, machine-local legacy Git config into a new
   worktree and runs the complete Verification Suite before merge.
+- OpenSSH uses local default identities for GitHub and GitLab. Every other host
+  uses the 1Password SSH agent.
 - `skill-link [directory]` points `~/.agents/skills` and `~/.claude/skills` at a
   skill you are developing, so edits take effect without reinstalling. It
   defaults to the current directory, requires a `SKILL.md`, and moves an
