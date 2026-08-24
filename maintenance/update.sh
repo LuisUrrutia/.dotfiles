@@ -197,11 +197,19 @@ update_homebrew() {
 
 update_mise() {
   local index="$TARGET_MISE"
+  local completion_check="$DOTFILES/tools/fish/check-claude-completion.sh"
   if ! command -v mise >/dev/null 2>&1; then set_result "$index" skipped "not found"; return; fi
   run_child mise upgrade --yes
   if [[ "$CHILD_STATUS" -ne 0 ]]; then set_result "$index" failed "upgrade, status $CHILD_STATUS"; return; fi
   run_child mise prune --yes
   if [[ "$CHILD_STATUS" -ne 0 ]]; then set_result "$index" failed "prune, status $CHILD_STATUS"; return; fi
+  if command -v claude >/dev/null 2>&1 && command -v fish >/dev/null 2>&1 && [[ -x "$completion_check" ]]; then
+    run_child "$completion_check"
+    if [[ "$CHILD_STATUS" -ne 0 ]]; then
+      set_result "$index" warning "Claude completion drift; maintenance completed"
+      return
+    fi
+  fi
   set_result "$index" completed
 }
 

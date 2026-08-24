@@ -33,11 +33,18 @@ assert_log_order() {
   done
 }
 
-mkdir -p "$FIXTURE_ROOT/cli" "$FIXTURE_ROOT/maintenance" "$FAKE_BIN"
+mkdir -p "$FIXTURE_ROOT/cli" "$FIXTURE_ROOT/maintenance" "$FIXTURE_ROOT/tools/fish" "$FAKE_BIN"
 cp "$ROOT_DIR/dotfiles" "$FIXTURE_ROOT/dotfiles"
 cp "$ROOT_DIR"/cli/*.sh "$FIXTURE_ROOT/cli/"
 cp "$ROOT_DIR/maintenance/update.sh" "$FIXTURE_ROOT/maintenance/update.sh"
 chmod +x "$FIXTURE_ROOT/dotfiles" "$FIXTURE_ROOT/maintenance/update.sh"
+
+printf '%s\n' \
+  '#!/usr/bin/env bash' \
+  'printf "claude completion check\n" >>"$UPDATE_LOG"' \
+  '[[ "${UPDATE_SCENARIO:-}" != completion-drift ]]' \
+  >"$FIXTURE_ROOT/tools/fish/check-claude-completion.sh"
+chmod +x "$FIXTURE_ROOT/tools/fish/check-claude-completion.sh"
 
 printf '%s\n' \
   '#!/usr/bin/env bash' \
@@ -66,7 +73,7 @@ printf '%s\n' \
   'exit 0' \
   >"$FAKE_BIN/fake-tool"
 chmod +x "$FAKE_BIN/fake-tool"
-for tool in brew mise rustup mas nvim skills tpack tldr mo fish; do
+for tool in brew mise claude rustup mas nvim skills tpack tldr mo fish; do
   ln -s fake-tool "$FAKE_BIN/$tool"
 done
 
@@ -163,6 +170,7 @@ assert_log_order "$TMP_DIR/all-pass/tools.log" \
   'brew doctor' \
   'mise upgrade --yes' \
   'mise prune --yes' \
+  'claude completion check' \
   'rustup update' \
   'mas upgrade' \
   'nvim --headless +Lazy! sync +qa' \
@@ -179,6 +187,12 @@ assert_log_order "$TMP_DIR/all-pass/tools.log" \
 [[ "$SCENARIO_OUTPUT" == *'child stdout: rustup update'* ]] || fail "child stdout was not streamed"
 [[ "$SCENARIO_OUTPUT" == *'child stderr: rustup update'* ]] || fail "child stderr was not streamed"
 [[ -f "$SCENARIO_STATE/dotfiles/update/mole-clean" ]] || fail "Mole success did not write its stamp"
+
+run_scenario completion-drift
+[[ "$SCENARIO_STATUS" -eq 0 ]] || fail "Claude completion drift failed Software Maintenance"
+[[ "$SCENARIO_OUTPUT" == *'[update] mise: warning (Claude completion drift; maintenance completed)'* ]] ||
+  fail "Claude completion drift warning is missing"
+[[ "$SCENARIO_LOG" == *'rustup update'* ]] || fail "Claude completion drift stopped independent targets"
 
 run_scenario skills-list-warns
 [[ "$SCENARIO_STATUS" -eq 0 ]] || fail "Skills listing warning became a failure"
