@@ -36,7 +36,6 @@ vscode "vscodevim.vim"             # Vim emulation
 # Programming Languages and Runtimes
 # ==============================================================================
 brew "mise"             # Multiple package manager
-brew "lua-language-server" # Lua language server
 
 # ==============================================================================
 # Shell and Terminal

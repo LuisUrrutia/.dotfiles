@@ -226,6 +226,8 @@ update_neovim() {
   if [[ "$CHILD_STATUS" -ne 0 ]]; then set_result "$index" failed "plugins, status $CHILD_STATUS"; return; fi
   run_child nvim --headless "+lua if not require('config.blink').ensure() then vim.cmd.cquit() end" +qa
   if [[ "$CHILD_STATUS" -ne 0 ]]; then set_result "$index" failed "blink.cmp, status $CHILD_STATUS"; return; fi
+  run_child nvim --headless "+lua if not require('config.lsp').update() then vim.cmd.cquit() end" +qa
+  if [[ "$CHILD_STATUS" -ne 0 ]]; then set_result "$index" failed "language servers, status $CHILD_STATUS"; return; fi
   run_child nvim --headless "+lua require('config.treesitter').install()" +qa
   if [[ "$CHILD_STATUS" -ne 0 ]]; then set_result "$index" failed "parsers, status $CHILD_STATUS"; return; fi
   set_result "$index" completed

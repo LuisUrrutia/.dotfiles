@@ -334,20 +334,21 @@ List them with `dotfiles config backups list`. Pruning is a dry run unless
 
 This list is intentionally grouped. The exact package lists live in
 `brewfiles/core`, `brewfiles/profiles/`, and
-`tools/mise/config/.config/mise/config.toml`.
+`tools/mise/config/.config/mise/config.toml`; Neovim-only language servers live
+in `tools/vim/config/.config/nvim/lua/config/lsp.lua`.
 
 ### Package ownership
 
 Homebrew owns macOS apps, system utilities, native dependencies, and packages
 selected through install profiles. The global mise config owns Core Install
 runtimes and portable global CLIs, including Claude Code, Codex, and TPack.
-Project dependencies remain project-local, and no command has two package
-managers.
+Mason owns language servers used only through Neovim. Project dependencies
+remain project-local, and no command has two package managers.
 
 Versions follow moving channels such as `latest`, `lts`, or a major release;
 the repo does not record exact installed versions. During an ownership change,
-the Bootstrapper installs and verifies the mise replacement before removing a
-known legacy Homebrew package. See
+the Bootstrapper installs and verifies the replacement before removing a known
+legacy package. See
 [ADR 0001](docs/adr/0001-own-portable-global-clis-with-mise.md) for the complete
 decision.
 

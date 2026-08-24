@@ -52,6 +52,7 @@ printf '%s\n' \
   'if [[ "${UPDATE_SCENARIO:-}" == "mise-${1:-}-fails" && "$tool" == mise ]]; then exit 9; fi' \
   'if [[ "${UPDATE_SCENARIO:-}" == nvim-plugins-fails && "$tool" == nvim && "$*" == *Lazy* ]]; then exit 11; fi' \
   'if [[ "${UPDATE_SCENARIO:-}" == nvim-blink-fails && "$tool" == nvim && "$*" == *config.blink* ]]; then exit 15; fi' \
+  'if [[ "${UPDATE_SCENARIO:-}" == nvim-lsp-fails && "$tool" == nvim && "$*" == *config.lsp* ]]; then exit 16; fi' \
   'if [[ "${UPDATE_SCENARIO:-}" == nvim-parsers-fails && "$tool" == nvim && "$*" == *treesitter* ]]; then exit 12; fi' \
   'if [[ "${UPDATE_SCENARIO:-}" == skills-list-warns && "$tool" == skills && "${1:-}" == list ]]; then exit 13; fi' \
   'if [[ "${UPDATE_SCENARIO:-}" == rustup-fails && "$tool" == rustup ]]; then exit 14; fi' \
@@ -139,13 +140,15 @@ for mise_stage in upgrade prune; do
   [[ "$SCENARIO_LOG" == *'rustup update'* ]] || fail "mise $mise_stage failure stopped rustup"
 done
 
-for nvim_stage in plugins blink parsers; do
+for nvim_stage in plugins blink lsp parsers; do
   run_scenario "nvim-$nvim_stage-fails"
   [[ "$SCENARIO_STATUS" -eq 1 ]] || fail "Neovim $nvim_stage failure did not fail Update"
   if [[ "$nvim_stage" == plugins ]]; then
     [[ "$SCENARIO_LOG" != *config.blink* ]] || fail "blink.cmp verification ran after plugin failure"
   elif [[ "$nvim_stage" == blink ]]; then
-    [[ "$SCENARIO_LOG" != *treesitter* ]] || fail "Neovim parsers ran after blink.cmp failure"
+    [[ "$SCENARIO_LOG" != *config.lsp* ]] || fail "Mason update ran after blink.cmp failure"
+  elif [[ "$nvim_stage" == lsp ]]; then
+    [[ "$SCENARIO_LOG" != *treesitter* ]] || fail "Neovim parsers ran after Mason failure"
   fi
   [[ "$SCENARIO_LOG" == *'skills update --yes'* ]] || fail "Neovim $nvim_stage failure stopped Skills"
 done
@@ -164,6 +167,7 @@ assert_log_order "$TMP_DIR/all-pass/tools.log" \
   'mas upgrade' \
   'nvim --headless +Lazy! sync +qa' \
   "nvim --headless +lua if not require('config.blink').ensure() then vim.cmd.cquit() end +qa" \
+  "nvim --headless +lua if not require('config.lsp').update() then vim.cmd.cquit() end +qa" \
   "nvim --headless +lua require('config.treesitter').install() +qa" \
   'skills list -g' \
   'skills update --yes' \

@@ -363,4 +363,11 @@ set -e
 [[ "$(<"$dependent_log")" == $'packages\nfailures' ]] ||
   fail "cleanup or Tool Installers ran after a Brew Bundle failure"
 
+BREW_BUNDLE_FAILURES=()
+: >"$dependent_log"
+install_packages() { printf '%s\n' packages >>"$dependent_log"; }
+install_declared_packages_and_dependents
+[[ "$(<"$dependent_log")" == $'packages\ntools\ncleanup\nfirst-run' ]] ||
+  fail "Homebrew cleanup ran before Tool Installers could migrate package ownership"
+
 printf 'bootstrap test: passed\n'
