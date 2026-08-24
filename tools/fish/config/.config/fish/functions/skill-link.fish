@@ -38,7 +38,7 @@ function skill-link -d "Link a skill directory into the agent skill directories"
         return 1
     end
 
-    set -l agent_dirs (__skill_link_agent_dirs)
+    set -l agent_dirs (skill_agent_dirs)
 
     for agent_dir in $agent_dirs
         if string match -q "$agent_dir/*" -- "$source"
@@ -57,11 +57,6 @@ function skill-link -d "Link a skill directory into the agent skill directories"
     end
 
     test "$failed" = false
-end
-
-function __skill_link_agent_dirs -d "List the directories agents read skills from"
-    echo "$HOME/.agents/skills"
-    echo "$HOME/.claude/skills"
 end
 
 function __skill_link_into -a name source agent_dir -d "Point one agent directory at a skill"
@@ -103,7 +98,7 @@ function __skill_link_is_replaceable -a target source -d "Check whether a symlin
 
     test "$resolved" = "$source"; and return 0
 
-    for agent_dir in (__skill_link_agent_dirs)
+    for agent_dir in (skill_agent_dirs)
         string match -q "$agent_dir/*" -- "$resolved"; and return 0
     end
 
