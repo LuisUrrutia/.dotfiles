@@ -159,9 +159,14 @@ list_tools_with_entries() {
   done
 }
 
+status_color_enabled() {
+  [[ -t 1 && -z "${NO_COLOR:-}" && "${TERM:-}" != dumb ]]
+}
+
 print_tool_status() {
   local tool="$1"
   local detailed="$2"
+  local color_enabled="$3"
   local path=""
   local state=""
   local linked=0
@@ -170,6 +175,7 @@ print_tool_status() {
   local divergent=0
   local conflict=0
   local details=""
+  local color=""
 
   while IFS= read -r path; do
     [[ -n "$path" ]] || continue
@@ -186,22 +192,59 @@ print_tool_status() {
     fi
   done < <(list_entries "$tool")
 
-  printf '%s linked=%s missing=%s identical=%s divergent=%s conflict=%s\n' \
-    "$tool" "$linked" "$missing" "$identical" "$divergent" "$conflict"
-  [[ -z "$details" ]] || printf '%s\n' "$details"
+  if [[ "$color_enabled" == true ]]; then
+    if [[ "$divergent" -gt 0 || "$conflict" -gt 0 ]]; then
+      color='1;31'
+    elif [[ "$missing" -gt 0 || "$identical" -gt 0 ]]; then
+      color='1;33'
+    fi
+  fi
+
+  if [[ -n "$color" ]]; then
+    printf '\033[%sm%s linked=%s missing=%s identical=%s divergent=%s conflict=%s\033[0m\n' \
+      "$color" "$tool" "$linked" "$missing" "$identical" "$divergent" "$conflict"
+  else
+    printf '%s linked=%s missing=%s identical=%s divergent=%s conflict=%s\n' \
+      "$tool" "$linked" "$missing" "$identical" "$divergent" "$conflict"
+  fi
+
+  if [[ -z "$details" ]]; then
+    return 0
+  fi
+  while IFS= read -r path; do
+    state="${path##* }"
+    path="${path% *}"
+    color=""
+    if [[ "$color_enabled" == true ]]; then
+      case "$state" in
+      missing | identical) color='1;33' ;;
+      divergent | conflict) color='1;31' ;;
+      esac
+    fi
+    if [[ -n "$color" ]]; then
+      printf '%s \033[%sm%s\033[0m\n' "$path" "$color" "$state"
+    else
+      printf '%s %s\n' "$path" "$state"
+    fi
+  done <<<"$details"
 }
 
 status_command() {
   local tool="${1:-}"
+  local color_enabled=false
+
+  if status_color_enabled; then
+    color_enabled=true
+  fi
 
   if [[ -n "$tool" ]]; then
     require_tool "$tool"
-    print_tool_status "$tool" true
+    print_tool_status "$tool" true "$color_enabled"
     return
   fi
 
   while IFS= read -r tool; do
-    print_tool_status "$tool" false
+    print_tool_status "$tool" false "$color_enabled"
   done < <(list_tools_with_entries)
 }
 

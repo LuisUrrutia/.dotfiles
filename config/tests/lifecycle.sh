@@ -73,6 +73,27 @@ all_status="$(HOME="$HOME_DIR" "$FIXTURE_ROOT/dotfiles" config status)"
 [[ "$all_status" == 'fixture linked=2 missing=1 identical=1 divergent=1 conflict=1' ]] ||
   fail "all-tools status is not concise"
 
+color_status="$TMP_DIR/color-status.out"
+TERM=xterm-256color script -q "$color_status" \
+  env -u NO_COLOR HOME="$HOME_DIR" "$FIXTURE_ROOT/dotfiles" config status fixture \
+  </dev/null >/dev/null
+red=$'\033[1;31m'
+yellow=$'\033[1;33m'
+reset=$'\033[0m'
+grep -F "${red}fixture linked=2 missing=1 identical=1 divergent=1 conflict=1${reset}" \
+  "$color_status" >/dev/null || fail "problematic tool status was not red in a terminal"
+grep -F ".config/fixture/missing.txt ${yellow}missing${reset}" "$color_status" >/dev/null ||
+  fail "repairable entry state was not yellow in a terminal"
+grep -F ".config/fixture/divergent.txt ${red}divergent${reset}" "$color_status" >/dev/null ||
+  fail "decision-required entry state was not red in a terminal"
+
+no_color_status="$TMP_DIR/no-color-status.out"
+NO_COLOR=1 TERM=xterm-256color script -q "$no_color_status" \
+  env HOME="$HOME_DIR" "$FIXTURE_ROOT/dotfiles" config status fixture \
+  </dev/null >/dev/null
+[[ "$(LC_ALL=C tr -cd '\033' <"$no_color_status" | wc -c | tr -d ' ')" -eq 0 ]] ||
+  fail "NO_COLOR did not suppress terminal colors"
+
 cmp_bin="$TMP_DIR/cmp-bin"
 mkdir -p "$cmp_bin"
 printf '%s\n' '#!/usr/bin/env bash' 'exit 2' >"$cmp_bin/cmp"
