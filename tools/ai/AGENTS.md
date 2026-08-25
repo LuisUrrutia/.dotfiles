@@ -84,6 +84,22 @@ Read `~/.agents/AGENTS_LOCAL.md` when it exists.
 - If required authenticated material is inaccessible, report the exact access
   blocker before dependent work. Do not infer its contents.
 
+## GitHub writes
+
+- Before an authenticated GitHub write through `gh`, determine the intended
+  actor. Use explicit user direction when provided. Otherwise, read the
+  path-effective Git email with `git config --get user.email` and match it to an
+  authenticated GitHub account. Use `git config --get user.name` only as
+  supporting evidence because multiple accounts can share a name. If the match
+  is not unambiguous, ask the user to specify the account before writing.
+- Verify the active actor with `gh api user --jq .login`. Treat SSH checks,
+  fetches, and pushes only as Git/SSH evidence because that authentication is
+  independent of `gh`.
+- Require an exact actor match before the write. On a mismatch, use
+  `gh auth switch --hostname github.com --user <intended-actor>` when that
+  account is already authenticated, then verify again. Keep tokens and other
+  secrets out of commands and output.
+
 ## Commits
 
 - For any change or implementation task on a work branch, invoke the `commit`
