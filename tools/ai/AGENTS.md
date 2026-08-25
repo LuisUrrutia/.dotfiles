@@ -52,6 +52,10 @@ Read `~/.agents/AGENTS_LOCAL.md` when it exists.
      read the handoff document.
   5. Report the destination worktree and terminal, then stop. The receiving
      agent owns implementation, verification, and commits from that point.
+- A handoff is complete only after the receiving agent starts in the destination
+  worktree and receives the handoff document. If any prerequisite is unavailable
+  or prohibited, stop before creating the branch or worktree or editing files,
+  and report the exact blocker. The current agent never implements as a fallback.
 - WorkTrunk owns worktree creation, switching, listing, and removal. Orca owns
   only the terminal placement for this handoff.
 
@@ -107,6 +111,15 @@ Read `~/.agents/AGENTS_LOCAL.md` when it exists.
   autonomous and interactive work without asking for confirmation or waiting
   until the end.
 - On `main` or `master`, ask before the first commit.
+
+## Pull requests
+
+- Update an existing PR branch from its base with rebase. Prefer this over a
+  merge commit.
+- Publishing that rebase with `git push --force-with-lease` is pre-authorized
+  and needs no separate confirmation. Immediately before pushing, verify the
+  current branch, exact PR head, push remote, and expected remote tip. Use the
+  lease form only.
 
 ## Verification
 
