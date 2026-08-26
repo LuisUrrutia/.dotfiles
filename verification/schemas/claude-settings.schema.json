@@ -4,8 +4,6 @@
   "required": [
     "permissions",
     "model",
-    "hooks",
-    "statusLine",
     "tui",
     "skipDangerousModePermissionPrompt",
     "theme"
@@ -22,7 +20,6 @@
     "model": { "type": "string", "minLength": 1 },
     "hooks": {
       "type": "object",
-      "minProperties": 1,
       "additionalProperties": {
         "type": "array",
         "items": {
