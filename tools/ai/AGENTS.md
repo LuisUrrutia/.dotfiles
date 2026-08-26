@@ -150,6 +150,21 @@ Keep tokens and other secrets out of commands and output.
   is pre-authorized. Immediately before pushing, verify the current branch,
   exact PR head, push remote, and expected remote tip.
 
+## PR feedback
+
+When the user asks to review a PR's comments, the request covers every
+feedback channel on that PR and includes acting on it:
+
+1. Collect review comments and threads, conversation comments, and feedback
+   emitted by workflow runs for the PR head: check-run annotations, bot
+   summaries, and reviewer output printed in job logs.
+2. Apply every item that is a clear improvement or a correct observation
+   immediately, without asking.
+3. Report only the remainder: each item left unapplied with its reason, and
+   each item that needs the user's decision with the choices.
+
+The task is complete when every item is either applied or in that report.
+
 ## Verification
 
 - After each implementation, run all applicable checks:
