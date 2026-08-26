@@ -120,7 +120,6 @@ when the dependency is absent. Use `stow_config <tool>` for per-file links.
 these links:
 
 - `~/.agents/AGENTS.md` -> the tracked common source
-- `~/.agents/references` -> the tracked references in `tools/ai/references`
 - `~/.codex/AGENTS.md` -> `~/.agents/AGENTS.md`, because Codex does not discover
   the `.agents` location itself
 - `~/.agents/AGENTS_LOCAL.md` ->
