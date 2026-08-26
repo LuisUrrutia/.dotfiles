@@ -30,47 +30,6 @@ fires; the rule names the trigger.
   principles to prose in every language; for languages other than English,
   adapt its English-specific vocabulary and grammar rules.
 
-## Worktrees
-
-- New branches: when the user asks to work on one, create its worktree with
-  `wt switch --create <name>` and perform the work there.
-- Use WorkTrunk (`wt`) for every other worktree lifecycle operation:
-  - Switch worktrees: `wt switch <name>`
-  - List worktrees: `wt list`
-  - Remove the current worktree: `wt remove`
-- If the project has no `.config/wt.toml`, suggest creating it.
-- Reserve raw `git worktree` commands for cases where the user explicitly
-  requests them.
-
-### Orca handoff
-
-- Treat the current agent as Orca-managed when both `ORCA_WORKTREE_ID` and
-  `ORCA_TERMINAL_HANDLE` are set.
-- In an Orca-managed session, when you decide the current task needs a new
-  branch or worktree, transfer ownership before implementation:
-  1. Invoke the `orca-cli` skill. Match `ORCA_PANE_KEY` against
-     `orca worktree ps --json` and preserve that pane's `agentType` in the
-     destination:
-     - `codex`: `codex --dangerously-bypass-approvals-and-sandbox`
-     - `claude`: `claude --dangerously-skip-permissions`
-     Stop and report any other or unresolved agent type; its YOLO command is
-     undefined.
-  2. Invoke the `handoff` skill with context limited to the work requested for
-     the new branch.
-  3. Create the branch and worktree with `wt`, and resolve the destination's
-     absolute worktree path.
-  4. Use Orca only to create a terminal tab attached to that existing path,
-     start the preserved agent with its command above, and send it a prompt to
-     read the handoff document.
-  5. Report the destination worktree and terminal, then stop. The receiving
-     agent owns implementation, verification, and commits from that point.
-- A handoff is complete only after the receiving agent starts in the destination
-  worktree and receives the handoff document. If any prerequisite is unavailable
-  or prohibited, stop before creating the branch or worktree or editing files,
-  and report the exact blocker. The current agent never implements as a fallback.
-- WorkTrunk owns worktree creation, switching, listing, and removal. Orca owns
-  only the terminal placement for this handoff.
-
 ## Execution
 
 - Once a plan is agreed, execute autonomously. Interrupt only for a destructive
@@ -92,6 +51,55 @@ fires; the rule names the trigger.
   available: `ast-grep` for structural code queries, `rg` for content,
   `rg --files` for paths, and `fd` for filename searches that need file-system
   filters.
+
+## Worktrees
+
+- When the user asks to work on a new branch, create its worktree with
+  `wt switch --create <name>` and work there.
+- WorkTrunk (`wt`) owns every other worktree lifecycle operation; invoke the
+  `worktrunk` skill for its commands. If the project has no `.config/wt.toml`,
+  suggest creating it. Use raw `git worktree` only when the user explicitly
+  asks for it.
+- Orca reads worktrees and places terminals; `wt` creates every branch and
+  worktree. `orca worktree create` and `orca project setup-*` are prohibited.
+- `orca repo add` is reserved for a user's explicit request to clone a repo
+  into Orca. Clone `<owner>/<repo>` over SSH into `~/Projects/<owner>/<repo>`,
+  creating `~/Projects/<owner>/` when missing, then run
+  `orca repo add --path ~/Projects/<owner>/<repo> --json`. A worktree is
+  never a repo to add.
+
+### Orca handoff
+
+The session is Orca-managed when both `ORCA_WORKTREE_ID` and
+`ORCA_TERMINAL_HANDLE` are set. In an Orca-managed session, when the task needs
+a new branch or worktree, transfer ownership before any implementation:
+
+1. Invoke the `orca-cli` skill. Match `ORCA_PANE_KEY` against
+   `orca worktree ps --json` and preserve that pane's `agentType` in the
+   destination:
+   - `codex`: `codex --dangerously-bypass-approvals-and-sandbox`
+   - `claude`: `claude --dangerously-skip-permissions`
+   Any other or unresolved agent type is a blocker: its YOLO command is
+   undefined.
+2. Write the handoff document as the `handoff` skill describes
+   (`~/.agents/skills/handoff/SKILL.md`), with context limited to the work
+   requested for the new branch.
+3. Create the branch and worktree with `wt switch --create <name>` and resolve
+   the destination's absolute path.
+4. Orca discovers that worktree under the current repo with a delay. Wait for
+   it: poll `orca worktree show --worktree path:<abs-path> --json` every few
+   seconds until it resolves, for up to two minutes. `selector_not_found`
+   during that window means keep waiting; after it, that is a blocker.
+5. Run `orca terminal create --worktree path:<abs-path> --command "<agent
+   command>" --json`, wait for `tui-idle`, and send a prompt to read the
+   handoff document.
+6. Report the destination worktree and terminal, then stop. The receiving agent
+   owns implementation, verification, and commits.
+
+The handoff is complete only when the receiving agent has started in the
+destination worktree and received the handoff document. On a blocker, stop
+before creating the branch or worktree or editing files; implementation waits
+for a completed handoff, and the current agent never implements as a fallback.
 
 ## Evidence
 
