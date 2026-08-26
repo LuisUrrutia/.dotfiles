@@ -32,6 +32,9 @@ fires; the rule names the trigger.
 - Use the user's current language for conversation. Apply ASD-STE100 clarity
   principles to prose in every language; for languages other than English,
   adapt its English-specific vocabulary and grammar rules.
+- Write everything that leaves the conversation in English: commits, PR
+  titles and bodies, GitHub and issue-tracker comments, code, comments in
+  code, and documentation.
 
 ## Execution
 
