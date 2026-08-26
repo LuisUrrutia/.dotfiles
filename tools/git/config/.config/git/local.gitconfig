@@ -79,7 +79,6 @@
   # the usual default is to push all branches
   default = upstream
   autoSetupRemote = true
-  followTags = true
   useForceIfIncludes = true
 [fetch]
   prune = true
