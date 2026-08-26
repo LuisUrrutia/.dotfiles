@@ -109,6 +109,13 @@ for a completed handoff, and the current agent never implements as a fallback.
   issues included (`https://github.com/<owner>/<repo>/issues/123`, not `#123`).
 - Back research findings with primary or trusted documentation.
 
+## Git transport
+
+- Use SSH for every Git network operation: clone, fetch, pull, push, and
+  submodules. HTTPS remotes are prohibited, including as a fallback.
+- If SSH fails, diagnose and repair the SSH path; when the available access
+  cannot restore it, that is a blocker.
+
 ## GitHub writes
 
 Before an authenticated GitHub write through `gh`:
