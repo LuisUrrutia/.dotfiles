@@ -143,6 +143,9 @@ Keep tokens and other secrets out of commands and output.
 
 - Update an existing PR branch from its base with rebase rather than a merge
   commit.
+- After publishing material changes to a branch with an open PR, invoke the
+  `pr` skill in Update mode and rewrite the whole PR body from the published
+  diff under its claim rules, rather than patching the existing body.
 - Publishing that rebase with `git push --force-with-lease` (lease form only)
   is pre-authorized. Immediately before pushing, verify the current branch,
   exact PR head, push remote, and expected remote tip.
