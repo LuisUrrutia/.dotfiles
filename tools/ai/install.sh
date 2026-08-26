@@ -55,6 +55,10 @@ link_is_managed() {
   codex)
     [[ "$current" == "$HOME/.agents/AGENTS.md" ]]
     ;;
+  references)
+    [[ "$current" == "$DOTFILES/tools/ai/references" ||
+      "$current" == "$HOME/.dotfiles/tools/ai/references" ]]
+    ;;
   local)
     is_managed_machine_source "$resolved_current" || is_managed_machine_source "$current"
     ;;
@@ -129,6 +133,8 @@ hardware_hash() {
 
 common_source="$DOTFILES/tools/ai/AGENTS.md"
 common_target="$HOME/.agents/AGENTS.md"
+references_source="$DOTFILES/tools/ai/references"
+references_target="$HOME/.agents/references"
 codex_source="$common_target"
 codex_target="$HOME/.codex/AGENTS.md"
 local_target="$HOME/.agents/AGENTS_LOCAL.md"
@@ -146,10 +152,12 @@ else
 fi
 
 destination_is_safe "$common_source" "$common_target" common || exit 1
+destination_is_safe "$references_source" "$references_target" references || exit 1
 destination_is_safe "$codex_source" "$codex_target" codex || exit 1
 destination_is_safe "$local_source" "$local_target" local || exit 1
 
 install_link "$common_source" "$common_target" common
+install_link "$references_source" "$references_target" references
 install_link "$codex_source" "$codex_target" codex
 
 if [[ -n "$local_source" ]]; then

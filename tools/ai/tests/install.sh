@@ -28,6 +28,10 @@ HOME="$common_home" \
 [[ -L "$common_home/.agents/AGENTS.md" ]] || fail "common instructions were not linked"
 [[ "$(readlink "$common_home/.agents/AGENTS.md")" == "$ROOT_DIR/tools/ai/AGENTS.md" ]] ||
   fail "common instructions point to the wrong source"
+[[ -L "$common_home/.agents/references" ]] || fail "agent references were not linked"
+[[ "$(readlink "$common_home/.agents/references")" == "$ROOT_DIR/tools/ai/references" ]] ||
+  fail "agent references point to the wrong source"
+[[ -f "$common_home/.agents/references/orca.md" ]] || fail "Orca reference is unavailable"
 [[ -L "$common_home/.codex/AGENTS.md" ]] || fail "Codex instructions were not linked"
 [[ "$(readlink "$common_home/.codex/AGENTS.md")" == "$common_home/.agents/AGENTS.md" ]] ||
   fail "Codex instructions do not point to the common destination"
@@ -41,9 +45,10 @@ grep -F '.agents/AGENTS_LOCAL.md' "$ROOT_DIR/tools/ai/AGENTS.md" >/dev/null ||
 
 fixture_root="$TMP_DIR/repository"
 fixture_home="$TMP_DIR/registered-home"
-mkdir -p "$fixture_root/tools/ai" "$fixture_root/machines" "$fixture_home"
+mkdir -p "$fixture_root/tools/ai/references" "$fixture_root/machines" "$fixture_home"
 cp "$AI_INSTALL" "$fixture_root/tools/ai/install.sh"
 cp "$ROOT_DIR/tools/ai/AGENTS.md" "$fixture_root/tools/ai/AGENTS.md"
+cp "$ROOT_DIR/tools/ai/references/orca.md" "$fixture_root/tools/ai/references/orca.md"
 cp "$ROOT_DIR/tools/lib.sh" "$fixture_root/tools/lib.sh"
 printf '%s\n' 'MACHINE_ID="fixture"' >"$fixture_root/machines/registered.sh"
 printf '%s\n' '# Registered machine instructions' >"$fixture_root/machines/registered.agents.md"
@@ -90,6 +95,45 @@ set -e
 [[ "$(<"$conflict_home/.agents/AGENTS.md")" == 'foreign common instructions' ]] ||
   fail "regular instruction conflict was overwritten"
 [[ ! -e "$conflict_home/.codex/AGENTS.md" ]] || fail "conflict caused partial installation"
+
+references_conflict_home="$TMP_DIR/references-conflict-home"
+mkdir -p "$references_conflict_home/.agents/references"
+printf '%s\n' 'local reference' >"$references_conflict_home/.agents/references/local.md"
+set +e
+HOME="$references_conflict_home" \
+  DOTFILES="$fixture_root" \
+  DOTFILES_HARDWARE_HASH_OVERRIDE=unregistered \
+  /bin/bash "$fixture_root/tools/ai/install.sh" \
+  >"$TMP_DIR/references-conflict.out" 2>"$TMP_DIR/references-conflict.err"
+references_conflict_status=$?
+set -e
+[[ "$references_conflict_status" -eq 1 ]] || fail "regular references conflict did not fail"
+[[ -d "$references_conflict_home/.agents/references" && ! -L "$references_conflict_home/.agents/references" ]] ||
+  fail "regular references directory was replaced"
+[[ "$(<"$references_conflict_home/.agents/references/local.md")" == 'local reference' ]] ||
+  fail "local reference was modified"
+[[ ! -e "$references_conflict_home/.agents/AGENTS.md" ]] ||
+  fail "references conflict caused partial common installation"
+[[ ! -e "$references_conflict_home/.codex/AGENTS.md" ]] ||
+  fail "references conflict caused partial Codex installation"
+
+foreign_references_home="$TMP_DIR/foreign-references-home"
+foreign_references_source="$TMP_DIR/foreign-references"
+mkdir -p "$foreign_references_home/.agents" "$foreign_references_source"
+ln -s "$foreign_references_source" "$foreign_references_home/.agents/references"
+set +e
+HOME="$foreign_references_home" \
+  DOTFILES="$fixture_root" \
+  DOTFILES_HARDWARE_HASH_OVERRIDE=unregistered \
+  /bin/bash "$fixture_root/tools/ai/install.sh" \
+  >"$TMP_DIR/foreign-references.out" 2>"$TMP_DIR/foreign-references.err"
+foreign_references_status=$?
+set -e
+[[ "$foreign_references_status" -eq 1 ]] || fail "foreign references symlink did not fail"
+[[ "$(readlink "$foreign_references_home/.agents/references")" == "$foreign_references_source" ]] ||
+  fail "foreign references symlink was replaced"
+[[ ! -e "$foreign_references_home/.agents/AGENTS.md" ]] ||
+  fail "foreign references conflict caused partial installation"
 
 foreign_home="$TMP_DIR/foreign-home"
 mkdir -p "$foreign_home/.agents"
@@ -154,9 +198,21 @@ HOME="$repair_home" \
 [[ "$(readlink "$repair_home/.agents/AGENTS.md")" == "$fixture_root/tools/ai/AGENTS.md" ]] ||
   fail "known broken common link was not repaired"
 
+references_repair_home="$TMP_DIR/references-repair-home"
+mkdir -p "$references_repair_home/.agents"
+ln -s "$references_repair_home/.dotfiles/tools/ai/references" \
+  "$references_repair_home/.agents/references"
+HOME="$references_repair_home" \
+  DOTFILES="$fixture_root" \
+  DOTFILES_HARDWARE_HASH_OVERRIDE=unregistered \
+  /bin/bash "$fixture_root/tools/ai/install.sh" >/dev/null
+[[ "$(readlink "$references_repair_home/.agents/references")" == "$fixture_root/tools/ai/references" ]] ||
+  fail "known broken references link was not repaired"
+
 canonical_home="$TMP_DIR/canonical-home"
 mkdir -p "$canonical_home/.agents" "$canonical_home/.codex"
 ln -s "$fixture_root/tools/ai/../ai/AGENTS.md" "$canonical_home/.agents/AGENTS.md"
+ln -s "$fixture_root/tools/ai/../ai/references" "$canonical_home/.agents/references"
 ln -s "../.agents/AGENTS.md" "$canonical_home/.codex/AGENTS.md"
 HOME="$canonical_home" \
   DOTFILES="$fixture_root" \
@@ -164,6 +220,8 @@ HOME="$canonical_home" \
   /bin/bash "$fixture_root/tools/ai/install.sh" >/dev/null
 [[ "$(readlink "$canonical_home/.agents/AGENTS.md")" == "$fixture_root/tools/ai/AGENTS.md" ]] ||
   fail "equivalent common link was not normalized to the canonical source"
+[[ "$(readlink "$canonical_home/.agents/references")" == "$fixture_root/tools/ai/references" ]] ||
+  fail "equivalent references link was not normalized to the canonical source"
 [[ "$(readlink "$canonical_home/.codex/AGENTS.md")" == "$canonical_home/.agents/AGENTS.md" ]] ||
   fail "equivalent Codex link was not normalized to the canonical source"
 

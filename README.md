@@ -203,6 +203,8 @@ Global Claude and Codex instructions share the tracked source at
 `~/.agents/AGENTS.md`. Because Codex does not discover that location itself,
 `~/.codex/AGENTS.md` links to `~/.agents/AGENTS.md`. Claude reads the Stowed
 `~/.claude/CLAUDE.md`, whose entire content is `@~/.agents/AGENTS.md`.
+Repository-specific agent references live in `tools/ai/references`; the same
+installer links that directory as `~/.agents/references`.
 
 For a registered machine, add `machines/<hardware-hash>.agents.md` beside its
 Machine Config. The installer links it to `~/.agents/AGENTS_LOCAL.md`, and the

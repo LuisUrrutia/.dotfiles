@@ -15,6 +15,15 @@ Read `~/.agents/AGENTS_LOCAL.md` (machine-local rules) when it exists.
 - Make a clear recommendation when the evidence supports one. Use "it depends"
   only for genuine tradeoffs, and name them.
 
+## Repository references
+
+Read a file under `~/.agents/references/` only when its rule in this section
+fires; the rule names the trigger.
+
+- Orca: when the workspace root is named `orca` or `orca.*`, or the supplied
+  task context identifies `stablyai/orca` or one of its forks, read and follow
+  `~/.agents/references/orca.md` for the entire task.
+
 ## Language
 
 - Use the user's current language for conversation. Apply ASD-STE100 clarity
