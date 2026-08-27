@@ -13,7 +13,15 @@
     "sessionUrl": false
   },
   "cleanupPeriodDays": 90,
+  "includeGitInstructions": false,
+  "fileCheckpointingEnabled": true,
+  "autoCompactEnabled": true,
+  "env": {
+    "BASH_DEFAULT_TIMEOUT_MS": "300000",
+    "BASH_MAX_OUTPUT_LENGTH": "60000"
+  },
   "model": "opus[1m]",
+  "fallbackModel": ["fable"],
   "hooks": {
     "SessionStart": [
       {
