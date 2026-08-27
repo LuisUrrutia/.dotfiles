@@ -68,13 +68,25 @@ grep -F -- '--skill vercel-composition-patterns' "$FAKE_MISE_LOG" >/dev/null
 grep -F -- '--skill vercel-react-best-practices' "$FAKE_MISE_LOG" >/dev/null
 grep -F -- '--skill vercel-react-view-transitions' "$FAKE_MISE_LOG" >/dev/null
 grep -F -- '--skill web-design-guidelines' "$FAKE_MISE_LOG" >/dev/null
-grep -F -- '--skill grill-with-docs' "$FAKE_MISE_LOG" >/dev/null
 grep -F -- '--skill ast-grep' "$FAKE_MISE_LOG" >/dev/null
 grep -F -- '--skill commit' "$FAKE_MISE_LOG" >/dev/null
 grep -F -- '--skill orca-cli' "$FAKE_MISE_LOG" >/dev/null
 grep -F -- '--agent opencode --agent claude-code -g -y' "$FAKE_MISE_LOG" >/dev/null
 [[ "$(grep -Fxc -- 'exec -- playwright-cli install --skills --global' "$FAKE_MISE_LOG")" -eq 1 ]]
 [[ "$(grep -Fxc -- 'exec -- playwright-cli install --skills=agents --global' "$FAKE_MISE_LOG")" -eq 1 ]]
+
+matt_skills_line="$(grep -F -- 'exec -- skills add git@github.com:mattpocock/skills.git ' "$FAKE_MISE_LOG")"
+matt_skill_count="$(awk '{ count = 0; for (field = 1; field <= NF; field++) if ($field == "--skill") count++; print count }' <<<"$matt_skills_line")"
+[[ "$matt_skill_count" -eq 24 ]]
+
+for skill_name in \
+  grill-with-docs triage improve-codebase-architecture \
+  setup-matt-pocock-skills to-spec to-tickets implement wayfinder prototype \
+  diagnosing-bugs research tdd domain-modeling codebase-design code-review \
+  resolving-merge-conflicts wizard grill-me handoff teach to-questionnaire \
+  wait-what grilling writing-for-agents; do
+  [[ " $matt_skills_line " == *" --skill $skill_name "* ]]
+done
 
 cat >"$FAKE_HOMEBREW_BIN/mise" <<'EOF'
 #!/usr/bin/env bash

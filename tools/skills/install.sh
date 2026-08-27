@@ -14,7 +14,7 @@ GLOBAL_SKILLS_AGENTS=(
 GLOBAL_SKILL_GROUPS=(
   "https://github.com/anthropics/skills|skill-creator"
   "https://github.com/vercel-labs/agent-skills|vercel-composition-patterns vercel-react-best-practices vercel-react-native-skills vercel-react-view-transitions web-design-guidelines writing-guidelines"
-  "mattpocock/skills|code-review codebase-design diagnosing-bugs domain-modeling grill-me grill-with-docs grilling handoff implement improve-codebase-architecture prototype research setup-matt-pocock-skills tdd teach to-issues to-prd triage writing-great-skills claude-handoff design-an-interface edit-article loop-me request-refactor-plan resolving-merge-conflicts wayfinder"
+  "git@github.com:mattpocock/skills.git|grill-with-docs triage improve-codebase-architecture setup-matt-pocock-skills to-spec to-tickets implement wayfinder prototype diagnosing-bugs research tdd domain-modeling codebase-design code-review resolving-merge-conflicts wizard grill-me handoff teach to-questionnaire wait-what grilling writing-for-agents"
   "https://github.com/ast-grep/agent-skill.git|ast-grep"
   "LuisUrrutia/skills|commit pr daily-meeting-update github-actions humanize"
   "https://github.com/stablyai/orca|orca-cli orchestration computer-use orca-linear orca-emulator"
