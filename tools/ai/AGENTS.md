@@ -23,10 +23,11 @@ fires; the rule names the trigger.
 - Orca: when the workspace root is named `orca` or `orca.*`, or the supplied
   task context identifies `stablyai/orca` or one of its forks, read and follow
   `~/.agents/references/orca.md` for the entire task.
-- Orca-managed session: the session is Orca-managed when both
-  `ORCA_WORKTREE_ID` and `ORCA_TERMINAL_HANDLE` are set. In that session, read
-  and follow `~/.agents/references/orca-session.md`, including its
-  repository-registration preflight, for the entire session.
+- Orca-managed session: read `ORCA_WORKTREE_ID` and `ORCA_TERMINAL_HANDLE`
+  from the environment on the first turn. When both are set, read and follow
+  `~/.agents/references/orca-session.md`, including its
+  repository-registration preflight, for the entire session. Reach that file
+  before creating a branch, a worktree, or any file.
 
 ## Language
 
