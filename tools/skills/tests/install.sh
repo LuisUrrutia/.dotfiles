@@ -61,7 +61,7 @@ bash "$SKILLS_INSTALL" >/dev/null
 grep -F -- "--restow --no-folding -d $ROOT_DIR/tools/skills -t $HOME config" "$FAKE_STOW_LOG" >/dev/null
 [[ -s "$FAKE_MISE_LOG" ]]
 
-[[ "$(wc -l <"$FAKE_MISE_LOG")" -eq 8 ]]
+[[ "$(wc -l <"$FAKE_MISE_LOG")" -eq 9 ]]
 grep -F -- 'exec -- skills add ' "$FAKE_MISE_LOG" >/dev/null
 grep -F -- '--skill skill-creator' "$FAKE_MISE_LOG" >/dev/null
 grep -F -- '--skill ast-grep' "$FAKE_MISE_LOG" >/dev/null
@@ -71,20 +71,54 @@ grep -F -- '--agent opencode --agent claude-code -g -y' "$FAKE_MISE_LOG" >/dev/n
 [[ "$(grep -Fxc -- 'exec -- playwright-cli install --skills --global' "$FAKE_MISE_LOG")" -eq 1 ]]
 [[ "$(grep -Fxc -- 'exec -- playwright-cli install --skills=agents --global' "$FAKE_MISE_LOG")" -eq 1 ]]
 
+while IFS= read -r skills_add_line; do
+  skill_flag_count="$(awk '{ count = 0; for (field = 1; field <= NF; field++) if ($field == "--skill") count++; print count }' <<<"$skills_add_line")"
+  if [[ "$skill_flag_count" -ne 1 ]]; then
+    echo "Expected one --skill flag: $skills_add_line" >&2
+    exit 1
+  fi
+done < <(grep -F -- 'exec -- skills add ' "$FAKE_MISE_LOG")
+
 vercel_skills_line="$(grep -F -- 'exec -- skills add https://github.com/vercel-labs/agent-skills ' "$FAKE_MISE_LOG")"
-vercel_skill_count="$(awk '{ count = 0; for (field = 1; field <= NF; field++) if ($field == "--skill") count++; print count }' <<<"$vercel_skills_line")"
+vercel_skill_names="${vercel_skills_line#* --skill }"
+vercel_skill_names="${vercel_skill_names%% --agent *}"
+vercel_skill_count="$(awk '{ print NF }' <<<"$vercel_skill_names")"
 [[ "$vercel_skill_count" -eq 5 ]]
 
 for skill_name in \
   vercel-composition-patterns vercel-react-best-practices \
   vercel-react-view-transitions web-design-guidelines writing-guidelines; do
-  [[ " $vercel_skills_line " == *" --skill $skill_name "* ]]
+  [[ " $vercel_skill_names " == *" $skill_name "* ]]
 done
 
-[[ " $vercel_skills_line " != *' --skill vercel-react-native-skills '* ]]
+[[ " $vercel_skill_names " != *' vercel-react-native-skills '* ]]
+
+cursor_skills_line="$(grep -F -- 'exec -- skills add git@github.com:cursor/plugins.git ' "$FAKE_MISE_LOG")"
+cursor_skill_names="${cursor_skills_line#* --skill }"
+cursor_skill_names="${cursor_skill_names%% --agent *}"
+cursor_skill_count="$(awk '{ print NF }' <<<"$cursor_skill_names")"
+[[ "$cursor_skill_count" -eq 22 ]]
+
+for skill_name in \
+  principle-boundary-discipline principle-build-the-lever \
+  principle-encode-lessons-in-structure principle-exhaust-the-design-space \
+  principle-experience-first principle-fix-root-causes \
+  principle-foundational-thinking principle-guard-the-context-window \
+  principle-laziness-protocol principle-make-operations-idempotent \
+  principle-migrate-callers-then-delete-legacy-apis \
+  principle-minimize-reader-load principle-model-the-domain \
+  principle-never-block-on-the-human principle-outcome-oriented-execution \
+  principle-prove-it-works principle-redesign-from-first-principles \
+  principle-separate-before-serializing-shared-state \
+  principle-sequence-verifiable-units principle-subtract-before-you-add \
+  principle-type-system-discipline typescript-best-practices; do
+  [[ " $cursor_skill_names " == *" $skill_name "* ]]
+done
 
 matt_skills_line="$(grep -F -- 'exec -- skills add git@github.com:mattpocock/skills.git ' "$FAKE_MISE_LOG")"
-matt_skill_count="$(awk '{ count = 0; for (field = 1; field <= NF; field++) if ($field == "--skill") count++; print count }' <<<"$matt_skills_line")"
+matt_skill_names="${matt_skills_line#* --skill }"
+matt_skill_names="${matt_skill_names%% --agent *}"
+matt_skill_count="$(awk '{ print NF }' <<<"$matt_skill_names")"
 [[ "$matt_skill_count" -eq 24 ]]
 
 for skill_name in \
@@ -93,7 +127,7 @@ for skill_name in \
   diagnosing-bugs research tdd domain-modeling codebase-design code-review \
   resolving-merge-conflicts wizard grill-me handoff teach to-questionnaire \
   wait-what grilling writing-for-agents; do
-  [[ " $matt_skills_line " == *" --skill $skill_name "* ]]
+  [[ " $matt_skill_names " == *" $skill_name "* ]]
 done
 
 cat >"$FAKE_HOMEBREW_BIN/mise" <<'EOF'
