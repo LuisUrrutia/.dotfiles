@@ -1,0 +1,10 @@
+personality = "pragmatic"
+model_reasoning_effort = "xhigh"
+plan_mode_reasoning_effort = "xhigh"
+web_search = "live"
+
+[skills]
+max_context_tokens = 10000
+
+[features]
+memories = false

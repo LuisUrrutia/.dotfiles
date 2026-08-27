@@ -64,16 +64,24 @@ grep -F -- "--restow --no-folding -d $ROOT_DIR/tools/skills -t $HOME config" "$F
 [[ "$(wc -l <"$FAKE_MISE_LOG")" -eq 8 ]]
 grep -F -- 'exec -- skills add ' "$FAKE_MISE_LOG" >/dev/null
 grep -F -- '--skill skill-creator' "$FAKE_MISE_LOG" >/dev/null
-grep -F -- '--skill vercel-composition-patterns' "$FAKE_MISE_LOG" >/dev/null
-grep -F -- '--skill vercel-react-best-practices' "$FAKE_MISE_LOG" >/dev/null
-grep -F -- '--skill vercel-react-view-transitions' "$FAKE_MISE_LOG" >/dev/null
-grep -F -- '--skill web-design-guidelines' "$FAKE_MISE_LOG" >/dev/null
 grep -F -- '--skill ast-grep' "$FAKE_MISE_LOG" >/dev/null
 grep -F -- '--skill commit' "$FAKE_MISE_LOG" >/dev/null
 grep -F -- '--skill orca-cli' "$FAKE_MISE_LOG" >/dev/null
 grep -F -- '--agent opencode --agent claude-code -g -y' "$FAKE_MISE_LOG" >/dev/null
 [[ "$(grep -Fxc -- 'exec -- playwright-cli install --skills --global' "$FAKE_MISE_LOG")" -eq 1 ]]
 [[ "$(grep -Fxc -- 'exec -- playwright-cli install --skills=agents --global' "$FAKE_MISE_LOG")" -eq 1 ]]
+
+vercel_skills_line="$(grep -F -- 'exec -- skills add https://github.com/vercel-labs/agent-skills ' "$FAKE_MISE_LOG")"
+vercel_skill_count="$(awk '{ count = 0; for (field = 1; field <= NF; field++) if ($field == "--skill") count++; print count }' <<<"$vercel_skills_line")"
+[[ "$vercel_skill_count" -eq 5 ]]
+
+for skill_name in \
+  vercel-composition-patterns vercel-react-best-practices \
+  vercel-react-view-transitions web-design-guidelines writing-guidelines; do
+  [[ " $vercel_skills_line " == *" --skill $skill_name "* ]]
+done
+
+[[ " $vercel_skills_line " != *' --skill vercel-react-native-skills '* ]]
 
 matt_skills_line="$(grep -F -- 'exec -- skills add git@github.com:mattpocock/skills.git ' "$FAKE_MISE_LOG")"
 matt_skill_count="$(awk '{ count = 0; for (field = 1; field <= NF; field++) if ($field == "--skill") count++; print count }' <<<"$matt_skills_line")"

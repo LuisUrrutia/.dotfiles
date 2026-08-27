@@ -206,6 +206,12 @@ Global Claude and Codex instructions share the tracked source at
 Repository-specific agent references live in `tools/ai/references`; the same
 installer links that directory as `~/.agents/references`.
 
+Stable Codex defaults that share `~/.codex/config.toml` with app-managed state
+are declared in `tools/codex/settings.toml`. The Codex Tool Installer merges
+only those declared keys into the regular live file and creates a timestamped
+backup before changing it; it does not track volatile project trust, hook,
+plugin, or runtime-path state.
+
 For a registered machine, add `machines/<hardware-hash>.agents.md` beside its
 Machine Config. The installer links it to `~/.agents/AGENTS_LOCAL.md`, and the
 common instructions tell agents to read that file when present. This keeps
