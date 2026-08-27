@@ -1,7 +1,18 @@
 {
   "permissions": {
-    "defaultMode": "bypassPermissions"
+    "defaultMode": "bypassPermissions",
+    "deny": [
+      "Read(~/.ssh/**)",
+      "Read(~/.aws/**)",
+      "Read(//**/.env*)"
+    ]
   },
+  "attribution": {
+    "commit": "",
+    "pr": "",
+    "sessionUrl": false
+  },
+  "cleanupPeriodDays": 90,
   "model": "opus[1m]",
   "hooks": {
     "SessionStart": [
