@@ -32,6 +32,8 @@ HOME="$common_home" \
 [[ "$(readlink "$common_home/.agents/references")" == "$ROOT_DIR/tools/ai/references" ]] ||
   fail "agent references point to the wrong source"
 [[ -f "$common_home/.agents/references/orca.md" ]] || fail "Orca reference is unavailable"
+[[ -f "$common_home/.agents/references/orca-session.md" ]] ||
+  fail "Orca session reference is unavailable"
 [[ -L "$common_home/.codex/AGENTS.md" ]] || fail "Codex instructions were not linked"
 [[ "$(readlink "$common_home/.codex/AGENTS.md")" == "$common_home/.agents/AGENTS.md" ]] ||
   fail "Codex instructions do not point to the common destination"
@@ -40,6 +42,18 @@ HOME="$common_home" \
 
 grep -F '.agents/AGENTS_LOCAL.md' "$ROOT_DIR/tools/ai/AGENTS.md" >/dev/null ||
   fail "common instructions do not load the optional machine layer"
+grep -F 'repository-registration preflight' "$ROOT_DIR/tools/ai/AGENTS.md" >/dev/null ||
+  fail "common instructions do not require the Orca repository preflight"
+
+orca_session="$ROOT_DIR/tools/ai/references/orca-session.md"
+repo_list_line="$(grep -nF 'orca repo list --json' "$orca_session" | head -n 1 | cut -d: -f1)"
+repo_add_line="$(grep -nF 'orca repo add --path <main-worktree-path> --json' "$orca_session" |
+  head -n 1 | cut -d: -f1)"
+worktree_create_line="$(grep -nF 'wt switch --create <name>' "$orca_session" |
+  head -n 1 | cut -d: -f1)"
+[[ "$repo_list_line" -lt "$worktree_create_line" &&
+  "$repo_add_line" -lt "$worktree_create_line" ]] ||
+  fail "Orca session instructions create a worktree before registering its repository"
 [[ "$(<"$ROOT_DIR/tools/claude/config/.claude/CLAUDE.md")" == '@~/.agents/AGENTS.md' ]] ||
   fail "Claude does not import the common instructions"
 
@@ -49,6 +63,8 @@ mkdir -p "$fixture_root/tools/ai/references" "$fixture_root/machines" "$fixture_
 cp "$AI_INSTALL" "$fixture_root/tools/ai/install.sh"
 cp "$ROOT_DIR/tools/ai/AGENTS.md" "$fixture_root/tools/ai/AGENTS.md"
 cp "$ROOT_DIR/tools/ai/references/orca.md" "$fixture_root/tools/ai/references/orca.md"
+cp "$ROOT_DIR/tools/ai/references/orca-session.md" \
+  "$fixture_root/tools/ai/references/orca-session.md"
 cp "$ROOT_DIR/tools/lib.sh" "$fixture_root/tools/lib.sh"
 printf '%s\n' 'MACHINE_ID="fixture"' >"$fixture_root/machines/registered.sh"
 printf '%s\n' '# Registered machine instructions' >"$fixture_root/machines/registered.agents.md"

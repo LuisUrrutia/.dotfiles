@@ -25,7 +25,8 @@ fires; the rule names the trigger.
   `~/.agents/references/orca.md` for the entire task.
 - Orca-managed session: the session is Orca-managed when both
   `ORCA_WORKTREE_ID` and `ORCA_TERMINAL_HANDLE` are set. In that session, read
-  and follow `~/.agents/references/orca-session.md` for the entire session.
+  and follow `~/.agents/references/orca-session.md`, including its
+  repository-registration preflight, for the entire session.
 
 ## Language
 
