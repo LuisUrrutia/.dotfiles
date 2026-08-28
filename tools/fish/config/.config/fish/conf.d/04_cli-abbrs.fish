@@ -2,7 +2,7 @@ status is-interactive; or return
 
 if command -q eza
     abbr -a -- ls 'eza --icons=auto --color=auto --group-directories-first --octal-permissions'
-    abbr -a -- ll 'eza --icons=auto --color=auto --group-directories-first --octal-permissions --git -alh --classify=auto'
+    alias ll 'eza --icons=auto --color=auto --group-directories-first --octal-permissions --git -alh --classify=auto'
     abbr -a -- tree 'eza --icons=auto --color=auto --group-directories-first --octal-permissions --tree'
 end
 

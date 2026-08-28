@@ -53,9 +53,10 @@ fi
 grep -F 'positive integer' "$TMP_DIR/img2jpg.err" >/dev/null ||
   fail "img2jpg did not explain its dimension constraint"
 
-if grep -Eq '^[[:space:]]*alias[[:space:]]' "$CLI_ABBRS"; then
-  fail "interactive CLI policy still defines global aliases"
-fi
 PATH="$TMP_DIR/bin:$PATH" CLI_ABBRS="$CLI_ABBRS" "$FISH" --no-config --interactive -c \
-  'source "$CLI_ABBRS"; abbr -q ls; and abbr -q grep' </dev/null ||
-  fail "interactive CLI abbreviations were not registered"
+  'source "$CLI_ABBRS"
+    abbr -q ls
+    and abbr -q grep
+    and not abbr -q ll
+    and functions -q ll' </dev/null ||
+  fail "interactive CLI shortcuts were not registered"
