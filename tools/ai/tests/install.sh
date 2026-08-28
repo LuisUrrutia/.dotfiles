@@ -44,16 +44,38 @@ grep -F '.agents/AGENTS_LOCAL.md' "$ROOT_DIR/tools/ai/AGENTS.md" >/dev/null ||
   fail "common instructions do not load the optional machine layer"
 grep -F 'repository-registration preflight' "$ROOT_DIR/tools/ai/AGENTS.md" >/dev/null ||
   fail "common instructions do not require the Orca repository preflight"
+grep -F 'operating from a different checkout' "$ROOT_DIR/tools/ai/AGENTS.md" >/dev/null ||
+  fail "common instructions do not route cross-checkout work through Orca handoff"
 
 orca_session="$ROOT_DIR/tools/ai/references/orca-session.md"
+ownership_line="$(grep -nF 'The starting agent owns only the checkout path' "$orca_session" |
+  head -n 1 | cut -d: -f1)"
+grep -F 'newly cloned or imported main checkout' "$orca_session" >/dev/null ||
+  fail "Orca session instructions exclude imported main checkouts from handoff"
 repo_list_line="$(grep -nF 'orca repo list --json' "$orca_session" | head -n 1 | cut -d: -f1)"
 repo_add_line="$(grep -nF 'orca repo add --path <main-worktree-path> --json' "$orca_session" |
   head -n 1 | cut -d: -f1)"
+existing_branch_line="$(grep -nF 'wt switch <branch>' "$orca_session" |
+  head -n 1 | cut -d: -f1)"
+pull_request_line="$(grep -nF 'wt switch pr:<number>' "$orca_session" |
+  head -n 1 | cut -d: -f1)"
 worktree_create_line="$(grep -nF 'wt switch --create <name>' "$orca_session" |
   head -n 1 | cut -d: -f1)"
-[[ "$repo_list_line" -lt "$worktree_create_line" &&
+terminal_create_line="$(grep -nF 'orca terminal create --worktree path:<abs-path>' "$orca_session" |
+  head -n 1 | cut -d: -f1)"
+[[ "$ownership_line" -lt "$repo_list_line" ]] ||
+  fail "Orca session instructions register a repository before defining checkout ownership"
+[[ "$repo_list_line" -lt "$existing_branch_line" &&
+  "$repo_add_line" -lt "$existing_branch_line" &&
+  "$repo_list_line" -lt "$pull_request_line" &&
+  "$repo_add_line" -lt "$pull_request_line" &&
+  "$repo_list_line" -lt "$worktree_create_line" &&
   "$repo_add_line" -lt "$worktree_create_line" ]] ||
-  fail "Orca session instructions create a worktree before registering its repository"
+  fail "Orca session instructions resolve a destination before registering its repository"
+[[ "$existing_branch_line" -lt "$terminal_create_line" &&
+  "$pull_request_line" -lt "$terminal_create_line" &&
+  "$worktree_create_line" -lt "$terminal_create_line" ]] ||
+  fail "Orca session instructions launch an agent before resolving its destination"
 [[ "$(<"$ROOT_DIR/tools/claude/config/.claude/CLAUDE.md")" == '@~/.agents/AGENTS.md' ]] ||
   fail "Claude does not import the common instructions"
 
