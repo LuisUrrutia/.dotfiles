@@ -56,6 +56,9 @@ fires; the rule names the trigger.
   with a summary of completed and remaining work.
 - Run CLI tools non-interactively (`--no-interactive`, `--yes`, or the
   equivalent), configured to fail rather than wait on stdin.
+- Fish is the configured user shell. Bash and Zsh may lack its `PATH` entries
+  and other startup state; check through Fish before treating a command or
+  setting as unavailable.
 - Use the environment's dedicated search tools. When only shell search is
   available: `ast-grep` for structural code queries, `rg` for content,
   `rg --files` for paths, and `fd` for filename searches that need file-system
