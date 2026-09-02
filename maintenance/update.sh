@@ -105,9 +105,16 @@ terminate_process_group() {
 }
 
 start_child() {
-  "$PROCESS_GROUP_PYTHON" -c \
-    'import os, sys; os.setsid(); os.execvp(sys.argv[1], sys.argv[1:])' \
-    "$@" &
+  # Background jobs get /dev/null as stdin; keep the controlling TTY for sudo.
+  if [[ -t 0 ]]; then
+    "$PROCESS_GROUP_PYTHON" -c \
+      'import os, sys; os.execvp(sys.argv[1], sys.argv[1:])' \
+      "$@" </dev/tty &
+  else
+    "$PROCESS_GROUP_PYTHON" -c \
+      'import os, sys; os.setsid(); os.execvp(sys.argv[1], sys.argv[1:])' \
+      "$@" &
+  fi
   ACTIVE_PID="$!"
 }
 

@@ -52,6 +52,7 @@ printf '%s\n' \
   'printf "%s %s\n" "$tool" "$*" >>"$UPDATE_LOG"' \
   'printf "child stdout: %s %s\n" "$tool" "$*"' \
   'printf "child stderr: %s %s\n" "$tool" "$*" >&2' \
+  'if [[ "${UPDATE_SCENARIO:-}" == brew-needs-terminal && "$tool" == brew && "${1:-}" == upgrade ]] && { [[ ! -t 0 ]] || ! : </dev/tty 2>/dev/null; }; then printf "sudo: a terminal is required to read the password\n" >&2; exit 1; fi' \
   'if [[ "${UPDATE_SCENARIO:-}" == "brew-${1:-}-fails" && "$tool" == brew ]]; then exit 7; fi' \
   'if [[ "${UPDATE_SCENARIO:-}" == brew-cleanup-fails && "$tool" == brew && "${1:-}" == cleanup ]]; then exit 7; fi' \
   'if [[ "$tool" == brew && "${1:-}" == doctor && ! -f "$EXPECTED_BREW_STAMP" ]]; then exit 10; fi' \
@@ -100,6 +101,38 @@ run_scenario() {
     UPDATE_SCENARIO="$scenario" \
     EXPECTED_BREW_STAMP="$state_dir/dotfiles/update/brew" \
     "$FIXTURE_ROOT/dotfiles" update --ignore-schedule \
+    >"$output_file" 2>&1
+  SCENARIO_STATUS=$?
+  set -e
+
+  SCENARIO_STATE="$state_dir"
+  SCENARIO_LOG="$(<"$log_file")"
+  SCENARIO_OUTPUT="$(<"$output_file")"
+}
+
+run_terminal_scenario() {
+  local scenario="$1"
+  local scenario_dir="$TMP_DIR/$scenario"
+  local home_dir="$scenario_dir/home"
+  local state_dir="$scenario_dir/state"
+  local log_file="$scenario_dir/tools.log"
+  local output_file="$scenario_dir/output.log"
+
+  mkdir -p "$home_dir/.config/fish/functions" "$home_dir/.config/tlrc" "$state_dir"
+  : >"$home_dir/.config/fish/fish_plugins"
+  : >"$home_dir/.config/fish/functions/fisher.fish"
+  : >"$home_dir/.config/tlrc/config.toml"
+  : >"$log_file"
+
+  set +e
+  HOME="$home_dir" \
+    XDG_CONFIG_HOME="$home_dir/.config" \
+    XDG_STATE_HOME="$state_dir" \
+    PATH="$FAKE_BIN:/usr/bin:/bin" \
+    UPDATE_LOG="$log_file" \
+    UPDATE_SCENARIO="$scenario" \
+    EXPECTED_BREW_STAMP="$state_dir/dotfiles/update/brew" \
+    /usr/bin/script -q /dev/null "$FIXTURE_ROOT/dotfiles" update --ignore-schedule \
     >"$output_file" 2>&1
   SCENARIO_STATUS=$?
   set -e
@@ -187,6 +220,10 @@ assert_log_order "$TMP_DIR/all-pass/tools.log" \
 [[ "$SCENARIO_OUTPUT" == *'child stdout: rustup update'* ]] || fail "child stdout was not streamed"
 [[ "$SCENARIO_OUTPUT" == *'child stderr: rustup update'* ]] || fail "child stderr was not streamed"
 [[ -f "$SCENARIO_STATE/dotfiles/update/mole-clean" ]] || fail "Mole success did not write its stamp"
+
+run_terminal_scenario brew-needs-terminal
+[[ "$SCENARIO_STATUS" -eq 0 ]] || fail "Homebrew could not use the terminal for sudo"
+[[ "$SCENARIO_LOG" == *'brew upgrade'* ]] || fail "terminal Homebrew upgrade did not run"
 
 run_scenario completion-drift
 [[ "$SCENARIO_STATUS" -eq 0 ]] || fail "Claude completion drift failed Software Maintenance"
