@@ -15,3 +15,15 @@ eval "$("$bin_path" activate bash)"
 # npmMinimalAgeGate (10080 min). Written into ~/.npmrc, which stays untracked
 # because npm also keeps the registry auth token there.
 npm config set min-release-age 7 --location=user
+
+# bun comes from mise, so no Homebrew vendor completion exists; generate it
+# the same way tools/python does for uv.
+fish_config_dir="$HOME/.config/fish"
+fish_completions_dir="$fish_config_dir/completions"
+
+if [[ -L "$fish_config_dir" ]]; then
+  echo "Warning: $fish_config_dir is a symlink; run tools/fish/install.sh before generating bun Fish completions" >&2
+elif command -v bun >/dev/null 2>&1; then
+  mkdir -p "$fish_completions_dir"
+  SHELL=fish bun completions >"$fish_completions_dir/bun.fish"
+fi

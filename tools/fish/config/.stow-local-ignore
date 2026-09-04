@@ -18,3 +18,4 @@
 ^/\.config/fish/themes/catppuccin-.*\.theme
 ^/\.config/fish/themes/static/Catppuccin .*\.theme
 ^/\.config/fish/themes/static/catppuccin-.*\.theme
+^/\.config/fish/completions/bun\.fish
