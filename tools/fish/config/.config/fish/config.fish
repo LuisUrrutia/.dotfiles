@@ -8,10 +8,6 @@ if status is-interactive
 
     set -gx GPG_TTY (tty)
 
-    if command -q mise
-        mise activate fish | source
-    end
-
     if command -q starship
         starship init fish | source
 
@@ -35,10 +31,6 @@ if status is-interactive
 
     if command -q eza
         set -g fzf_preview_dir_cmd 'eza --tree --level=2 --group-directories-first --icons=auto --color=always'
-    end
-else
-    if command -q mise
-        mise activate fish --shims 2>/dev/null | source
     end
 end
 
