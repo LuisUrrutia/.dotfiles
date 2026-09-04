@@ -12,8 +12,6 @@ Standalone scripts stowed into `~/.local/bin` (see `install.sh`, which runs
   in-progress operation (rebase/merge/…), and working-tree counts.
 - `machash` — print this Mac's hardware hash, used to match
   `machines/<hash>.sh` records.
-- `starship-git-branch` — branch segment for the starship prompt; hides the
-  branch when the worktree directory name already contains it.
 - `thaw-config` — back up Thaw preferences into `tools/thaw/backups`.
 
 ## Tests

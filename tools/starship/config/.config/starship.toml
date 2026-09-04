@@ -10,7 +10,7 @@ format = """
 $username\
 $hostname\
 $directory\
-${custom.git_branch}\
+$git_branch\
 $git_commit\
 $git_state\
 $git_status\
@@ -83,13 +83,10 @@ read_only = " 󰌾"
 truncation_length = 4
 truncate_to_repo = true
 
-[custom.git_branch]
-command = "starship-git-branch"
-description = "Show Git branch unless the worktree directory is named after it"
-format = "([$output]($style) )"
+[git_branch]
+format = "[$symbol$branch]($style) "
 style = "bold mauve"
-when = true
-require_repo = true
+symbol = " "
 
 [git_commit]
 style = "bold green"
