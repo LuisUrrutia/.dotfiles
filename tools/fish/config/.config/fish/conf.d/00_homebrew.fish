@@ -16,15 +16,3 @@ end
 if not contains -- "$HOMEBREW_PREFIX/share/info" $INFOPATH
     set -gx INFOPATH "$HOMEBREW_PREFIX/share/info" $INFOPATH
 end
-
-if test -d "$HOMEBREW_PREFIX/share/fish/completions"
-    if not contains -- "$HOMEBREW_PREFIX/share/fish/completions" $fish_complete_path
-        set -a fish_complete_path "$HOMEBREW_PREFIX/share/fish/completions"
-    end
-end
-
-if test -d "$HOMEBREW_PREFIX/share/fish/vendor_completions.d"
-    if not contains -- "$HOMEBREW_PREFIX/share/fish/vendor_completions.d" $fish_complete_path
-        set -a fish_complete_path "$HOMEBREW_PREFIX/share/fish/vendor_completions.d"
-    end
-end
