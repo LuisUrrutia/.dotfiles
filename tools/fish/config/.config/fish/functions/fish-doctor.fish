@@ -113,14 +113,6 @@ function fish-doctor -d "Check Fish dotfiles health"
         __fish_doctor_warn "zoxide cd integration is not loaded"
     end
 
-    if command -q atuin
-        atuin --version >/dev/null 2>&1
-        and __fish_doctor_ok "atuin command is available"
-        or __fish_doctor_warn "atuin command exists but version probe failed"
-    else
-        __fish_doctor_warn "atuin command not found"
-    end
-
     if command -q mise
         mise --version >/dev/null 2>&1
         and __fish_doctor_ok "mise command is available"

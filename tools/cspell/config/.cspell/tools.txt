@@ -1,4 +1,3 @@
-atuin
 blueutil
 btop
 caffeinate

@@ -1,3 +1,4 @@
+[[ ! -L "$upgrade_home/.config/fish/conf.d/zz_atuin.fish" ]] || fail "known broken conf.d link survived"
 #!/usr/bin/env bash
 
 set -euo pipefail
@@ -38,13 +39,16 @@ restow_all "$clean_home"
 # An upgrade removes only broken links whose literal target names a retired
 # source. The target may be in an older clone, so it need not mention this root.
 upgrade_home="$TMP_DIR/upgrade-home"
-mkdir -p "$upgrade_home/.config/fish/functions" "$upgrade_home/.config/fish/completions"
+mkdir -p "$upgrade_home/.config/fish/functions" "$upgrade_home/.config/fish/completions" \
+  "$upgrade_home/.config/fish/conf.d"
 ln -s "$TMP_DIR/old-clone/tools/fish/config/.config/fish/functions/upd.fish" \
   "$upgrade_home/.config/fish/functions/upd.fish"
 ln -s ../../../../old-clone/tools/fish/config/.config/fish/functions/backup-configs.fish \
   "$upgrade_home/.config/fish/functions/backup-configs.fish"
 ln -s "$TMP_DIR/old-clone/tools/fish/config/.config/fish/completions/upd.fish" \
   "$upgrade_home/.config/fish/completions/upd.fish"
+ln -s "$TMP_DIR/old-clone/tools/fish/config/.config/fish/conf.d/zz_atuin.fish" \
+  "$upgrade_home/.config/fish/conf.d/zz_atuin.fish"
 
 HOME="$upgrade_home" DOTFILES="$DOTFILES_ROOT" /bin/bash -c \
   'source "$DOTFILES/tools/fish/migrate-legacy.sh"; migrate_retired_fish_links'

@@ -11,6 +11,7 @@ migrate_retired_fish_links() {
   for relative_path in \
     functions/upd.fish \
     conf.d/00_mise-activate.fish \
+    conf.d/zz_atuin.fish \
     functions/backup-configs.fish \
     completions/upd.fish; do
     target="$HOME/.config/fish/$relative_path"

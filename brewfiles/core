@@ -43,7 +43,6 @@ brew "mise"             # Multiple package manager
 cask "ghostty"   # Terminal emulator
 brew "fish"      # Shell
 brew "fisher"    # Fish plugin manager
-brew "atuin"     # Shell history manager
 brew "tmux"      # Terminal multiplexer
 brew "starship"  # Shell prompt
 
