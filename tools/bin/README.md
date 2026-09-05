@@ -12,6 +12,10 @@ Standalone scripts stowed into `~/.local/bin` (see `install.sh`, which runs
   in-progress operation (rebase/merge/…), and working-tree counts.
 - `machash` — print this Mac's hardware hash, used to match
   `machines/<hash>.sh` records.
+- `macfuse-guard` — pin macFUSE while Homebrew offers the broken 5.3.3
+  release, then unpin it when another version becomes available.
+- `openclaw-mount` — mount `voidcore:.openclaw` through SSHFS only while
+  Tailscale is connected, and manage its login LaunchAgent.
 - `thaw-config` — back up Thaw preferences into `tools/thaw/backups`.
 
 ## Tests

@@ -1,0 +1,80 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+readonly BREW_BIN="${BREW_BIN:-$(command -v brew || true)}"
+readonly JQ_BIN="${JQ_BIN:-$(command -v jq || true)}"
+readonly BLOCKED_VERSION="${MACFUSE_BLOCKED_VERSION:-5.3.3}"
+
+say() {
+  printf '[macfuse-guard] %s\n' "$*"
+}
+
+fail() {
+  say "ERROR: $*" >&2
+  exit 1
+}
+
+is_installed() {
+  "${BREW_BIN}" list --cask macfuse >/dev/null 2>&1
+}
+
+is_pinned() {
+  "${BREW_BIN}" list --pinned | /usr/bin/grep -Fxq macfuse
+}
+
+available_version() {
+  "${BREW_BIN}" info --json=v2 --cask macfuse |
+    "${JQ_BIN}" -er '.casks[0].version'
+}
+
+reconcile() {
+  local version
+
+  [[ -x "${BREW_BIN}" ]] || fail "Homebrew is not installed"
+  [[ -x "${JQ_BIN}" ]] || fail "jq is not installed"
+
+  if ! is_installed; then
+    say "macFUSE is not installed; nothing to guard"
+    return
+  fi
+
+  if ! version="$(available_version)"; then
+    fail "unable to read the available macFUSE version"
+  fi
+
+  if [[ "${version}" == "${BLOCKED_VERSION}" ]]; then
+    if ! is_pinned; then
+      "${BREW_BIN}" pin --cask macfuse
+    fi
+    say "Blocked macFUSE ${version}; cask is pinned"
+    return
+  fi
+
+  if is_pinned; then
+    "${BREW_BIN}" unpin --cask macfuse
+  fi
+  say "Allowed macFUSE ${version}; cask is unpinned"
+}
+
+usage() {
+  cat <<'EOF'
+Usage: macfuse-guard [reconcile]
+
+Keep the macFUSE cask pinned while Homebrew offers version 5.3.3. Unpin it
+automatically when Homebrew offers another version.
+EOF
+}
+
+case "${1:-reconcile}" in
+  reconcile)
+    reconcile
+    ;;
+  -h | --help | help)
+    usage
+    ;;
+  *)
+    usage >&2
+    exit 64
+    ;;
+esac

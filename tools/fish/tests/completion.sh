@@ -49,3 +49,33 @@ update_candidates="$(complete_for 'dotfiles update --')"
 backup_candidates="$(complete_for 'dotfiles backup ')"
 [[ "$backup_candidates" == *$'all'* && "$backup_candidates" == *$'raycast'* && "$backup_candidates" == *$'thaw'* ]] ||
   fail "Backup targets are absent"
+
+tmp_dir="$(mktemp -d)"
+trap 'rm -rf "$tmp_dir"' EXIT
+fixture="$tmp_dir/repo"
+mkdir -p "$fixture/tools/alpha/config" "$fixture/tools/beta/config" \
+  "$fixture/tools/removed/config" "$fixture/tools/untracked/config" "$tmp_dir/bin"
+printf '#!/bin/sh\nexit 0\n' >"$fixture/dotfiles"
+chmod +x "$fixture/dotfiles"
+touch "$fixture/tools/alpha/config/one" "$fixture/tools/alpha/config/two" \
+  "$fixture/tools/beta/config/one" "$fixture/tools/removed/config/one" \
+  "$fixture/tools/untracked/config/one"
+git -C "$fixture" init -q
+git -C "$fixture" add tools/alpha tools/beta tools/removed
+rm -r "$fixture/tools/removed/config"
+
+real_git="$(command -v git)"
+cat >"$tmp_dir/bin/git" <<'EOF'
+#!/bin/sh
+printf 'call\n' >>"$GIT_LOG"
+exec "$REAL_GIT" "$@"
+EOF
+chmod +x "$tmp_dir/bin/git"
+
+config_candidates="$(COMPLETION="$COMPLETION" REAL_GIT="$real_git" GIT_LOG="$tmp_dir/git.log" \
+  PATH="$tmp_dir/bin:$fixture:/opt/homebrew/bin:/usr/bin:/bin" \
+  "$FISH" --no-config -c 'source "$COMPLETION"; complete -C "dotfiles config diff "' </dev/null)"
+[[ "$config_candidates" == $'alpha\nbeta' ]] ||
+  fail "Config tools did not match tracked packages with existing config directories"
+[[ "$(wc -l <"$tmp_dir/git.log" | tr -d ' ')" -eq 1 ]] ||
+  fail "Config tool completion queried Git more than once"

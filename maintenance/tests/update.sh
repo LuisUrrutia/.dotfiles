@@ -33,11 +33,15 @@ assert_log_order() {
   done
 }
 
-mkdir -p "$FIXTURE_ROOT/cli" "$FIXTURE_ROOT/maintenance" "$FIXTURE_ROOT/tools/fish" "$FAKE_BIN"
+mkdir -p "$FIXTURE_ROOT/cli" "$FIXTURE_ROOT/maintenance" \
+  "$FIXTURE_ROOT/tools/bin/config/.local/bin" "$FIXTURE_ROOT/tools/fish" "$FAKE_BIN"
 cp "$ROOT_DIR/dotfiles" "$FIXTURE_ROOT/dotfiles"
 cp "$ROOT_DIR"/cli/*.sh "$FIXTURE_ROOT/cli/"
 cp "$ROOT_DIR/maintenance/update.sh" "$FIXTURE_ROOT/maintenance/update.sh"
+cp "$ROOT_DIR/tools/bin/config/.local/bin/macfuse-guard" \
+  "$FIXTURE_ROOT/tools/bin/config/.local/bin/macfuse-guard"
 chmod +x "$FIXTURE_ROOT/dotfiles" "$FIXTURE_ROOT/maintenance/update.sh"
+chmod +x "$FIXTURE_ROOT/tools/bin/config/.local/bin/macfuse-guard"
 
 printf '%s\n' \
   '#!/usr/bin/env bash' \
@@ -50,6 +54,19 @@ printf '%s\n' \
   '#!/usr/bin/env bash' \
   'tool="$(basename "$0")"' \
   'printf "%s %s\n" "$tool" "$*" >>"$UPDATE_LOG"' \
+  'if [[ "$tool" == brew && "${1:-}" == --prefix && "${2:-}" == fisher ]]; then printf "%s\n" "$FISHER_PREFIX"; exit 0; fi' \
+  'if [[ "$tool" == brew && "${1:-}" == list && "${2:-}" == --cask && "${3:-}" == macfuse ]]; then [[ "${UPDATE_SCENARIO:-}" != macfuse-not-installed ]]; exit; fi' \
+  'if [[ "$tool" == brew && "${1:-}" == info && "${2:-}" == --json=v2 && "${3:-}" == --cask ]]; then' \
+  '  [[ "${UPDATE_SCENARIO:-}" != macfuse-info-fails ]] || exit 7' \
+  '  version=5.3.3' \
+  '  [[ "${UPDATE_SCENARIO:-}" != macfuse-5.3.4 ]] || version=5.3.4' \
+  '  printf '\''{"casks":[{"version":"%s"}]}\n'\'' "$version"' \
+  '  exit 0' \
+  'fi' \
+  'if [[ "$tool" == brew && "${1:-}" == list && "${2:-}" == --pinned ]]; then' \
+  '  [[ "${UPDATE_SCENARIO:-}" != macfuse-5.3.4 ]] || printf '\''macfuse\n'\''' \
+  '  exit 0' \
+  'fi' \
   'printf "child stdout: %s %s\n" "$tool" "$*"' \
   'printf "child stderr: %s %s\n" "$tool" "$*" >&2' \
   'if [[ "${UPDATE_SCENARIO:-}" == brew-needs-terminal && "$tool" == brew && "${1:-}" == upgrade ]] && { [[ ! -t 0 ]] || ! : </dev/tty 2>/dev/null; }; then printf "sudo: a terminal is required to read the password\n" >&2; exit 1; fi' \
@@ -83,12 +100,14 @@ run_scenario() {
   local scenario_dir="$TMP_DIR/$scenario"
   local home_dir="$scenario_dir/home"
   local state_dir="$scenario_dir/state"
+  local fisher_prefix="$scenario_dir/fisher"
   local log_file="$scenario_dir/tools.log"
   local output_file="$scenario_dir/output.log"
 
-  mkdir -p "$home_dir/.config/fish/functions" "$home_dir/.config/tlrc" "$state_dir"
+  mkdir -p "$home_dir/.config/fish" "$home_dir/.config/tlrc" \
+    "$fisher_prefix/share/fish/vendor_functions.d" "$state_dir"
   : >"$home_dir/.config/fish/fish_plugins"
-  : >"$home_dir/.config/fish/functions/fisher.fish"
+  : >"$fisher_prefix/share/fish/vendor_functions.d/fisher.fish"
   : >"$home_dir/.config/tlrc/config.toml"
   : >"$log_file"
 
@@ -99,6 +118,7 @@ run_scenario() {
     PATH="$FAKE_BIN:/usr/bin:/bin" \
     UPDATE_LOG="$log_file" \
     UPDATE_SCENARIO="$scenario" \
+    FISHER_PREFIX="$fisher_prefix" \
     EXPECTED_BREW_STAMP="$state_dir/dotfiles/update/brew" \
     "$FIXTURE_ROOT/dotfiles" update --ignore-schedule \
     >"$output_file" 2>&1
@@ -115,12 +135,14 @@ run_terminal_scenario() {
   local scenario_dir="$TMP_DIR/$scenario"
   local home_dir="$scenario_dir/home"
   local state_dir="$scenario_dir/state"
+  local fisher_prefix="$scenario_dir/fisher"
   local log_file="$scenario_dir/tools.log"
   local output_file="$scenario_dir/output.log"
 
-  mkdir -p "$home_dir/.config/fish/functions" "$home_dir/.config/tlrc" "$state_dir"
+  mkdir -p "$home_dir/.config/fish" "$home_dir/.config/tlrc" \
+    "$fisher_prefix/share/fish/vendor_functions.d" "$state_dir"
   : >"$home_dir/.config/fish/fish_plugins"
-  : >"$home_dir/.config/fish/functions/fisher.fish"
+  : >"$fisher_prefix/share/fish/vendor_functions.d/fisher.fish"
   : >"$home_dir/.config/tlrc/config.toml"
   : >"$log_file"
 
@@ -131,6 +153,7 @@ run_terminal_scenario() {
     PATH="$FAKE_BIN:/usr/bin:/bin" \
     UPDATE_LOG="$log_file" \
     UPDATE_SCENARIO="$scenario" \
+    FISHER_PREFIX="$fisher_prefix" \
     EXPECTED_BREW_STAMP="$state_dir/dotfiles/update/brew" \
     /usr/bin/script -q /dev/null "$FIXTURE_ROOT/dotfiles" update --ignore-schedule \
     >"$output_file" 2>&1
@@ -197,6 +220,7 @@ run_scenario all-pass
 [[ "$SCENARIO_STATUS" -eq 0 ]] || fail "successful Update failed"
 assert_log_order "$TMP_DIR/all-pass/tools.log" \
   'brew update' \
+  'brew pin --cask macfuse' \
   'brew upgrade' \
   'brew autoremove' \
   'brew cleanup --prune=all' \
@@ -224,6 +248,20 @@ assert_log_order "$TMP_DIR/all-pass/tools.log" \
 run_terminal_scenario brew-needs-terminal
 [[ "$SCENARIO_STATUS" -eq 0 ]] || fail "Homebrew could not use the terminal for sudo"
 [[ "$SCENARIO_LOG" == *'brew upgrade'* ]] || fail "terminal Homebrew upgrade did not run"
+
+run_scenario macfuse-5.3.4
+[[ "$SCENARIO_STATUS" -eq 0 ]] || fail "macFUSE 5.3.4 guard scenario failed"
+assert_log_order "$TMP_DIR/macfuse-5.3.4/tools.log" \
+  'brew update' \
+  'brew unpin --cask macfuse' \
+  'brew upgrade'
+
+run_scenario macfuse-info-fails
+[[ "$SCENARIO_STATUS" -eq 1 ]] || fail "macFUSE guard metadata failure did not fail Update"
+[[ "$SCENARIO_LOG" != *'brew upgrade'* ]] || fail "Homebrew upgrade ran after macFUSE guard failure"
+[[ "$SCENARIO_LOG" == *'mise upgrade --yes'* ]] || fail "macFUSE guard failure stopped mise"
+[[ "$SCENARIO_OUTPUT" == *'[update] Homebrew: failed (macFUSE guard, status 1)'* ]] ||
+  fail "macFUSE guard failure reason is missing"
 
 run_scenario completion-drift
 [[ "$SCENARIO_STATUS" -eq 0 ]] || fail "Claude completion drift failed Software Maintenance"

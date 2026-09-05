@@ -125,6 +125,21 @@ grep -F 'preserving legacy Homebrew packages' "$TMP_DIR/missing-tpack/stderr" >/
 grep -F '"github:tmuxpack/tpack" = "latest"' \
   "$ROOT_DIR/tools/mise/config/.config/mise/config.toml" >/dev/null ||
   fail "TPack is not declared in the mise-owned portable toolchain"
+grep -F '"npm:@luisurrutia/bird" = "1.0.0"' \
+  "$ROOT_DIR/tools/mise/config/.config/mise/config.toml" >/dev/null ||
+  fail "LuisUrrutia Bird is not declared in the mise-owned portable toolchain"
+! grep -F '"npm:@steipete/bird"' \
+  "$ROOT_DIR/tools/mise/config/.config/mise/config.toml" >/dev/null ||
+  fail "deprecated steipete Bird package is still declared"
+grep -F 'minimum_release_age_excludes' \
+  "$ROOT_DIR/tools/mise/config/.config/mise/config.toml" >/dev/null ||
+  fail "mise minimum release age exclusions are not configured"
+grep -F '"aqua:anthropics/claude-code"' \
+  "$ROOT_DIR/tools/mise/config/.config/mise/config.toml" >/dev/null ||
+  fail "Claude Code is still subject to mise minimum release age"
+grep -F '"aqua:openai/codex"' \
+  "$ROOT_DIR/tools/mise/config/.config/mise/config.toml" >/dev/null ||
+  fail "Codex is still subject to mise minimum release age"
 ! grep -F 'credential_command' \
   "$ROOT_DIR/tools/mise/config/.config/mise/config.toml" >/dev/null ||
   fail "fresh mise install still requires an explicit GitHub credential command"

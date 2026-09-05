@@ -101,3 +101,23 @@ env HOME="$home_dir" PATH=/usr/bin:/bin HOMEBREW_FILE="$HOMEBREW_FILE" \
     and test "$HOMEBREW_REPOSITORY" = "$EXPECTED_HOMEBREW_REPOSITORY"
     and test "$HOMEBREW_NO_ANALYTICS" = custom
   '
+
+for fzf_options in '--layout=reverse --height=40%' ''; do
+  env HOME="$home_dir" PATH=/usr/bin:/bin CONFIG_FILE="$CONFIG_FILE" \
+    SECRET_MARKER="$secret_marker" FZF_DEFAULT_OPTS="$fzf_options" \
+    EXPECTED_FZF_OPTS="$fzf_options" "$FISH" --no-config --interactive -c '
+      source "$CONFIG_FILE"
+      source "$CONFIG_FILE"
+      test "$FZF_DEFAULT_OPTS" = "$EXPECTED_FZF_OPTS"
+    ' </dev/null
+done
+
+env HOME="$home_dir" PATH=/usr/bin:/bin CONFIG_FILE="$CONFIG_FILE" \
+  SECRET_MARKER="$secret_marker" "$FISH" --no-config --interactive -c '
+    set -e FZF_DEFAULT_OPTS
+    source "$CONFIG_FILE"
+    string match -q -- "*--color=bg+:#313244*" "$FZF_DEFAULT_OPTS"; or exit 1
+    set -l expected "$FZF_DEFAULT_OPTS"
+    source "$CONFIG_FILE"
+    test "$FZF_DEFAULT_OPTS" = "$expected"
+  ' </dev/null

@@ -1,0 +1,332 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+readonly SSHFS_BIN="${SSHFS_BIN:-$(command -v sshfs || true)}"
+readonly SSH_HOST="${OPENCLAW_SSH_HOST:-voidcore}"
+readonly REMOTE_PATH="${OPENCLAW_REMOTE_PATH:-.openclaw}"
+readonly MOUNT_POINT="${OPENCLAW_MOUNT_POINT:-${HOME}/OpenClaw}"
+readonly VOLUME_NAME="${OPENCLAW_VOLUME_NAME:-OpenClaw}"
+readonly READY_FILE="${OPENCLAW_READY_FILE:-openclaw.json}"
+readonly MACFUSE_INFO_PLIST="${OPENCLAW_MACFUSE_INFO_PLIST:-/Library/Filesystems/macfuse.fs/Contents/Info.plist}"
+TAILSCALE_BIN="${TAILSCALE_BIN:-$(command -v tailscale || true)}"
+if [[ -z "${TAILSCALE_BIN}" && -x /Applications/Tailscale.app/Contents/MacOS/Tailscale ]]; then
+  TAILSCALE_BIN="/Applications/Tailscale.app/Contents/MacOS/Tailscale"
+fi
+readonly TAILSCALE_BIN
+readonly LAUNCH_AGENT_LABEL="com.luisurrutia.openclaw-sshfs"
+readonly LAUNCH_AGENT_PATH="${HOME}/Library/LaunchAgents/${LAUNCH_AGENT_LABEL}.plist"
+LAUNCHD_DOMAIN="gui/$(id -u)"
+readonly LAUNCHD_DOMAIN
+readonly LAUNCH_AGENT_LOG="${HOME}/Library/Logs/openclaw-sshfs.log"
+readonly LAUNCH_AGENT_ERROR_LOG="${HOME}/Library/Logs/openclaw-sshfs.error.log"
+
+say() {
+  printf '[openclaw-sshfs] %s\n' "$*"
+}
+
+fail() {
+  say "ERROR: $*" >&2
+  exit 1
+}
+
+macfuse_version() {
+  [[ -r "${MACFUSE_INFO_PLIST}" ]] || return 1
+  /usr/bin/plutil -extract CFBundleShortVersionString raw -o - \
+    "${MACFUSE_INFO_PLIST}" 2>/dev/null
+}
+
+require_supported_macfuse() {
+  local version
+
+  version="$(macfuse_version)" || fail "macFUSE is not installed"
+  if [[ "${version}" == "5.3.3" ]]; then
+    fail "macFUSE 5.3.3 breaks SSHFS; install 5.3.2 or a later fixed release"
+  fi
+}
+
+tailscale_state() {
+  local state
+
+  if [[ ! -x "${TAILSCALE_BIN}" ]]; then
+    printf 'Unavailable\n'
+    return
+  fi
+
+  if ! state="$(
+    TAILSCALE_BE_CLI=1 "${TAILSCALE_BIN}" status --json 2>/dev/null |
+      /usr/bin/plutil -extract BackendState raw -o - - 2>/dev/null
+  )"; then
+    printf 'Unavailable\n'
+    return
+  fi
+
+  printf '%s\n' "${state}"
+}
+
+require_tailscale_connection() {
+  local state
+
+  state="$(tailscale_state)"
+  [[ "${state}" == "Running" ]] ||
+    fail "Tailscale is not connected (state: ${state})"
+}
+
+is_expected_mount() {
+  /sbin/mount | /usr/bin/grep -Fq \
+    "${SSH_HOST}:${REMOTE_PATH} on ${MOUNT_POINT} (macfuse"
+}
+
+mountpoint_in_use() {
+  /sbin/mount | /usr/bin/grep -Fq " on ${MOUNT_POINT} ("
+}
+
+mount_openclaw() {
+  require_tailscale_connection
+
+  if is_expected_mount && [[ -r "${MOUNT_POINT}/${READY_FILE}" ]]; then
+    say "Already mounted at ${MOUNT_POINT}"
+    return 0
+  fi
+
+  require_supported_macfuse
+  [[ -x "${SSHFS_BIN}" ]] || fail "sshfs is not installed or executable"
+  mkdir -p "${MOUNT_POINT}"
+
+  if mountpoint_in_use; then
+    fail "Another or unusable filesystem is mounted at ${MOUNT_POINT}"
+  fi
+
+  if [[ -n "$(/usr/bin/find "${MOUNT_POINT}" -mindepth 1 -maxdepth 1 -print -quit)" ]]; then
+    fail "Mount point is not empty: ${MOUNT_POINT}"
+  fi
+
+  say "Mounting ${SSH_HOST}:${REMOTE_PATH} at ${MOUNT_POINT}"
+  "${SSHFS_BIN}" "${SSH_HOST}:${REMOTE_PATH}" "${MOUNT_POINT}" \
+    -o "BatchMode=yes,ConnectTimeout=10,ConnectionAttempts=1,reconnect,volname=${VOLUME_NAME},noappledouble,noapplexattr,ServerAliveInterval=15"
+
+  for _ in {1..20}; do
+    if is_expected_mount && [[ -r "${MOUNT_POINT}/${READY_FILE}" ]]; then
+      say "Mounted and ${READY_FILE} is readable"
+      return 0
+    fi
+    sleep 0.25
+  done
+
+  fail "sshfs returned, but the OpenClaw mount is not usable"
+}
+
+unmount_openclaw() {
+  local force="${1:-false}"
+
+  if ! mountpoint_in_use; then
+    say "Not mounted: ${MOUNT_POINT}"
+    return 0
+  fi
+
+  is_expected_mount || fail "Refusing to unmount an unexpected filesystem at ${MOUNT_POINT}"
+
+  say "Unmounting ${MOUNT_POINT}"
+  if [[ "${force}" == true ]]; then
+    /usr/sbin/diskutil unmount force "${MOUNT_POINT}"
+  elif ! /sbin/umount "${MOUNT_POINT}"; then
+    fail "Unmount failed; use force-unmount only when no writes are in progress"
+  fi
+
+  if mountpoint_in_use; then
+    fail "Unmount did not complete: ${MOUNT_POINT}"
+  fi
+
+  say "Unmounted"
+}
+
+reconcile_openclaw() {
+  local state
+
+  state="$(tailscale_state)"
+  if [[ "${state}" == "Running" ]]; then
+    mount_openclaw
+    return
+  fi
+
+  if is_expected_mount; then
+    say "Tailscale is ${state}; unmounting ${MOUNT_POINT}"
+    unmount_openclaw
+  elif mountpoint_in_use; then
+    fail "Tailscale is ${state}; refusing to touch an unexpected filesystem at ${MOUNT_POINT}"
+  else
+    say "Tailscale is ${state}; volume remains unmounted"
+  fi
+}
+
+status_openclaw() {
+  local version="not installed"
+  local state
+
+  version="$(macfuse_version || true)"
+  state="$(tailscale_state)"
+  if [[ "${state}" == "Running" ]] && is_expected_mount && [[ -r "${MOUNT_POINT}/${READY_FILE}" ]]; then
+    say "Mounted and ready at ${MOUNT_POINT} (Tailscale ${state}, macFUSE ${version})"
+    return 0
+  fi
+
+  if is_expected_mount; then
+    say "Mounted but unavailable at ${MOUNT_POINT} (Tailscale ${state}, macFUSE ${version})"
+  elif mountpoint_in_use; then
+    say "A different filesystem is mounted at ${MOUNT_POINT} (Tailscale ${state}, macFUSE ${version})"
+  else
+    say "Not mounted (Tailscale ${state}, macFUSE ${version})"
+  fi
+  return 1
+}
+
+absolute_script_path() {
+  local invoked_as="$0"
+  local script_directory
+
+  if [[ "${invoked_as}" != */* ]]; then
+    invoked_as="$(command -v "${invoked_as}")"
+  fi
+
+  script_directory="$(cd "$(dirname "${invoked_as}")" && pwd -P)"
+  printf '%s/%s\n' "${script_directory}" "$(basename "${invoked_as}")"
+}
+
+create_launch_agent_plist() {
+  local target_path="$1"
+  local executable_path="$2"
+
+  /usr/bin/plutil -create xml1 "${target_path}"
+  /usr/bin/plutil -insert Label -string "${LAUNCH_AGENT_LABEL}" "${target_path}"
+  /usr/bin/plutil -insert ProgramArguments -array "${target_path}"
+  /usr/bin/plutil -insert ProgramArguments.0 -string "${executable_path}" "${target_path}"
+  /usr/bin/plutil -insert ProgramArguments.1 -string reconcile "${target_path}"
+  /usr/bin/plutil -insert RunAtLoad -bool true "${target_path}"
+  /usr/bin/plutil -insert StartInterval -integer 60 "${target_path}"
+  /usr/bin/plutil -insert ProcessType -string Background "${target_path}"
+  /usr/bin/plutil -insert ThrottleInterval -integer 30 "${target_path}"
+  /usr/bin/plutil -insert WorkingDirectory -string "${HOME}" "${target_path}"
+  /usr/bin/plutil -insert EnvironmentVariables -dictionary "${target_path}"
+  /usr/bin/plutil -insert EnvironmentVariables.PATH -string \
+    '/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin' \
+    "${target_path}"
+  /usr/bin/plutil -insert StandardOutPath -string \
+    "${LAUNCH_AGENT_LOG}" "${target_path}"
+  /usr/bin/plutil -insert StandardErrorPath -string \
+    "${LAUNCH_AGENT_ERROR_LOG}" "${target_path}"
+}
+
+install_launch_agent() (
+  local temporary_plist
+  local executable_path
+
+  temporary_plist="$(/usr/bin/mktemp "${TMPDIR:-/tmp}/openclaw-mount.plist.XXXXXX")"
+  trap '/bin/rm -f "${temporary_plist}"' EXIT
+
+  executable_path="$(absolute_script_path)"
+  create_launch_agent_plist "${temporary_plist}" "${executable_path}"
+  /usr/bin/plutil -lint "${temporary_plist}" >/dev/null
+
+  if launchctl print "${LAUNCHD_DOMAIN}/${LAUNCH_AGENT_LABEL}" >/dev/null 2>&1; then
+    say "Reloading existing LaunchAgent"
+    launchctl bootout "${LAUNCHD_DOMAIN}/${LAUNCH_AGENT_LABEL}"
+  fi
+
+  mkdir -p "$(dirname "${LAUNCH_AGENT_PATH}")"
+  /usr/bin/install -m 0644 "${temporary_plist}" "${LAUNCH_AGENT_PATH}"
+  launchctl bootstrap "${LAUNCHD_DOMAIN}" "${LAUNCH_AGENT_PATH}"
+
+  say "LaunchAgent installed and loaded: ${LAUNCH_AGENT_PATH}"
+  say "It reconciles the mount with Tailscale every 60 seconds"
+)
+
+uninstall_launch_agent() {
+  if launchctl print "${LAUNCHD_DOMAIN}/${LAUNCH_AGENT_LABEL}" >/dev/null 2>&1; then
+    launchctl bootout "${LAUNCHD_DOMAIN}/${LAUNCH_AGENT_LABEL}"
+  fi
+
+  if [[ -e "${LAUNCH_AGENT_PATH}" ]]; then
+    /bin/rm "${LAUNCH_AGENT_PATH}"
+  fi
+
+  say "LaunchAgent uninstalled; the current mount was left unchanged"
+}
+
+launch_agent_status() {
+  if launchctl print "${LAUNCHD_DOMAIN}/${LAUNCH_AGENT_LABEL}" >/dev/null 2>&1; then
+    say "LaunchAgent is installed and loaded"
+    return 0
+  fi
+
+  say "LaunchAgent is not loaded"
+  return 1
+}
+
+usage() {
+  cat <<'EOF'
+Usage: openclaw-mount COMMAND
+
+Commands:
+  mount             Mount OpenClaw (default)
+  unmount           Unmount OpenClaw
+  force-unmount     Force an unusable volume to unmount
+  restart           Unmount and mount again
+  force-restart     Force unmount, then mount again
+  reconcile         Match the mount state to Tailscale
+  status            Show mount, Tailscale, and macFUSE status
+  install-agent     Install and load the automatic LaunchAgent
+  uninstall-agent   Unload and remove the LaunchAgent
+  agent-status      Show LaunchAgent status
+
+Environment overrides:
+  OPENCLAW_SSH_HOST     SSH config alias (default: voidcore)
+  OPENCLAW_REMOTE_PATH  Remote directory (default: .openclaw)
+  OPENCLAW_MOUNT_POINT  Local mount point (default: ~/OpenClaw)
+  OPENCLAW_VOLUME_NAME  Finder volume name (default: OpenClaw)
+  OPENCLAW_READY_FILE   File used to verify the mount (default: openclaw.json)
+  TAILSCALE_BIN         Tailscale CLI executable
+  SSHFS_BIN             sshfs executable (default: first sshfs in PATH)
+EOF
+}
+
+case "${1:-mount}" in
+  mount)
+    mount_openclaw
+    ;;
+  unmount)
+    unmount_openclaw
+    ;;
+  force-unmount)
+    unmount_openclaw true
+    ;;
+  restart)
+    unmount_openclaw
+    mount_openclaw
+    ;;
+  force-restart)
+    unmount_openclaw true
+    mount_openclaw
+    ;;
+  reconcile)
+    reconcile_openclaw
+    ;;
+  status)
+    status_openclaw
+    ;;
+  install-agent)
+    install_launch_agent
+    ;;
+  uninstall-agent)
+    uninstall_launch_agent
+    ;;
+  agent-status)
+    launch_agent_status
+    ;;
+  -h | --help | help)
+    usage
+    ;;
+  *)
+    usage >&2
+    exit 64
+    ;;
+esac

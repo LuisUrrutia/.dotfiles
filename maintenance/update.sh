@@ -163,6 +163,7 @@ write_stamp() {
 
 update_homebrew() {
   local index="$TARGET_HOMEBREW"
+  local macfuse_guard="$DOTFILES/tools/bin/config/.local/bin/macfuse-guard"
   local stamp="$STATE_DIR/brew"
   local step=""
 
@@ -175,7 +176,23 @@ update_homebrew() {
     return
   fi
 
-  for step in update upgrade autoremove; do
+  run_child brew update
+  if [[ "$CHILD_STATUS" -ne 0 ]]; then
+    set_result "$index" failed "update, status $CHILD_STATUS"
+    return
+  fi
+
+  if [[ ! -x "$macfuse_guard" ]]; then
+    set_result "$index" failed "macFUSE guard not found"
+    return
+  fi
+  run_child "$macfuse_guard" reconcile
+  if [[ "$CHILD_STATUS" -ne 0 ]]; then
+    set_result "$index" failed "macFUSE guard, status $CHILD_STATUS"
+    return
+  fi
+
+  for step in upgrade autoremove; do
     run_child brew "$step"
     if [[ "$CHILD_STATUS" -ne 0 ]]; then
       set_result "$index" failed "$step, status $CHILD_STATUS"
@@ -291,10 +308,17 @@ update_fish_plugins() {
   local fish_config="${XDG_CONFIG_HOME:-$HOME/.config}/fish"
   local manifest="$fish_config/fish_plugins"
   local fisher_file="$fish_config/functions/fisher.fish"
+  local fisher_prefix=""
   local command_string=""
 
   if ! command -v fish >/dev/null 2>&1; then set_result "$index" skipped "Fish not found"; return; fi
   if [[ ! -f "$manifest" ]]; then set_result "$index" skipped "manifest not found"; return; fi
+  if [[ ! -f "$fisher_file" ]] && command -v brew >/dev/null 2>&1; then
+    fisher_prefix="$(brew --prefix fisher 2>/dev/null)" || fisher_prefix=""
+    if [[ -n "$fisher_prefix" ]]; then
+      fisher_file="$fisher_prefix/share/fish/vendor_functions.d/fisher.fish"
+    fi
+  fi
   if [[ ! -f "$fisher_file" ]]; then set_result "$index" skipped "Fisher not found"; return; fi
 
   command_string="source \"$fisher_file\"; and fisher update"

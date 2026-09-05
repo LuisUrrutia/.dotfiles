@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+[[ "${TAILSCALE_BE_CLI:-}" == "1" ]]
+[[ "${1:-}" == "status" ]]
+[[ "${2:-}" == "--json" ]]
+printf '{"BackendState":"%s"}\n' "${FAKE_TAILSCALE_STATE:-Running}"

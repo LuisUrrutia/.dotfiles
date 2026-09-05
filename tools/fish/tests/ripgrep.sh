@@ -67,3 +67,14 @@ env \
     source "$ABBR_FILE"
     abbr --show rg | string match -q "abbr -a -- rg rgi"
   ' </dev/null
+
+env HOME="$home_dir" RGI_FILE="$RGI_FILE" "$FISH" --no-config -c '
+    source "$RGI_FILE"
+    complete -c rg -l files -d "List files to search"
+    set -l expected (complete -C "rg --files")
+    set -l actual (complete -C "rgi --files")
+    test -n "$expected"; and test "$actual" = "$expected"
+  ' || {
+  printf 'rgi did not inherit ripgrep completions\n' >&2
+  exit 1
+}

@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+printf '%s\n' "$*" >>"${FAKE_BREW_LOG}"
+
+case "${1:-} ${2:-} ${3:-}" in
+  "list --cask macfuse")
+    [[ "${FAKE_MACFUSE_INSTALLED:-true}" == true ]]
+    ;;
+  "list --pinned ")
+    if [[ "${FAKE_MACFUSE_PINNED:-false}" == true ]]; then
+      printf 'macfuse\n'
+    fi
+    ;;
+  "info --json=v2 --cask")
+    printf '{"casks":[{"version":"%s"}]}\n' "${FAKE_MACFUSE_VERSION:-5.3.3}"
+    ;;
+  "pin --cask macfuse" | "unpin --cask macfuse")
+    ;;
+  *)
+    printf 'unexpected brew arguments: %s\n' "$*" >&2
+    exit 64
+    ;;
+esac

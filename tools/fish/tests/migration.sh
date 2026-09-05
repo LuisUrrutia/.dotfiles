@@ -1,4 +1,3 @@
-[[ ! -L "$upgrade_home/.config/fish/conf.d/zz_atuin.fish" ]] || fail "known broken conf.d link survived"
 #!/usr/bin/env bash
 
 set -euo pipefail
@@ -55,6 +54,7 @@ HOME="$upgrade_home" DOTFILES="$DOTFILES_ROOT" /bin/bash -c \
 [[ ! -L "$upgrade_home/.config/fish/functions/upd.fish" ]] || fail "known broken function link survived"
 [[ ! -L "$upgrade_home/.config/fish/functions/backup-configs.fish" ]] || fail "known broken Backup link survived"
 [[ ! -L "$upgrade_home/.config/fish/completions/upd.fish" ]] || fail "known broken completion link survived"
+[[ ! -L "$upgrade_home/.config/fish/conf.d/zz_atuin.fish" ]] || fail "known broken conf.d link survived"
 restow_all "$upgrade_home"
 [[ -L "$upgrade_home/.config/fish/completions/dotfiles.fish" ]] ||
   fail "upgrade install did not stow canonical completion"

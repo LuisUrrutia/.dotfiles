@@ -1,5 +1,9 @@
 [settings]
 idiomatic_version_file_enable_tools = ["node", "python"]
+minimum_release_age_excludes = [
+  "aqua:anthropics/claude-code",
+  "aqua:openai/codex",
+]
 
 [tools]
 "aqua:anthropics/claude-code" = "latest"
@@ -16,9 +20,9 @@ dotnet = "10"
 java = "lts"
 markdownlint-cli2 = "latest"
 node = "lts"
-"npm:@playwright/cli" = "latest"
+"npm:@playwright/cli" = { version = "latest", trust_policy_excludes = ["@playwright/cli@0.1.19", "playwright@1.63.0-alpha-2026-08-31", "playwright-core@1.63.0-alpha-2026-08-31"] }
 "npm:@code-yeongyu/comment-checker" = "latest"
-"npm:@steipete/bird" = "latest"
+"npm:@luisurrutia/bird" = "1.0.0"
 "npm:clawpatch" = "latest"
 "npm:skills" = "latest"
 opencode = "latest"

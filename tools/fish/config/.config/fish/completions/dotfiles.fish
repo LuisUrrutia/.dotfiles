@@ -15,7 +15,6 @@ function __dotfiles_needs_tool_name -d "Check whether Tool Apply needs a tool na
     test (count $tokens) -eq 3; and test "$tokens[2]" = tool; and test "$tokens[3]" = apply
 end
 
-
 function __dotfiles_needs_config_tool -d "Check whether a Config command needs a tool"
     set -l tokens (commandline --current-process --tokenize --cut-at-cursor)
     test (count $tokens) -eq 3; or return 1
@@ -67,10 +66,9 @@ end
 
 function __dotfiles_config_tools -d "List tools with tracked Stowed Config"
     set -l root (__dotfiles_repository_root); or return
-    for tool_dir in "$root"/tools/*/config
-        test -d "$tool_dir"; or continue
-        set -l tool (path basename (path dirname "$tool_dir"))
-        git -C "$root" ls-files --error-unmatch "tools/$tool/config" >/dev/null 2>&1; and echo "$tool"
+    set -l tools (git -C "$root" ls-files -z -- 'tools/*/config/*' | string split0 | string replace -rf '^tools/([^/]+)/config/.*$' '$1' | path sort --unique)
+    for tool in $tools
+        test -d "$root/tools/$tool/config"; and echo "$tool"
     end
 end
 

@@ -23,12 +23,12 @@ fires; the rule names the trigger.
 - Orca: when the workspace root is named `orca` or `orca.*`, or the supplied
   task context identifies `stablyai/orca` or one of its forks, read and follow
   `~/.agents/references/orca.md` for the entire task.
-- Orca-managed session: on the first turn, read `ORCA_WORKTREE_ID` and
+- Orca handoff gate: on the first turn, read `ORCA_WORKTREE_ID` and
   `ORCA_TERMINAL_HANDLE` from the environment. When both are set, read and
-  follow `~/.agents/references/orca-session.md` for the entire session. It owns
-  the repository-registration preflight and checkout ownership; reach it before
-  cloning or importing a repository, operating from a different checkout, or
-  creating a branch, worktree, terminal, or file.
+  follow `~/.agents/references/orca-session.md` for the entire session. This
+  reference owns the repository-registration preflight and checkout ownership.
+  Reach it before operating from a different checkout, cloning or importing a
+  repository, or selecting or creating a branch, worktree, terminal, or file.
 
 ## Language
 
@@ -66,8 +66,17 @@ fires; the rule names the trigger.
 
 ## Worktrees
 
+In an Orca-managed session, follow the referenced `Orca handoff gate` when the
+working checkout differs from the checkout path encoded by `ORCA_WORKTREE_ID`,
+or the task needs a different checkout or a new branch or worktree. The starting
+agent follows the reference to resolve the destination, using WorkTrunk when
+needed, starts a receiving agent there, and sends it the handoff. The gate
+completes only after that agent has started in the destination and received the
+handoff. The starting agent then stops, and the receiving agent begins task
+work.
+
 - When the user asks to work on a new branch, create its worktree with
-  `wt switch --create <name>` and work there.
+  `wt switch --create <name>`.
 - WorkTrunk (`wt`) owns every other worktree lifecycle operation; invoke the
   `worktrunk` skill for its commands. If the project has no `.config/wt.toml`,
   suggest creating it. Use raw `git worktree` only when the user explicitly
