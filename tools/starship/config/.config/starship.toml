@@ -17,6 +17,7 @@ $git_status\
 $package\
 $nodejs\
 $bun\
+$deno\
 $python\
 $rust\
 $golang\
@@ -66,13 +67,13 @@ mantle = "#181825"
 crust = "#11111b"
 
 [username]
-format = "[$user]($style)@"
+format = "[$user]($style) "
 style_user = "bold peach"
 style_root = "bold red"
 
 [hostname]
 ssh_only = true
-format = "[$hostname]($style) "
+format = "on [$hostname]($style) "
 style = "bold green"
 trim_at = ".local"
 
@@ -114,7 +115,6 @@ display_private = true
 [nodejs]
 style = "bold green"
 symbol = " "
-detect_files = ["package.json", ".node-version", ".nvmrc", "!bunfig.toml", "!bun.lock", "!bun.lockb"]
 
 [bun]
 style = "bold peach"
@@ -123,7 +123,6 @@ symbol = " "
 [python]
 style = "bold yellow"
 symbol = " "
-pyenv_version_name = true
 
 [rust]
 style = "bold red"
