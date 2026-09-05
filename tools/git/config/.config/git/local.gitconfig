@@ -22,13 +22,8 @@
   # via https://www.youtube.com/watch?v=aolI_Rz0ZqY&t=2391s
   staash = stash --all
 
-  # via https://stackoverflow.com/questions/5188320/how-can-i-get-a-list-of-git-branches-ordered-by-most-recent-commit
-  # Usage: git recent-branches [comparison-ref] [count]; defaults to remote HEAD, upstream, then HEAD.
-  recent-branches = "!r() { refbranch=$1 count=$2; if [ -z \"$refbranch\" ]; then upstream=$(git rev-parse --abbrev-ref --symbolic-full-name '@{upstream}' 2>/dev/null || true); remote=${upstream%%/*}; if [ -z \"$remote\" ] || [ \"$remote\" = \"$upstream\" ]; then if git remote get-url origin >/dev/null 2>&1; then remote=origin; else remote=$(git remote | head -n 1); fi; fi; if [ -n \"$remote\" ]; then refbranch=$(git symbolic-ref --quiet --short \"refs/remotes/$remote/HEAD\" 2>/dev/null || true); fi; [ -n \"$refbranch\" ] || refbranch=$upstream; [ -n \"$refbranch\" ] || refbranch=HEAD; fi; git for-each-ref --sort=-committerdate refs/heads --format='%(refname:short)|%(HEAD)%(color:yellow)%(refname:short)|%(color:bold green)%(committerdate:relative)|%(color:blue)%(subject)|%(color:magenta)%(authorname)%(color:reset)' --color=always --count=${count:-20} | while read line; do branch=$(echo \"$line\" | awk 'BEGIN { FS = \"|\" }; { print $1 }' | tr -d '*'); ahead=$(git rev-list --count \"$refbranch..$branch\"); behind=$(git rev-list --count \"$branch..$refbranch\"); colorline=$(echo \"$line\" | sed 's/^[^|]*|//'); echo \"$ahead|$behind|$colorline\" | awk -F'|' -vOFS='|' '{$5=substr($5,1,70)}1'; done | ( printf '%s\\n\\n' 'ahead|behind|branch' && cat) | column -ts'|'; }; r"
-
   # branch
   branch-name = branch --show-current
-  dm = "!f() { target=${1:-HEAD}; git branch --merged \"$target\" | sed 's/^[* ]*//' | grep -Ev '^(main|master|develop|dev)$' | while IFS= read -r branch; do [ -n \"$branch\" ] && git branch -d \"$branch\"; done; }; f"
 
   # commit
   amend = commit --amend            # amend your last commit

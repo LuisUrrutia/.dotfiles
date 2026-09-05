@@ -204,9 +204,12 @@ CONFIG
 
   run_migration
   cp "$HOME_DIR/.gitconfig" "$HOME_DIR/.gitconfig.after-first"
+  local inode=""
+  inode="$(stat -f %i "$HOME_DIR/.gitconfig")"
   run_migration
 
   cmp "$HOME_DIR/.gitconfig.after-first" "$HOME_DIR/.gitconfig" >/dev/null
+  [[ "$(stat -f %i "$HOME_DIR/.gitconfig")" == "$inode" ]]
   assert_machine_backup_count 0
 }
 
@@ -265,6 +268,88 @@ test_git_ignore_backup() {
   assert_ignore_backup_count 1
 }
 
+test_conditional_include_precedence() {
+  setup_home "conditional-include-precedence"
+  git -C "$HOME_DIR" init -q
+  printf '[user]\n  email = work@example.com\n' >"$HOME_DIR/work.gitconfig"
+  cat >"$HOME_DIR/.gitconfig" <<'CONFIG'
+[include]
+  path = ~/.config/git/local.gitconfig
+[includeIf "gitdir:~/"]
+  path = ~/work.gitconfig
+[user]
+  email = preferred@example.com
+CONFIG
+  local before=""
+  before="$(HOME="$HOME_DIR" git -C "$HOME_DIR" config user.email)"
+
+  run_migration
+
+  [[ "$(HOME="$HOME_DIR" git -C "$HOME_DIR" config user.email)" == "$before" ]]
+}
+
+test_interleaved_conditional_includes() {
+  setup_home "interleaved-conditional-includes"
+  git -C "$HOME_DIR" init -q
+  printf '[user]\n  email = first@example.com\n' >"$HOME_DIR/first.gitconfig"
+  printf '[user]\n  email = second@example.com\n' >"$HOME_DIR/second.gitconfig"
+  printf '[user]\n  email = final@example.com\n' >"$HOME_DIR/final.gitconfig"
+  cat >"$HOME_DIR/.gitconfig" <<'CONFIG'
+[include]
+  path = ~/.config/git/local.gitconfig
+[includeIf "gitdir:~/"]
+  path = ~/first.gitconfig
+[includeIf "gitdir/i:~/"]
+  path = ~/second.gitconfig
+[includeIf "gitdir:~/"]
+  path = ~/final.gitconfig
+CONFIG
+
+  run_migration
+
+  [[ "$(HOME="$HOME_DIR" git -C "$HOME_DIR" config user.email)" == final@example.com ]]
+}
+
+test_invalid_config_preserves_live_files() {
+  setup_home "invalid-config"
+  mkdir -p "$HOME_DIR/.config/git"
+  printf '[include]\n  path = ~/.config/git/local.gitconfig\n[user]\n  name = Example\n[broken\n' >"$HOME_DIR/.gitconfig"
+  printf '[core]\n  editor = custom-editor\n' >"$HOME_DIR/.config/git/local.gitconfig"
+  printf 'private.local\n' >"$HOME_DIR/.config/git/ignore"
+  cp "$HOME_DIR/.gitconfig" "$HOME_DIR/original"
+
+  assert_migration_fails
+
+  cmp "$HOME_DIR/original" "$HOME_DIR/.gitconfig"
+  [[ -f "$HOME_DIR/.config/git/local.gitconfig" ]]
+  [[ -f "$HOME_DIR/.config/git/ignore" ]]
+  assert_machine_backup_count 0
+  assert_local_backup_count 0
+  assert_ignore_backup_count 0
+}
+
+test_migration_preserves_permissions_and_values() {
+  setup_home "preserve-values"
+  cat >"$HOME_DIR/.gitconfig" <<'CONFIG'
+[include]
+  path = ~/.config/git/local.gitconfig
+[user]
+  name = "Example\nUser"
+  email = old@example.com
+  email = final@example.com
+[gpg "ssh"]
+  program = ""
+CONFIG
+  chmod 600 "$HOME_DIR/.gitconfig"
+
+  run_migration
+
+  assert_config_value user.name $'Example\nUser'
+  assert_config_value user.email final@example.com
+  assert_config_value gpg.ssh.program ''
+  [[ "$(stat -f %Lp "$HOME_DIR/.gitconfig")" == 600 ]]
+}
+
 tests=(
   test_monolithic_filtering
   test_duplicate_include_cleanup
@@ -275,7 +360,15 @@ tests=(
   test_old_managed_symlink_removal
   test_local_gitconfig_backup
   test_git_ignore_backup
+  test_conditional_include_precedence
+  test_interleaved_conditional_includes
+  test_invalid_config_preserves_live_files
+  test_migration_preserves_permissions_and_values
 )
+
+if (($# > 0)); then
+  tests=("$@")
+fi
 
 for test_name in "${tests[@]}"; do
   "$test_name"

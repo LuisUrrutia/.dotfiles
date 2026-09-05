@@ -1,0 +1,73 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+usage() {
+  echo 'Usage: git recent-branches [--color=auto|always|never] [comparison-ref] [count]'
+}
+
+color=auto
+case "${1:-}" in
+-h | --help) usage; exit 0 ;;
+--color=*) color="${1#--color=}"; shift ;;
+esac
+if (($# > 2)); then
+  usage >&2
+  exit 2
+fi
+case "$color" in
+auto)
+  color=never
+  [[ ! -t 1 ]] || color=always
+  ;;
+always | never) ;;
+*) usage >&2; exit 2 ;;
+esac
+
+comparison="${1:-}"
+count="${2:-20}"
+if [[ "$count" == *[!0-9]* ]]; then
+  echo 'Error: count must be a non-negative integer (0 lists all branches).' >&2
+  exit 2
+fi
+
+if [[ -z "$comparison" ]]; then
+  upstream="$(git rev-parse --abbrev-ref --symbolic-full-name '@{upstream}' 2>/dev/null || true)"
+  remote="${upstream%%/*}"
+  if [[ -z "$remote" || "$remote" == "$upstream" ]]; then
+    if git remote get-url origin >/dev/null 2>&1; then
+      remote=origin
+    else
+      remotes="$(git remote)"
+      remote="${remotes%%$'\n'*}"
+    fi
+  fi
+  if [[ -n "$remote" ]]; then
+    comparison="$(git symbolic-ref --quiet --short "refs/remotes/$remote/HEAD" 2>/dev/null || true)"
+  fi
+  comparison="${comparison:-${upstream:-HEAD}}"
+fi
+
+comparison="$(git rev-parse --verify --end-of-options "$comparison^{commit}")"
+rows="$(git for-each-ref --sort=-committerdate --count="$count" --color=never \
+  --format="%(ahead-behind:$comparison)%1f%(HEAD)%(refname:short)%1f%(committerdate:relative)%1f%(subject)%1f%(authorname)" \
+  refs/heads)"
+
+printf '%s\n' "$rows" | awk -F '\037' -v color="$color" '
+  BEGIN {
+    OFS = FS
+    print "ahead", "behind", "branch", "updated", "subject", "author"
+    if (color == "always") {
+      yellow = "\033[33m"
+      green = "\033[1;32m"
+      blue = "\033[34m"
+      magenta = "\033[35m"
+      reset = "\033[m"
+    }
+  }
+  NF {
+    split($1, counts, " ")
+    print counts[1], counts[2], yellow $2 reset, green $3 reset,
+      blue substr($4, 1, 70) reset, magenta $5 reset
+  }
+' | column -t -s $'\037'

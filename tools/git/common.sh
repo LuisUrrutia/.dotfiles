@@ -57,26 +57,26 @@ ensure_machine_git_config() {
   local machine_git_config="$HOME/.gitconfig"
 
   if [[ -n "$EFFECTIVE_GIT_USER_NAME" ]]; then
-    "$bin_path" config --file "$machine_git_config" user.name "$EFFECTIVE_GIT_USER_NAME"
+    "$bin_path" config --file "$machine_git_config" --replace-all user.name "$EFFECTIVE_GIT_USER_NAME"
   fi
 
   if [[ -n "$EFFECTIVE_GIT_USER_EMAIL" ]]; then
-    "$bin_path" config --file "$machine_git_config" user.email "$EFFECTIVE_GIT_USER_EMAIL"
+    "$bin_path" config --file "$machine_git_config" --replace-all user.email "$EFFECTIVE_GIT_USER_EMAIL"
   fi
 
   if [[ -n "$EFFECTIVE_GIT_SIGNING_KEY" ]]; then
-    "$bin_path" config --file "$machine_git_config" user.signingkey "$EFFECTIVE_GIT_SIGNING_KEY"
+    "$bin_path" config --file "$machine_git_config" --replace-all user.signingkey "$EFFECTIVE_GIT_SIGNING_KEY"
   fi
 
   if [[ -n "$EFFECTIVE_GIT_SIGNING_KEY" || -n "$EFFECTIVE_GIT_SIGNING_PROGRAM" ]]; then
-    "$bin_path" config --file "$machine_git_config" commit.gpgsign true
-    "$bin_path" config --file "$machine_git_config" tag.gpgsign true
-    "$bin_path" config --file "$machine_git_config" tag.forceSignAnnotated true
-    "$bin_path" config --file "$machine_git_config" gpg.format ssh
+    "$bin_path" config --file "$machine_git_config" --replace-all commit.gpgsign true
+    "$bin_path" config --file "$machine_git_config" --replace-all tag.gpgsign true
+    "$bin_path" config --file "$machine_git_config" --replace-all tag.forceSignAnnotated true
+    "$bin_path" config --file "$machine_git_config" --replace-all gpg.format ssh
   fi
 
   if [[ -n "$EFFECTIVE_GIT_SIGNING_PROGRAM" ]]; then
-    "$bin_path" config --file "$machine_git_config" gpg.ssh.program "$EFFECTIVE_GIT_SIGNING_PROGRAM"
+    "$bin_path" config --file "$machine_git_config" --replace-all gpg.ssh.program "$EFFECTIVE_GIT_SIGNING_PROGRAM"
   fi
 
   echo "Updated machine Git config: $machine_git_config"
@@ -152,14 +152,14 @@ remove_stale_managed_git_identity() {
 
     if [[ -n "$managed_name" && -n "$managed_email" && "$current_name" == "$managed_name" && "$current_email" == "$managed_email" ]]; then
       if [[ "$current_name" != "$EFFECTIVE_GIT_USER_NAME" || "$current_email" != "$EFFECTIVE_GIT_USER_EMAIL" ]]; then
-        "$bin_path" config --file "$machine_git_config" --unset user.name || true
-        "$bin_path" config --file "$machine_git_config" --unset user.email || true
+        "$bin_path" config --file "$machine_git_config" --unset-all user.name || true
+        "$bin_path" config --file "$machine_git_config" --unset-all user.email || true
       fi
     fi
 
     if [[ -n "$managed_signing_key" && "$current_signing_key" == "$managed_signing_key" ]]; then
       if [[ -z "$EFFECTIVE_GIT_SIGNING_KEY" || "$current_signing_key" != "$EFFECTIVE_GIT_SIGNING_KEY" ]]; then
-        "$bin_path" config --file "$machine_git_config" --unset user.signingkey || true
+        "$bin_path" config --file "$machine_git_config" --unset-all user.signingkey || true
         removed_stale_signing=true
       fi
     fi

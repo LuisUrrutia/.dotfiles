@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+if [[ "${1:-}" == -h || "${1:-}" == --help ]]; then
+  echo 'Usage: git dm [comparison-ref]'
+  exit 0
+fi
+if (($# > 1)); then
+  echo 'Usage: git dm [comparison-ref]' >&2
+  exit 2
+fi
+
+target="$(git rev-parse --verify --end-of-options "${1:-HEAD}^{commit}")"
+branches="$(git for-each-ref --merged="$target" --format='%(refname:short)%09%(worktreepath)' refs/heads)"
+status=0
+while IFS=$'\t' read -r branch worktree; do
+  case "$branch" in
+  "" | main | master | develop | dev) continue ;;
+  esac
+  [[ -z "$worktree" ]] || continue
+  git branch -d -- "$branch" || status=1
+done <<<"$branches"
+exit "$status"

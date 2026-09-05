@@ -232,6 +232,20 @@ The legacy `tools/git/config/.gitconfig` path is intentionally local-only and
 ignored by Git. Keep it on disk if you want a machine-specific file there, but do
 not track it as shared repo config.
 
+The Git installer validates machine config before migration, preserves the order
+of conditional includes, and checks Stow conflicts before changing live files.
+If Stow fails, it restores files moved by the migration. Regular managed files
+in an existing split configuration are treated as drift and require resolution
+before reinstalling.
+
+`git recent-branches [comparison-ref] [count]` lists 20 branches by default,
+comparing against remote HEAD, upstream, or HEAD, in that order. Counts are
+computed together; use `0` to list all branches and `--color=always` or
+`--color=never` before the positional arguments to override terminal detection.
+`git dm [comparison-ref]` deletes merged branches while preserving branches in
+use and `main`, `master`, `develop`, and `dev`. Both commands validate their
+arguments and return nonzero on failure.
+
 Install or re-run one tool config:
 
 ```sh

@@ -82,112 +82,6 @@ guard_git_config_dir_symlink() {
   return 1
 }
 
-remove_old_stowed_machine_config() {
-  local link_target=""
-
-  [[ -L "$machine_git_config" ]] || return 0
-
-  link_target="$(readlink "$machine_git_config")"
-  if is_old_stowed_machine_config_link "$link_target"; then
-    rm "$machine_git_config"
-  fi
-}
-
-remove_old_stowed_git_config_dir() {
-  local link_target=""
-
-  [[ -L "$git_config_dir" ]] || return 0
-
-  link_target="$(readlink "$git_config_dir")"
-  if is_old_stowed_git_config_dir_link "$link_target"; then
-    rm "$git_config_dir"
-  fi
-}
-
-backup_old_local_config() {
-  local backup=""
-
-  [[ -f "$local_git_config" && ! -L "$local_git_config" ]] || return 0
-
-  backup="$local_git_config.migrated.$(/bin/date +%Y%m%d%H%M%S)"
-  if [[ -e "$backup" ]]; then
-    backup="$backup.$$"
-  fi
-
-  mv "$local_git_config" "$backup"
-  echo "Backed up old Git config: $backup"
-}
-
-backup_old_git_ignore() {
-  local backup=""
-
-  [[ -f "$global_git_ignore" && ! -L "$global_git_ignore" ]] || return 0
-
-  backup="$global_git_ignore.migrated.$(/bin/date +%Y%m%d%H%M%S)"
-  if [[ -e "$backup" ]]; then
-    backup="$backup.$$"
-  fi
-
-  mv "$global_git_ignore" "$backup"
-  echo "Backed up old Git ignore: $backup"
-}
-
-backup_machine_config() {
-  local backup=""
-
-  [[ -f "$machine_git_config" && ! -L "$machine_git_config" ]] || return 0
-
-  backup="$machine_git_config.migrated.$(/bin/date +%Y%m%d%H%M%S)"
-  if [[ -e "$backup" ]]; then
-    backup="$backup.$$"
-  fi
-
-  cp "$machine_git_config" "$backup"
-  echo "Backed up old Git machine config: $backup"
-}
-
-write_include_first_config() {
-  local temp_config="$1"
-
-  {
-    printf '[include]\n'
-    printf '\tpath = %s\n' "$local_include_path"
-    if [[ -s "$temp_config" ]]; then
-      printf '\n'
-      cat "$temp_config"
-    fi
-  } >"$machine_git_config"
-}
-
-copy_allowed_machine_keys() {
-  local source_config="$1"
-  local target_config="$2"
-  local key=""
-  local processed_include_if_keys=""
-  local value=""
-
-  for key in "${allowed_machine_keys[@]}"; do
-    value="$("$GIT_BIN" config --file "$source_config" --get "$key" 2>/dev/null || true)"
-    [[ -n "$value" ]] || continue
-
-    "$GIT_BIN" config --file "$target_config" "$key" "$value"
-  done
-
-  while IFS= read -r key; do
-    is_preserved_include_if_key "$key" || continue
-    case "$processed_include_if_keys" in
-    *$'\n'"$key"$'\n'*)
-      continue
-      ;;
-    esac
-    processed_include_if_keys+=$'\n'"$key"$'\n'
-
-    while IFS= read -r value; do
-      "$GIT_BIN" config --file "$target_config" --add "$key" "$value"
-    done < <("$GIT_BIN" config --file "$source_config" --get-all "$key" 2>/dev/null || true)
-  done < <("$GIT_BIN" config --file "$source_config" --name-only --list 2>/dev/null || true)
-}
-
 is_preserved_include_if_key() {
   local candidate="$1"
 
@@ -207,97 +101,202 @@ is_allowed_machine_key() {
   return 1
 }
 
-machine_config_has_unmanaged_keys() {
+prepare_machine_config() {
+  local record=""
   local key=""
+  local value=""
+  local status=0
 
-  [[ -f "$machine_git_config" && ! -L "$machine_git_config" ]] || return 1
+  if [[ -f "$machine_git_config" && ! -L "$machine_git_config" ]]; then
+    cp -p "$machine_git_config" "$transaction/source"
+  else
+    : >"$transaction/source"
+  fi
+  cp -p "$transaction/source" "$transaction/filtered"
+  "$GIT_BIN" config --file "$transaction/source" --null --list >"$transaction/entries"
 
-  while IFS= read -r key; do
-    [[ -n "$key" ]] || continue
-    [[ "$key" == include.path ]] && continue
-    if is_preserved_include_if_key "$key"; then
+  while IFS= read -r -d '' record; do
+    key="${record%%$'\n'*}"
+    value="${record#*$'\n'}"
+    if [[ "$key" == include.path ]]; then
+      if [[ "$value" == "$local_include_path" || "$value" == "$local_git_config" ]]; then
+        has_canonical_include=true
+      else
+        needs_backup=true
+      fi
+    elif is_allowed_machine_key "$key" || is_preserved_include_if_key "$key"; then
       continue
+    else
+      needs_backup=true
     fi
-    if ! is_allowed_machine_key "$key"; then
-      return 0
+
+    # Edit the copy in place: regrouping retained keys changes includeIf precedence.
+    if "$GIT_BIN" config --file "$transaction/filtered" --unset-all "$key"; then
+      continue
+    else
+      status=$?
+      [[ "$status" -eq 5 ]] || return "$status"
     fi
-  done < <("$GIT_BIN" config --file "$machine_git_config" --name-only --list 2>/dev/null || true)
+  done <"$transaction/entries"
 
-  return 1
+  [[ "$has_canonical_include" == true ]] || needs_backup=true
+  cp -p "$transaction/source" "$transaction/result"
+  {
+    printf '[include]\n\tpath = %s\n' "$local_include_path"
+    sed '/[^[:space:]]/,$!d' "$transaction/filtered"
+  } >"$transaction/result"
+  "$GIT_BIN" config --file "$transaction/result" --list >/dev/null
 }
 
-machine_config_has_unmanaged_includes() {
-  local include_path=""
+preflight_stow() {
+  local stow_args=(--simulate --restow --no-folding)
+  local filename=""
 
-  [[ -f "$machine_git_config" && ! -L "$machine_git_config" ]] || return 1
+  # A split config with regular managed targets is drift, not a legacy migration.
+  if [[ "$has_canonical_include" != true ]]; then
+    for filename in local.gitconfig ignore; do
+      if [[ -f "$git_config_dir/$filename" && ! -L "$git_config_dir/$filename" ]]; then
+        stow_args+=("--ignore=^\.config/git/${filename//./\\.}$")
+      fi
+    done
+  fi
+  stow "${stow_args[@]}" -d "$DOTFILES/tools/git" -t "$HOME" config
+}
 
-  while IFS= read -r include_path; do
-    if [[ "$include_path" != "$local_include_path" && "$include_path" != "$HOME/.config/git/local.gitconfig" ]]; then
-      return 0
+backup_path() {
+  local path="$1"
+  backup="$path.migrated.$(/bin/date +%Y%m%d%H%M%S)"
+  while [[ -e "$backup" || -L "$backup" ]]; do
+    backup="$backup.$$"
+  done
+}
+
+move_legacy_file() {
+  local path="$1"
+
+  [[ -f "$path" && ! -L "$path" ]] || return 0
+  backup_path "$path"
+  mv "$path" "$backup"
+  moved_paths+=("$path")
+  moved_backups+=("$backup")
+  printf 'Backed up old Git file: %s\n' "$backup"
+}
+
+record_new_links() {
+  local source=""
+  local target=""
+  local relative=""
+
+  find "$DOTFILES/tools/git/config/" -type f -print0 >"$transaction/package-files"
+  while IFS= read -r -d '' source; do
+    relative="${source#"$DOTFILES/tools/git/config/"}"
+    case "$relative" in
+    .gitconfig | .stow-local-ignore) continue ;;
+    esac
+    target="$HOME/$relative"
+    if [[ ! -e "$target" && ! -L "$target" ]]; then
+      new_link_targets+=("$target")
+      new_link_sources+=("$source")
     fi
-  done < <("$GIT_BIN" config --file "$machine_git_config" --get-all include.path 2>/dev/null || true)
-
-  return 1
+  done <"$transaction/package-files"
 }
 
-machine_config_has_canonical_include() {
-  local include_path=""
+rollback_migration() {
+  local i=0
+  local target=""
+  local failed=false
 
-  while IFS= read -r include_path; do
-    if [[ "$include_path" == "$local_include_path" || "$include_path" == "$HOME/.config/git/local.gitconfig" ]]; then
-      return 0
+  for ((i = 0; i < ${#new_link_targets[@]}; i++)); do
+    target="${new_link_targets[$i]}"
+    if [[ -L "$target" && "$target" -ef "${new_link_sources[$i]}" ]]; then
+      rm "$target" || failed=true
     fi
-  done < <("$GIT_BIN" config --file "$machine_git_config" --get-all include.path 2>/dev/null || true)
-
-  return 1
+  done
+  for ((i = 0; i < ${#moved_paths[@]}; i++)); do
+    target="${moved_paths[$i]}"
+    if [[ -e "$target" || -L "$target" ]]; then
+      printf 'Error: cannot restore over unexpected target %s; backup: %s\n' "$target" "${moved_backups[$i]}" >&2
+      failed=true
+    else
+      mv "${moved_backups[$i]}" "$target" || failed=true
+    fi
+  done
+  if [[ -n "$old_git_dir_link" ]]; then
+    if rmdir "$git_config_dir"; then
+      ln -s "$old_git_dir_link" "$git_config_dir" || failed=true
+    else
+      printf 'Error: could not restore Git directory link to %s\n' "$old_git_dir_link" >&2
+      failed=true
+    fi
+  fi
+  [[ "$failed" == false ]]
 }
 
-machine_config_needs_migration_backup() {
-  [[ -f "$machine_git_config" && ! -L "$machine_git_config" ]] || return 1
-
-  if machine_config_has_unmanaged_keys; then
-    return 0
+cleanup() {
+  local status=$?
+  trap - EXIT
+  if [[ "$committed" != true ]]; then
+    [[ "$status" -ne 0 ]] || status=1
+    rollback_migration || status=1
   fi
-
-  if machine_config_has_unmanaged_includes; then
-    return 0
-  fi
-
-  if ! machine_config_has_canonical_include; then
-    return 0
-  fi
-
-  return 1
+  rm -rf "$transaction"
+  exit "$status"
 }
 
-rebuild_machine_config() {
-  local temp_config=""
-  local filtered_config=""
+with_stow=false
+case "${1:-}" in
+"") ;;
+--stow) with_stow=true ;;
+*) printf 'Usage: %s [--stow]\n' "$0" >&2; exit 2 ;;
+esac
+[[ "$#" -le 1 ]] || exit 2
 
-  touch "$machine_git_config"
-
-  temp_config="$(mktemp)"
-  filtered_config="$(mktemp)"
-  cp "$machine_git_config" "$temp_config"
-  copy_allowed_machine_keys "$temp_config" "$filtered_config"
-  write_include_first_config "$filtered_config"
-  rm -f "$temp_config" "$filtered_config"
-}
-
-ensure_machine_config_include_first() {
-  if machine_config_needs_migration_backup; then
-    backup_machine_config
-  fi
-
-  rebuild_machine_config
-}
-
-mkdir -p "$config_home"
 guard_machine_config_symlink
 guard_git_config_dir_symlink
-remove_old_stowed_machine_config
-remove_old_stowed_git_config_dir
+if [[ -e "$machine_git_config" && ! -f "$machine_git_config" ]]; then
+  printf 'Error: not a regular Git config: %s\n' "$machine_git_config" >&2
+  exit 1
+fi
+
+transaction="$(mktemp -d "$HOME/.git-config-migration.XXXXXX")"
+committed=false
+needs_backup=false
+has_canonical_include=false
+old_git_dir_link=""
+backup=""
+moved_paths=()
+moved_backups=()
+new_link_targets=()
+new_link_sources=()
+trap cleanup EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
+
+prepare_machine_config
+if [[ "$with_stow" == true ]]; then
+  # shellcheck disable=SC1091
+  source "$DOTFILES/tools/lib.sh"
+  preflight_stow
+fi
+
+if [[ -L "$git_config_dir" ]]; then
+  old_git_dir_link="$(readlink "$git_config_dir")"
+  rm "$git_config_dir"
+fi
 mkdir -p "$git_config_dir"
-backup_old_local_config
-backup_old_git_ignore
-ensure_machine_config_include_first
+move_legacy_file "$local_git_config"
+move_legacy_file "$global_git_ignore"
+if [[ "$with_stow" == true ]]; then
+  record_new_links
+  stow_config git
+fi
+
+if [[ -f "$machine_git_config" && ! -L "$machine_git_config" && "$needs_backup" == true ]]; then
+  backup_path "$machine_git_config"
+  cp -p "$machine_git_config" "$backup"
+  printf 'Backed up old Git machine config: %s\n' "$backup"
+fi
+if [[ -L "$machine_git_config" ]] || ! cmp -s "$transaction/result" "$machine_git_config"; then
+  mv -f "$transaction/result" "$machine_git_config"
+fi
+committed=true

@@ -27,8 +27,7 @@ validate_machine_git_config_include() {
   fi
 }
 
-GIT_BIN="$bin_path" bash "$DOTFILES/tools/git/migrate-config.sh"
-stow_config git
+GIT_BIN="$bin_path" bash "$DOTFILES/tools/git/migrate-config.sh" --stow
 
 # Repo-local hooks for the dotfiles repo itself (gitleaks pre-commit).
 if [[ -d "$DOTFILES/.git" && -d "$DOTFILES/.githooks" ]]; then
