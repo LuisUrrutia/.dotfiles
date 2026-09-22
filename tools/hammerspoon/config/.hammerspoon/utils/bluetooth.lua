@@ -126,7 +126,7 @@ end
 -- Connect to Bluetooth device asynchronously without blocking Hammerspoon
 -- @param device_id string - Bluetooth device address
 -- @param callback fun(ok: boolean)|nil - Called with the connection result
--- @return boolean - Whether the connect attempt was started
+-- @return hs.task|false - Started task, or false if it could not start
 function lib.connect(device_id, callback)
     if not valid_device_id(device_id) then
         if callback then
@@ -149,7 +149,14 @@ function lib.connect(device_id, callback)
         end
     end, { "--connect", device_id })
 
-    return task:start() ~= false
+    if not task or not task:start() then
+        if callback then
+            callback(false)
+        end
+        return false
+    end
+
+    return task
 end
 
 -- Disconnect from Bluetooth device

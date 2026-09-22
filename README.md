@@ -426,8 +426,8 @@ with `gh extension upgrade --all` on each run. Fish keeps `upd` and
   completion, formatting, Fugitive, and diff helpers.
 - tmux uses the mise-owned TPack for plugins and validates the config in an
   isolated server before installing plugins.
-- Hammerspoon handles Bluetooth sleep/reconnect behavior, caffeinate-at-home
-  logic, and hotkeys.
+- Hammerspoon disconnects Bluetooth devices on lid close and reconnects them on
+  lid open. It also handles caffeinate-at-home logic and hotkeys.
 - Raycast exports are tracked as `.rayconfig` backups with `raycast-config`
   helpers for status, listing, backup, restore, and scriptable latest-path lookup.
 - Thaw preferences back up with `dotfiles backup thaw`; `dotfiles backup all`

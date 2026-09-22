@@ -59,12 +59,15 @@ local function build_hs()
         location = {},
         timer = {},
         timers = {},
+        periodic_timers = {},
         hotkey = {},
         json = {},
         task = {},
+        tasks = {},
         task_fail = {},
         fs = { files = { ["/opt/homebrew/bin/blueutil"] = true } },
         bluetooth_powered_on = true,
+        lid_output = '"AppleClamshellState" = No',
     }
 
     function hs.logger.new(name, level)
@@ -102,6 +105,7 @@ local function build_hs()
     end
 
     function hs.battery.powerSource()
+        if hs.battery.unavailable then return nil end
         return hs.battery.source or "Battery Power"
     end
 
@@ -155,6 +159,7 @@ local function build_hs()
             stopped = false,
             fire = function(self)
                 if not self.stopped then
+                    self.stopped = true
                     fn()
                 end
             end,
@@ -168,12 +173,28 @@ local function build_hs()
         return timer
     end
 
+    function hs.timer.doEvery(interval, fn)
+        local timer = {
+            interval = interval,
+            fire = function(self)
+                if not self.stopped then fn() end
+            end,
+            stop = function(self) self.stopped = true end,
+        }
+        table.insert(hs.periodic_timers, timer)
+        return timer
+    end
+
     function hs.hotkey.bind(mods, key, fn)
         table.insert(hs.calls, { type = "hotkey", mods = mods, key = key, fn = fn })
     end
 
     function hs.execute(command, with_user_env)
         table.insert(hs.calls, { type = "execute", command = command, with_user_env = with_user_env })
+        if command == "/usr/sbin/ioreg -r -n IOPMrootDomain -d 1 -l" then
+            return hs.lid_output, not hs.lid_probe_failed
+        end
+        if hs.execute_failed then return "bad", false, "exit", 1 end
         if command:find(" %-p") then
             if hs.bluetooth_powered_on then
                 return "1\n", true, "exit", 0
@@ -186,16 +207,31 @@ local function build_hs()
     end
 
     function hs.task.new(path, callback, arguments)
-        return {
+        if hs.task.create_failed then return nil end
+        local task = {
+            finish = function(self, exit_code)
+                self.running = false
+                callback(exit_code, "", "")
+            end,
+            terminate = function(self)
+                self.terminated = true
+                self.running = false
+                return self
+            end,
+            isRunning = function(self) return self.running == true end,
             start = function(self)
                 table.insert(hs.calls, { type = "task", path = path, arguments = arguments })
+                if hs.task.start_failed then return false end
+                self.running = true
                 local exit_code = hs.task_fail[arguments[#arguments]] and 1 or 0
-                if callback then
-                    callback(exit_code, "", "")
+                if not hs.task.deferred then
+                    self:finish(exit_code)
                 end
                 return self
             end,
         }
+        table.insert(hs.tasks, task)
+        return task
     end
 
     function hs.fs.attributes(path, attribute)
@@ -245,7 +281,111 @@ local function count_connects(hs, address)
     end)
 end
 
-test("bluetooth manager uses system sleep events, dedupes devices, and delays reconnect", function()
+local function close_lid(hs)
+    hs.lid_output = '"AppleClamshellState" = Yes'
+    hs.caffeinate.callback(hs.caffeinate.watcher.systemWillSleep)
+end
+
+local function open_lid(hs)
+    hs.lid_output = '"AppleClamshellState" = No'
+    hs.caffeinate.callback(hs.caffeinate.watcher.systemDidWake)
+end
+
+test("bluetooth manager leaves devices connected when sleeping with the lid open", function()
+    local hs = build_hs()
+    hs.json.next_value = { { address = "aa-bb-cc-dd-ee-ff" } }
+    local manager = load_module("modules.bluetooth_sleep_manager")
+    manager.start()
+
+    hs.caffeinate.callback(hs.caffeinate.watcher.screensDidSleep)
+    hs.caffeinate.callback(hs.caffeinate.watcher.systemWillSleep)
+    hs.caffeinate.callback(hs.caffeinate.watcher.systemDidWake)
+
+    assert_equal(count_disconnects(hs), 0, "sleep with an open lid must preserve Bluetooth connections")
+    assert_equal(#hs.timers, 0, "ordinary wake must not schedule Bluetooth connections")
+end)
+
+test("bluetooth manager follows the lid while the Mac stays awake", function()
+    local hs = build_hs()
+    hs.json.next_value = { { address = "aa-bb-cc-dd-ee-ff" } }
+    local manager = load_module("modules.bluetooth_sleep_manager")
+    manager.start()
+
+    hs.lid_output = '"AppleClamshellState" = Yes'
+    hs.periodic_timers[1]:fire()
+    hs.periodic_timers[1]:fire()
+    hs.caffeinate.callback(hs.caffeinate.watcher.systemDidWake)
+
+    assert_equal(count_disconnects(hs), 1, "a docked lid close must disconnect once without a sleep event")
+    assert_equal(#hs.timers, 0, "wake with the lid still closed must not reconnect")
+
+    hs.lid_output = '"AppleClamshellState" = No'
+    hs.periodic_timers[1]:fire()
+    hs.timers[1]:fire()
+    hs.timers[2]:fire()
+
+    assert_equal(count_connects(hs), 1, "opening the lid without a wake event must reconnect")
+end)
+
+test("bluetooth manager does not disconnect on reload with the lid already closed", function()
+    local hs = build_hs()
+    hs.lid_output = '"AppleClamshellState" = Yes'
+    hs.json.next_value = { { address = "aa-bb-cc-dd-ee-ff" } }
+    local manager = load_module("modules.bluetooth_sleep_manager")
+    manager.start()
+
+    hs.periodic_timers[1]:fire()
+    hs.caffeinate.callback(hs.caffeinate.watcher.systemDidWake)
+
+    assert_equal(count_disconnects(hs), 0, "reload must preserve active docked peripherals")
+    assert_equal(#hs.timers, 0, "reload must not invent previously disconnected devices")
+
+    open_lid(hs)
+    close_lid(hs)
+    assert_equal(count_disconnects(hs), 1, "the next lid close must still be observed")
+end)
+
+test("bluetooth manager ignores missing, malformed, or failed lid readings", function()
+    local hs = build_hs()
+    hs.json.next_value = { { address = "aa-bb-cc-dd-ee-ff" } }
+    local manager = load_module("modules.bluetooth_sleep_manager")
+    manager.start()
+
+    for _, output in ipairs({ "", '"AppleClamshellState" = unknown' }) do
+        hs.lid_output = output
+        hs.periodic_timers[1]:fire()
+    end
+    hs.lid_probe_failed = true
+    close_lid(hs)
+    assert_equal(count_disconnects(hs), 0, "an unreadable lid must not disconnect devices")
+
+    hs.lid_probe_failed = false
+    close_lid(hs)
+    hs.lid_output = ""
+    hs.periodic_timers[1]:fire()
+    assert_equal(#hs.timers, 0, "a missing lid state must not be mistaken for opening")
+
+    open_lid(hs)
+    hs.lid_probe_failed = true
+    hs.timers[1]:fire()
+    assert_equal(count_connects(hs), 0, "reconnect must wait until the lid is known to be open")
+end)
+
+test("bluetooth manager checks the lid again before a delayed reconnect", function()
+    local hs = build_hs()
+    hs.json.next_value = { { address = "aa-bb-cc-dd-ee-ff" } }
+    local manager = load_module("modules.bluetooth_sleep_manager")
+    manager.start()
+    close_lid(hs)
+    open_lid(hs)
+
+    hs.lid_output = '"AppleClamshellState" = Yes'
+    hs.timers[1]:fire()
+
+    assert_equal(count_connects(hs), 0, "a delayed reconnect must not race the next lid check")
+end)
+
+test("bluetooth manager uses lid transitions, dedupes devices, and delays reconnect", function()
     local hs = build_hs()
     hs.json.next_value = {
         { address = "aa-bb-cc-dd-ee-ff" },
@@ -256,17 +396,17 @@ test("bluetooth manager uses system sleep events, dedupes devices, and delays re
     bluetooth_sleep_manager.start()
 
     hs.caffeinate.callback(hs.caffeinate.watcher.screensDidSleep)
-    hs.caffeinate.callback(hs.caffeinate.watcher.systemWillSleep)
-    hs.caffeinate.callback(hs.caffeinate.watcher.systemDidWake)
+    close_lid(hs)
+    open_lid(hs)
     hs.timers[1]:fire()
     hs.timers[2]:fire()
 
-    assert_equal(count_disconnects(hs), 1, "system sleep should disconnect each device once")
-    assert_equal(count_connects(hs), 1, "system wake should reconnect each device once")
+    assert_equal(count_disconnects(hs), 1, "lid closure should disconnect each device once")
+    assert_equal(count_connects(hs), 1, "lid opening should reconnect each device once")
     assert_equal(#hs.timers, 2, "wake should schedule a delayed reconnect and a settle check")
 end)
 
-test("bluetooth manager retries when Bluetooth is off after wake", function()
+test("bluetooth manager retries when Bluetooth is off after opening", function()
     local hs = build_hs()
     hs.json.next_value = {
         { address = "aa-bb-cc-dd-ee-ff" },
@@ -275,10 +415,10 @@ test("bluetooth manager retries when Bluetooth is off after wake", function()
     local bluetooth_sleep_manager = load_module("modules.bluetooth_sleep_manager")
     bluetooth_sleep_manager.start()
 
-    hs.caffeinate.callback(hs.caffeinate.watcher.systemWillSleep)
+    close_lid(hs)
 
     hs.bluetooth_powered_on = false
-    hs.caffeinate.callback(hs.caffeinate.watcher.systemDidWake)
+    open_lid(hs)
     hs.timers[1]:fire()
 
     assert_equal(#hs.timers, 2, "powered-off Bluetooth should schedule a retry")
@@ -300,10 +440,10 @@ test("bluetooth manager gives up reconnecting after max attempts", function()
     local bluetooth_sleep_manager = load_module("modules.bluetooth_sleep_manager")
     bluetooth_sleep_manager.start()
 
-    hs.caffeinate.callback(hs.caffeinate.watcher.systemWillSleep)
+    close_lid(hs)
 
     hs.bluetooth_powered_on = false
-    hs.caffeinate.callback(hs.caffeinate.watcher.systemDidWake)
+    open_lid(hs)
 
     local index = 1
     while hs.timers[index] do
@@ -314,7 +454,7 @@ test("bluetooth manager gives up reconnecting after max attempts", function()
     assert_equal(#hs.timers, 5, "retries should stop after the attempt limit")
     assert_equal(count_connects(hs), 0, "no reconnect should run while Bluetooth is off")
 
-    hs.caffeinate.callback(hs.caffeinate.watcher.systemDidWake)
+    open_lid(hs)
     assert_equal(#hs.timers, 5, "given-up devices should not be retried on a later wake")
 end)
 
@@ -328,8 +468,8 @@ test("bluetooth manager retries only devices that failed to reconnect", function
     local bluetooth_sleep_manager = load_module("modules.bluetooth_sleep_manager")
     bluetooth_sleep_manager.start()
 
-    hs.caffeinate.callback(hs.caffeinate.watcher.systemWillSleep)
-    hs.caffeinate.callback(hs.caffeinate.watcher.systemDidWake)
+    close_lid(hs)
+    open_lid(hs)
 
     hs.task_fail["aa-bb-cc-dd-ee-01"] = true
     hs.timers[1]:fire()
@@ -352,6 +492,7 @@ test("bluetooth manager start is idempotent", function()
     bluetooth_sleep_manager.start()
 
     assert_equal(hs.caffeinate.watch_count, 1, "start should create one watcher")
+    assert_equal(#hs.periodic_timers, 1, "start should create one lid timer")
 end)
 
 test("bluetooth manager requests Bluetooth permission at startup", function()
@@ -373,7 +514,7 @@ test("bluetooth manager requests Bluetooth permission at startup", function()
     assert_false(with_user_env, "blueutil permission probe should not use user shell env")
 end)
 
-test("bluetooth manager cancels a pending reconnect on a new sleep cycle", function()
+test("bluetooth manager cancels a pending reconnect on a new lid cycle", function()
     local hs = build_hs()
     hs.json.next_value = {
         { address = "aa-bb-cc-dd-ee-ff" },
@@ -382,14 +523,14 @@ test("bluetooth manager cancels a pending reconnect on a new sleep cycle", funct
     local bluetooth_sleep_manager = load_module("modules.bluetooth_sleep_manager")
     bluetooth_sleep_manager.start()
 
-    hs.caffeinate.callback(hs.caffeinate.watcher.systemWillSleep)
-    hs.caffeinate.callback(hs.caffeinate.watcher.systemDidWake)
+    close_lid(hs)
+    open_lid(hs)
     local stale_timer = hs.timers[1]
 
-    hs.caffeinate.callback(hs.caffeinate.watcher.systemWillSleep)
-    assert_truthy(stale_timer.stopped, "a new sleep cycle should cancel the pending reconnect")
+    close_lid(hs)
+    assert_truthy(stale_timer.stopped, "a new lid cycle should cancel the pending reconnect")
 
-    hs.caffeinate.callback(hs.caffeinate.watcher.systemDidWake)
+    open_lid(hs)
     stale_timer:fire()
     assert_equal(count_connects(hs), 0, "a stale timer should not reconnect while the machine sleeps")
 
@@ -406,16 +547,137 @@ test("bluetooth manager stop cancels a pending reconnect", function()
     local bluetooth_sleep_manager = load_module("modules.bluetooth_sleep_manager")
     bluetooth_sleep_manager.start()
 
-    hs.caffeinate.callback(hs.caffeinate.watcher.systemWillSleep)
-    hs.caffeinate.callback(hs.caffeinate.watcher.systemDidWake)
+    close_lid(hs)
+    open_lid(hs)
     local pending_timer = hs.timers[1]
 
     bluetooth_sleep_manager.stop()
     assert_truthy(pending_timer.stopped, "stop should cancel the pending reconnect")
+    assert_truthy(hs.periodic_timers[1].stopped, "stop should cancel the lid timer")
 
     pending_timer:fire()
     assert_equal(count_connects(hs), 0, "a stopped manager should not reconnect devices")
 end)
+
+test("bluetooth manager waits for an in-flight connection before retrying", function()
+    local hs = build_hs()
+    hs.task.deferred = true
+    hs.json.next_value = { { address = "aa-bb-cc-dd-ee-ff" } }
+    local manager = load_module("modules.bluetooth_sleep_manager")
+    manager.start()
+    close_lid(hs)
+    open_lid(hs)
+
+    for index = 1, 3 do hs.timers[index]:fire() end
+
+    assert_equal(count_connects(hs), 1, "a slow connection must not spawn overlapping blueutil processes")
+    hs.tasks[1]:finish(0)
+    hs.timers[4]:fire()
+    assert_equal(#hs.timers, 4, "a successful delayed connection should finish the retry loop")
+end)
+
+test("bluetooth manager bounds hung connections and cancels them before retrying", function()
+    local hs = build_hs()
+    hs.task.deferred = true
+    hs.json.next_value = { { address = "aa-bb-cc-dd-ee-ff" } }
+    local manager = load_module("modules.bluetooth_sleep_manager")
+    manager.start()
+    close_lid(hs)
+    open_lid(hs)
+
+    local index = 1
+    while hs.timers[index] and index <= 40 do
+        hs.timers[index]:fire()
+        local running = 0
+        for _, task in ipairs(hs.tasks) do
+            if task:isRunning() then running = running + 1 end
+        end
+        assert_truthy(running <= 1, "a retry must terminate the previous process before starting another")
+        index = index + 1
+    end
+
+    assert_false(hs.timers[index], "hung connections must have a bounded retry budget")
+    assert_equal(count_connects(hs), 5, "each hung attempt should consume the retry budget once")
+    for _, task in ipairs(hs.tasks) do
+        assert_truthy(task.terminated, "a timed-out task must be terminated")
+    end
+end)
+
+test("bluetooth manager cancels active tasks on lid close and ignores their late callbacks", function()
+    local hs = build_hs()
+    hs.task.deferred = true
+    hs.json.next_value = { { address = "aa-bb-cc-dd-ee-ff" } }
+    local manager = load_module("modules.bluetooth_sleep_manager")
+    manager.start()
+    close_lid(hs)
+    open_lid(hs)
+    hs.timers[1]:fire()
+    local old_task = hs.tasks[1]
+
+    close_lid(hs)
+    old_task:finish(0)
+    open_lid(hs)
+    if hs.timers[3] then hs.timers[3]:fire() end
+
+    assert_equal(count_connects(hs), 2, "a stale completion must not erase the next lid cycle's devices")
+    assert_truthy(old_task.terminated, "lid closure must cancel the previous connection process")
+end)
+
+test("bluetooth manager cancels active tasks on stop", function()
+    local hs = build_hs()
+    hs.task.deferred = true
+    hs.json.next_value = { { address = "aa-bb-cc-dd-ee-ff" } }
+    local manager = load_module("modules.bluetooth_sleep_manager")
+    manager.start()
+    close_lid(hs)
+    open_lid(hs)
+    hs.timers[1]:fire()
+
+    manager.stop()
+
+    assert_truthy(hs.tasks[1].terminated, "stop must terminate the active connection process")
+    assert_truthy(hs.timers[2].stopped, "stop must cancel the connection check")
+end)
+
+test("bluetooth manager snapshots connected devices even when earlier devices still need retrying", function()
+    local hs = build_hs()
+    hs.json.next_value = {
+        { address = "aa-bb-cc-dd-ee-01" },
+        { address = "aa-bb-cc-dd-ee-02" },
+    }
+    hs.task_fail["aa-bb-cc-dd-ee-02"] = true
+    local manager = load_module("modules.bluetooth_sleep_manager")
+    manager.start()
+    close_lid(hs)
+    open_lid(hs)
+    hs.timers[1]:fire()
+    hs.json.next_value = { { address = "aa-bb-cc-dd-ee-01" } }
+
+    close_lid(hs)
+    open_lid(hs)
+    hs.timers[3]:fire()
+
+    assert_equal(count_disconnects(hs), 3, "a partially successful wake must not skip the next lid closure snapshot")
+    assert_equal(count_connects(hs, "aa-bb-cc-dd-ee-01"), 2, "each lid closure must remember the connected device")
+    assert_equal(count_connects(hs, "aa-bb-cc-dd-ee-02"), 2, "the still-disconnected device must remain remembered")
+end)
+
+for _, failure in ipairs({ "create_failed", "start_failed" }) do
+    test("bluetooth utility reports task " .. failure .. " exactly once", function()
+        local hs = build_hs()
+        hs.task[failure] = true
+        local bluetooth = load_module("utils.bluetooth")
+        local results = {}
+
+        local started = bluetooth.connect("aa-bb-cc-dd-ee-ff", function(ok)
+            table.insert(results, ok)
+        end)
+
+        assert_false(started, "a failed task must not count as started")
+        assert_equal(#results, 1, "failure must complete the connection callback")
+        assert_equal(results[1], false, "callback must report failure")
+    end)
+end
 
 test("bluetooth utility resolves blueutil from the Intel Homebrew prefix", function()
     local hs = build_hs()
@@ -460,10 +722,8 @@ test("bluetooth utility validates addresses and ignores failed blueutil output",
     assert_false(connect_result, "connect callback should report failure for invalid addresses")
     assert_false(bluetooth.disconnect("not valid; rm -rf ~"), "invalid addresses should be rejected")
 
-    hs.execute = function(command)
-        table.insert(hs.calls, { type = "execute", command = command })
-        return "bad", false, "exit", 1
-    end
+    hs.execute_failed = true
+    hs.json.next_value = { { address = "aa-bb-cc-dd-ee-ff" } }
 
     assert_equal(#bluetooth.connected_devices(), 0, "failed blueutil should return no devices")
 
@@ -603,6 +863,58 @@ test("caffeinate at home applies a nil SSID that persists past the settle window
         return call.type == "caffeinate_set" and not call.value
     end)
     assert_equal(disabled, 2, "a persistent nil SSID should allow system and display idle")
+end)
+
+test("caffeinate at home releases sleep prevention immediately on battery without an SSID", function()
+    local hs = build_hs()
+    hs.battery.source = "AC Power"
+    hs.wifi.current = "Shadow"
+    local caffeinate = load_module("modules.caffeinate_at_home")
+    caffeinate.start({ "Shadow" })
+    hs.wifi.current = nil
+    hs.wifi.callback()
+
+    hs.battery.source = "Battery Power"
+    hs.battery.callback()
+
+    assert_equal(count_calls(hs, function(call)
+        return call.type == "caffeinate_set" and not call.value
+    end), 2, "battery power must release both assertions without waiting for WiFi")
+    assert_truthy(hs.timers[1].stopped, "battery power should cancel the WiFi settle timer")
+end)
+
+test("caffeinate at home bounds the nil SSID grace period across repeated notifications", function()
+    local hs = build_hs()
+    hs.battery.source = "AC Power"
+    hs.wifi.current = "Shadow"
+    local caffeinate = load_module("modules.caffeinate_at_home")
+    caffeinate.start({ "Shadow" })
+    hs.wifi.current = nil
+    hs.wifi.callback()
+
+    hs.wifi.callback()
+    hs.battery.callback()
+    hs.timers[1]:fire()
+
+    assert_equal(count_calls(hs, function(call)
+        return call.type == "caffeinate_set" and not call.value
+    end), 2, "repeated notifications must not keep extending sleep prevention")
+    assert_equal(#hs.timers, 1, "one missing-SSID episode should use one grace period")
+end)
+
+test("caffeinate at home allows sleep when the power source is unavailable", function()
+    local hs = build_hs()
+    hs.battery.source = "AC Power"
+    hs.wifi.current = "Shadow"
+    local caffeinate = load_module("modules.caffeinate_at_home")
+    caffeinate.start({ "Shadow" })
+
+    hs.battery.unavailable = true
+    hs.battery.callback()
+
+    assert_equal(count_calls(hs, function(call)
+        return call.type == "caffeinate_set" and not call.value
+    end), 2, "an unavailable power source must allow sleep without throwing")
 end)
 
 test("caffeinate at home re-evaluates on system wake", function()

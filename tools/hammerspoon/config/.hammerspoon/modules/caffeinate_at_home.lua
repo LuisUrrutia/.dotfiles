@@ -23,23 +23,18 @@ local function set_caffeinate(enabled)
     hs.caffeinate.set("displayIdle", enabled)
 end
 
-local function is_on_ac_power()
-    return hs.battery.powerSource() == "AC Power"
-end
-
 local function request_location_services()
     hs.location.get()
 end
 
 -- Apply caffeinate state for the current WiFi network and power source
 -- @return nil
-local function evaluate()
-    local current_SSID = hs.wifi.currentNetwork()
+local function evaluate(current_SSID, power_source)
     local current_SSID_label = current_SSID or "<unavailable>"
 
     local is_home = home_SSID_set[current_SSID] == true
 
-    if is_home and is_on_ac_power() then
+    if is_home and power_source == "AC Power" then
         log.i("On home WiFi: prevent sleep")
 
         set_caffeinate(true)
@@ -48,7 +43,8 @@ local function evaluate()
             log.w("WiFi SSID unavailable. Check Hammerspoon Location Services permission.")
         end
 
-        log.i("Allow normal sleep. Current SSID: " .. current_SSID_label .. ", power: " .. hs.battery.powerSource())
+        log.i("Allow normal sleep. Current SSID: " .. current_SSID_label ..
+            ", power: " .. (power_source or "<unavailable>"))
 
         set_caffeinate(false)
     end
@@ -57,20 +53,25 @@ end
 -- Handle WiFi/power change events, debouncing transient nil SSIDs
 -- @return nil
 local function on_change()
+    local current_SSID = hs.wifi.currentNetwork()
+    local power_source = hs.battery.powerSource()
+
+    if not current_SSID and power_source == "AC Power" then
+        if not settle_timer then
+            settle_timer = hs.timer.doAfter(WIFI_SETTLE_DELAY, function()
+                settle_timer = nil
+                evaluate(hs.wifi.currentNetwork(), hs.battery.powerSource())
+            end)
+        end
+        return
+    end
+
     if settle_timer then
         settle_timer:stop()
         settle_timer = nil
     end
 
-    if not hs.wifi.currentNetwork() then
-        settle_timer = hs.timer.doAfter(WIFI_SETTLE_DELAY, function()
-            settle_timer = nil
-            evaluate()
-        end)
-        return
-    end
-
-    evaluate()
+    evaluate(current_SSID, power_source)
 end
 
 local function on_wake(event_type)
