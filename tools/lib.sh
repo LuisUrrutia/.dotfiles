@@ -21,6 +21,41 @@ require_brew_bin() {
   fi
 }
 
+# Usage: set_default_app_for_extensions <app_name> <bundle_id> <extensions...>
+set_default_app_for_extensions() {
+  local app_name="$1"
+  local bundle_id="$2"
+  shift 2
+
+  require_brew_bin duti
+
+  local association_status=0
+  local extension handler verified attempt
+  for extension in "$@"; do
+    if ! "$bin_path" -s "$bundle_id" ".$extension" all; then
+      echo "Warning: could not set $app_name as the default for .$extension" >&2
+      association_status=1
+      continue
+    fi
+
+    # Launch Services can briefly return the previous handler after a successful write.
+    verified=false
+    for attempt in 1 2 3 4 5 6 7 8 9 10; do
+      if handler="$("$bin_path" -x "$extension")" && [[ "${handler##*$'\n'}" == "$bundle_id" ]]; then
+        verified=true
+        break
+      fi
+      [[ "$attempt" -eq 10 ]] || sleep 1
+    done
+    if [[ "$verified" != true ]]; then
+      echo "Warning: $app_name default association verification failed for .$extension" >&2
+      association_status=1
+    fi
+  done
+
+  return "$association_status"
+}
+
 # Load the complete mise-managed environment into the current Bash process.
 # Use after tools/mise/install.sh so later installers never depend on a shell
 # restart or interactive shell configuration.
