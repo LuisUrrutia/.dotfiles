@@ -68,7 +68,7 @@ load_mise_environment() {
     return 1
   fi
 
-  if ! mise_environment="$("$mise_path" env -s bash)"; then
+  if ! mise_environment="$("$mise_path" -C "$DOTFILES" env -s bash)"; then
     echo "Error: mise could not provide the Bootstrapper environment" >&2
     return 1
   fi

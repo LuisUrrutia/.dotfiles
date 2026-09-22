@@ -24,7 +24,7 @@ cat >"$fake_bin/mise" <<'EOF'
 #!/usr/bin/env bash
 set -euo pipefail
 
-[[ "$*" == 'env -s bash' ]] || exit 1
+[[ "$*" == "-C $DOTFILES env -s bash" ]] || exit 1
 printf 'export PATH=%q\n' "$MISE_TEST_MANAGED_BIN:$PATH"
 printf 'export JAVA_HOME=%q\n' "$MISE_TEST_JAVA_HOME"
 EOF

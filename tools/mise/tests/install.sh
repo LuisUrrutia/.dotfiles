@@ -3,7 +3,6 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
-MISE_INSTALL="$ROOT_DIR/tools/mise/install.sh"
 TMP_DIR="$(mktemp -d)"
 
 cleanup() {
@@ -32,6 +31,11 @@ EOF
 #!/usr/bin/env bash
 set -euo pipefail
 printf 'mise %s\n' "$*" >>"$CALL_LOG"
+if [[ "${1:-}" == -C ]]; then
+  cd "$2"
+  shift 2
+fi
+[[ "$PWD" == "$DOTFILES" ]] || exit 1
 if [[ "${1:-}" == install && "${2:-}" == --yes ]]; then
   exit 0
 fi
@@ -78,12 +82,15 @@ run_install() {
   make_fakes "$fake_bin"
   mkdir -p "$case_home"
 
-  HOME="$case_home" \
-    DOTFILES="$ROOT_DIR" \
-    HOMEBREW_PREFIX="$TMP_DIR/$case_name/homebrew" \
-    PATH="$fake_bin:/usr/bin:/bin" \
-    /bin/bash "$MISE_INSTALL" >"$TMP_DIR/$case_name/stdout" \
-    2>"$TMP_DIR/$case_name/stderr"
+  (
+    cd "$case_home"
+    HOME="$case_home" \
+      DOTFILES="$ROOT_DIR" \
+      HOMEBREW_PREFIX="$TMP_DIR/$case_name/homebrew" \
+      PATH="$fake_bin:/usr/bin:/bin" \
+      /bin/bash "$ROOT_DIR/dotfiles" tool apply mise >"$TMP_DIR/$case_name/stdout" \
+      2>"$TMP_DIR/$case_name/stderr"
+  )
 }
 
 run_install success
@@ -92,9 +99,9 @@ expected_sequence="$TMP_DIR/expected-sequence"
 cat >"$expected_sequence" <<EOF
 stow -v --restow --no-folding -d $ROOT_DIR/tools/mise -t $TMP_DIR/success/home config
 mise install --yes
-mise which claude
-mise which codex
-mise which tpack
+mise -C $ROOT_DIR which claude
+mise -C $ROOT_DIR which codex
+mise -C $ROOT_DIR which tpack
 brew list --cask claude-code
 brew uninstall --cask claude-code
 brew list --cask claude-code@latest
@@ -131,15 +138,19 @@ grep -F '"npm:@luisurrutia/bird" = "1.0.0"' \
 ! grep -F '"npm:@steipete/bird"' \
   "$ROOT_DIR/tools/mise/config/.config/mise/config.toml" >/dev/null ||
   fail "deprecated steipete Bird package is still declared"
-grep -F 'minimum_release_age_excludes' \
-  "$ROOT_DIR/tools/mise/config/.config/mise/config.toml" >/dev/null ||
-  fail "mise minimum release age exclusions are not configured"
-grep -F '"aqua:anthropics/claude-code"' \
-  "$ROOT_DIR/tools/mise/config/.config/mise/config.toml" >/dev/null ||
-  fail "Claude Code is still subject to mise minimum release age"
-grep -F '"aqua:openai/codex"' \
-  "$ROOT_DIR/tools/mise/config/.config/mise/config.toml" >/dev/null ||
-  fail "Codex is still subject to mise minimum release age"
+python3 - "$ROOT_DIR/tools/mise/config/.config/mise/config.toml" <<'PY'
+import sys
+import tomllib
+
+with open(sys.argv[1], "rb") as source:
+    config = tomllib.load(source)
+
+expected = {"aqua:anthropics/claude-code", "aqua:openai/codex"}
+exclusions = config.get("settings", {}).get("minimum_release_age_excludes", [])
+missing = expected.difference(exclusions)
+if missing:
+    sys.exit("mise install test: missing release-age exclusions: " + ", ".join(sorted(missing)))
+PY
 ! grep -F 'credential_command' \
   "$ROOT_DIR/tools/mise/config/.config/mise/config.toml" >/dev/null ||
   fail "fresh mise install still requires an explicit GitHub credential command"

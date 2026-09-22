@@ -9,7 +9,7 @@ if [[ -z "$mise_bin" ]]; then
 fi
 
 for command_name in claude codex tpack; do
-  if ! "$mise_bin" which "$command_name" >/dev/null 2>&1; then
+  if ! "$mise_bin" -C "$DOTFILES" which "$command_name" >/dev/null 2>&1; then
     printf 'Error: mise did not install the required %s command; preserving legacy Homebrew packages.\n' \
       "$command_name" >&2
     exit 1
