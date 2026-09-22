@@ -8,6 +8,7 @@ CHILD_STATUS=0
 PROCESS_GROUP_PYTHON=""
 TARGET_NAMES=(
   "Homebrew"
+  "GitHub CLI extensions"
   "mise"
   "rustup"
   "App Store"
@@ -21,15 +22,16 @@ TARGET_NAMES=(
 TARGET_OUTCOMES=()
 TARGET_REASONS=()
 TARGET_HOMEBREW=0
-TARGET_MISE=1
-TARGET_RUSTUP=2
-TARGET_APP_STORE=3
-TARGET_NEOVIM=4
-TARGET_SKILLS=5
-TARGET_TPACK=6
-TARGET_TLRC=7
-TARGET_MOLE=8
-TARGET_FISH=9
+TARGET_GH=1
+TARGET_MISE=2
+TARGET_RUSTUP=3
+TARGET_APP_STORE=4
+TARGET_NEOVIM=5
+TARGET_SKILLS=6
+TARGET_TPACK=7
+TARGET_TLRC=8
+TARGET_MOLE=9
+TARGET_FISH=10
 
 usage() {
   printf 'Usage: dotfiles update [--ignore-schedule]\n'
@@ -219,6 +221,16 @@ update_homebrew() {
   fi
 }
 
+update_gh_extensions() {
+  local index="$TARGET_GH"
+  if ! command -v gh >/dev/null 2>&1; then
+    set_result "$index" skipped "gh not found"
+    return
+  fi
+  run_child env GH_PROMPT_DISABLED=1 GIT_TERMINAL_PROMPT=0 gh extension upgrade --all
+  if [[ "$CHILD_STATUS" -eq 0 ]]; then set_result "$index" completed; else set_result "$index" failed "status $CHILD_STATUS"; fi
+}
+
 update_mise() {
   local index="$TARGET_MISE"
   local completion_check="$DOTFILES/tools/fish/check-claude-completion.sh"
@@ -270,7 +282,7 @@ update_skills() {
   if ! command -v skills >/dev/null 2>&1; then set_result "$index" skipped "not found"; return; fi
   run_child_quiet skills list -g
   if [[ "$CHILD_STATUS" -ne 0 ]]; then set_result "$index" warning "unable to list installed skills"; return; fi
-  run_child skills update --yes
+  run_child skills update --global --yes
   if [[ "$CHILD_STATUS" -eq 0 ]]; then set_result "$index" completed; else set_result "$index" failed "status $CHILD_STATUS"; fi
 }
 
@@ -322,7 +334,8 @@ update_fish_plugins() {
   if [[ ! -f "$fisher_file" ]]; then set_result "$index" skipped "Fisher not found"; return; fi
 
   command_string="source \"$fisher_file\"; and fisher update"
-  run_child fish --no-config --command "$command_string"
+  # Fisher needs the installed plugin state stored in universal variables.
+  run_child fish --command "$command_string"
   if [[ "$CHILD_STATUS" -eq 0 ]]; then set_result "$index" completed; else set_result "$index" failed "status $CHILD_STATUS"; fi
 }
 
@@ -358,6 +371,7 @@ main() {
   trap 'interrupt TERM 143' TERM
 
   update_homebrew
+  update_gh_extensions
   update_mise
   update_rustup
   update_app_store

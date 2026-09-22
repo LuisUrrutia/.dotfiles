@@ -399,9 +399,10 @@ Update keeps Homebrew work daily-gated and Mole cleanup weekly-gated unless
 `--ignore-schedule` is used. It updates toward current versions without
 reconciling Brewfile membership, removing manually installed software, or
 changing this Git repository. It is also the only owner of periodic Neovim,
-TPack, Fish, Skills, and tlrc updates; their installers only establish declared
-state. Fish keeps `upd` and `backup-configs` as interactive abbreviations for
-the canonical commands.
+TPack, Fish, Skills, tlrc, and GitHub CLI extension updates; their installers
+only establish declared state. All installed GitHub CLI extensions are updated
+with `gh extension upgrade --all` on each run. Fish keeps `upd` and
+`backup-configs` as interactive abbreviations for the canonical commands.
 
 - Fish has abbreviations for Git, Docker, Brew, common cleanup,
   iCloud/Obsidian paths, and WorkTrunk shell integration. `halp` and `cheat`

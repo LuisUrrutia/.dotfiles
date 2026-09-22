@@ -74,12 +74,22 @@ printf '%s\n' \
   'if [[ "${UPDATE_SCENARIO:-}" == brew-cleanup-fails && "$tool" == brew && "${1:-}" == cleanup ]]; then exit 7; fi' \
   'if [[ "$tool" == brew && "${1:-}" == doctor && ! -f "$EXPECTED_BREW_STAMP" ]]; then exit 10; fi' \
   'if [[ "${UPDATE_SCENARIO:-}" == doctor-fails && "$tool" == brew && "${1:-}" == doctor ]]; then exit 8; fi' \
+  'if [[ "$tool" == gh ]]; then' \
+  '  [[ "${GH_PROMPT_DISABLED:-}" == 1 && "${GIT_TERMINAL_PROMPT:-}" == 0 ]] || exit 18' \
+  '  [[ "${UPDATE_SCENARIO:-}" != gh-upgrade-fails ]] || exit 17' \
+  'fi' \
   'if [[ "${UPDATE_SCENARIO:-}" == "mise-${1:-}-fails" && "$tool" == mise ]]; then exit 9; fi' \
   'if [[ "${UPDATE_SCENARIO:-}" == nvim-plugins-fails && "$tool" == nvim && "$*" == *Lazy* ]]; then exit 11; fi' \
   'if [[ "${UPDATE_SCENARIO:-}" == nvim-blink-fails && "$tool" == nvim && "$*" == *config.blink* ]]; then exit 15; fi' \
   'if [[ "${UPDATE_SCENARIO:-}" == nvim-lsp-fails && "$tool" == nvim && "$*" == *config.lsp* ]]; then exit 16; fi' \
   'if [[ "${UPDATE_SCENARIO:-}" == nvim-parsers-fails && "$tool" == nvim && "$*" == *treesitter* ]]; then exit 12; fi' \
   'if [[ "${UPDATE_SCENARIO:-}" == skills-list-warns && "$tool" == skills && "${1:-}" == list ]]; then exit 13; fi' \
+  'if [[ "${UPDATE_SCENARIO:-}" == skills-project-scope && "$tool" == skills && "${1:-}" == update ]]; then' \
+  '  case " $* " in' \
+  '    *" --global "* | *" -g "*) printf "skills global updates applied\n" >>"$UPDATE_LOG" ;;' \
+  '    *) printf "No project skills to update.\n" ;;' \
+  '  esac' \
+  'fi' \
   'if [[ "${UPDATE_SCENARIO:-}" == rustup-fails && "$tool" == rustup ]]; then exit 14; fi' \
   'if [[ "${UPDATE_SCENARIO:-}" == signal && "$tool" == brew && "${1:-}" == update ]]; then' \
   '  trap '\''printf "TERM\n" >"$SIGNAL_RESULT"; exit 143'\'' TERM' \
@@ -91,7 +101,7 @@ printf '%s\n' \
   'exit 0' \
   >"$FAKE_BIN/fake-tool"
 chmod +x "$FAKE_BIN/fake-tool"
-for tool in brew mise claude rustup mas nvim skills tpack tldr mo fish; do
+for tool in brew gh mise claude rustup mas nvim skills tpack tldr mo fish; do
   ln -s fake-tool "$FAKE_BIN/$tool"
 done
 
@@ -175,6 +185,7 @@ for brew_stage in update upgrade autoremove cleanup; do
   run_scenario "brew-$brew_stage-fails"
   [[ "$SCENARIO_STATUS" -eq 1 ]] || fail "Homebrew $brew_stage failure did not fail Update"
   [[ ! -e "$SCENARIO_STATE/dotfiles/update/brew" ]] || fail "failed Homebrew $brew_stage chain wrote a stamp"
+  [[ "$SCENARIO_LOG" == *'gh extension upgrade --all'* ]] || fail "Homebrew $brew_stage failure stopped GitHub CLI extensions"
   [[ "$SCENARIO_LOG" == *'mise upgrade --yes'* ]] || fail "Homebrew $brew_stage failure stopped mise"
   case "$brew_stage" in
   update)
@@ -213,7 +224,7 @@ for nvim_stage in plugins blink lsp parsers; do
   elif [[ "$nvim_stage" == lsp ]]; then
     [[ "$SCENARIO_LOG" != *treesitter* ]] || fail "Neovim parsers ran after Mason failure"
   fi
-  [[ "$SCENARIO_LOG" == *'skills update --yes'* ]] || fail "Neovim $nvim_stage failure stopped Skills"
+  [[ "$SCENARIO_LOG" == *'skills update --global --yes'* ]] || fail "Neovim $nvim_stage failure stopped Skills"
 done
 
 run_scenario all-pass
@@ -225,6 +236,7 @@ assert_log_order "$TMP_DIR/all-pass/tools.log" \
   'brew autoremove' \
   'brew cleanup --prune=all' \
   'brew doctor' \
+  'gh extension upgrade --all' \
   'mise upgrade --yes' \
   'mise prune --yes' \
   'claude completion check' \
@@ -235,12 +247,13 @@ assert_log_order "$TMP_DIR/all-pass/tools.log" \
   "nvim --headless +lua if not require('config.lsp').update() then vim.cmd.cquit() end +qa" \
   "nvim --headless +lua require('config.treesitter').install() +qa" \
   'skills list -g' \
-  'skills update --yes' \
+  'skills update --global --yes' \
   'tpack update all' \
   'tldr --config' \
   'mo clean' \
-  'fish --no-config --command'
+  'fish --command'
 [[ "$SCENARIO_OUTPUT" == *'[update] Homebrew: completed'* ]] || fail "Homebrew completion is missing"
+[[ "$SCENARIO_OUTPUT" == *'[update] GitHub CLI extensions: completed'* ]] || fail "GitHub CLI extensions completion is missing"
 [[ "$SCENARIO_OUTPUT" == *'child stdout: rustup update'* ]] || fail "child stdout was not streamed"
 [[ "$SCENARIO_OUTPUT" == *'child stderr: rustup update'* ]] || fail "child stderr was not streamed"
 [[ -f "$SCENARIO_STATE/dotfiles/update/mole-clean" ]] || fail "Mole success did not write its stamp"
@@ -269,15 +282,27 @@ run_scenario completion-drift
   fail "Claude completion drift warning is missing"
 [[ "$SCENARIO_LOG" == *'rustup update'* ]] || fail "Claude completion drift stopped independent targets"
 
+run_scenario skills-project-scope
+[[ "$SCENARIO_STATUS" -eq 0 ]] || fail "global Skills update failed from a project"
+[[ "$SCENARIO_LOG" == *'skills global updates applied'* ]] ||
+  fail "Skills update selected the project scope and left global updates pending"
+
 run_scenario skills-list-warns
 [[ "$SCENARIO_STATUS" -eq 0 ]] || fail "Skills listing warning became a failure"
-[[ "$SCENARIO_LOG" != *'skills update --yes'* ]] || fail "Skills update ran after listing warning"
+[[ "$SCENARIO_LOG" != *'skills update --global --yes'* ]] || fail "Skills update ran after listing warning"
 [[ "$SCENARIO_OUTPUT" == *'[update] Skills: warning (unable to list installed skills)'* ]] ||
   fail "Skills warning outcome is missing"
 
+run_scenario gh-upgrade-fails
+[[ "$SCENARIO_STATUS" -eq 1 ]] || fail "GitHub CLI extension failure did not fail Update"
+[[ "$SCENARIO_OUTPUT" == *'[update] GitHub CLI extensions: failed (status 17)'* ]] ||
+  fail "GitHub CLI extension failure outcome is missing"
+[[ "$SCENARIO_LOG" == *'mise upgrade --yes'* && "$SCENARIO_LOG" == *'fish --command'* ]] ||
+  fail "GitHub CLI extension failure stopped later targets"
+
 run_scenario rustup-fails
 [[ "$SCENARIO_STATUS" -eq 1 ]] || fail "representative independent failure did not fail aggregate"
-[[ "$SCENARIO_LOG" == *'mas upgrade'* && "$SCENARIO_LOG" == *'fish --no-config --command'* ]] ||
+[[ "$SCENARIO_LOG" == *'mas upgrade'* && "$SCENARIO_LOG" == *'fish --command'* ]] ||
   fail "independent failure stopped later targets"
 
 stamp_home="$TMP_DIR/stamp-failure/home"
@@ -305,7 +330,7 @@ missing_state="$TMP_DIR/missing/state"
 mkdir -p "$missing_home" "$missing_state"
 PATH="/usr/bin:/bin" HOME="$missing_home" XDG_STATE_HOME="$missing_state" \
   "$FIXTURE_ROOT/dotfiles" update >"$TMP_DIR/missing.out"
-for expected in Homebrew mise rustup 'App Store' Neovim Skills 'TPack plugins' 'tlrc pages' 'Mole clean' 'Fish plugins'; do
+for expected in Homebrew 'GitHub CLI extensions' mise rustup 'App Store' Neovim Skills 'TPack plugins' 'tlrc pages' 'Mole clean' 'Fish plugins'; do
   grep -qF "[update] $expected: skipped" "$TMP_DIR/missing.out" || fail "missing $expected was not skipped"
 done
 
@@ -322,6 +347,7 @@ HOME="$schedule_home" XDG_STATE_HOME="$schedule_state" PATH="$FAKE_BIN:/usr/bin:
   EXPECTED_BREW_STAMP="$schedule_state/dotfiles/update/brew" \
   "$FIXTURE_ROOT/dotfiles" update >"$TMP_DIR/schedule.out" 2>&1
 [[ "$(<"$schedule_log")" != *'brew update'* ]] || fail "daily gate did not skip Homebrew"
+[[ "$(<"$schedule_log")" == *'gh extension upgrade --all'* ]] || fail "Homebrew daily gate skipped GitHub CLI extensions"
 [[ "$(<"$schedule_log")" != *'mo clean'* ]] || fail "weekly gate did not skip Mole"
 
 legacy_home="$TMP_DIR/legacy/home"
