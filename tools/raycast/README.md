@@ -1,5 +1,8 @@
 # Raycast
 
+The default install uses SuperCMD. The Raycast helper is retained for existing
+Raycast installations and saved exports.
+
 Raycast settings are managed through exported `.rayconfig` backups.
 
 Raycast does not expose a stable external CLI for fully automated export/import,

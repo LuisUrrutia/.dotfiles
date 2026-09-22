@@ -349,7 +349,7 @@ List them with `dotfiles config backups list`. Pruning is a dry run unless
 - macOS/system: GNU core tools, dockutil, mas, mole, Linearmouse, Thaw,
   DisplayLink, The Unarchiver
 - Automation and hotkeys: Hammerspoon, skhd
-- Apps: Dia, Raycast, 1Password, Ghostty, CleanShot, Cadran, IINA, Spotify,
+- Apps: Dia, SuperCMD, 1Password, Ghostty, CleanShot, IINA, Spotify,
   Discord, WhatsApp, Telegram, Slack, Figma, Zoom
 - Security/networking: 1Password CLI, OpenSSH, GnuPG, YubiKey Manager,
   NordVPN, Tailscale, VeraCrypt

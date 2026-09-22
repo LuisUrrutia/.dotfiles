@@ -147,9 +147,10 @@ cask "figma" # Interface design
 # ------------------------------------------------------------------------------
 # Productivity
 # ------------------------------------------------------------------------------
-cask "raycast"      # Launcher and command palette
+tap "shobhit99/tap", "git@github.com:shobhit99/homebrew-tap.git", trusted: true
+cask "shobhit99/tap/supercmd", trusted: true # Launcher and command palette
 cask "obsidian"     # Markdown knowledge base
-cask "cadran"       # Desktop clock rendered behind icons
+cask "notion"       # Notes and collaboration
 cask "cleanshot"                   # Screen capture
 cask "hammerspoon"  # Automation
 
@@ -210,6 +211,5 @@ cask "zoom"        # Video conferencing
 # ------------------------------------------------------------------------------
 cask "chatgpt"  # ChatGPT desktop app
 cask "claude"   # AI assistant desktop app
-cask "codexbar" # Menu bar usage monitor for AI coding tools
 cask "granola"  # AI-powered meeting notepad
 cask "stablyai/orca/orca", trusted: true # Multi-agent orchestration app
