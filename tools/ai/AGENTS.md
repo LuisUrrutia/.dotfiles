@@ -15,6 +15,19 @@ Read `~/.agents/AGENTS_LOCAL.md` (machine-local rules) when it exists.
 - Make a clear recommendation when the evidence supports one. Use "it depends"
   only for genuine tradeoffs, and name them.
 
+## Session start
+
+On the first turn, before any other tool call, read `ORCA_WORKTREE_ID` and
+`ORCA_TERMINAL_HANDLE` from the environment and open the first reply with one
+line: the session is Orca-managed and owns the checkout path encoded in
+`ORCA_WORKTREE_ID`, or it is not. This step is complete only when that line is
+written; every later rule about checkouts reads it.
+
+In an Orca-managed session read `~/.agents/references/orca-session.md` before
+the first command that touches any checkout. That reference owns the
+repository preflight and the handoff procedure; this file only says when they
+fire.
+
 ## Repository references
 
 Read a file under `~/.agents/references/` only when its rule in this section
@@ -23,12 +36,6 @@ fires; the rule names the trigger.
 - Orca: when the workspace root is named `orca` or `orca.*`, or the supplied
   task context identifies `stablyai/orca` or one of its forks, read and follow
   `~/.agents/references/orca.md` for the entire task.
-- Orca handoff gate: on the first turn, read `ORCA_WORKTREE_ID` and
-  `ORCA_TERMINAL_HANDLE` from the environment. When both are set, read and
-  follow `~/.agents/references/orca-session.md` for the entire session. This
-  reference owns the repository-registration preflight and checkout ownership.
-  Reach it before operating from a different checkout, cloning or importing a
-  repository, or selecting or creating a branch, worktree, terminal, or file.
 
 ## Language
 
@@ -64,23 +71,38 @@ fires; the rule names the trigger.
   `rg --files` for paths, and `fd` for filename searches that need file-system
   filters.
 
-## Worktrees
+## Checkout ownership and handoff
 
-In an Orca-managed session, follow the referenced `Orca handoff gate` when the
-working checkout differs from the checkout path encoded by `ORCA_WORKTREE_ID`,
-or the task needs a different checkout or a new branch or worktree. The starting
-agent follows the reference to resolve the destination, using WorkTrunk when
-needed, starts a receiving agent there, and sends it the handoff. The gate
-completes only after that agent has started in the destination and received the
-handoff. The starting agent then stops, and the receiving agent begins task
-work.
+This agent owns exactly one checkout: the path in `ORCA_WORKTREE_ID`. Every
+other absolute path is a destination, whether it already exists, is a pull
+request checkout, or is a worktree created during the task. Task work is
+implementation, verification, commits, and PR work; it happens only in the
+owned checkout, in commands whose working directory is that checkout.
 
-- When the user asks to work on a new branch, create its worktree with
-  `wt switch --create <name>`.
-- WorkTrunk (`wt`) owns every other worktree lifecycle operation; invoke the
-  `worktrunk` skill for its commands. If the project has no `.config/wt.toml`,
-  suggest creating it. Use raw `git worktree` only when the user explicitly
-  asks for it.
+A handoff moves the task to a destination. It fires when the task asks for a
+new branch, a new worktree, a different checkout, or a pull request checkout,
+and when the implementation checkout differs from the owned one. The handoff
+is the whole sequence in `orca-session.md`: preflight, destination resolved
+with WorkTrunk (`wt switch --create <name>` for a new branch, `wt switch
+<branch>` or `wt switch pr:<number>` otherwise), handoff document written, a
+receiving agent of the pane's own type started in the destination and sent the
+document. The handoff is complete only when that receiving agent has started
+there and received the document; the starting agent then reports the
+destination and stops. Creating the worktree is the middle of the handoff,
+never its end.
+
+Two checks keep ownership honest:
+
+- A command about to run with a working directory other than the owned
+  checkout is task work in the wrong place: run the handoff instead and let
+  the receiving agent run it.
+- On a handoff blocker, report it and stop; the task waits for a completed
+  handoff, and the starting agent never implements as the fallback.
+
+WorkTrunk (`wt`) owns every worktree lifecycle operation; invoke the
+`worktrunk` skill for its commands. If the project has no `.config/wt.toml`,
+suggest creating it. Use raw `git worktree` only when the user explicitly asks
+for it.
 
 ## Evidence
 
