@@ -11,6 +11,7 @@ usage() {
 Usage: prefs-diff.sh [--values] [--paths] [--include-noisy]
 
 List macOS preference domains and keys currently written on this machine.
+ByHost rows include the stored host UUID, including preferences from other Macs.
 
 Options:
   --values  Include compact value previews, with sensitive-looking keys redacted
@@ -336,13 +337,16 @@ noisy_domain_prefixes = (
 )
 
 
-def domain_from_path(path, byhost):
+def preference_identity(path, byhost):
     name = os.path.basename(path)
     if name.endswith(".plist"):
         name = name[:-6]
     if byhost:
-        name = uuid_suffix.sub("", name)
-    return name
+        suffix = uuid_suffix.search(name)
+        if suffix:
+            return f"byHost:{suffix.group()[1:]}", name[:suffix.start()]
+        return "byHost", name
+    return "user", name
 
 
 def is_noisy_domain(domain):
@@ -383,7 +387,7 @@ def preview_value(key_path, value):
 
 
 def flatten(prefix, value):
-    if isinstance(value, dict):
+    if isinstance(value, dict) and value:
         for key in sorted(value):
             key_path = f"{prefix}.{key}" if prefix else str(key)
             yield from flatten(key_path, value[key])
@@ -412,13 +416,13 @@ def make_row(scope, domain, key_path, kind, path, preview=""):
 
 def collect_rows():
     locations = [
-        ("user", os.path.join(home, "Library/Preferences/*.plist"), False),
-        ("currentHost", os.path.join(home, "Library/Preferences/ByHost/*.plist"), True),
+        (os.path.join(home, "Library/Preferences/*.plist"), False),
+        (os.path.join(home, "Library/Preferences/ByHost/*.plist"), True),
     ]
 
-    for scope, pattern, byhost in locations:
+    for pattern, byhost in locations:
         for path in sorted(glob.glob(pattern)):
-            domain = domain_from_path(path, byhost)
+            scope, domain = preference_identity(path, byhost)
             if not include_noisy and is_noisy_domain(domain):
                 continue
 

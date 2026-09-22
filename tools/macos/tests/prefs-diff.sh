@@ -23,9 +23,30 @@ cat >"$prefs_dir/com.example.readable.plist" <<'PLIST'
   <dict>
     <key>SomeKey</key>
     <string>SomeValue</string>
+    <key>EmptyDictionary</key>
+    <dict/>
+    <key>NestedDictionary</key>
+    <dict>
+      <key>Empty</key>
+      <dict/>
+    </dict>
   </dict>
 </plist>
 PLIST
+
+mkdir -p "$prefs_dir/ByHost"
+for host_suffix in 11111111-1111-1111-1111-111111111111 22222222-2222-2222-2222-222222222222; do
+  cat >"$prefs_dir/ByHost/com.example.host.$host_suffix.plist" <<PLIST
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+  <dict>
+    <key>HostSetting</key>
+    <string>$host_suffix</string>
+  </dict>
+</plist>
+PLIST
+done
 
 # A plist that cannot be parsed at all. Two of these ship with Photoshop, and
 # they used to abort the entire listing rather than being reported as one row.
@@ -59,6 +80,14 @@ for flags in "" "--values" "--paths" "--values --paths" "--include-noisy"; do
     fail "a non-dictionary plist root was dropped with flags '${flags:-<none>}'"
   [[ "$output" == *"com.example.readable"* ]] ||
     fail "a readable plist was lost with flags '${flags:-<none>}'"
+  [[ "$output" == *"EmptyDictionary"* && "$output" == *"NestedDictionary.Empty"* && "$output" == *"dict[0]"* ]] ||
+    fail "written empty dictionaries were omitted with flags '${flags:-<none>}'"
+  for host_suffix in 11111111-1111-1111-1111-111111111111 22222222-2222-2222-2222-222222222222; do
+    [[ "$output" == *"byHost:$host_suffix"* ]] ||
+      fail "a stored host UUID was omitted with flags '${flags:-<none>}'"
+  done
+  [[ "$output" != *"currentHost"* && "$output" == *"across 5 domains"* ]] ||
+    fail "preferences from different hosts were merged or labeled currentHost"
 done
 
 # The header names the columns, so it is what every row has to line up with
