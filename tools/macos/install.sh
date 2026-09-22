@@ -230,6 +230,7 @@ configure_keyboard_input() {
 
   # Disable auto-correct
   defaults write NSGlobalDomain NSAutomaticSpellingCorrectionEnabled -bool false
+  defaults write NSGlobalDomain NSAutomaticInlinePredictionEnabled -bool false
 
   # Show ASCII control characters in standard text views using caret notation
   defaults write NSGlobalDomain NSTextShowsControlCharacters -bool true
@@ -383,14 +384,21 @@ configure_dock_menu_bar() {
   # Don't show siri in menubar to save space
   defaults write com.apple.Siri StatusMenuVisible -int 0
 
-  # Don't show spotlight in menubar
-  # Using Raycast instead as a more powerful alternative
+  # SuperCMD replaces the Spotlight launcher.
   defaults -currentHost write com.apple.Spotlight MenuItemHidden -int 1
 
   # Show battery percentage in menubar
   # Write through cfprefsd instead of the ByHost plist path so the change
   # isn't overwritten from the daemon's cache
   defaults -currentHost write com.apple.controlcenter BatteryShowPercentage -bool true
+}
+
+configure_window_management() {
+  defaults write com.apple.dock mru-spaces -bool false
+  defaults write NSGlobalDomain AppleSpacesSwitchOnActivate -bool false
+  defaults write com.apple.WindowManager EnableStandardClickToShowDesktop -bool false
+  defaults write NSGlobalDomain AppleActionOnDoubleClick -string "Fill"
+  defaults write com.apple.WindowManager EnableTiledWindowMargins -bool false
 }
 
 configure_updates_security() {
@@ -474,9 +482,8 @@ configure_power_management() {
   # Wake the machine when the laptop lid is opened
   sudo_askpass pmset -a lidwake 1
 
-  # Power management settings for when plugged in (AC power)
-  # Disable machine sleep while charging for desktop replacement mode
-  sudo_askpass pmset -c sleep 0
+  # Hammerspoon overrides idle sleep only on home Wi-Fi with AC power.
+  sudo_askpass pmset -c sleep 45
   sudo_askpass pmset -c displaysleep 30
 
   # Power management settings for battery power (laptops only; -b fails on
@@ -526,6 +533,29 @@ configure_application_settings() {
   defaults write com.apple.loginwindow RetriesUntilHint -int 0
 }
 
+configure_safari_developer_tools() {
+  # Safari's sandbox can reject these writes without Full Disk Access.
+  defaults_try "Safari Develop menu" \
+    write com.apple.Safari IncludeDevelopMenu -bool true
+  defaults_try "Safari Web Inspector" \
+    write com.apple.Safari WebKitDeveloperExtrasEnabledPreferenceKey -bool true
+  defaults_try "Safari WebKit developer tools" \
+    write com.apple.Safari com.apple.Safari.ContentPageGroupIdentifier.WebKit2DeveloperExtrasEnabled -bool true
+  defaults_try "Safari full website address" \
+    write com.apple.Safari ShowFullURLInSmartSearchField -bool true
+  defaults_try "Safari automatic download opening" \
+    write com.apple.Safari AutoOpenSafeDownloads -bool false
+  defaults_try "Safari Tab navigation" \
+    write com.apple.Safari WebKitTabToLinksPreferenceKey -bool true
+  defaults_try "Safari WebKit Tab navigation" \
+    write com.apple.Safari com.apple.Safari.ContentPageGroupIdentifier.WebKit2TabsToLinks -bool true
+}
+
+configure_airplay_receiver() {
+  # The receiver occupies ports used by local development servers (5000/7000).
+  defaults -currentHost write com.apple.controlcenter AirplayReceiverEnabled -bool false
+}
+
 configure_keyboard_shortcuts() {
   ###############################################################################
   # Keyboard Shortcuts Customization                                            #
@@ -544,7 +574,7 @@ configure_keyboard_shortcuts() {
   "
 
   # Keyboard > Shortcuts > Spotlight > Show Spotlight search, disable
-  # Note: Replacing it with Raycast https://raycastapp.notion.site/Hotkey-56103210375b4fc78b63a7c5e7075fb7
+  # Reserve the shortcut for SuperCMD.
   defaults write com.apple.symbolichotkeys.plist AppleSymbolicHotKeys -dict-add 64 "
     <dict>
       <key>enabled</key><false/>
@@ -552,28 +582,42 @@ configure_keyboard_shortcuts() {
   "
 
   # Keyboard > Shortcuts > Spotlight > Show Finder search window, disable
-  # Note: Replacing it with Raycast https://raycastapp.notion.site/Hotkey-56103210375b4fc78b63a7c5e7075fb7
   defaults write com.apple.symbolichotkeys.plist AppleSymbolicHotKeys -dict-add 65 "
     <dict>
       <key>enabled</key><false/>
     </dict>
   "
 
-  # Keyboard > Shortcuts > Screenshots > Save picture of screen as file, disable
-  # Note: Replacing it with CleanShotX for better screenshot capabilities
-  defaults write com.apple.symbolichotkeys.plist AppleSymbolicHotKeys -dict-add 28 "
-    <dict>
-      <key>enabled</key><false/>
-    </dict>
-  "
+  local shortcut_id
+  # Keep Control-Space and Control-Option-Space available to developer tools.
+  for shortcut_id in 60 61; do
+    defaults write com.apple.symbolichotkeys.plist AppleSymbolicHotKeys -dict-add "$shortcut_id" '
+      <dict><key>enabled</key><false/></dict>
+    '
+  done
 
-  # Keyboard > Shortcuts > Screenshots > Save picture of selected area as file, disable
-  # Note: Replacing it with CleanShotX for better screenshot capabilities
-  defaults write com.apple.symbolichotkeys.plist AppleSymbolicHotKeys -dict-add 30 "
+  # Ghostty owns Command-backquote; move native window cycling to Hyper-backquote.
+  defaults write com.apple.symbolichotkeys.plist AppleSymbolicHotKeys -dict-add 27 '
     <dict>
-      <key>enabled</key><false/>
+      <key>enabled</key><true/>
+      <key>value</key>
+      <dict>
+        <key>type</key><string>standard</string>
+        <key>parameters</key>
+        <array><integer>96</integer><integer>50</integer><integer>1966080</integer></array>
+      </dict>
     </dict>
-  "
+  '
+
+  # All entries in KeyboardSettings' Screenshots group: file/clipboard captures,
+  # the screenshot/recording toolbar, and Touch Bar captures belong to CleanShot.
+  for shortcut_id in 28 29 30 31 184 181 182; do
+    defaults write com.apple.symbolichotkeys.plist AppleSymbolicHotKeys -dict-add "$shortcut_id" '
+      <dict>
+        <key>enabled</key><false/>
+      </dict>
+    '
+  done
 }
 
 configure_login_items() {
@@ -697,10 +741,13 @@ main() {
   run_macos_step configure_screen_lock
   run_macos_step configure_finder_files
   run_macos_step configure_dock_menu_bar
+  run_macos_step configure_window_management
   run_macos_step configure_updates_security
   run_macos_step configure_filevault
   run_macos_step configure_power_management
   run_macos_step configure_application_settings
+  run_macos_step configure_safari_developer_tools
+  run_macos_step configure_airplay_receiver
   run_macos_step configure_keyboard_shortcuts
   run_macos_step configure_login_items
   run_macos_step configure_messages_shortcuts
