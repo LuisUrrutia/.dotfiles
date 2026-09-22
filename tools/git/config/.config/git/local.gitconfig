@@ -101,8 +101,6 @@
 [transfer]
   fsckObjects = true
   credentialsInUrl = die
-[safe]
-  bareRepository = explicit
 [tag]
   sort = -version:refname
 [filter "lfs"]
