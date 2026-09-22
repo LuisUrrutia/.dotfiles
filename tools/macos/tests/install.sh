@@ -250,9 +250,7 @@ for step in $registered_steps; do
     fail "main() runs '$step', which is not defined"
 done
 
-# The recovery key must reach the key file and nothing else. This script's
-# stdout is copied into the setup log, which is world-readable, so a key
-# echoed to stdout leaves an unprotected second copy behind.
+# The recovery key must not be copied into the setup log.
 key_dir="$(mktemp -d)"
 key_file="$key_dir/FileVault Recovery Key.txt"
 # shellcheck disable=SC2329  # called indirectly, through the function under test
@@ -269,13 +267,77 @@ grep -q "TEST-KEY-DO-NOT-LOG" "$key_file" ||
 
 # A key file that cannot be opened has to fail before fdesetup encrypts the
 # disk, not after, when the key it printed is already unrecoverable
-# shellcheck disable=SC2329  # must stay uncalled; that is what is asserted
-fdesetup() { fail "fdesetup ran even though the key file could not be opened"; }
-! write_filevault_recovery_key "$key_dir/missing/key.txt" 2>/dev/null ||
-  fail "an unwritable key file was reported as a successful enablement"
+# shellcheck disable=SC2329
+fdesetup() { touch "$key_dir/fdesetup-called"; return 1; }
+existing_file="$key_dir/existing.txt"
+printf 'preserve existing data\n' >"$existing_file"
+chmod 644 "$existing_file"
+ln -s "$existing_file" "$key_dir/existing-link"
+ln -s "$key_dir/absent-target" "$key_dir/dangling-link"
+mkfifo "$key_dir/existing-pipe"
+
+for destination in "$key_dir/missing/key.txt" "$existing_file" \
+  "$key_dir/existing-link" "$key_dir/dangling-link" "$key_dir/existing-pipe"; do
+  ! write_filevault_recovery_key "$destination" 2>/dev/null ||
+    fail "an unsafe key destination was accepted: $destination"
+done
+
+[[ ! -e "$key_dir/fdesetup-called" ]] ||
+  fail "fdesetup ran before a safe key file was opened"
+[[ "$(cat "$existing_file")" == "preserve existing data" ]] ||
+  fail "an existing destination was changed"
+[[ "$(stat -f '%Sp' "$existing_file")" == "-rw-r--r--" ]] ||
+  fail "an existing destination's permissions were changed"
+[[ -L "$key_dir/existing-link" && -L "$key_dir/dangling-link" && ! -e "$key_dir/absent-target" ]] ||
+  fail "a key destination symlink was changed or followed"
+
+failed_key_file="$key_dir/failed-key.txt"
+! write_filevault_recovery_key "$failed_key_file" ||
+  fail "failed FileVault enablement was reported as successful"
+[[ -e "$key_dir/fdesetup-called" && ! -e "$failed_key_file" ]] ||
+  fail "failed FileVault enablement did not clean up its own key file"
 
 rm -rf "$key_dir"
 unset -f fdesetup sudo_askpass
+
+key_home="$(mktemp -d)"
+mkdir -p "$key_home/Desktop"
+printf 'preserve old recovery file\n' >"$key_home/Desktop/FileVault Recovery Key.txt"
+cat >"$key_home/enable.sh" <<'BASH'
+source "$DOTFILES/tools/macos/install.sh"
+fdesetup() {
+  case "$1" in
+  status) printf 'FileVault is Off.\n' ;;
+  enable) printf 'TEST-KEY-DO-NOT-LOG\n' ;;
+  esac
+}
+sudo_askpass() { "$@"; }
+configure_filevault
+configure_filevault
+BASH
+
+# Give only the fake enablement a terminal so the production interactive gate runs.
+HOME="$key_home" /usr/bin/script -q /dev/null /bin/bash "$key_home/enable.sh" \
+  </dev/null >"$key_home/output" 2>&1
+
+[[ "$(cat "$key_home/Desktop/FileVault Recovery Key.txt")" == "preserve old recovery file" ]] ||
+  fail "FileVault enablement changed the previous recovery file"
+! grep -q 'TEST-KEY-DO-NOT-LOG' "$key_home/output" ||
+  fail "FileVault enablement exposed a recovery key in its output"
+key_count=0
+for key_directory in "$key_home/Desktop"/FileVault\ Recovery\ Key.*; do
+  [[ -d "$key_directory" ]] || continue
+  [[ "$(stat -f '%Sp' "$key_directory")" == "drwx------" ]] ||
+    fail "the recovery-key directory is not private"
+  [[ "$(stat -f '%Sp' "$key_directory/recovery-key.txt")" == "-rw-------" ]] ||
+    fail "the recovery-key file is not private"
+  grep -q 'TEST-KEY-DO-NOT-LOG' "$key_directory/recovery-key.txt" ||
+    fail "the recovery-key file is missing the command output"
+  key_count=$((key_count + 1))
+done
+[[ "$key_count" -eq 2 ]] || fail "FileVault enablements did not create unique destinations"
+rm -rf "$key_home"
+
 # shellcheck disable=SC1090
 source "$ROOT_DIR/tools/macos/install.sh"
 

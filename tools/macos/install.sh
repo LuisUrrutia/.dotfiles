@@ -433,17 +433,25 @@ configure_updates_security() {
   sudo_askpass /usr/libexec/ApplicationFirewall/socketfilterfw --setblockall off --setallowsigned off --setallowsignedapp off --setstealthmode on --setglobalstate on
 }
 
-# Enables FileVault and puts the recovery key in the given file, and nowhere
-# else. fdesetup prints the key to stdout exactly once, so it used to be teed
-# to both the file and stdout; but this script's stdout is copied into the
-# setup log, which is not protected the way the umask protects the key file.
-# That left an unprotected second copy of the key that nothing ever told you
-# to delete. Opening the redirect up front also means a missing Desktop fails
-# before the disk is encrypted rather than after, when the key is already gone.
+# Open a new private file before encryption; never send the key to the setup log.
 write_filevault_recovery_key() {
   local key_file="$1"
 
-  (umask 177 && sudo_askpass fdesetup enable -user "$(whoami)" >"$key_file")
+  if [[ -e "$key_file" || -L "$key_file" ]]; then
+    echo "Error: refusing existing FileVault key destination: $key_file" >&2
+    return 1
+  fi
+
+  (
+    umask 177
+    set -C
+    exec 3>"$key_file" || exit 1
+    if sudo_askpass fdesetup enable -user "$(whoami)" >&3; then
+      exit 0
+    fi
+    rm -f "$key_file"
+    exit 1
+  )
 }
 
 configure_filevault() {
@@ -462,13 +470,17 @@ configure_filevault() {
     return 0
   fi
 
-  local key_file="$HOME/Desktop/FileVault Recovery Key.txt"
+  local key_dir
+  local key_file
+
+  key_dir="$(mktemp -d "$HOME/Desktop/FileVault Recovery Key.XXXXXX")" || return 1
+  key_file="$key_dir/recovery-key.txt"
 
   echo "Enabling FileVault; the recovery key will be written to: $key_file" >&2
   if write_filevault_recovery_key "$key_file"; then
     echo "IMPORTANT: the recovery key exists only in '$key_file'. Move it to your password manager, then delete the file." >&2
   else
-    rm -f "$key_file"
+    rmdir "$key_dir" 2>/dev/null || true
     echo "Warning: FileVault enablement failed" >&2
     return 1
   fi
