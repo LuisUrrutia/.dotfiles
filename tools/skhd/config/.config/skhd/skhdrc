@@ -3,7 +3,8 @@
 # meh = ctrl + alt + shift
 
 # Application launchers
-f13 : open -a Slack
-f15 : open -a Dia
-f16 : open -a WhatsApp
-f17 : open -a Zed
+f13 : open -a Orca
+f14 : open -a Dia
+f15 : open -a ChatGPT
+f16 : open -a Slack
+f17 : open -a WhatsApp
