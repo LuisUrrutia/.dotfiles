@@ -390,4 +390,44 @@ install_declared_packages_and_dependents
 [[ "$(<"$dependent_log")" == $'packages\ntools\ncleanup\nfirst-run' ]] ||
   fail "Homebrew cleanup ran before Tool Installers could migrate package ownership"
 
+drain_fixture="$TMP_DIR/drain-fixture"
+drain_log="$TMP_DIR/drain.log"
+: >"$drain_log"
+for fixture_tool in alpha drain omega; do
+  mkdir -p "$drain_fixture/tools/$fixture_tool"
+done
+cat >"$drain_fixture/tools/alpha/install.sh" <<'EOF'
+#!/usr/bin/env bash
+IFS= read -r line || line=""
+printf 'alpha:%s\n' "$line" >>"$DRAIN_LOG"
+EOF
+cat >"$drain_fixture/tools/drain/install.sh" <<'EOF'
+#!/usr/bin/env bash
+cat >/dev/null
+printf 'drain\n' >>"$DRAIN_LOG"
+EOF
+cat >"$drain_fixture/tools/omega/install.sh" <<'EOF'
+#!/usr/bin/env bash
+printf 'omega\n' >>"$DRAIN_LOG"
+EOF
+chmod +x "$drain_fixture"/tools/*/install.sh
+(
+  DOTFILES_INSTALL_NO_MAIN=true
+  export DOTFILES_INSTALL_NO_MAIN
+  # shellcheck disable=SC1090,SC1091
+  source "$INSTALL"
+  DOTFILES="$drain_fixture"
+  DRAIN_LOG="$drain_log"
+  HOME="$TMP_DIR/drain-home"
+  export DOTFILES DRAIN_LOG HOME
+  load_tool_library() { :; }
+  mise_github_backend_count() { printf '0\n'; }
+  github_phase_preflight() { :; }
+  run_mise_tool_installer() { :; }
+  load_mise_environment() { :; }
+  run_tool_installers <<<"bootstrapper-stdin" >/dev/null
+)
+[[ "$(<"$drain_log")" == $'alpha:\ndrain\nomega' ]] ||
+  fail "a Tool Installer that reads stdin skipped later installers or received the Bootstrapper's input: $(tr '\n' ' ' <"$drain_log")"
+
 printf 'bootstrap test: passed\n'

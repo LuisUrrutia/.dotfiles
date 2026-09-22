@@ -1459,6 +1459,7 @@ run_mise_tool_installer() {
 
 run_tool_installers() {
   local tool_name=""
+  local tool_names=()
   local mise_aqua_count=""
   local mise_github_count=""
   local tmux_git_sources=""
@@ -1478,7 +1479,13 @@ run_tool_installers() {
   run_mise_tool_installer
   load_mise_environment
 
+  # Read the whole catalog before running any installer: the loop must not
+  # depend on a stream an installer's child process could consume.
   while IFS= read -r tool_name; do
+    tool_names+=("$tool_name")
+  done < <(LC_ALL=C list_tools)
+
+  for tool_name in "${tool_names[@]}"; do
     [[ "$tool_name" == "fish" || "$tool_name" == "mise" ]] && continue
     if [[ "$tool_name" == "tmux" ]]; then
       tmux_git_sources="$(tmux_github_git_source_count)"
@@ -1493,7 +1500,7 @@ run_tool_installers() {
         "git"
     fi
     run_tool "$tool_name"
-  done < <(LC_ALL=C list_tools)
+  done
 }
 
 run_first_run_tasks() {

@@ -36,5 +36,6 @@ run_tool() {
   fi
 
   printf 'Configuring %s...\n' "$tool"
-  /bin/bash "$script"
+  # A CLI inside an installer may drain inherited stdin; never hand it the Bootstrapper's.
+  /bin/bash "$script" </dev/null
 }
