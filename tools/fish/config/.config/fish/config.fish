@@ -1,3 +1,7 @@
+# The following lines were added by Docker Desktop to add commands to your PATH.
+export PATH="$PATH:/Users/luisurrutia/.docker/bin"
+# End of Docker Desktop section.
+
 set -q LANG; or set -gx LANG en_US.UTF-8
 set -q PAGER; or set -gx PAGER less
 set -q XDG_CONFIG_HOME; or set -gx XDG_CONFIG_HOME "$HOME/.config"
