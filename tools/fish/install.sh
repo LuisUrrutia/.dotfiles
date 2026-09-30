@@ -125,8 +125,9 @@ stow_config fish
 # Add fish to shells if not already present
 grep -qxF "$bin_path" /etc/shells || printf '%s\n' "$bin_path" | sudo_askpass tee -a /etc/shells >/dev/null
 
-# Set fish as default shell
-if [[ "$SHELL" != "$bin_path" ]]; then
+# $SHELL follows the caller's environment; Directory Services holds the login shell.
+login_shell="$(dscl . -read "/Users/$(id -un)" UserShell 2>/dev/null | awk '{print $2}')"
+if [[ "$login_shell" != "$bin_path" ]]; then
   chsh -s "$bin_path"
 fi
 
@@ -136,4 +137,5 @@ if [[ ! -f "$fish_plugins_path" ]]; then
   echo "Error: missing fish_plugins manifest: $fish_plugins_path" >&2
   exit 1
 fi
-"$bin_path" --command "source \"$opt_path/share/fish/vendor_functions.d/fisher.fish\"; and fisher update"
+# Fisher reads plugin names from a non-TTY stdin until EOF; with none it syncs fish_plugins.
+"$bin_path" --command "source \"$opt_path/share/fish/vendor_functions.d/fisher.fish\"; and fisher update" </dev/null
