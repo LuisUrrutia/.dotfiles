@@ -53,6 +53,14 @@ fi
 grep -F 'positive integer' "$TMP_DIR/img2jpg.err" >/dev/null ||
   fail "img2jpg did not explain its dimension constraint"
 
+EXTRACT="$ROOT_DIR/tools/fish/config/.config/fish/completions/extract.fish"
+mkdir -p "$TMP_DIR/archives/nested"
+touch "$TMP_DIR/archives/a.tar.zst" "$TMP_DIR/archives/b.xz" "$TMP_DIR/archives/c.zst" "$TMP_DIR/archives/notes.txt"
+extract_candidates="$(EXTRACT="$EXTRACT" ARCHIVES="$TMP_DIR/archives" "$FISH" --no-config -c \
+  'source "$EXTRACT"; complete -C "extract $ARCHIVES/"' </dev/null | cut -f1 | xargs -n1 basename | tr '\n' ' ')"
+[[ "$extract_candidates" == "a.tar.zst b.xz c.zst nested notes.txt " ]] ||
+  fail "extract completion did not rank archives before other files: $extract_candidates"
+
 PATH="$TMP_DIR/bin:$PATH" CLI_ABBRS="$CLI_ABBRS" "$FISH" --no-config --interactive -c \
   'source "$CLI_ABBRS"
     abbr -q ls
