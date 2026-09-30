@@ -20,6 +20,7 @@ function fish-doctor -d "Check Fish dotfiles health"
         printf '%s\n' "Run safe checks for this Fish configuration."
         printf '\n%s\n' Checks
         printf '  %s\n' "syntax for config.fish, conf.d, functions, and completions"
+        printf '  %s\n' "dangling symlinks left by retired files"
         printf '  %s\n' "quiet noninteractive startup"
         printf '  %s\n' "expected Fish integrations and optional tools"
         printf '\n%s\n' Options
@@ -54,6 +55,24 @@ function fish-doctor -d "Check Fish dotfiles health"
             command fish -n "$file"
             set failed 1
         end
+    end
+
+    printf '\n%s\n' Links
+    set -l dangling_links
+    for directory in conf.d functions completions
+        for link in "$fish_root/$directory"/*
+            if test -L "$link"; and not test -e "$link"
+                set -a dangling_links (string replace -- "$fish_root/" '' "$link")
+            end
+        end
+    end
+
+    if test (count $dangling_links) -eq 0
+        __fish_doctor_ok "no dangling symlinks in conf.d, functions, or completions"
+    else
+        __fish_doctor_fail "dangling symlinks; run 'dotfiles tool apply fish' to remove retired links"
+        printf '  %s\n' $dangling_links
+        set failed 1
     end
 
     printf '\n%s\n' Startup
