@@ -65,6 +65,16 @@ PATH="$TMP_DIR/bin:$PATH" CLI_ABBRS="$CLI_ABBRS" "$FISH" --no-config --interacti
   'source "$CLI_ABBRS"
     abbr -q ls
     and abbr -q grep
-    and not abbr -q ll
-    and functions -q ll' </dev/null ||
+    and not abbr -q ll' </dev/null ||
   fail "interactive CLI shortcuts were not registered"
+
+LL="$ROOT_DIR/tools/fish/config/.config/fish/functions/ll.fish"
+PATH="$TMP_DIR/bin:$PATH" LL="$LL" "$FISH" --no-config -c 'source "$LL"; ll' >/dev/null 2>&1 ||
+  fail "ll did not run eza"
+
+mkdir -p "$TMP_DIR/listing"
+touch "$TMP_DIR/listing/entry"
+PATH=/usr/bin:/bin LL="$LL" LISTING="$TMP_DIR/listing" "$FISH" --no-config -c \
+  'source "$LL"; ll "$LISTING"' >"$TMP_DIR/ll.out" 2>&1 ||
+  fail "ll did not fall back to ls without eza"
+grep -F entry "$TMP_DIR/ll.out" >/dev/null || fail "ll fallback did not list the directory"
