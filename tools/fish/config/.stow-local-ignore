@@ -1,5 +1,5 @@
 ^/\.config/fish/fish_variables
-^/\.config/fish/functions/_.*
+^/\.config/fish/functions/_(fzf|autopair|puffer_fish|sponge)_.*
 ^/\.config/fish/functions/fisher\.fish
 ^/\.config/fish/functions/fzf_configure_bindings\.fish
 ^/\.config/fish/functions/sponge_filter_failed\.fish
