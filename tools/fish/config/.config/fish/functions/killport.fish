@@ -1,32 +1,17 @@
 function killport -d "Kill process listening on a TCP port"
-    set -l dry_run false
-    set -l assume_yes false
-    set -l port
+    argparse --max-args=1 -n killport n/dry-run y/yes h/help -- $argv
+    or return
 
-    for arg in $argv
-        switch $arg
-            case -n --dry-run
-                set dry_run true
-            case -y --yes
-                set assume_yes true
-            case -h --help
-                echo "Usage: killport [options] [port]"
-                echo "  -n, --dry-run    Show listening processes and the TERM that would be sent"
-                echo "  -y, --yes        Send TERM without prompting"
-                echo "  -h, --help       Show this help message"
-                echo "  no port          Select a listening TCP port with fzf"
-                return 0
-            case '-*'
-                echo "killport: unknown option '$arg'" >&2
-                return 1
-            case '*'
-                if test -n "$port"
-                    echo "killport: expected exactly one port" >&2
-                    return 1
-                end
-                set port $arg
-        end
+    if set -q _flag_help
+        echo "Usage: killport [options] [port]"
+        echo "  -n, --dry-run    Show listening processes and the TERM that would be sent"
+        echo "  -y, --yes        Send TERM without prompting"
+        echo "  -h, --help       Show this help message"
+        echo "  no port          Select a listening TCP port with fzf"
+        return 0
     end
+
+    set -l port $argv[1]
 
     if test -z "$port"
         if not type -q fzf
@@ -34,7 +19,7 @@ function killport -d "Kill process listening on a TCP port"
             return 1
         end
 
-        set -l selection (lsof -nP -iTCP -sTCP:LISTEN 2>/dev/null | awk 'NR > 1 { split($9, address, ":"); port = address[length(address)]; if (port ~ /^[0-9]+$/) printf "%s\t%-8s %-24s %8s  %s\n", port, port, $1, $2, $9 }' | sort -n -u | fzf --with-shell 'fish -c' --prompt='TCP port> ' --header='PORT     COMMAND                       PID  ADDRESS' --delimiter='\t' --with-nth=2.. --preview='set -l pids (lsof -nP -iTCP:{1} -sTCP:LISTEN -t 2>/dev/null | sort -u); if test (count $pids) -gt 0; ps -p (string join , $pids) -o pid,ppid,comm,args; else; echo "No process is listening on TCP port {1}"; end')
+        set -l selection (__fish_listening_ports | command awk -F '\t' '{ printf "%s\t%-8s %-24s %8s  %s\n", $1, $1, $2, $3, $4 }' | fzf --with-shell 'fish -c' --prompt='TCP port> ' --header='PORT     COMMAND                       PID  ADDRESS' --delimiter='\t' --with-nth=2.. --preview='set -l pids (lsof -nP -iTCP:{1} -sTCP:LISTEN -t 2>/dev/null | sort -u); if test (count $pids) -gt 0; ps -p (string join , $pids) -o pid,ppid,comm,args; else; echo "No process is listening on TCP port {1}"; end')
 
         if test -z "$selection"
             echo "Cancelled; no processes killed."
@@ -64,12 +49,12 @@ function killport -d "Kill process listening on a TCP port"
     set -l pid_list (string join , $pids)
     ps -p "$pid_list" -o pid,ppid,comm,args
 
-    if test "$dry_run" = true
+    if set -q _flag_dry_run
         echo "Dry run: would send TERM to PID(s) "(string join ' ' $pids)" listening on TCP port $port"
         return 0
     end
 
-    if test "$assume_yes" != true
+    if not set -q _flag_yes
         set -l prompt "Send TERM to PID(s) "(string join ' ' $pids)" listening on TCP port $port? [y/N] "
         read -l -P "$prompt" confirm
         switch (string lower -- "$confirm")
