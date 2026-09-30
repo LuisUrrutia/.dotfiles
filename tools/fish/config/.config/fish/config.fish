@@ -1,7 +1,3 @@
-# The following lines were added by Docker Desktop to add commands to your PATH.
-export PATH="$PATH:/Users/luisurrutia/.docker/bin"
-# End of Docker Desktop section.
-
 set -q LANG; or set -gx LANG en_US.UTF-8
 set -q PAGER; or set -gx PAGER less
 set -q XDG_CONFIG_HOME; or set -gx XDG_CONFIG_HOME "$HOME/.config"
@@ -38,6 +34,8 @@ if status is-interactive
     end
 end
 
-if test -d "$HOME/.bifrost/bin"
-    fish_add_path --append --path "$HOME/.bifrost/bin"
+for extra_bin in "$HOME/.bifrost/bin" "$HOME/.docker/bin"
+    if test -d "$extra_bin"
+        fish_add_path --append --path "$extra_bin"
+    end
 end
