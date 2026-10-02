@@ -12,13 +12,9 @@ GLOBAL_SKILLS_AGENTS=(
 )
 
 GLOBAL_SKILL_GROUPS=(
-  "https://github.com/anthropics/skills|skill-creator"
-  "https://github.com/vercel-labs/agent-skills|vercel-composition-patterns vercel-react-best-practices vercel-react-view-transitions web-design-guidelines writing-guidelines"
-  "git@github.com:cursor/plugins.git|principle-boundary-discipline principle-build-the-lever principle-encode-lessons-in-structure principle-exhaust-the-design-space principle-experience-first principle-fix-root-causes principle-foundational-thinking principle-guard-the-context-window principle-laziness-protocol principle-make-operations-idempotent principle-migrate-callers-then-delete-legacy-apis principle-minimize-reader-load principle-model-the-domain principle-never-block-on-the-human principle-outcome-oriented-execution principle-prove-it-works principle-redesign-from-first-principles principle-separate-before-serializing-shared-state principle-sequence-verifiable-units principle-subtract-before-you-add principle-type-system-discipline typescript-best-practices"
-  "git@github.com:mattpocock/skills.git|grill-with-docs triage improve-codebase-architecture setup-matt-pocock-skills to-spec to-tickets implement wayfinder prototype diagnosing-bugs research tdd domain-modeling codebase-design code-review resolving-merge-conflicts wizard grill-me handoff teach to-questionnaire wait-what grilling writing-for-agents"
-  "https://github.com/ast-grep/agent-skill.git|ast-grep"
-  "LuisUrrutia/skills|commit pr daily-meeting-update github-actions humanize"
-  "https://github.com/stablyai/orca|orca-cli orchestration computer-use orca-linear orca-emulator"
+  "git@github.com:anthropics/skills.git|frontend-design"
+  "git@github.com:vercel-labs/agent-skills.git|vercel-react-best-practices vercel-composition-patterns"
+  "git@github.com:addyosmani/agent-skills.git|performance-optimization"
 )
 
 install_global_skills() {
