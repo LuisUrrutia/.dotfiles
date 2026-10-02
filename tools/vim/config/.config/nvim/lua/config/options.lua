@@ -18,6 +18,7 @@ vim.opt.showmode = true -- message on status line to show current mode
 vim.opt.smartcase = true -- no ignore case when pattern has uppercase
 vim.opt.visualbell = true -- use visual bell instead of beeping
 vim.opt.wildmode = "list:longest" -- mode for 'wildchar' command-line expansion
+vim.opt.mouse = "" -- let the terminal handle text selection and context menus
 
 vim.api.nvim_create_autocmd("UIEnter", {
   callback = function()
