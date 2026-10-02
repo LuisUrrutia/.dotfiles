@@ -69,8 +69,49 @@ PATH="$TMP_DIR/bin:$PATH" CLI_ABBRS="$CLI_ABBRS" "$FISH" --no-config --interacti
   fail "interactive CLI shortcuts were not registered"
 
 LL="$ROOT_DIR/tools/fish/config/.config/fish/functions/ll.fish"
-PATH="$TMP_DIR/bin:$PATH" LL="$LL" "$FISH" --no-config -c 'source "$LL"; ll' >/dev/null 2>&1 ||
-  fail "ll did not run eza"
+cat >"$TMP_DIR/bin/eza" <<'SH'
+#!/usr/bin/env bash
+printf '%s\n' "$@" >"$EZA_ARGS"
+exit "${EZA_STATUS:-0}"
+SH
+
+fish_home="$TMP_DIR/home with spaces"
+fish_config="$fish_home/.config/fish"
+mkdir -p "$fish_config/conf.d" "$fish_config/functions"
+ln -s "$CLI_ABBRS" "$fish_config/conf.d/04_cli-abbrs.fish"
+
+printf '%s\n' --icons=auto --color=auto --group-directories-first \
+  --octal-permissions --git -alh --classify=auto "$fish_home" --sort=size \
+  >"$TMP_DIR/expected-eza.args"
+
+for link_state in missing linked; do
+  if [[ "$link_state" == linked ]]; then
+    ln -s "$LL" "$fish_config/functions/ll.fish"
+  fi
+
+  HOME="$fish_home" XDG_CONFIG_HOME="$fish_home/.config" PATH="$TMP_DIR/bin:/usr/bin:/bin" \
+    CLI_ABBRS="$fish_config/conf.d/04_cli-abbrs.fish" EZA_ARGS="$TMP_DIR/eza.args" \
+    "$FISH" --no-config --interactive -c \
+    'set -p fish_function_path "$__fish_config_dir/functions"
+      functions ll >/dev/null
+      source "$CLI_ABBRS"
+      ll "$HOME" --sort=size' </dev/null ||
+    fail "ll failed with a $link_state function link"
+  cmp -s "$TMP_DIR/expected-eza.args" "$TMP_DIR/eza.args" ||
+    fail "ll did not use eza with the expected options and arguments ($link_state link)"
+  rm "$TMP_DIR/eza.args"
+done
+
+set +e
+PATH="$TMP_DIR/bin:$PATH" LL="$LL" EZA_ARGS="$TMP_DIR/eza.args" EZA_STATUS=37 \
+  "$FISH" --no-config -c 'source "$LL"; ll' </dev/null
+ll_status=$?
+set -e
+[[ "$ll_status" -eq 37 ]] || fail "ll did not preserve eza's exit status"
+
+CLI_ABBRS="$CLI_ABBRS" "$FISH" --no-config -c \
+  'function ll; echo caller; end; source "$CLI_ABBRS"; test (ll) = caller' </dev/null ||
+  fail "CLI configuration replaced ll in a noninteractive shell"
 
 mkdir -p "$TMP_DIR/listing"
 touch "$TMP_DIR/listing/entry"
@@ -78,3 +119,17 @@ PATH=/usr/bin:/bin LL="$LL" LISTING="$TMP_DIR/listing" "$FISH" --no-config -c \
   'source "$LL"; ll "$LISTING"' >"$TMP_DIR/ll.out" 2>&1 ||
   fail "ll did not fall back to ls without eza"
 grep -F entry "$TMP_DIR/ll.out" >/dev/null || fail "ll fallback did not list the directory"
+
+HOME="$fish_home" XDG_CONFIG_HOME="$fish_home/.config" PATH=/usr/bin:/bin \
+  CLI_ABBRS="$fish_config/conf.d/04_cli-abbrs.fish" LISTING="$TMP_DIR/listing" \
+  "$FISH" --no-config --interactive -c \
+  'set -p fish_function_path "$__fish_config_dir/functions"; source "$CLI_ABBRS"; ll "$LISTING"' \
+  >"$TMP_DIR/ll.out" 2>&1 </dev/null || fail "interactive ll failed without eza"
+grep -F entry "$TMP_DIR/ll.out" >/dev/null || fail "interactive ll fallback did not list the directory"
+
+rm "$fish_config/functions/ll.fish"
+printf '%s\n' 'function ll; echo custom; end' >"$fish_config/functions/ll.fish"
+HOME="$fish_home" XDG_CONFIG_HOME="$fish_home/.config" CLI_ABBRS="$fish_config/conf.d/04_cli-abbrs.fish" \
+  "$FISH" --no-config --interactive -c \
+  'set -p fish_function_path "$__fish_config_dir/functions"; source "$CLI_ABBRS"; test (ll) = custom' </dev/null ||
+  fail "CLI configuration overrode an existing ll function file"
