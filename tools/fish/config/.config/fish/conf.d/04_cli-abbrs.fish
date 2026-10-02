@@ -1,5 +1,10 @@
 status is-interactive; or return
 
+# Existing installs can load this file before the ll function has been stowed.
+if not test -e "$__fish_config_dir/functions/ll.fish"
+    source (path dirname (path resolve (status filename)))/../functions/ll.fish
+end
+
 if command -q eza
     abbr -a -- ls 'eza --icons=auto --color=auto --group-directories-first --octal-permissions'
     abbr -a -- tree 'eza --icons=auto --color=auto --group-directories-first --octal-permissions --tree'
