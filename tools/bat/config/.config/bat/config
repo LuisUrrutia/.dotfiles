@@ -1,7 +1,5 @@
-# Match bat's theme to the system appearance while keeping Catppuccin colors.
---theme="auto:system"
---theme-dark="Catppuccin Mocha"
---theme-light="Catppuccin Latte"
+# Keep the terminal's Mocha palette even when macOS uses light mode.
+--theme="Catppuccin Mocha"
 
 # Keep useful context without the full grid-heavy default output.
 --style="numbers,changes,header"
