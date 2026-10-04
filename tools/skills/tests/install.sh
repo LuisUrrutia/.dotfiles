@@ -63,6 +63,7 @@ diff -u - "$FAKE_MISE_LOG" <<'EOF'
 exec -- skills add git@github.com:anthropics/skills.git --skill frontend-design --agent opencode --agent claude-code -g -y
 exec -- skills add git@github.com:vercel-labs/agent-skills.git --skill vercel-react-best-practices vercel-composition-patterns --agent opencode --agent claude-code -g -y
 exec -- skills add git@github.com:addyosmani/agent-skills.git --skill performance-optimization --agent opencode --agent claude-code -g -y
+exec -- skills add git@github.com:kitlangton/2password.git --skill 2password --agent opencode --agent claude-code -g -y
 exec -- playwright-cli install --skills --global
 exec -- playwright-cli install --skills=agents --global
 EOF
