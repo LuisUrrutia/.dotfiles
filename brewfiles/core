@@ -212,4 +212,4 @@ cask "zoom"        # Video conferencing
 cask "chatgpt"  # ChatGPT desktop app
 cask "claude"   # AI assistant desktop app
 cask "granola"  # AI-powered meeting notepad
-cask "stablyai/orca/orca", trusted: true # Multi-agent orchestration app
+cask "t3-code@nightly" # AI coding agents desktop app
