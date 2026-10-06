@@ -16,6 +16,7 @@ GLOBAL_SKILL_GROUPS=(
   "git@github.com:vercel-labs/agent-skills.git|vercel-react-best-practices vercel-composition-patterns"
   "git@github.com:addyosmani/agent-skills.git|performance-optimization"
   "git@github.com:kitlangton/2password.git|2password"
+  "git@github.com:tester-army/e2e.git|e2e"
 )
 
 install_global_skills() {
