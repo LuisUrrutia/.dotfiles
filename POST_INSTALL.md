@@ -10,6 +10,7 @@ file at the end of a run.
   - Settings > Touch ID > Enable Apple Watch.
   - 1Password > Settings > Apple Watch.
 - Complete CleanShot setup.
+- If using VoiceInk, configure its [Codex command](README.md#voiceink-with-codex).
 - Add Bluetooth permission for Hammerspoon in System Settings > Privacy &
   Security > Bluetooth.
 - Allow Ghostty under System Settings > Privacy & Security > Developer Tools.

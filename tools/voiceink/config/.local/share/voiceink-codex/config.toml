@@ -1,0 +1,21 @@
+model = "gpt-6-luna"
+model_reasoning_effort = "medium"
+service_tier = "fast"
+approval_policy = "never"
+sandbox_mode = "read-only"
+project_doc_max_bytes = 0
+web_search = "disabled"
+
+[features]
+skip_host_skill_discovery = true
+plugins = false
+apps = false
+hooks = false
+memories = false
+
+[skills]
+bundled.enabled = false
+include_instructions = false
+
+[agents]
+enabled = false

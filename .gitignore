@@ -31,3 +31,11 @@ tools/*/config/.cargo/
 tools/*/config/.rustup/
 tools/*/config/.local/share/
 tools/*/config/.local/state/
+
+# Track only the VoiceInk launcher and settings beside its runtime directory.
+!tools/voiceink/config/.local/share/
+tools/voiceink/config/.local/share/*
+!tools/voiceink/config/.local/share/voiceink-codex/
+tools/voiceink/config/.local/share/voiceink-codex/*
+!tools/voiceink/config/.local/share/voiceink-codex/run.sh
+!tools/voiceink/config/.local/share/voiceink-codex/config.toml

@@ -17,6 +17,7 @@ GLOBAL_SKILL_GROUPS=(
   "git@github.com:addyosmani/agent-skills.git|performance-optimization"
   "git@github.com:kitlangton/2password.git|2password"
   "git@github.com:tester-army/e2e.git|e2e"
+  "git@github.com:LuisUrrutia/skills.git|comment-style communicate-clearly"
 )
 
 install_global_skills() {
