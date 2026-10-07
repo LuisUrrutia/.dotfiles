@@ -435,6 +435,39 @@ with `gh extension upgrade --all` on each run. Fish keeps `upd` and
   committing them because they can contain private app state.
 - Catppuccin is used across Fish/FZF, Starship, Ghostty, bat, btop, and editor tooling.
 
+### VoiceInk with Codex
+
+The VoiceInk Tool Installer sets up a reusable Codex directory at
+`~/.local/share/voiceink-codex` when the mise-managed Codex CLI is installed.
+It prepares the command even if VoiceInk will be installed later.
+Stow links `run.sh` and `config.toml` from `tools/voiceink/config`;
+authentication links to `~/.codex/auth.json`, and the two writing skills link to
+`~/.agents/skills`. Runtime files stay in the home directory.
+
+The Skills Tool Installer installs `comment-style` and `communicate-clearly`
+from `git@github.com:LuisUrrutia/skills.git`. Sign into Codex with `codex login`
+before using the integration. To configure it after installing VoiceInk:
+
+```sh
+dotfiles tool apply skills
+dotfiles tool apply voiceink
+```
+
+Set VoiceInk's command to:
+
+```sh
+/bin/bash "$HOME/.local/share/voiceink-codex/run.sh"
+```
+
+VoiceInk supplies `VOICEINK_FULL_PROMPT`. The command reads the current skill
+instructions through the symlinks, adds them to the prompt in memory, and
+returns Codex's final response on stdout. Each dictation starts a new session
+with `--ephemeral`, reusing the directory and caches. The isolated config uses
+`gpt-6-luna` with medium reasoning and the fast service tier; it disables global
+agent instructions, the skill catalog, plugins, apps, hooks, memories, and web
+search. It does not copy credentials, skill files, or dictation results into
+the repository.
+
 ## Post-install checklist
 
 The manual steps live in [POST_INSTALL.md](POST_INSTALL.md), which the
