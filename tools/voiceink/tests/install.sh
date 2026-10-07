@@ -96,8 +96,8 @@ assert args[:-1] == [runtime, '-C', runtime, 'exec', '--skip-git-repo-check', '-
 assert args[-1].endswith(prompt)
 assert args[-1].count('<skill>') == 2
 for name in ['comment-style', 'communicate-clearly']:
-    path = Path(runtime) / 'skills' / name / 'SKILL.md'
-    assert path.read_text() in args[-1]
+    path = f'{runtime}/skills/{name}/SKILL.md'
+    assert Path(path).read_text() in args[-1]
     assert f'<path>{path}</path>' in args[-1]
 PY
 done
