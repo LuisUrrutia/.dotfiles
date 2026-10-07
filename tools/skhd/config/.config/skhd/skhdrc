@@ -3,7 +3,7 @@
 # meh = ctrl + alt + shift
 
 # Application launchers
-f13 : open -a Orca
+f13 : open -a "T3 Code (Nightly)"
 f14 : open -a Dia
 f15 : open -a ChatGPT
 f16 : open -a Slack
