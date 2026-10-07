@@ -15,28 +15,6 @@ Read `~/.agents/AGENTS_LOCAL.md` (machine-local rules) when it exists.
 - Make a clear recommendation when the evidence supports one. Use "it depends"
   only for genuine tradeoffs, and name them.
 
-## Session start
-
-On the first turn, before any other tool call, read `ORCA_WORKTREE_ID` and
-`ORCA_TERMINAL_HANDLE` from the environment and open the first reply with one
-line: the session is Orca-managed and owns the checkout path encoded in
-`ORCA_WORKTREE_ID`, or it is not. This step is complete only when that line is
-written; every later rule about checkouts reads it.
-
-In an Orca-managed session read `~/.agents/references/orca-session.md` before
-the first command that touches any checkout. That reference owns the
-repository preflight and the handoff procedure; this file only says when they
-fire.
-
-## Repository references
-
-Read a file under `~/.agents/references/` only when its rule in this section
-fires; the rule names the trigger.
-
-- Orca: when the workspace root is named `orca` or `orca.*`, or the supplied
-  task context identifies `stablyai/orca` or one of its forks, read and follow
-  `~/.agents/references/orca.md` for the entire task.
-
 ## Language
 
 - Use the user's current language for conversation. Apply ASD-STE100 clarity
@@ -71,33 +49,7 @@ fires; the rule names the trigger.
   `rg --files` for paths, and `fd` for filename searches that need file-system
   filters.
 
-## Checkout ownership and handoff
-
-This agent owns exactly one checkout: the path in `ORCA_WORKTREE_ID`. Every
-other absolute path is a destination, whether it already exists, is a pull
-request checkout, or is a worktree created during the task. Task work is
-implementation, verification, commits, and PR work; it happens only in the
-owned checkout, in commands whose working directory is that checkout.
-
-A handoff moves the task to a destination. It fires when the task asks for a
-new branch, a new worktree, a different checkout, or a pull request checkout,
-and when the implementation checkout differs from the owned one. The handoff
-is the whole sequence in `orca-session.md`: preflight, destination resolved
-with WorkTrunk (`wt switch --create <name>` for a new branch, `wt switch
-<branch>` or `wt switch pr:<number>` otherwise), handoff document written, a
-receiving agent of the pane's own type started in the destination and sent the
-document. The handoff is complete only when that receiving agent has started
-there and received the document; the starting agent then reports the
-destination and stops. Creating the worktree is the middle of the handoff,
-never its end.
-
-Two checks keep ownership honest:
-
-- A command about to run with a working directory other than the owned
-  checkout is task work in the wrong place: run the handoff instead and let
-  the receiving agent run it.
-- On a handoff blocker, report it and stop; the task waits for a completed
-  handoff, and the starting agent never implements as the fallback.
+## Worktrees
 
 WorkTrunk (`wt`) owns every worktree lifecycle operation; invoke the
 `worktrunk` skill for its commands. If the project has no `.config/wt.toml`,
@@ -118,6 +70,14 @@ for it.
   submodules. HTTPS remotes are prohibited, including as a fallback.
 - If SSH fails, diagnose and repair the SSH path; when the available access
   cannot restore it, that is a blocker.
+
+## Slack messages
+
+- When a task calls for a Slack message, create an unsent draft in Slack for
+  the user to review and publish.
+- If a Slack draft cannot be created, provide the message text in the
+  conversation so the user can publish it.
+- Never send, publish, or schedule a Slack message on the user's behalf.
 
 ## GitHub writes
 
