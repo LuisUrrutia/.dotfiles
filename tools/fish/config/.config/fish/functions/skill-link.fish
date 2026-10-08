@@ -11,6 +11,7 @@ function skill-link -d "Link a skill directory into the agent skill directories"
                 echo "Replaces the installed copy in ~/.agents/skills and ~/.claude/skills"
                 echo "with a symlink to the directory. An installed copy that differs is"
                 echo "moved to ~/.agents/skills-backups first."
+                echo "Skips files and directories without a SKILL.md."
                 return 0
             case '-*'
                 echo "skill-link: unknown option '$arg'" >&2
@@ -36,6 +37,11 @@ end
 function __skill_link_one -a source_argument -d "Link one skill directory into the agent skill directories"
 
     if not test -d "$source_argument"
+        if test -e "$source_argument"
+            echo "Skipped $source_argument: not a directory"
+            return 0
+        end
+
         echo "skill-link: not a directory: $source_argument" >&2
         return 1
     end
@@ -43,8 +49,8 @@ function __skill_link_one -a source_argument -d "Link one skill directory into t
     set -l source (path resolve "$source_argument")
 
     if not test -f "$source/SKILL.md"
-        echo "skill-link: no SKILL.md in $source" >&2
-        return 1
+        echo "Skipped $source: no SKILL.md"
+        return 0
     end
 
     set -l agent_dirs (skill_agent_dirs)
