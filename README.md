@@ -413,8 +413,9 @@ with `gh extension upgrade --all` on each run. Fish keeps `upd` and
   uses the 1Password SSH agent.
 - `skill-link [directory ...]` points `~/.agents/skills` and
   `~/.claude/skills` at skills you are developing, so edits take effect without
-  reinstalling. It accepts shell globs, defaults to the current directory,
-  requires a `SKILL.md`, and moves an installed copy that differs to
+  reinstalling. It accepts shell globs and directory lists, defaults to the
+  current directory, skips files and directories without a direct `SKILL.md`,
+  and moves an installed copy that differs to
   `~/.agents/skills-backups` before linking. `skill-unlink [directory ...]`
   removes only links to those directories and preserves installed copies,
   unrelated links, and backups.

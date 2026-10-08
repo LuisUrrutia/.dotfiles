@@ -103,9 +103,12 @@ run_skill_link "$PROJECT_DIR/skills/walkthrough" "" >/dev/null 2>&1 ||
 [[ "$(readlink "$AGENTS_SKILLS/walkthrough")" == "$PROJECT_DIR/skills/walkthrough" ]] ||
   fail "the default directory was not linked"
 
-# Arrange: a directory containing multiple skills for shell glob expansion.
+# Arrange: shell glob expansion includes skills, files, and non-skill directories.
 write_skill "$PROJECT_DIR/batch/alpha" 'alpha v1'
 write_skill "$PROJECT_DIR/batch/beta" 'beta v1'
+mkdir -p "$PROJECT_DIR/batch/docs" "$PROJECT_DIR/batch/not-a-skill/SKILL.md"
+printf 'docs\n' >"$PROJECT_DIR/batch/README.md"
+write_skill "$PROJECT_DIR/batch/container/nested-skill" 'nested v1'
 
 # Act: Fish expands the wildcard before calling skill-link.
 run_skill_link "$PROJECT_DIR/batch" "*" >"$TMP_DIR/batch.out" 2>&1 ||
@@ -119,37 +122,62 @@ for skill in alpha beta; do
     fail "$skill is not linked in .claude"
 done
 
-# Arrange: an invalid directory sorts before a valid skill in the same batch.
+for agent_dir in "$AGENTS_SKILLS" "$CLAUDE_SKILLS"; do
+  for entry in docs not-a-skill README.md container nested-skill; do
+    [[ ! -e "$agent_dir/$entry" && ! -L "$agent_dir/$entry" ]] ||
+      fail "a non-skill or nested skill was linked: $agent_dir/$entry"
+  done
+done
+
+# Arrange: an explicit list includes a non-skill and a nested path with spaces.
 mkdir -p "$PROJECT_DIR/partial/a-docs"
 printf 'docs\n' >"$PROJECT_DIR/partial/a-docs/README.md"
-write_skill "$PROJECT_DIR/partial/z-valid" 'valid v1'
+write_skill "$PROJECT_DIR/partial/nested/z valid" 'valid v1'
 
-# Act: the batch reports failure but continues after the invalid directory.
-if run_skill_link "$PROJECT_DIR/partial" "*" >"$TMP_DIR/partial.out" 2>&1; then
-  fail "a partially invalid wildcard batch succeeded"
-fi
+# Act: trailing slashes and quoted paths work while non-skills are skipped.
+run_skill_link "$PROJECT_DIR/partial" "a-docs/ 'nested/z valid/'" >"$TMP_DIR/partial.out" 2>&1 ||
+  fail "linking a mixed directory list failed: $(<"$TMP_DIR/partial.out")"
 
-# Assert: the valid skill was still linked and the invalid directory was not.
-[[ "$(readlink "$AGENTS_SKILLS/z-valid")" == "$PROJECT_DIR/partial/z-valid" ]] ||
-  fail "the valid skill after a batch error was not linked"
-[[ ! -e "$AGENTS_SKILLS/a-docs" ]] || fail "the invalid batch directory was linked"
-grep -q 'no SKILL.md' "$TMP_DIR/partial.out" ||
-  fail "the partial batch failure was not explained"
+# Assert: both agents receive only the valid skill.
+for agent_dir in "$AGENTS_SKILLS" "$CLAUDE_SKILLS"; do
+  [[ "$(readlink "$agent_dir/z valid")" == "$PROJECT_DIR/partial/nested/z valid" ]] ||
+    fail "the valid skill in a mixed directory list was not linked"
+  [[ ! -e "$agent_dir/a-docs" && ! -L "$agent_dir/a-docs" ]] ||
+    fail "the non-skill directory in a list was linked"
+done
+grep -q '^Skipped .*: no SKILL.md' "$TMP_DIR/partial.out" ||
+  fail "the skipped directory was not explained"
 
-# Assert: a directory without a SKILL.md is refused.
+# Assert: a directory without a SKILL.md is a successful no-op.
 mkdir -p "$PROJECT_DIR/skills/docs"
 printf 'docs\n' >"$PROJECT_DIR/skills/docs/README.md"
-if run_skill_link "$TMP_DIR" "$PROJECT_DIR/skills/docs" >"$TMP_DIR/nodoc.out" 2>&1; then
-  fail "a directory without SKILL.md was accepted"
-fi
-grep -q 'no SKILL.md' "$TMP_DIR/nodoc.out" || fail "the SKILL.md refusal is not explained"
-[[ ! -e "$AGENTS_SKILLS/docs" ]] || fail "a directory without SKILL.md was linked"
+run_skill_link "$TMP_DIR" "$PROJECT_DIR/skills/docs" >"$TMP_DIR/nodoc.out" 2>&1 ||
+  fail "skipping a directory without SKILL.md failed"
+grep -q '^Skipped .*: no SKILL.md' "$TMP_DIR/nodoc.out" || fail "the skip is not explained"
+for agent_dir in "$AGENTS_SKILLS" "$CLAUDE_SKILLS"; do
+  [[ ! -e "$agent_dir/docs" && ! -L "$agent_dir/docs" ]] ||
+    fail "a directory without SKILL.md was linked"
+done
 
 # Assert: a missing directory is refused.
 if run_skill_link "$TMP_DIR" "$PROJECT_DIR/skills/nowhere" >/dev/null 2>&1; then
   fail "a missing directory was accepted"
 fi
 [[ ! -e "$AGENTS_SKILLS/nowhere" ]] || fail "a missing directory created a link"
+
+# Arrange: a missing path precedes a valid skill.
+write_skill "$PROJECT_DIR/skills/after-error" 'after-error v1'
+
+# Act: real errors still fail the batch while later skills are processed.
+if run_skill_link "$PROJECT_DIR/skills" "nowhere after-error/" >"$TMP_DIR/error.out" 2>&1; then
+  fail "a batch containing a missing path succeeded"
+fi
+
+for agent_dir in "$AGENTS_SKILLS" "$CLAUDE_SKILLS"; do
+  [[ "$(readlink "$agent_dir/after-error")" == "$PROJECT_DIR/skills/after-error" ]] ||
+    fail "the valid skill after a missing path was not linked"
+done
+grep -q 'not a directory' "$TMP_DIR/error.out" || fail "the missing path is not explained"
 
 # Assert: an installed skill directory cannot be linked onto itself.
 write_skill "$AGENTS_SKILLS/installed-only" 'installed only'
