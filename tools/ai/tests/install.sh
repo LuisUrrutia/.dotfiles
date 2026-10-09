@@ -31,9 +31,8 @@ HOME="$common_home" \
 [[ -L "$common_home/.agents/references" ]] || fail "agent references were not linked"
 [[ "$(readlink "$common_home/.agents/references")" == "$ROOT_DIR/tools/ai/references" ]] ||
   fail "agent references point to the wrong source"
-[[ -f "$common_home/.agents/references/orca.md" ]] || fail "Orca reference is unavailable"
-[[ -f "$common_home/.agents/references/orca-session.md" ]] ||
-  fail "Orca session reference is unavailable"
+[[ -f "$common_home/.agents/references/counterexample.md" ]] ||
+  fail "counterexample reference is unavailable"
 [[ -L "$common_home/.codex/AGENTS.md" ]] || fail "Codex instructions were not linked"
 [[ "$(readlink "$common_home/.codex/AGENTS.md")" == "$common_home/.agents/AGENTS.md" ]] ||
   fail "Codex instructions do not point to the common destination"
@@ -45,9 +44,8 @@ fixture_home="$TMP_DIR/registered-home"
 mkdir -p "$fixture_root/tools/ai/references" "$fixture_root/machines" "$fixture_home"
 cp "$AI_INSTALL" "$fixture_root/tools/ai/install.sh"
 cp "$ROOT_DIR/tools/ai/AGENTS.md" "$fixture_root/tools/ai/AGENTS.md"
-cp "$ROOT_DIR/tools/ai/references/orca.md" "$fixture_root/tools/ai/references/orca.md"
-cp "$ROOT_DIR/tools/ai/references/orca-session.md" \
-  "$fixture_root/tools/ai/references/orca-session.md"
+cp "$ROOT_DIR/tools/ai/references/counterexample.md" \
+  "$fixture_root/tools/ai/references/counterexample.md"
 cp "$ROOT_DIR/tools/lib.sh" "$fixture_root/tools/lib.sh"
 printf '%s\n' 'MACHINE_ID="fixture"' >"$fixture_root/machines/registered.sh"
 printf '%s\n' '# Registered machine instructions' >"$fixture_root/machines/registered.agents.md"

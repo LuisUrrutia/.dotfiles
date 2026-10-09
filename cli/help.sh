@@ -10,7 +10,7 @@ Commands:
   verify        Run the Verification Suite
   config        Inspect or resolve Stowed Config drift
   update        Update installed software and plugins
-  backup        Back up Raycast or Thaw configuration
+  backup        Back up Thaw configuration
   help          Show contextual help
 
 Run 'dotfiles help <command>' for details.
@@ -138,16 +138,16 @@ EOF
 
 backup_help() {
   cat <<'EOF'
-Usage: dotfiles backup <all|raycast|thaw>
+Usage: dotfiles backup <all|thaw>
 
-Back up one application configuration or run both owners concurrently.
+Back up Thaw configuration. The all target runs all supported backups.
 EOF
 }
 
 backup_target_help() {
   local target="$1"
   case "$target" in
-  all | raycast | thaw) printf 'Usage: dotfiles backup %s\n' "$target" ;;
+  all | thaw) printf 'Usage: dotfiles backup %s\n' "$target" ;;
   *) backup_help ;;
   esac
 }
@@ -203,7 +203,7 @@ run_help() {
     shift
     if [[ "$#" -eq 0 ]]; then
       backup_help
-    elif [[ "$#" -eq 1 && ("$1" == all || "$1" == raycast || "$1" == thaw) ]]; then
+    elif [[ "$#" -eq 1 && ("$1" == all || "$1" == thaw) ]]; then
       backup_target_help "$1"
     else
       printf 'dotfiles: unknown help path: %s\n' "$*" >&2

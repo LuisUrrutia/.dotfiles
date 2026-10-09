@@ -9,12 +9,13 @@ export GIT_TERMINAL_PROMPT=0
 
 installed_extensions="$("$bin_path" extension list | awk '{print $3}')"
 
-for extension in github/gh-stack drogers0/gh-image; do
-  if printf '%s\n' "$installed_extensions" | grep -Fxq "$extension"; then
-    printf 'GitHub CLI extension already installed: %s\n' "$extension"
-    continue
-  fi
+if printf '%s\n' "$installed_extensions" | grep -Fxq drogers0/gh-image; then
+  "$bin_path" extension remove gh-image
+fi
 
-  printf 'Installing GitHub CLI extension: %s\n' "$extension"
-  "$bin_path" extension install "$extension"
-done
+if printf '%s\n' "$installed_extensions" | grep -Fxq github/gh-stack; then
+  printf 'GitHub CLI extension already installed: github/gh-stack\n'
+else
+  printf 'Installing GitHub CLI extension: github/gh-stack\n'
+  "$bin_path" extension install github/gh-stack
+fi

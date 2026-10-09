@@ -1,4 +1,4 @@
-# Orca Counterexample Pass
+# Counterexample Pass
 
 For every behavioral change, work in two passes:
 

@@ -41,4 +41,4 @@ check-jsonschema --schemafile verification/schemas/cc-rulebook.schema.json \
   tools/cc-safety-net/config/.cc-safety-net/rules/user-rules/rulebook.json
 
 editorconfig-checker -exclude \
-  '(^|/)(tools/git/tests/migrate-config\.sh$|tools/raycast/backups/|tools/thaw/Thaw\.plist$)'
+  '(^|/)(tools/git/tests/migrate-config\.sh$|tools/thaw/Thaw\.plist$)'

@@ -38,7 +38,7 @@ run_backup() {
   fi
   for argument in "$@"; do
     if [[ "$argument" == -h || "$argument" == --help ]]; then
-      if [[ "$target" == all || "$target" == raycast || "$target" == thaw ]]; then
+      if [[ "$target" == all || "$target" == thaw ]]; then
         backup_target_help "$target"
       elif [[ "$target" == -h || "$target" == --help ]]; then
         backup_help
@@ -57,7 +57,7 @@ run_backup() {
     return 2
   }
   case "$target" in
-  all | raycast | thaw) exec /bin/bash "$DOTFILES/maintenance/backup.sh" "$target" ;;
+  all | thaw) exec /bin/bash "$DOTFILES/maintenance/backup.sh" "$target" ;;
   *)
     printf 'dotfiles backup: unknown target: %s\n' "$target" >&2
     backup_help >&2

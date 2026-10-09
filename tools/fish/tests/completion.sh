@@ -47,8 +47,9 @@ update_candidates="$(complete_for 'dotfiles update --')"
 [[ "$update_candidates" == *'--ignore-schedule'* ]] || fail "Update syntax is absent"
 
 backup_candidates="$(complete_for 'dotfiles backup ')"
-[[ "$backup_candidates" == *$'all'* && "$backup_candidates" == *$'raycast'* && "$backup_candidates" == *$'thaw'* ]] ||
+[[ "$backup_candidates" == *$'all'* && "$backup_candidates" == *$'thaw'* ]] ||
   fail "Backup targets are absent"
+[[ "$backup_candidates" != *raycast* ]] || fail "retired Backup target was completed"
 
 tmp_dir="$(mktemp -d)"
 trap 'rm -rf "$tmp_dir"' EXIT

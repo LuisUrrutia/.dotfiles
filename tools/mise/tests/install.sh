@@ -115,7 +115,7 @@ brew uninstall --formula tpack
 EOF
 cmp -s "$expected_sequence" "$TMP_DIR/success/calls.log" ||
   fail "mise install and legacy migration ran in the wrong order"
-! grep -E 'brew (list|uninstall) --cask (claude|codexbar)$' \
+! grep -E 'brew (list|uninstall) --cask claude$' \
   "$TMP_DIR/success/calls.log" >/dev/null ||
   fail "desktop app casks were included in the CLI migration"
 

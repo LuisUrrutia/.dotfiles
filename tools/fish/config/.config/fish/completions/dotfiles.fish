@@ -111,7 +111,7 @@ complete -c dotfiles -s h -l help -d "Show help"
 complete -c dotfiles -f -n __dotfiles_needs_help_command -a 'install tool verify config update backup'
 complete -c dotfiles -f -n '__dotfiles_needs_help_child tool' -a 'list apply'
 complete -c dotfiles -f -n '__dotfiles_needs_help_child config' -a 'status diff repair capture discard resolve'
-complete -c dotfiles -f -n '__dotfiles_needs_help_child backup' -a 'all raycast thaw'
+complete -c dotfiles -f -n '__dotfiles_needs_help_child backup' -a 'all thaw'
 
 # Install.
 complete -c dotfiles -n '__dotfiles_seen_subcommand install' -s n -l dry-run -d "Preview without changing the system"
@@ -139,4 +139,4 @@ complete -c dotfiles -n '__dotfiles_seen_subcommand resolve' -l agent -r -a 'cla
 
 # Phase 3.
 complete -c dotfiles -n '__dotfiles_seen_subcommand update' -l ignore-schedule -d "Bypass daily and weekly gates"
-complete -c dotfiles -f -n __dotfiles_needs_backup_target -a 'all raycast thaw'
+complete -c dotfiles -f -n __dotfiles_needs_backup_target -a 'all thaw'

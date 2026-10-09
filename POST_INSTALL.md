@@ -19,7 +19,9 @@ file at the end of a run.
   when prompted, then open a page and select it under Safari > Develop > device.
 - Run `remindctl authorize` to grant Reminders access.
 - Profile-specific steps:
-  - `dev`: finish Docker Desktop setup.
+  - `dev`: open OrbStack and finish its setup. If Docker Desktop data remains,
+    migrate containers, images, and volumes with `orb docker migrate --all`
+    before removing the old data.
   - `audio`: configure SoundSource and Loopback licenses.
   - `productivity`: configure BusyCal.
   - `streaming`: configure OBS.

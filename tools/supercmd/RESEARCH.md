@@ -41,29 +41,3 @@ describes a lifetime license with a one-time payment.
 https://supercmd.sh/en
 https://api.github.com/repos/shobhit99/homebrew-tap/contents/Casks/supercmd.rb
 https://github.com/SuperCmdLabs/SuperCmd-v2-releases/blob/main/appcast.xml
-
-## Repository verification
-
-All commands below completed with exit status 0. Homebrew Bundle's cask list
-includes `supercmd` and excludes `raycast`, `codexbar`, and `cadran`.
-No live app was installed or uninstalled during verification.
-
-```bash
-/bin/bash brewfiles/check.sh
-/bin/bash brewfiles/tests/cleanup.sh
-HOMEBREW_NO_AUTO_UPDATE=1 /opt/homebrew/bin/brew bundle list --file brewfiles/core --cask
-/bin/bash -n tools/macos/install.sh
-/opt/homebrew/bin/shellcheck tools/macos/install.sh
-/bin/bash tools/macos/tests/install.sh
-/bin/bash tools/bin/tests/dotfiles.sh
-/bin/bash tools/raycast/tests/backup.sh
-/bin/bash maintenance/tests/backup.sh
-/bin/bash install.sh --dry-run
-/bin/bash install.sh --dry-run --core-only
-/bin/bash install.sh --dry-run --all-profiles
-/bin/bash install.sh --dry-run --profile web3,streaming,audio
-/bin/bash install.sh --dry-run --profile blockchain,obs,focusrite
-DOTFILES_HARDWARE_HASH_OVERRIDE=55930b1d4d8e /bin/bash install.sh --dry-run
-/opt/homebrew/bin/editorconfig-checker brewfiles/core README.md POST_INSTALL.md tools/macos/install.sh tools/raycast/README.md tools/supercmd/RESEARCH.md
-git diff --check
-```

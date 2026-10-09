@@ -355,7 +355,7 @@ List them with `dotfiles config backups list`. Pruning is a dry run unless
   NordVPN, Tailscale, VeraCrypt
 - AI tools: Claude, Claude Code, Codex, Ollama, OpenCode config, Claude agent
   profiles
-- Optional tool groups: Docker Desktop, Yaak, Android platform tools, AWS,
+- Optional tool groups: OrbStack, Yaak, Android platform tools, AWS,
   Google Cloud, web3 tools, audio/streaming apps
 
 This list is intentionally grouped. The exact package lists live in
@@ -389,9 +389,8 @@ dotfiles verify
 dotfiles update
 dotfiles update --ignore-schedule
 
-# Back up one app or both concurrently
+# Back up application configuration
 dotfiles backup thaw
-dotfiles backup raycast
 dotfiles backup all
 ```
 
@@ -429,11 +428,12 @@ with `gh extension upgrade --all` on each run. Fish keeps `upd` and
   isolated server before installing plugins.
 - Hammerspoon disconnects Bluetooth devices on lid close and reconnects them on
   lid open. It also handles caffeinate-at-home logic and hotkeys.
-- Raycast exports are tracked as `.rayconfig` backups with `raycast-config`
-  helpers for status, listing, backup, restore, and scriptable latest-path lookup.
 - Thaw preferences back up with `dotfiles backup thaw`; `dotfiles backup all`
-  runs the Thaw and Raycast owners concurrently. Review app backups before
+  runs all supported backups, currently Thaw. Review app backups before
   committing them because they can contain private app state.
+- OrbStack owns the Docker engine and CLI in the `dev` profile. Its Tool
+  Installer removes only broken Docker Desktop plugin links, preserving working
+  links, custom plugins, and container data.
 - Catppuccin is used across Fish/FZF, Starship, Ghostty, bat, btop, and editor tooling.
 
 ### VoiceInk with Codex
