@@ -81,6 +81,10 @@ hardware-bound preferences can be restored.
 `mise -C ~ bootstrap --dry-run` previews the effective native resources; it may
 need network metadata. Neither command proves successful package installation.
 
+On macOS, the login-shell hook uses existing sudo authorization to register the
+declared shell and change the current account without a second password prompt.
+It reads native mise's declaration and leaves the final status check to mise.
+
 AutoFirma uses its interactive vendor installer because its cask cannot run
 unattended. `setup:autofirma` downloads the pinned archive, checks its SHA-256 and
 package signature, then prints the command to open it. Complete the installer
