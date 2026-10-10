@@ -87,7 +87,7 @@ truncate_to_repo = true
 [git_branch]
 format = "[$symbol$branch]($style) "
 style = "bold mauve"
-symbol = " "
+symbol = ""
 
 [git_commit]
 style = "bold green"
