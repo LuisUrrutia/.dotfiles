@@ -44,71 +44,139 @@ granting permissions, uninstalling Homebrew, or modifying live Macs.
 
 ## Proposed structure and ownership
 
-The public repository distributes a reviewed baseline; private mise history owns
-the enrolled user's effective setup. Preserve current tool paths where useful,
-but change their runtime owner. Proposed locations are not present yet:
+Design the repository as a native mise configuration tree. The user explicitly
+rejected preserving Stow's directory layout. Group files by the capability that
+owns them, keeping a module's package declarations, deployment rules, sources,
+templates, and necessary scripts together. This is the proposed destination, not
+the current filesystem:
 
 ```text
-Public repository
-  mise.toml                         enrollment entrypoint
-  tools/<tool>/config/              public seeds and reviewed shared defaults
-  tools/mise/config/.config/mise/   baseline global setup/modules/history
-  machines/<hardware-hash>.sh       public records during compatibility
-  bootstrap/                       first-use/enrollment/migration safeguards
-  config/                          safe status/diff/capture/discard adapter
-  maintenance/                     explicit software maintenance
-  verification/                    shared offline verification
-
-Enrolled home (private history owns shared contents)
-  ~/.config/mise/config.toml        effective tools and bootstrap declarations
-  ~/.config/mise/config.<profile>.toml native optional profiles
-  ~/.config/mise/conf.d/            native fragments when needed
-  ~/.local/share/dotfiles/setup/    config sources, templates, and setup tasks
-  managed live configuration       tracked regular files or per-file links
-
-Local enrollment state (not exchanged)
-  ~/.config/mise/miserc.local.toml  environment selection
-  ~/.config/mise/config.local.toml origin/mode and local overrides
-  machine identity and generated outputs with explicit local/variant policy
+.dotfiles/
+  install.sh                      official mise and first-use prerequisites
+  mise.toml                       repo verification and enrollment adapter
+  config.toml                     shared mise policy and setup defaults
+  conf.d/
+    fish/
+      mise.toml                   packages, login shell, files, plugin task
+      config.fish
+      fish_plugins
+      conf.d/                     Fish startup snippets
+      functions/
+      completions/
+    git/
+      mise.toml
+      defaults.gitconfig
+      ignore
+      identity.gitconfig.tera
+      scope.gitconfig.tera
+    starship/
+      mise.toml
+      starship.toml
+    zed/
+      mise.toml
+      settings.jsonc
+      keymap.jsonc
+    macos/
+      mise.toml                   defaults and native LaunchAgents
+      system-settings.sh          only behavior outside native declarations
+    orbstack/
+      mise.dev.toml               active only with the dev environment
+    cloud/
+      mise.cloud.toml             cloud tools, active only with cloud
+    cli/
+      mise.toml                   common CLIs without their own module
+    apps/
+      mise.toml                   common apps without managed config
+  tasks/                          shared native operational commands
+    sync
+    update
+    config
+  bootstrap/                      first-use and existing-install migration
+  machines/                       public enrollment records
+  tests/                          verification code, fixtures, and schemas
+  plans/
 ```
 
-Use native modules and dotfile groups for different purposes: a module selects
-packages/config/services together; a group deploys a source tree. Preserve core,
-all, and selected profiles, their aliases, per-package/language choices, and
-interrupted-selection recovery. Establish one selection authority and translate
-it to native environments; do not maintain Brewfiles and TOML as competing lists.
+Other capabilities and profiles follow the same pattern; the tree is illustrative,
+not a reduction of the inventory. Keep a source beside its manifest when the
+module is small. Add a `templates/` or `scripts/` subdirectory only when the module
+needs that grouping. Preserve real application structure, such as Fish's
+`functions/` or Neovim's `lua/`; remove synthetic HOME paths and generic wrappers.
 
-Keep `dotfiles` as the stable public entrypoint while its implementations become
-small mise adapters. Native commands remain available, with their lower-level
-overwrite semantics documented. Seed missing effective files at first enrollment;
-restore existing private setup through adoption on subsequent Macs. Run ongoing
-setup from a neutral directory with effective global config, so the public
-project cannot override synchronized declarations. Test same-run tool resolution
-before retiring `load_mise_environment` or its equivalent.
+`conf.d/fish/mise.toml` maps source files explicitly, for example:
+
+```toml
+[dotfiles]
+"~/.config/fish/config.fish" = "config.fish"
+"~/.config/fish/functions" = { source = "functions", mode = "symlink-each" }
+```
+
+A relative source resolves beside its manifest. This example needs neither
+`config/.config/fish` nor a copy of `mise.toml` in the live Fish directory.
+Use similar entries for Fish snippets, completions, and the plugin manifest.
+Native groups remain useful for a homogeneous source tree; they are not the unit
+of module selection and need not mirror HOME.
+
+Use `mise.toml` in a module for common setup and `mise.<profile>.toml` for optional
+setup. Selecting `dev` in the local environment list loads matching fragments,
+such as `conf.d/orbstack/mise.dev.toml`. No extra module index or copied package
+list is required. Keep all optional-only files/services/packages in the optional
+fragment. Use a root `config.<profile>.toml` only for a real setup-wide override.
+Preserve core/all/subsets, aliases, individual choices, and selection recovery;
+translate those choices to native configuration through one enrollment owner.
+
+The active shared payload has the same relative layout under `~/.config/mise`:
+
+```text
+~/.config/mise/
+  config.toml
+  conf.d/                         manifests and source files together
+  tasks/                          shared operational tasks
+  miserc.local.toml               this machine's environment selection
+  config.local.toml               local origin, mode, and identity inputs
+```
+
+Private history owns shared contents of this active tree and explicitly tracked
+live app files. Local files, credentials, generated machine outputs, locks, logs,
+and history storage retain their separate policies. There is no second active
+source tree at `~/.local/share/dotfiles/setup/`. Native mise state remains in its
+state directory; runtime state is not stored inside source modules.
+
+The public checkout stays separate. First enrollment copies only the native
+payload into missing regular active files, without `.git`, repository `mise.toml`,
+bootstrap tooling, or tests. Later Macs restore the private setup via adoption.
+Do not clone the public Git repository into the active directory as an enrollment
+shortcut: private setup adoption checks a pre-existing checkout's origin. Public
+updates are explicit diff/merge imports; public publication is reviewed promotion.
+An older seed must never replace newer active contents. M0 proves this protocol.
+
+Use native mise commands and tasks as the operational route. Keep `dotfiles` as
+a thin compatibility command over that route, preserving its public behavior;
+retire the old `cli/`, `config/`, and `maintenance/` implementation layers as their
+contracts move. The root repository `mise.toml` does not duplicate machine
+resources. Run active bootstrap from a neutral directory and prove same-run tool
+resolution before retiring current environment-loading helpers.
 
 | Path category | Runtime owner | How changes travel |
 | --- | --- | --- |
-| Effective tool/package/modules/tasks | Global mise setup and history-owned sources | Private history, then profile-specific bootstrap |
-| Shared Fish/editor/Starship and other managed sources | History-owned source tree or regular live file | Private history; linked source contents explicitly tracked |
-| Templates and owned-key merge sources | History-owned source tree | Private history, then render/merge locally |
-| Generated machine Git includes | Templates plus local machine inputs | Shared input changes travel; outputs stay machine-scoped |
+| Module manifests and supporting sources | Active `~/.config/mise/conf.d/` | Private history, then profile-specific bootstrap |
+| Shared operational tasks | Active `~/.config/mise/tasks/` | Private history, then serialized execution |
+| Generated machine Git includes | Module templates plus local machine inputs | Shared input changes travel; outputs stay machine-scoped |
 | App-written managed regular files | Live file plus private history | Save/sync/pull; no recurring seed overwrite |
 | Public baseline and tests | This Git repository | Explicit reviewed import/promotion |
 | Local-only preferences and enrollment | Local files/history | Never exchanged by default |
 | Credentials and sessions | Existing secret/app owner | Excluded, or explicitly encrypted eligible file |
 
-Do not track the whole public checkout. Tracking a symlink records the link, not
-its target contents. Track portable source contents separately and retain normal
-live directories for runtime data. Do not render all machines' Git identities
-into one shared output. Later public imports must diff/merge with effective setup;
-an old public seed must never overwrite newer private changes.
+Do not track the public checkout. Tracking a symlink records its link, not the
+source content; explicitly track the shared native payload. Keep real live
+directories so applications cannot write runtime data into the module tree.
 
-The supported software-add path records the tool/package/plugin and its scope
-before installing it. Shared declarations reach all machines; profile declarations
-apply only to selected profiles. Explicit machine-only additions remain local.
-Preserve version policies and hardware eligibility, not installed binary copies.
-Unmanaged installation is reported for enrollment, not silently discovered and
-published. These contracts also apply when an agent changes the setup.
+The supported software-add path records the tool/package/plugin in its owning
+module before installation. Shared declarations reach all machines; optional
+fragments apply only to selected profiles. Explicit machine-only additions remain
+local. Preserve version policies and hardware eligibility, not installed binary
+copies. Report unmanaged installations for enrollment. These contracts also apply
+when an agent changes the setup.
 
 ## Delivery order
 
@@ -126,7 +194,7 @@ script/config sizes, not measured diffs; re-estimate after M0 and before executi
 | M2 | Native profile and machine enrollment | M1 | 300-700; draft |
 | M3 | Formula/tool ownership without brew | M0 package gate, M2 | 300-700 per bounded batch; draft |
 | M4 | Cask/App Store/vendor app ownership | M0 cask gate, M2 | 300-700 per artifact class; blocked on transfer proof |
-| M5 | Safe config groups replacing Stow | M1, M2 | 350-750; draft, then small tool batches |
+| M5 | Native modules and safe file ownership replacing Stow | M1, M2 | 350-750; draft, then small tool batches |
 | M6 | Machine Git templates and scoped identities | M5 | 300-650; draft |
 | M7 | Fish login shell, activation, plugins | M3 Fish/Fisher, M5 | 250-600; draft |
 | M8a | User defaults and appearance LaunchAgent | M5; selected apps for Dock | 300-650; draft |
@@ -155,9 +223,10 @@ Never use the operator's live app directory or history origin for a probe.
   Installed mise is 2026.10.1; current documentation includes newer behavior.
   `mise vars --json`, for example, was unavailable in the installed build.
 - Prove D3's first-use regular global-config enrollment, later private adoption,
-  global module/profile precedence, all-group selection, history visibility,
+  folder-local module/profile precedence, deployment selection, history visibility,
   same-run runtime availability, and single hook execution. Public seed reruns
-  must preserve private edits. Verify paths across different home/account names;
+  must preserve private edits. Keep the public checkout separate and prove the
+  allowlisted payload excludes repository tooling. Verify different home paths;
   relative group roots and relative entry sources resolve differently.
 - Prove D10's serial save/sync/pull/bootstrap protocol with two clients, an
   autosaving watcher, local mode overrides, and no second incoming writer. Test
@@ -200,11 +269,11 @@ Keep an existing newer compatible binary; preserve rollback material for an
 actual replacement. Explicitly establish PATH for the current run and future
 stock-shell sessions. Use only SSH for cloning the dotfiles repository.
 
-Seed regular effective global mise config and required sources, or restore the
-existing private setup, without overwriting unknown configuration; then invoke
-the effective setup. Preserve resumability and do not write the install marker
-when a required phase fails. Distinguish a first
-`--from --dry-run` that only reports cloning from a full configuration preview.
+Seed the native global files (`config.toml`, `conf.d/`, and `tasks/`), or restore
+the existing private setup, without overwriting unknown config. Then invoke the
+effective setup. Preserve resumability and do not write the install marker when
+a required phase fails. Distinguish a first `--from --dry-run` that only reports
+cloning from a full configuration preview.
 
 Acceptance: no-mise/no-brew environment, failed download/checksum, missing CLT,
 missing FDA, unavailable sudo, existing config conflict, dirty checkout, rerun
@@ -268,15 +337,27 @@ failure/retry, dependency preservation, running self-updating app, and reported
 owner. Validate application launch and selected GUI permissions on an actual
 logged-in Mac. Preserve unrelated manually installed software throughout.
 
-## M5: Replace Stow with safe groups
+## M5: Native modules and safe file deployment
 
-Declare one group per eligible history-owned config tree using `symlink-each`,
-portable links, explicit membership, and translated exclusions. Use the public
-Git manifest to check seed parity, not as a runtime index for regular private
-source files. Git membership alone misses intentional Stow exclusions. Track
-source contents explicitly; exclude Stow control files themselves. Do not include
-ignored legacy Git identity, generated Fish files, OpenCode state, or VoiceInk
-authentication/runtime data.
+Move each capability into `conf.d/<capability>` and keep its native declarations,
+config sources, templates, and necessary tasks together. Remove Stow's synthetic
+`config/.config/<tool>` and `config/Library/...` path prefixes. Explicit target
+entries preserve the actual destination. Do not copy whole legacy Tool Installers
+into new module folders as the default migration.
+
+Use source-relative `[dotfiles]` entries for individual files and `symlink-each`
+for real application subtrees. Use groups only where a source tree naturally
+shares deployment policy. Exclude manifests, setup scripts, and templates from
+recursive app deployment. Compare the new target map with the old Stow result;
+source-path identity is not a parity requirement. A Git manifest can check public
+seed membership but is not a runtime index for regular active sources.
+
+Track active source contents explicitly. Translate meaningful Stow exclusions,
+then retire the Stow control files. Keep ignored legacy Git identity, generated
+Fish files, OpenCode state, and VoiceInk authentication/runtime data excluded.
+Migrate `$DOTFILES` references, canonical agent instruction source links, task
+paths, and source-relative includes to the active tree rather than leaving hidden
+dependencies on the public checkout.
 
 Reuse `config/run.sh`'s public inspection and explicit capture/discard semantics.
 Before applying, check the complete selected target set, ancestor symlinks,
@@ -340,17 +421,19 @@ logs. Native preference rollback does not undo these system operations.
 bat caches, Ghostty validation, Neovim/Lazy/Mason, TPack, GH extensions, Skills,
 Rust components, completions, OrbStack migration, associations, Thaw, and VoiceInk.
 Call tool-scoped tasks explicitly; never run an old full installer after mise has
-taken over its same resources. Use task dependencies and `mise exec`/resolved
-paths instead of interactive shell initialization. Test launchd environments
-separately from shell PATH. Keep command wrappers from `tools/bin` functional.
+taken over its same resources. Keep module tasks beside their sources and shared
+operational tasks in native `tasks/`. Use task dependencies and `mise exec` or
+resolved paths instead of interactive shell initialization. Test launchd
+environments separately from shell PATH. Keep existing command wrappers working.
 
 ## M10: Complete setup history and private enrollment
 
 Create an allowlisted global history policy covering effective configuration,
-all managed shared sources, package/tool declarations, plugin manifests, templates,
-and required setup code. Keep public checkout files outside history's write
-ownership. Track regular live files or source contents behind links; seed only
-when absent. Versioned public import/promotion uses explicit diff/merge.
+the native `config.toml`, `conf.d/`, and `tasks/` payload, including package/tool
+declarations, plugin manifests, templates, and required setup code. Keep public
+checkout files outside history's write ownership. Track regular live files or
+source contents behind links; seed only when absent. Versioned public import and
+promotion use explicit diff/merge.
 
 Keep origin, mode, local profile selection, auth references, and application
 stamps local. Use machine variants for suitable nonsecret hardware-specific state,
@@ -370,7 +453,7 @@ without secrets in LaunchAgent environment or incidental authentication changes.
 Enrollment needs the actual private origin and key references.
 
 Acceptance: two isolated clients and a temporary Git origin demonstrate changes
-in both directions, source/config restoration together, simultaneous edits,
+in both directions, module manifest/source restoration together, simultaneous edits,
 unsaved changes, interrupted pull/recover, undo, and preserved local selection.
 Verify local autosave alone neither exchanges nor installs. Local-path transport
 is only a test fixture; real-origin acceptance uses SSH. Repeat bootstrap and
@@ -421,8 +504,8 @@ installation on a disposable Mac; fake executables cannot establish that result.
 
 ## M11-M12: Daily operations and verification
 
-M11 changes `maintenance/update.sh` to the new owners: official mise self-update,
-versioned tool upgrades, native package upgrades, App Store and existing plugin
+M11 ports `maintenance/update.sh` behavior into native operational tasks: official
+mise self-update, versioned tools, native packages, App Store, and existing plugin
 maintenance. Preserve scheduling gates, independent error reporting, successful
 mutation stamps, and `--ignore-schedule`. Do not run global prune, repository
 pull, or history pull as an incidental software update. Preserve or explicitly
@@ -430,9 +513,11 @@ redirect the existing `dotfiles` and Fish commands. Add the declared-software
 workflow and explicit full-setup sync command; share the application lock with
 M10b. Keep Thaw backup behavior.
 
-M12 provisions verification through mise on `macos-26`, ports the Brewfile and
-Stow groups to declaration/ownership and temporary-HOME deployment checks, and
-removes formats verification's `brew --prefix ruby` dependency. Keep CI and local
+M12 consolidates verification code, fixtures, and schemas under `tests/`, exposed
+through the repository mise tasks and existing compatibility command. Provision
+the toolchain through mise on `macos-26`, port Brewfile/Stow groups to native
+declaration/ownership and temporary-HOME deployment checks, and remove formats
+verification's `brew --prefix ruby` dependency. Keep CI and local
 verification on the same command. Use the GitHub Actions skill when changing CI.
 Enforce no duplicate package/file owner and no undocumented required-resource
 skip. Reuse existing test suites as behavior evidence, replacing only assertions

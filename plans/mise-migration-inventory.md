@@ -146,54 +146,56 @@ a second runtime manifest.
 ## Tool Installer disposition
 
 All 39 top-level Tool Installers are covered below. The exact implementation
-must be read again at pickup; a stow-only installer can be removed after its
-group has equivalent eligibility and safe conflict handling.
+must be read again at pickup. The source paths below describe the old layout,
+not the destination. Move cohesive behavior to `conf.d/<capability>`; remove a
+stow-only installer after native entries preserve eligibility and safe conflicts.
 
 | Tool | Planned owner or preserved behavior |
 | --- | --- |
 | `ai` | Mise links plus preservation guard for common/local agent instructions; retain override warning. |
-| `bat` | Config group plus cache-build task. |
-| `bin` | Config group for public commands; audit brew-dependent wrappers. |
-| `btop` | Config group; preserve dependency eligibility. |
-| `cc-safety-net` | Config group, excluding mutable rule locks and runtime state. |
-| `claude` | Config group/structured owned-key edits; preserve instruction import and app-owned state. |
+| `bat` | Native module entries plus cache-build task. |
+| `bin` | Native module entries for public commands; audit brew-dependent wrappers. |
+| `btop` | Native module entries; preserve dependency eligibility. |
+| `cc-safety-net` | Native module entries, excluding mutable rule locks and runtime state. |
+| `claude` | Native module entries/structured owned-key edits; preserve instruction import and app-owned state. |
 | `codex` | Structured TOML merge for managed settings; preserve unrelated configuration. |
-| `cspell` | Config group; preserve dictionary paths. |
-| `curl` | Config group and native/keg-only command resolution. |
+| `cspell` | Native module entries; preserve dictionary paths. |
+| `curl` | Native module entries and native/keg-only command resolution. |
 | `dockutil` | Preserve relative Dock edits unless native complete layout is proved equivalent. |
-| `fastfetch` | Config group. |
-| `fish` | Config group, native login shell, one activation owner, Fisher setup and migration. |
+| `fastfetch` | Native module entries. |
+| `fish` | Native module entries, native login shell, one activation owner, Fisher setup and migration. |
 | `gh` | Idempotent extension setup task; maintenance owns extension updates. |
-| `gh-dash` | Config group; existing mise CLI owner. |
-| `ghostty` | Config group plus config validation. |
-| `git` | Shared config group, identity templates, guarded migration, repo hook setup. |
-| `hammerspoon` | Config group; preserve blueutil dependency and existing automation behavior. |
+| `gh-dash` | Native module entries; existing mise CLI owner. |
+| `ghostty` | Native module entries plus config validation. |
+| `git` | Native Git module entries, identity templates, guarded migration, repo hook setup. |
+| `hammerspoon` | Native module entries; preserve blueutil dependency and existing automation behavior. |
 | `iina` | File-association task. |
 | `linearmouse` | Choose explicit source or mutable-history ownership; preserve app eligibility. |
 | `luarocks` | Preserve checks and native/runtime compatibility without brew execution. |
 | `macos` | Native user defaults/LaunchAgent plus narrow system tasks. |
 | `mise` | Official first-use bootstrap and global configuration enrollment; retire brew owner. |
-| `node` | Config group, npm policy, generated completions; preserve current runtime owner. |
-| `opencode` | Config group with runtime exclusions; mutable settings need explicit live-file ownership. |
+| `node` | Native module entries, npm policy, generated completions; preserve current runtime owner. |
+| `opencode` | Native module entries with runtime exclusions; mutable settings need explicit live-file ownership. |
 | `orbstack` | Retain safe Docker plugin-link migration; OrbStack remains engine/CLI owner. |
-| `python` | Config group and completion task; separate maintenance from installation. |
-| `ripgrep` | Config group. |
+| `python` | Native module entries and completion task; separate maintenance from installation. |
+| `ripgrep` | Native module entries. |
 | `rustup` | Preserve toolchain, target, and component setup under one declared owner. |
-| `skhd` | Config group and verified service handoff; Accessibility remains a GUI prerequisite. |
-| `skills` | Config group plus explicit global-skill installation task; keep SSH origins. |
-| `ssh` | Config group and directory permissions; preserve OrbStack include ordering and agent rules. |
-| `starship` | Config group. |
+| `skhd` | Native module entries and verified service handoff; Accessibility remains a GUI prerequisite. |
+| `skills` | Native module entries plus explicit global-skill installation task; keep SSH origins. |
+| `ssh` | Native module entries and directory permissions; preserve OrbStack include ordering and agent rules. |
+| `starship` | Native module entries. |
 | `thaw` | Preserve preference import/export, app restart behavior, and backup command. |
-| `tlrc` | Config group; maintenance retains reference-data updates. |
-| `tmux` | Config group, isolated validation, TPack setup and SSH transport wrappers. |
-| `vim` | Config group, Lazy restore, Treesitter/LSP setup, legacy migration; Mason scope remains. |
+| `tlrc` | Native module entries; maintenance retains reference-data updates. |
+| `tmux` | Native module entries, isolated validation, TPack setup and SSH transport wrappers. |
+| `vim` | Native module entries, Lazy restore, Treesitter/LSP setup, legacy migration; Mason scope remains. |
 | `voiceink` | Managed launcher/settings and safe local auth/skill links; never sync credentials/runtime. |
-| `wget` | Config group. |
-| `zed` | Config group or format-aware ownership; preserve file associations and JSONC compatibility. |
+| `wget` | Native module entries. |
+| `zed` | Native module entries or format-aware ownership; preserve file associations and JSONC compatibility. |
 
 ## Config trees and exclusions
 
-All 30 existing trees must be included in the Stow-to-mise parity check:
+All 30 existing trees must be included in the Stow-to-mise target parity check.
+Their source paths are flattened into native modules, not preserved:
 
 `bat`, `bin`, `btop`, `cc-safety-net`, `claude`, `cspell`, `curl`, `fastfetch`,
 `fish`, `gh-dash`, `ghostty`, `git`, `hammerspoon`, `linearmouse`, `macos`,
@@ -212,6 +214,32 @@ Also account for targets created outside Stow: agent instruction links, machine
 Git configuration, Codex settings, VoiceInk auth/skill links, generated
 completions,
 skills, plugin repositories, app associations, and service registration.
+
+### Native destination mapping
+
+These examples establish source layout, not a second package manifest. Apply the
+same ownership rule to the rest of the inventory. Existing live target paths stay
+explicit in each module's declaration.
+
+| Current source | Proposed source |
+| --- | --- |
+| `tools/fish/config/.config/fish/config.fish` | `conf.d/fish/config.fish` |
+| `tools/fish/config/.config/fish/functions/` | `conf.d/fish/functions/` |
+| `tools/git/config/.config/git/local.gitconfig` | `conf.d/git/defaults.gitconfig` |
+| `tools/starship/config/.config/starship.toml` | `conf.d/starship/starship.toml` |
+| `tools/zed/config/.config/zed/` | `conf.d/zed/` with only its managed source files |
+| `tools/vim/config/.config/nvim/` | `conf.d/nvim/` with its real Lua/config subtrees |
+| `tools/macos/install.sh` | Native declarations in `conf.d/macos/mise.toml` plus necessary module scripts |
+| `tools/mise/config/.config/mise/config.toml` | Root policy in `config.toml`; tool ownership in the corresponding modules |
+| `brewfiles/core` | Common declarations in owning modules; config-free tools/apps in `cli`/`apps` |
+| `brewfiles/profiles/cloud` | Optional `conf.d/cloud/mise.cloud.toml` declarations |
+| `maintenance/`, `config/`, `cli/` behavior | Native operational `tasks/` and thin compatibility routing |
+| `verification/` and component test trees | `tests/` with preserved behavioral coverage |
+
+Enroll the native root payload into `~/.config/mise` with the same relative paths.
+Do not retain a separate active source mirror or deploy module manifests and
+scripts into application config directories. Public `machines/` records remain
+tracked; local enrollment files remain outside the shared payload.
 
 ## Highest-risk package cases
 
@@ -232,9 +260,10 @@ PATH.
 
 These are investigation priorities, not findings that those packages fail.
 
-## Cross-cutting consumers
+## Cross-cutting consumers to migrate
 
-Inspect and migrate these consumers with their owning units:
+Inspect and migrate these current consumers with their owning units. Their names
+are source pointers, not instructions to retain the existing structure:
 
 - `install.sh`, `bootstrap/`, `private-install.sh`, `dotfiles`, and `cli/`.
 - `tools/lib.sh`, `tools/catalog.sh`, and each listed Tool Installer.
@@ -288,11 +317,30 @@ durable test artifact. M0 must turn the relevant observations into maintained
 fixtures against the selected mise version. Only these conclusions, their
 conditions, and their limits are retained here.
 
+A later module-layout probe used regular global files and no public-checkout
+symlinks. It ran `python3 /tmp/dotfiles-mise-research/module-layout-probe.py` with
+isolated HOME/XDG/config/data/state/cache, offline mode, disabled history, synthetic
+sources, and stdin closed. On mise 2026.10.1, all operations exited 0:
+
+- `mise config`: discovered `conf.d/fish/mise.toml` beside the global base.
+- `mise env --json`: loaded base/Fish markers, then the dev marker only after
+  `miserc.local.toml` selected `dev` and `conf.d/editor/mise.dev.toml` became active.
+- `mise dot apply --yes`: linked direct config files and each file in two
+  application subdirectories from module-relative sources; destinations stayed
+  real directories and did not receive the module manifest.
+- `mise run layout-probe`: discovered and ran a global task from `tasks/`.
+
+This proves the native folder structure on that build, not full adoption, package
+installation, synchronization, or task-path behavior in every module. The probe
+is a disposable design check; M0 must preserve its relevant cases as maintained
+fixtures. No live configuration or installed software changed.
+
 The user subsequently confirmed full setup synchronization, including software
 installation. D9/D10 and M10/M10b now include package declarations, setup sources,
 and automatic application; the earlier composition probes do not establish that
-protocol. This revision adds planning contracts only. Its behavioral acceptance
-remains M0/M10b work.
+protocol. The subsequent user correction replaced the Stow-shaped source layout
+with native colocated modules. These revisions add planning contracts and the
+bounded structural probe above; full behavioral acceptance remains M0/M10b work.
 
 ## Planning-artifact validation
 

@@ -35,7 +35,7 @@ route is verified; they do not silently remove a tool from scope.
 | --- | --- | --- | --- | --- |
 | D1 | What must replace Homebrew? | Resolved by user | None | User |
 | D2 | Where does shared history live, and who applies it? | Resolved direction | D9 | User; implementation for enrollment |
-| D3 | How do native configuration modules fit the current repository? | Proposed design with an early proof gate | D1, D2 | Implementation |
+| D3 | What structure follows mise rather than Stow? | Revised proposal; native module probe passed | D1, D2 | User direction; implementation design |
 | D4 | Which mechanism owns each configuration file? | Resolved policy | D2, D3 | Implementation |
 | D5 | How do machine roles select Git identities? | Resolved model; enrollment inputs outstanding | D3, D4 | User supplies account/path data |
 | D6 | What belongs in declarative macOS setup? | Resolved boundary | D1, D3 | Implementation |
@@ -113,51 +113,86 @@ https://mise.jdx.dev/dotfiles/sync.html
 https://mise.jdx.dev/dotfiles/history.html
 https://mise.jdx.dev/bootstrap/from-repository.html
 
-## D3: Native global setup with history-owned sources
+## D3: A native mise tree with cohesive modules
 
-**Proposed direction:** retain the public `tools/<tool>/config` organization as
-seeds. Enroll regular mutable native configuration under `~/.config/mise`, with
-`config.toml`, `config.<profile>.toml`, and `conf.d` as needed. This effective
-global configuration owns tools, provisioning, and history. Local machine
-selection lives in `miserc.local.toml`; local overrides are never shared blindly.
+**Authority:** the user rejected retaining Stow-shaped paths and requested a new
+structure designed around mise. Preserve capabilities and public machine records,
+not the old `tools/<tool>/config/.config/<tool>` layout.
 
-Place required source trees, templates, and setup tasks in a home-relative,
-history-owned workspace such as `~/.local/share/dotfiles/setup/`. Track their
-contents explicitly, keeping deployment paths portable between account names.
-Do not point effective setup back into the public checkout. Preserve current
-relative tool paths where practical, and migrate consumers of `$DOTFILES` and
-canonical instruction links explicitly.
+**Proposed direction:** the public root contains `config.toml`, `conf.d/`, and
+`tasks/`, matching mise's global configuration layout. Each `conf.d/<capability>/`
+keeps its declarations, config sources, templates, and necessary scripts together.
+For example, `conf.d/fish/mise.toml` sits beside `config.fish`, `fish_plugins`,
+`conf.d/`, `functions/`, and `completions/`. The inner `conf.d` is Fish's real
+configuration structure. No synthetic HOME tree or extra `config/` wrapper is
+needed. A one-file module can keep its source beside its manifest too.
 
-The public root bootstrap becomes an enrollment entrypoint. A Bash 3.2 starter
-installs official mise, prepares access, and seeds missing effective files or
-adopts the existing private setup. Subsequent bootstrap runs use the effective
-global configuration from a neutral working directory; the public checkout must
-not override synchronized declarations. `--from` is for public distribution;
-`--adopt` is for restoring the separate private setup/history.
+A module's `mise.toml` holds all its common packages, managed paths, native host
+settings/services, and task definitions. Use `mise.<profile>.toml` in that same
+module for optional declarations. Selecting `dev` loads matching module fragments;
+it does not require a separate hand-maintained module index. Keep optional-only
+resources out of the always-loaded file. Native `config.<profile>.toml` remains
+available for a real setup-wide override, not a duplicate package list.
 
-This supersedes the initial root-project/global split: leaving provisioning only
-in the public project would prevent the software changes requested in D9 from
-traveling through native history. Avoid duplicate runtime lists or a custom
-module interpreter. Local enrollment state stays outside the shared payload.
+The public distribution also needs `install.sh` and a small `bootstrap/` for
+first-use/migration, `machines/` for public enrollment records, `tests/` for
+verification, and the existing planning/docs. Root `mise.toml` owns repository
+verification and the enrollment adapter, not a second machine package/config
+manifest. Ordinary setup behavior belongs in native declarations or module tasks;
+shared operational commands belong in native `tasks/`. Keep `dotfiles` only as a
+thin compatibility command over that route, not another implementation tree.
 
-**Proof gate:** test first enrollment, later private adoption, native global module
-selection, watcher visibility, source path portability, and single hook execution.
-The earlier 2026.10.1 probe proved global/local environment and `conf.d` loading,
-but used symlinked global config. It did not prove this regular-file layout or a
-complete first-use bootstrap; those require M0 fixtures.
+Enroll `config.toml`, `conf.d/`, `tasks/`, and any actual global environment files
+as regular files under `~/.config/mise`, preserving their relative structure.
+This single active tree owns both mise configuration and its supporting sources.
+There is no separate `~/.local/share/dotfiles/setup/` source mirror. Track its shared
+contents in private history; `miserc.local.toml`, `config.local.toml`, credentials,
+and runtime state remain local or use their explicit history policy.
 
-Evidence: `tools/mise/install.sh`, `tools/lib.sh`, `bootstrap/profiles.sh`;
+Keep the public checkout separate. Initial public enrollment seeds only the
+allowlisted native payload, without copying `.git`, tests, or repository tooling.
+Do not adopt the public checkout into the active directory and then attach a
+different private history origin: native setup adoption checks existing checkout
+origins. Later machines can adopt the private setup directly. Public imports and
+promotion still use D2's explicit diff/merge. Normal bootstrap runs from a neutral
+working directory so repository tooling cannot override the active configuration.
+
+**Alternatives:** retaining Stow's layout reduces moves but preserves artificial
+path nesting and separates each tool's behavior across old installer layers.
+A flat `dotfiles/` tree plus a large central manifest shortens paths but separates
+sources from packages, templates, and services that change together. Native
+`conf.d` folders give that cohesion without a custom module loader.
+
+This supersedes the previous proposal to retain public tool paths and maintain a
+separate active source workspace. The previous root-project/global split was
+already superseded by D9's full setup sync requirement.
+
+**Evidence and proof limits:** an isolated 2026.10.1 probe loaded a common module,
+selected a folder-local `mise.dev.toml` through `miserc.local.toml`, applied
+relative sources with per-file links into real directories, omitted the module
+manifest from deployment, and ran a global file task. No live paths or packages
+changed. M0 must still prove complete enrollment/adoption, history coverage,
+package/service behavior, and the selected release's full bootstrap ordering.
+
+Evidence: the inventory's module-layout probe;
 https://mise.jdx.dev/bootstrap/modules.html
 https://mise.jdx.dev/bootstrap/from-repository.html
+https://mise.jdx.dev/dotfiles/managed.html
 
 ## D4: Explicit file ownership and preservation
 
-Use per-tool `symlink-each` groups backed by history-owned sources, with explicit
-file membership and translated Stow exclusions. A Git manifest can verify public
-seed membership; it cannot enumerate a regular source workspace without a Git
-index. Track source contents as well as any managed links. Prefer regular live
-directories so runtime data stays outside the source tree. Use whole-directory
-symlinks only when the entire directory is intentionally source-owned.
+Use module-local `[dotfiles]` entries with explicit destinations and sources
+relative to the declaring manifest. Link individual files and use `symlink-each`
+for application-owned subdirectories such as Fish functions. Module manifests,
+tasks, templates, and tests must not leak into live app config through a recursive
+link of the entire module. Use native groups when an actual source tree shares a
+target/mode; do not recreate a HOME-shaped tree just to give every tool a group.
+
+Use explicit source membership and translated Stow exclusions. A Git manifest can
+verify public seed membership; it cannot enumerate the regular active tree
+without a Git index. Track source contents as well as relevant managed links.
+Prefer regular live directories so runtime data stays outside source files. Use
+whole-directory links only when the complete directory is intentionally managed.
 
 Use templates for generated machine values; structured merge edits for owned
 keys in app-written TOML/JSON/YAML; blocks or lines for compatible startup files;
