@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 [[ "$(uname -s)" == Darwin ]] || exit 0
-sudo -n -v
+sudo -n /usr/bin/true
 
 mkdir -p "$HOME/Pictures/Screenshots"
 defaults write com.apple.screencapture location -string "$HOME/Pictures/Screenshots"

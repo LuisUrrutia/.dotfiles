@@ -48,7 +48,7 @@ fi
 if [[ -t 0 ]]; then
   /usr/bin/sudo -v
 else
-  /usr/bin/sudo -n -v
+  /usr/bin/sudo -n /usr/bin/true
 fi
 if command -v brew >/dev/null 2>&1 || [[ -x /opt/homebrew/bin/brew || -x /usr/local/bin/brew ]]; then
   echo 'This is a fresh-install setup. Use it after reinstalling macOS; it does not convert a Homebrew installation.' >&2
