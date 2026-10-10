@@ -51,9 +51,3 @@ _.path = ["{{ env.HOME }}/.local/bin", "/opt/homebrew/bin", "/opt/homebrew/sbin"
 
 [bootstrap.brew]
 adopt = true
-
-[bootstrap.brew.taps]
-"steipete/tap" = "git@github.com:steipete/homebrew-tap.git"
-"shobhit99/tap" = "git@github.com:shobhit99/homebrew-tap.git"
-"hashicorp/tap" = "git@github.com:hashicorp/homebrew-tap.git"
-"asmvik/formulae" = "git@github.com:asmvik/homebrew-formulae.git"

@@ -81,6 +81,10 @@ hardware-bound preferences can be restored.
 `mise -C ~ bootstrap --dry-run` previews the effective native resources; it may
 need network metadata. Neither command proves successful package installation.
 
+Third-party taps use mise's default GitHub metadata resolution. This downloads
+recipe definitions over HTTPS without cloning a Git repository. Actual Git
+operations, including setup history and plugins, use SSH.
+
 ## Select individual optional apps
 
 Edit `~/.config/mise/miserc.local.toml`, for example:
