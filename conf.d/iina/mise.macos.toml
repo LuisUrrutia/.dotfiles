@@ -3,4 +3,4 @@
 "brew-cask:iina" = { os = "macos" }
 
 [tasks."setup:iina"]
-run = 'bash "{{ config_root }}/setup.sh"'
+run = 'xcrun swift "{{ config_root }}/../macos/file-associations.swift" com.colliderli.iina mp4 m4v mov qt mkv avi webm mpeg mpg wmv flv ogv ogm m2ts vob 3gp 3g2 rmvb mxf'

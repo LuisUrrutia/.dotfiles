@@ -85,6 +85,10 @@ On macOS, the login-shell hook uses existing sudo authorization to register the
 declared shell and change the current account without a second password prompt.
 It reads native mise's declaration and leaves the final status check to mise.
 
+Zed and IINA file associations use macOS's current application API. Confirm the
+system dialogs when requested. A missing confirmation fails after 60 seconds;
+rerun setup after accepting it. Already selected handlers are left unchanged.
+
 AutoFirma uses its interactive vendor installer because its cask cannot run
 unattended. `setup:autofirma` downloads the pinned archive, checks its SHA-256 and
 package signature, then prints the command to open it. Complete the installer

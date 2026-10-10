@@ -3,4 +3,4 @@
 "brew-cask:zed" = { os = "macos" }
 
 [tasks."setup:zed"]
-run = 'bash "{{ config_root }}/setup.sh"'
+run = 'xcrun swift "{{ config_root }}/../macos/file-associations.swift" dev.zed.Zed json yaml toml sh'

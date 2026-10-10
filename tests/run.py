@@ -29,6 +29,8 @@ def main():
     for path in files:
         if path.suffix == '.py':
             compile(path.read_text(), str(path), 'exec')
+        elif path.suffix == '.swift':
+            run('xcrun', 'swiftc', '-typecheck', path)
         elif path.suffix == '.toml':
             tomllib.loads(path.read_text())
             toml.append(path)
