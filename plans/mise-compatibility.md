@@ -83,7 +83,7 @@ available verification tools. It does not provision the operator's machine.
 CI provisions its tools with mise on a disposable `macos-26` runner after moving
 aside the runner's preinstalled Homebrew prefix. No hosted workflow was dispatched.
 
-Final execution on 2026-10-10: `/bin/bash
+Earlier execution on 2026-10-10: `/bin/bash
 .tmp/mise-implementation/verify-entrypoint.sh` invoked `mise run verify` and exited
 with status **0** for implementation `d6f939c`. All four integration tests passed
 in **192.017 seconds**; typechecking, parser/static, smoke, secret-scan and diff
@@ -178,11 +178,12 @@ The real run exposed these corrections:
   removing its Fish shell registration, native user bootstrap passed twice,
   leaving Fish selected and exactly one `/etc/shells` entry.
 - `duti` returned error -50 for TOML and returned success for other extensions
-  before macOS consent completed. Zed and IINA now use `NSWorkspace` and verify
-  the resulting handler. In the VM, `mise -C ~ run setup:zed` changed TOML from
+  before macOS consent completed. The first correction used `NSWorkspace` and
+  verified the resulting handler. In the VM, `mise -C ~ run setup:zed` changed TOML from
   Cursor to Zed, passed again without a dialog, and all four handlers read back
   as Zed. Rejecting a separate change returned 1. IINA's missing-app check also
   returned 1; its media associations remain untested until its download works.
+  The later silent implementation below replaces the prompting setter.
 
 Other observed results:
 
@@ -264,6 +265,60 @@ https://tart.run/quick-start/ and https://tart.run/faq/#nested-virtualization-su
 Local VM files, access wrappers and command logs are retained under the ignored
 `.tmp/macos-acceptance/` directory. They are not part of a fresh checkout.
 The VM was stopped after evidence collection, preserving its disk for another run.
+
+## Silent file associations
+
+The `NSWorkspace` setter can require asynchronous user consent. The user's
+stacked dialogs showed why this is unsuitable for unattended setup. API contract:
+https://developer.apple.com/documentation/appkit/nsworkspace/setdefaultapplication(at:toopen:completion:)
+
+The helper now merges the requested entries into `LSHandlers` through
+CFPreferences, preserving unrelated handlers and preference keys. Dynamic types
+such as TOML use a filename-extension entry. A per-user lock serializes concurrent
+module tasks. Setup reloads only that user's `lsd`, then checks the effective
+handler through `NSWorkspace` in a fresh process. Already correct handlers do not
+cause a write or reload. Missing apps, invalid stored data and failed verification
+return nonzero; no prompting API or UI automation is used as a fallback.
+
+This preference format is undocumented. Direct preference edits alone did not
+change the active handler in the experiment. Both a full restart and reloading the
+user's daemon made the requested defaults effective on macOS 27.0. Future macOS
+versions require acceptance again; failure leaves setup pending with a sign-out
+and retry instruction. Upstream's template approach also describes why modifying
+preferences while LaunchServices is running is unreliable:
+https://github.com/scriptingosx/LSTemplatePkg
+
+Tests used `dotfiles-associations-023be87`, a disposable copy of the earlier VM
+snapshot, with Zed 1.23.2 installed through native mise. The original acceptance
+VM's firewall was left unchanged. Gatekeeper remained enabled in the test copy.
+All evidence below is local under `.tmp/macos-acceptance/evidence/`:
+
+| Operation | Observed result | Evidence |
+| --- | --- | --- |
+| Seed preferences without reloading | YAML and shell scripts still opened with TextEdit | `association-silent-seed.log` |
+| Restart after the seed | Requested handlers read back as Zed | `association-silent-after-restart.log` |
+| Change to TextEdit, then Zed, reloading only user `lsd` | Both changes took effect without consent dialogs | `association-silent-lsd-restart.log`, `association-silent-lsd-zed.log` |
+| `mise -C ~ run setup:zed` from four TextEdit associations | Exit 0; independent file-URL lookup selected Zed for JSON, YAML, TOML and shell scripts | `association-silent-acceptance.log` |
+| Repeat `setup:zed` | Exit 0; preferences and daemon PID unchanged | `association-silent-acceptance.log` |
+| Unrelated PNG/HTTPS handlers and preference marker | Preserved through application and concurrent updates | `association-silent-acceptance.log` |
+| Mismatched `--check` and `setup:iina` without IINA | Both exit 1; no preference writes or daemon reload | `association-silent-acceptance.log` |
+| Two simultaneous updates to disjoint types | Both exit 0; all four requested associations retained | `association-silent-acceptance.log` |
+| Reboot after applying the final helper | `--check` exits 0; independent file-URL lookup still selects Zed for all four extensions; Gatekeeper enabled | `association-silent-persistence.log` |
+
+The VM console showed no association dialogs after these tests. IINA's actual
+media associations remain unverified because its application was unavailable.
+The test copy was stopped after evidence collection.
+The probe scripts and VM disks are ignored local evidence, not repository tests;
+the maintained suite still has four integration areas and typechecks the helper.
+
+Repository verification on 2026-10-10 used `/bin/bash
+.tmp/mise-implementation/verify-entrypoint.sh`, which invokes `mise run verify`
+with isolated mise directories. It exited **0**: all four integration tests passed
+in **167.800 seconds**, along with Swift typechecking, parser/static checks, the
+shell smoke path, secret scanning and diff checks. Evidence:
+`.tmp/macos-acceptance/evidence/repository-verify-silent-associations.log`.
+The helper used for both repository and VM checks has SHA-256
+`f31b6e12a8f9f39b2965ba6034407dc8dc743d6703df45f629b9de188c056fbb`.
 
 ## Outstanding acceptance
 

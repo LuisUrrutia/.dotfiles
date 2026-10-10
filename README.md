@@ -89,9 +89,14 @@ Run the system-settings phase from the local console. Its firewall policy
 disables automatic permission for signed applications; incoming services such
 as SSH can require an explicit firewall decision before reconnecting.
 
-Zed and IINA file associations use macOS's current application API. Confirm the
-system dialogs when requested. A missing confirmation fails after 60 seconds;
-rerun setup after accepting it. Already selected handlers are left unchanged.
+Zed and IINA file associations are applied without confirmation dialogs. Setup
+merges only the requested handlers into LaunchServices preferences, reloads the
+current user's association service, and verifies the effective defaults in a
+fresh process. Unrelated associations stay intact; an unchanged rerun does not
+write preferences or reload the service. This uses an undocumented macOS storage
+format, tested on macOS 27.0. If verification fails, setup stays pending and asks
+you to sign out and back in before retrying; it never opens confirmation dialogs
+as a fallback. See [the VM evidence](plans/mise-compatibility.md#silent-file-associations).
 
 AutoFirma uses its interactive vendor installer because its cask cannot run
 unattended. `setup:autofirma` downloads the pinned archive, checks its SHA-256 and
