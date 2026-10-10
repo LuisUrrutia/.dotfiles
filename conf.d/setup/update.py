@@ -38,7 +38,7 @@ def main():
                 print(f"{name}: failed; continuing independent maintenance", file=sys.stderr)
 
         step("mise", [[MISE, "self-update", "--yes", "--minimum-release-age", "3d"], [MISE, "upgrade", "--yes"]])
-        step("packages", [[sys.executable, ROOT / "conf.d/setup/packages.py"],
+        step("packages", [[sys.executable, ROOT / "conf.d/setup/packages.py", "upgrade"],
                             [MISE, "bootstrap", "packages", "upgrade", "--yes"]], 86400)
         step("github-extensions", [["gh", "extension", "upgrade", "--all"]])
         step("rust", [["rustup", "update"]])

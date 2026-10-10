@@ -75,6 +75,8 @@ https://github.com/jdx/mise/blob/v2026.10.7/src/system/driver.rs
 - Regression cases for source changes during bootstrap, cancellation of timed-out
   descendants, warning-based resource skips, preference resets, invalid app-file
   structure, pending restore, and fresh same-machine LinearMouse recovery.
+- A focused Ghostty download parser check for the exact cask checksum, cache
+  integrity, and rejection of directories, links, truncation and extra payloads.
 - A noninteractive Fish smoke path and `install.sh --dry-run`.
 - Staged and unstaged `git diff --check`.
 
@@ -498,14 +500,92 @@ Sources:
 - https://github.com/googlefonts/LatoGFVersion/tree/080cb69711ca050d91e9c866e58df7a73095c69a/src
 - https://github.com/google/fonts/tree/main/ofl/lato
 
+## Ghostty download recovery
+
+On 2026-10-10, Ghostty's official 1.3.1 DMG became reachable again. Further cache
+inspection found the original DMG in Nix's **binary cache**, in addition to the
+repackaged `ghostty-bin` application. Its flat fixed-output path is derived from
+the DMG checksum and filename, so recovery needs neither Nix installation nor
+Hydra/GitHub release queries. The recovered DMG matched the official download
+byte for byte, SHA-256
+`18cff2b0a6cee90eead9c7d3064e808a252a40baf214aa752c1ecb793b8f5f69`.
+
+`conf.d/ghostty/package.py` now attempts native cask apply/upgrade first. After
+an official DMG download failure, it verifies current cask metadata, retrieves
+that checksum's Nix source archive, accepts only a single regular-file NAR,
+checks both cache hashes and the original cask SHA-256, and verifies the bundled
+app's signature against Ghostty's identifier and Developer ID team `24VZTF6M5V`.
+It then fills mise's URL-keyed download cache and retries the same native command.
+The cask keeps version selection, installation receipts, app replacement,
+completions/manpages and self-update handling. A missing mirror, altered archive,
+changed cask metadata, or failed signature remains an error. An existing damaged
+download is preserved for inspection instead of being silently replaced.
+
+The package prerequisite hook invokes this adapter for the default, unconditional
+macOS `latest` declaration. Maintenance passes `upgrade`, so native eligibility
+checks still preserve current or running self-updating apps. Explicit pins,
+conditional overrides, unsupported platforms and an undeclared Ghostty are left
+to native mise. Direct native package commands bypass the prerequisite hook.
+The adapter's native download budget defaults to two minutes unless supplied by
+`MISE_HTTP_DOWNLOAD_TIMEOUT`. Cache layout compatibility was tested with
+mise 2026.10.7; it does not broaden the cask release-age guarantees documented above.
+
+The disposable `dotfiles-associations-023be87` VM ran the real bootstrap hook
+with isolated configurations, caches, state, app directories and test prefixes:
+
+| Scenario or command | Observed result |
+| --- | --- |
+| `mise bootstrap --yes`, official host allowed and Nix blocked | Installed 1.3.1 from the official DMG; no recovery |
+| `mise bootstrap --yes`, official host blocked and Nix allowed | Recovered the byte-identical DMG, verified its signature and installed through the native cask |
+| Repeat bootstrap and `python3 conf.d/setup/packages.py upgrade` | Exit 0; no recovery, app inode and executable timestamp unchanged |
+| Both download hosts blocked | Exit 1; no app or completed archive installed |
+| Corrupt pre-existing native download cache | Exit 1; corrupt file preserved, no fallback or app installation |
+| Ghostty removed from the isolated declaration | No Ghostty installation or artifact download |
+| Ghostty `+version` and `codesign --verify --deep --strict -R` with its identifier and team | Passed |
+
+The active VM also installed Ghostty under `/Applications` through recovery.
+Its first configuration smoke check found that this test copy had not deployed
+the Ghostty dotfiles. Native deployment of just its three declared targets
+followed by `mise -C ~ run --timeout 2m setup:ghostty` passed. Ghostty `+version`,
+signature verification and a repeat IINA package apply passed as well.
+An independent `spctl --assess --type execute --verbose=2` of the recovered app
+returned **3**, `rejected`, `source=Notarized Developer ID`, matching the VM's
+previous security-assessment discrepancy. This proves download, installation,
+CLI and configuration validation, not GUI/Gatekeeper acceptance. No trust policy
+was changed for these tests.
+
+Local evidence under `.tmp/macos-acceptance/evidence/` includes
+`ghostty-nix-results.json`, `ghostty-official-bootstrap.log`,
+`ghostty-nix-bootstrap.log`, `ghostty-nix-apply-fixed.log`,
+`ghostty-both-unavailable.log`, `ghostty-corrupt-official-cache.log`,
+`ghostty-active-smoke-deployed.log`, `ghostty-installed-gatekeeper.log` and
+`ghostty-signature-probe.log`.
+These ignored artifacts are local evidence, not public setup inputs.
+
+Repository verification completed on 2026-10-11 through `/bin/bash
+.tmp/mise-implementation/verify-entrypoint.sh` (the isolated `mise run verify`
+entrypoint), exit **0**. All five tests passed in **152.469 seconds**: the four
+existing integration boundaries and the new DMG recovery check, including xz
+and zstd archives. Compilation/parsing, static checks, shell smoke, secret
+scanning and diff checks passed. See `repository-verify-ghostty-nix.log`.
+The owned acceptance fixtures were removed and the VM was stopped; proof remains
+in the host evidence directory.
+
+Sources:
+
+- https://nix.dev/manual/nix/2.35/protocols/store-path.html
+- https://cache.nixos.org/lxpkzzmjcpscgwp2gb0bxgx43mn6i1xz.narinfo
+- https://formulae.brew.sh/api/cask/ghostty.json
+- https://github.com/jdx/mise/blob/v2026.10.7/src/system/packages/brew/cask/fetch.rs
+
 ## Outstanding acceptance
 
 The fresh-Mac exercise in [POST_INSTALL.md](../POST_INSTALL.md) is in progress.
 The following acceptance is still outstanding:
 
-- NordVPN, Ghostty and Lato installation; IINA's security assessment and GUI
-  playback; optional packages, App Store installation, full package updates and
-  driver operation.
+- NordVPN and Lato installation; Ghostty and IINA's security assessment and GUI
+  acceptance; optional packages, App Store installation, full package updates
+  and driver operation.
 - Complete native package status with the custom-tap evaluator.
 - An untouched Setup Assistant/security flow, FileVault and immediate screen lock,
   the eight Mail/Safari defaults reported unset from Terminal, and actual launchd

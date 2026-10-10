@@ -118,6 +118,21 @@ IINA's module redirects its DMG download to the official GitHub release through
 mise's `url_replacements`. The native cask still owns its version, checksum,
 application and CLI installation, and self-update behavior.
 
+Ghostty setup and maintenance first use the native cask's official download.
+If that download fails, a small adapter looks up the **same DMG** in Nix's
+content-addressed cache. It verifies the cache archive, the original cask's
+SHA-256, and Ghostty's Apple Developer ID signature before filling mise's download
+cache and retrying. It installs neither Nix nor Homebrew and needs no GitHub API
+authentication. An unavailable mirror or failed verification leaves setup failed;
+it never substitutes another version or overwrites a damaged existing download.
+The cask continues to select releases and own installation and self-updates.
+
+This recovery runs through `config apply`, initial bootstrap, and `update` for
+the default macOS `latest` declaration. Direct `mise bootstrap packages apply`
+calls bypass the adapter. Pins and conditional package overrides are left to
+native mise. The download-cache layout is verified against mise 2026.10.7; see
+[the Ghostty acceptance record](plans/mise-compatibility.md#ghostty-download-recovery).
+
 ## Release policy
 
 Flexible mise tool requests select the newest matching release at least three
@@ -285,7 +300,8 @@ checkout. These repository commands provision only the verification toolchain;
 
 The suite uses real mise/Git with temporary homes and local bare origins. It
 covers file preservation, Git identities/worktrees, encrypted preferences, and
-manual/automatic exchange. Syntax, format/schema, workflow, secret, and shell
+manual/automatic exchange. A focused Ghostty recovery check rejects altered DMGs
+and malformed cache archives. Syntax, format/schema, workflow, secret, and shell
 smoke checks complement those four areas. There is no application build target;
 compilation/parsing and native deployment are the build-equivalent checks.
 

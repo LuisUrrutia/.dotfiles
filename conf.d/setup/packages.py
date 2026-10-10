@@ -1,20 +1,26 @@
 """Validate package prerequisites before native installation or upgrades."""
 
+import argparse
 import json
 import subprocess
 import sys
 import urllib.request
 
 import config
+from runtime import ROOT, run
 
 
 def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("action", nargs="?", choices=["apply", "upgrade"], default="apply")
+    args = parser.parse_args()
     config.check()
     if sys.platform == "darwin":
         with urllib.request.urlopen("https://formulae.brew.sh/api/cask/macfuse.json", timeout=30) as response:
             version = json.load(response)["version"]
         if version == "5.3.3":
             raise RuntimeError("macFUSE 5.3.3 is blocked by this setup; wait for a corrected cask before installing packages")
+        run([sys.executable, ROOT / "conf.d/ghostty/package.py", args.action])
 
 
 if __name__ == "__main__":
