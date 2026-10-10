@@ -1,7 +1,8 @@
 # Mise migration: decision map
 
-Status: direction established, including full setup synchronization; feasibility
-gates remain before implementation.
+Status: direction established, including full setup synchronization, a common
+base with app exceptions, encrypted app preferences, and a smaller test suite.
+Feasibility gates remain before implementation.
 Updated: 2026-10-10.
 Inspected repository: `0c2f8fe3739a1e16e80d07d476453bf119db55dc`.
 
@@ -13,9 +14,9 @@ this planning request, and no package or live configuration was changed.
 ## Destination
 
 Use mise to bootstrap fresh Macs and migrate Macs already using this repository.
-Replace Stow and the Homebrew executable, preserve the installed capabilities,
+Replace Stow and the Homebrew executable, preserve retained capabilities,
 and support configuration and software-declaration exchange between machines.
-Automatic machines receive and apply setup changes for their selected profiles;
+Automatic machines receive and apply common setup and enabled-app changes;
 manual machines exchange and apply them on request. Preserve a public, reviewable
 baseline and machine records without publishing private operational state.
 
@@ -39,10 +40,12 @@ route is verified; they do not silently remove a tool from scope.
 | D4 | Which mechanism owns each configuration file? | Resolved policy | D2, D3 | Implementation |
 | D5 | How do machine roles select Git identities? | Resolved model; enrollment inputs outstanding | D3, D4 | User supplies account/path data |
 | D6 | What belongs in declarative macOS setup? | Resolved boundary | D1, D3 | Implementation |
-| D7 | How are sensitive files recovered? | Proposed bounded design | D2, D4 | User supplies recipients at enrollment |
+| D7 | How are private app preferences captured and recovered? | Mandatory encryption; proposed restore boundary | D2, D4 | User scope; implementation; recipients at enrollment |
 | D8 | Can existing package ownership transfer safely? | Open feasibility gate | D1 | Implementation |
 | D9 | Does sync include shared configuration and installed software? | Resolved by user | None | User |
 | D10 | How are received software/setup changes applied? | Proposed serial application cycle | D2, D3, D4 | Implementation |
+| D11 | What is common, optional, or retired? | Resolved by user; individual app enrollment remains | None | User |
+| D12 | Which tests deserve to survive the migration? | Resolved policy | Retained behavior | User direction; implementation |
 
 Dependencies are prerequisites. Version compatibility affects every implementation
 unit and is verified first; it does not change the user's destination.
@@ -127,12 +130,13 @@ For example, `conf.d/fish/mise.toml` sits beside `config.fish`, `fish_plugins`,
 configuration structure. No synthetic HOME tree or extra `config/` wrapper is
 needed. A one-file module can keep its source beside its manifest too.
 
-A module's `mise.toml` holds all its common packages, managed paths, native host
-settings/services, and task definitions. Use `mise.<profile>.toml` in that same
-module for optional declarations. Selecting `dev` loads matching module fragments;
-it does not require a separate hand-maintained module index. Keep optional-only
-resources out of the always-loaded file. Native `config.<profile>.toml` remains
-available for a real setup-wide override, not a duplicate package list.
+A module's `mise.toml` holds its common packages, managed paths, native host
+settings/services, and task definitions. D11 removes the old installation
+profiles: cloud, development, formatting, image, and language tools always load.
+Use `mise.<app>.toml` for an individual optional capability, such as Loopback or
+DisplayLink. Local `env = ["loopback"]` activates that module using mise's native
+mechanism. Keep its packages, files, and services under the same selection. No
+profile menu, role preset, alias system, or duplicate module index is needed.
 
 The public distribution also needs `install.sh` and a small `bootstrap/` for
 first-use/migration, `machines/` for public enrollment records, `tests/` for
@@ -140,7 +144,8 @@ verification, and the existing planning/docs. Root `mise.toml` owns repository
 verification and the enrollment adapter, not a second machine package/config
 manifest. Ordinary setup behavior belongs in native declarations or module tasks;
 shared operational commands belong in native `tasks/`. Keep `dotfiles` only as a
-thin compatibility command over that route, not another implementation tree.
+thin compatibility command for retained operations, not another implementation
+tree or a reason to preserve the retired profile interface.
 
 Enroll `config.toml`, `conf.d/`, `tasks/`, and any actual global environment files
 as regular files under `~/.config/mise`, preserving their relative structure.
@@ -287,22 +292,51 @@ https://mise.jdx.dev/dev-tools/system-installs.html
 
 ## D7: Encryption and recovery
 
-Provide opt-in age encryption for selected private-history files before their
-first save. Keep credentials sourced through 1Password/2password where possible;
-do not turn application sessions, auth databases, or entire home directories into
-sync payloads. Public setup contains references and public keys only.
+**Authority:** the user requires all backed-up plists to be encrypted and adds
+Thaw, LinearMouse, SuperCmd, SoundSource, Loopback, and Audio Hijack settings to
+scope. Encryption is mandatory for those preference backups, not an opt-in.
+
+Configure native age encryption before the first checkpoint of any captured
+plist, including companion private config files. Public modules contain package
+declarations, capture/restore policy, and necessary adapters. Actual preferences
+belong in private encrypted history. Live files and export staging remain
+readable locally; encryption protects stored versions, not running applications.
+
+Prefer native tracking for regular live files with safe external-update behavior.
+CFPreferences domains use app/defaults export into explicit private snapshot
+paths, followed by controlled import. The local `defaults(1)` manual warns
+against modifying preferences while the application runs. A blind copy, symlink,
+or background restart cannot establish safe restoration. Application Support
+files require their own allowlist and consistent capture/restore point.
+
+M10a integrates capture/restore into D10's single cycle. Shared portable settings
+apply only where the app is enabled; hardware-dependent settings use explicit
+encrypted machine paths. Machine snapshots still synchronize for recovery.
+Local edits and received snapshots must survive a deferred restore without one
+being recaptured over the other. If the app cannot reload safely, expose pending
+restore until it can; do not interrupt a recording or audio route automatically.
+
+Keep credentials sourced through 1Password/2password where possible. Exclude
+licenses, authentication state, clipboard/history databases, caches, and recordings.
+Audio Hijack's session definitions describe user configuration and belong in
+scope. Inventory filenames alone do not establish which keys are portable or
+credential-free; verify that during each app's implementation.
 
 Use independent age identities per enrolled machine plus an offline/recoverable
 recipient. Keep private identities out of tracking; store recovery material in
 the password manager through its documented secure input flow. Test restoration
 with dummy secrets before enrolling real files.
 
-Native machine variants cannot currently be combined with encryption, and
-track-local does not accept it either. Do not promise that combination. Use
-track-local for strictly local files, or separate encrypted paths with a verified
-selection design if an actual private per-machine sharing requirement arises.
+Native machine variants and track-local cannot currently combine with encryption.
+Use encrypted `private/preferences/shared/<app>/` or
+`private/preferences/machines/<stable-id>/<app>/` paths under the active mise
+directory instead. Exclude private identities, including `age.txt`, from every
+tracking rule. Native launchd declarations remain TOML; generated plists need no
+tracked copy. If a plist is captured, its history must be encrypted.
 
 **Limits:** encryption does not hide filenames or remove old plaintext history.
+Retiring the tracked Thaw snapshot prevents new public plaintext versions but
+does not erase earlier commits. Any historical rewrite is separately scoped.
 Hardware/plugin recipients cannot be assumed to work from a background watcher.
 Key distribution and the private origin must be ready before enabling automatic
 sharing; a missing key must never fall back to plaintext.
@@ -343,7 +377,7 @@ when asked whether Fish, editor, and Starship changes should travel automaticall
 
 Include all managed shared configuration, package/tool declarations, plugin
 manifests, templates, and required setup code in private history. Apply shared
-changes on every enrolled machine and profile-scoped changes only on matching
+changes on every enrolled machine and optional-app changes only on matching
 machines. Preserve distinct machine roles, identities, local choices, and the
 existing secret/runtime exclusions. "All" describes managed setup, not every file
 or installed binary on a Mac.
@@ -375,16 +409,21 @@ local enrollment setting, not the name of mise's native sync setting.
 
 The command serializes supported mutations, waits for settled and valid inputs,
 checks for conflicts or incomplete recovery, exchanges and restores the complete
-revision, then applies the effective local profile. Recheck state before setup;
-record success only after required package/config/service checks pass. Use a
-setup-input fingerprint plus local selection to avoid bootstrap loops caused by
-its own checkpoints. Retry failures with bounded backoff and expose pending,
+revision, then applies the common base and local app selection. Recheck state
+before setup; record success only after required package/config/service checks
+pass. Use a setup-input fingerprint plus local selection to avoid bootstrap loops
+caused by its own checkpoints. Retry failures with bounded backoff and expose pending,
 failed, and applied state. Prove the protocol in M0 before relying on it.
 
 Do not invoke bootstrap synchronously from `[history.reload]`; upstream reserves
 those hooks for reloading applications, and nested setup may contend on locks.
 Serialize the scheduled path with manual operations and ordinary software setup.
 Raw native commands retain their lower-level semantics.
+
+Preference export/import follows M10a within this same serialized command. Save
+local app edits before exchange; retain incoming snapshots until a safe restore.
+Exclude snapshot-only changes from the package/setup fingerprint. Receiving an
+optional app's saved preferences does not enable that app on another machine.
 
 Automatic mode permits received setup code to execute as the enrolled user.
 Retain noninteractive failure behavior: missing sudo, App Store authentication,
@@ -397,6 +436,59 @@ Evidence:
 https://mise.jdx.dev/dotfiles/sync.html
 https://mise.jdx.dev/dotfiles/history.html
 https://mise.jdx.dev/bootstrap.html
+
+## D11: One common base, individual exceptions, and OpenCode retirement
+
+**Authority:** the user does not use the profile model and explicitly retired it.
+Every machine needs the former cloud, dev, formatters, image, and languages
+software. The work Mac excludes web3, streaming, audio, DisplayLink, and the old
+window selection. OpenCode is removed everywhere.
+
+Keep retained core plus those five categories in always-loaded modules. Move
+DisplayLink out of core. Express the remaining choices per app/tool with native
+modules; do not invent replacement work/personal/agent profiles. OBS and its
+required plugin can share one capability because they operate together. Keep
+BusyCal optional and add Audio Hijack as an optional app/config owner. The
+inventory is authoritative for exact members and known work exclusions; other
+machines' choices come from enrollment and inspected installed state.
+
+Retire profile prompts, aliases, all/subset grammar, and recovery files. Preserve
+safe resumability for the new setup, not the old selector's implementation.
+Obsolete arguments must explain the replacement rather than silently changing
+what gets installed. Disabling an optional app does not itself delete its data
+or grant permission for global package pruning.
+
+Remove OpenCode's runtime declaration, installer/config tree, launch shortcuts,
+editor integrations, prompt detection, skills target, schema, and exclusive
+dependencies. Do not replace its shortcuts with another assistant without a
+separate request. Preserve unrelated terminal/editor functionality and untracked
+user data; removal of credentials, sessions, or public Git history is separate.
+
+This supersedes previous requirements to preserve all ten profiles and every
+legacy command/test. It does not weaken the retained-capability ownership gate.
+
+## D12: Tests follow retained behavior
+
+**Authority:** the user considers the current suite excessive and poorly focused.
+The migration should reduce it, not mechanically reproduce it in a new tree.
+
+Keep static syntax/format/schema and secret checks, plus a small real integration
+suite for the boundaries this repo owns: safe/repeatable application, Git identity,
+encrypted app recovery, and synchronized setup application with machine eligibility.
+Use temporary HOME/XDG directories and actual mise/Git/parsers. Exercise failures
+that could lose state, apply the wrong identity/software, leak plaintext, or mark
+failed work successful. Reuse a case only if it still protects such a contract.
+
+Remove old profile-menu matrices, Stow/Brewfile implementation assertions,
+OpenCode checks, command-string snapshots, and tests of internal helper ordering.
+Do not retest upstream mise's internals or add tests for each declarative entry.
+Use narrow fakes only at real external/privileged boundaries. Keep live package,
+TCC, and app-restore acceptance separate from ordinary CI; do not build a complete
+cross-product of machines, identities, sync modes, and packages.
+
+Existing quality gates apply until their owner is retired. Update the relevant
+instructions and CI together with that retirement. "Fewer tests" must not leave
+the migration's preservation and recovery behavior unverified.
 
 ## Continuation
 

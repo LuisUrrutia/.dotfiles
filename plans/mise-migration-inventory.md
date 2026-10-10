@@ -25,10 +25,33 @@ transport; HTTP artifact/API downloads are not Git transport.
 
 Every entry below needs a row in M0's compatibility ledger with its new owner,
 fresh-install result, existing-install transfer, update result, and recovery.
-Do not infer support from a recipe name. Record shared/profile/machine scope
+Do not infer support from a recipe name. Record common/optional/machine scope
 and the effective declaration path as well: D9 includes software changes in
 private history, and M10b applies them on matching automatic machines. Transfer
 installation intent and source manifests, not downloaded binaries or app state.
+
+### New installation scope
+
+The source lists below remain a historical inventory, not the new selection
+model. D11 retires grouped profiles and their selection UI.
+
+| New scope | Baseline declarations or new capability |
+| --- | --- |
+| Common on every Mac | Retained core, except DisplayLink; all cloud, dev, formatters, image, and languages entries below |
+| Optional per app/tool; excluded on work | `solidity`, `ethereum`, `stellar-cli`, `foundry`; `obs` with `obs-advanced-scene-switcher`; `camo-studio`; `focusrite-control-2`; `loopback`; `soundsource`; `displaylink`; `asmvik/formulae/skhd` |
+| Other optional capability | `busycal`; keep its current optional status |
+| New optional app/config owner | `audio-hijack`; installed locally, absent from old manifests |
+| Retired everywhere | OpenCode and its exclusive integrations; old profile menus, aliases, presets, and saved selection format |
+
+Each optional capability uses a local native module selection. Do not bundle
+them back into work/personal/audio/streaming profiles. Unknown machines receive
+the common base; other optional choices are enrollment inputs. An existing
+installed app does not authorize deleting its data when its module is disabled.
+The work exclusions are explicit; no other machine's full selection was supplied.
+
+The `audio-hijack` recipe exists and is marked self-updating; that establishes a
+candidate native `brew-cask:` route, not a completed mise ownership test:
+https://raw.githubusercontent.com/Homebrew/homebrew-cask/master/Casks/a/audio-hijack.rb
 
 ### brewfiles/core
 
@@ -112,7 +135,8 @@ installation intent and source manifests, not downloaded binaries or app state.
 
 ## Existing global mise tools
 
-Retain these declarations and their actual version/trust settings from
+Retain these declarations and their actual version/trust settings, except the
+explicitly retired OpenCode entry, from
 `tools/mise/config/.config/mise/config.toml`; do not copy this inventory into
 a second runtime manifest.
 
@@ -136,7 +160,7 @@ a second runtime manifest.
 - `npm:@luisurrutia/bird`
 - `npm:clawpatch`
 - `npm:skills`
-- `opencode`
+- `opencode` (retire)
 - `pipx:httpie`
 - `pipx:pre-commit`
 - `pnpm`
@@ -145,8 +169,9 @@ a second runtime manifest.
 
 ## Tool Installer disposition
 
-All 39 top-level Tool Installers are covered below. The exact implementation
-must be read again at pickup. The source paths below describe the old layout,
+All 39 baseline top-level Tool Installers are covered below, including approved
+retirements. Read the exact implementation again at pickup. The source paths
+below describe the old layout,
 not the destination. Move cohesive behavior to `conf.d/<capability>`; remove a
 stow-only installer after native entries preserve eligibility and safe conflicts.
 
@@ -156,7 +181,7 @@ stow-only installer after native entries preserve eligibility and safe conflicts
 | `bat` | Native module entries plus cache-build task. |
 | `bin` | Native module entries for public commands; audit brew-dependent wrappers. |
 | `btop` | Native module entries; preserve dependency eligibility. |
-| `cc-safety-net` | Native module entries, excluding mutable rule locks and runtime state. |
+| `cc-safety-net` | Currently loaded only by OpenCode; retire its exclusive installer/rule deployment after a final consumer check. Preserve untracked local data. |
 | `claude` | Native module entries/structured owned-key edits; preserve instruction import and app-owned state. |
 | `codex` | Structured TOML merge for managed settings; preserve unrelated configuration. |
 | `cspell` | Native module entries; preserve dictionary paths. |
@@ -170,12 +195,12 @@ stow-only installer after native entries preserve eligibility and safe conflicts
 | `git` | Native Git module entries, identity templates, guarded migration, repo hook setup. |
 | `hammerspoon` | Native module entries; preserve blueutil dependency and existing automation behavior. |
 | `iina` | File-association task. |
-| `linearmouse` | Choose explicit source or mutable-history ownership; preserve app eligibility. |
+| `linearmouse` | Encrypted mutable JSON history plus preference-domain capture; retire the recurring Stow seed owner. |
 | `luarocks` | Preserve checks and native/runtime compatibility without brew execution. |
 | `macos` | Native user defaults/LaunchAgent plus narrow system tasks. |
 | `mise` | Official first-use bootstrap and global configuration enrollment; retire brew owner. |
 | `node` | Native module entries, npm policy, generated completions; preserve current runtime owner. |
-| `opencode` | Native module entries with runtime exclusions; mutable settings need explicit live-file ownership. |
+| `opencode` | Retire package/config/installer and cross-tool consumers under D11; no new native module. |
 | `orbstack` | Retain safe Docker plugin-link migration; OrbStack remains engine/CLI owner. |
 | `python` | Native module entries and completion task; separate maintenance from installation. |
 | `ripgrep` | Native module entries. |
@@ -184,7 +209,7 @@ stow-only installer after native entries preserve eligibility and safe conflicts
 | `skills` | Native module entries plus explicit global-skill installation task; keep SSH origins. |
 | `ssh` | Native module entries and directory permissions; preserve OrbStack include ordering and agent rules. |
 | `starship` | Native module entries. |
-| `thaw` | Preserve preference import/export, app restart behavior, and backup command. |
+| `thaw` | Replace public plist and timestamped plaintext backups with encrypted capture/restore under M10a. |
 | `tlrc` | Native module entries; maintenance retains reference-data updates. |
 | `tmux` | Native module entries, isolated validation, TPack setup and SSH transport wrappers. |
 | `vim` | Native module entries, Lazy restore, Treesitter/LSP setup, legacy migration; Mason scope remains. |
@@ -194,17 +219,19 @@ stow-only installer after native entries preserve eligibility and safe conflicts
 
 ## Config trees and exclusions
 
-All 30 existing trees must be included in the Stow-to-mise target parity check.
-Their source paths are flattened into native modules, not preserved:
+Inventory all 30 baseline trees for the transition. Compare retained targets with
+Stow; record OpenCode and its exclusive cc-safety-net deployment as intentional
+retirements. Source paths are flattened into native modules, not preserved:
 
 `bat`, `bin`, `btop`, `cc-safety-net`, `claude`, `cspell`, `curl`, `fastfetch`,
 `fish`, `gh-dash`, `ghostty`, `git`, `hammerspoon`, `linearmouse`, `macos`,
 `mise`, `node`, `opencode`, `python`, `ripgrep`, `skhd`, `skills`, `ssh`,
 `starship`, `tlrc`, `tmux`, `vim`, `voiceink`, `wget`, `zed`.
 
-Translate `.stow-local-ignore` in Fish, Git, Claude, and OpenCode into explicit
-mise exclusions. A Git manifest checks public seed membership but does not
-replace those rules or provide an index for regular history-owned sources.
+Translate `.stow-local-ignore` in retained Fish, Git, and Claude modules into
+explicit mise exclusions; OpenCode's tree is retired. A Git manifest checks
+public seed membership but does not replace those rules or provide an index for
+regular history-owned sources.
 Private history owns effective shared configs and setup sources under D9;
 track source contents behind links, not just the links themselves. Preserve
 `.gitignore` exceptions for the two VoiceInk source files.
@@ -232,14 +259,130 @@ explicit in each module's declaration.
 | `tools/macos/install.sh` | Native declarations in `conf.d/macos/mise.toml` plus necessary module scripts |
 | `tools/mise/config/.config/mise/config.toml` | Root policy in `config.toml`; tool ownership in the corresponding modules |
 | `brewfiles/core` | Common declarations in owning modules; config-free tools/apps in `cli`/`apps` |
-| `brewfiles/profiles/cloud` | Optional `conf.d/cloud/mise.cloud.toml` declarations |
+| `brewfiles/profiles/cloud` | Always-loaded `conf.d/cloud/mise.toml` declarations |
+| `brewfiles/profiles/dev`, `formatters`, `image`, `languages` | Common declarations in their owning modules, without environment suffixes |
+| Optional app entries, including former core DisplayLink | `conf.d/<app>/mise.<app>.toml` with only that capability's resources |
+| `tools/thaw/Thaw.plist` and plaintext backup output | Private encrypted snapshots; public `conf.d/thaw/` contains only declarations/adapters |
+| Appearance LaunchAgent plist | Native TOML declaration in `conf.d/macos/mise.toml`; runtime plist is generated |
 | `maintenance/`, `config/`, `cli/` behavior | Native operational `tasks/` and thin compatibility routing |
-| `verification/` and component test trees | `tests/` with preserved behavioral coverage |
+| `verification/` and component test trees | Reduced `tests/` suite based on retained behavior; see D12 |
 
 Enroll the native root payload into `~/.config/mise` with the same relative paths.
 Do not retain a separate active source mirror or deploy module manifests and
 scripts into application config directories. Public `machines/` records remain
 tracked; local enrollment files remain outside the shared payload.
+
+## Application preference discovery
+
+Read-only local inspection on 2026-10-10 found the following files. Bundle IDs
+and versions came from `/Applications/<app>.app/Contents/Info.plist`; preference
+paths and Application Support entries were enumerated without reading their
+values. This is path evidence, not proof of portable contents or safe restore.
+Reconfirm schemas and storage locations against the version being migrated.
+
+In this table, `Preferences/` means `~/Library/Preferences/`, and `Support/`
+means `~/Library/Application Support/`.
+
+| App/version | Existing primary preference path | Additional configuration candidates |
+| --- | --- | --- |
+| Thaw 2.0.1 | `Preferences/com.stonerl.Thaw.plist` | `Support/Thaw/Profiles/` exists but contained no files at inspection |
+| LinearMouse 0.12.0 | `Preferences/com.lujjjh.LinearMouse.plist` | `~/.config/linearmouse/linearmouse.json` is the main config and currently a managed symlink |
+| SuperCmd 1.0.9 | `Preferences/com.supercmd.SuperCmd.plist` | Inspect user-authored `Support/SuperCmd/Skills/` and extension settings separately; do not back up runtime directories |
+| SoundSource 6.1.4 | `Preferences/com.rogueamoeba.soundsource.plist` | `Support/SoundSource/Models.v2.plist`, `Presets.v2.plist` |
+| Loopback 2.5.0 | `Preferences/com.rogueamoeba.Loopback.plist` | `Support/Loopback/Devices.plist` |
+| Audio Hijack 4.6.0 | `Preferences/com.rogueamoeba.audiohijack.plist` | `Support/Audio Hijack 4/Sessions.plist`, `Presets.plist`, `Schedule.plist`, `Scripts.plist` |
+
+Also present: `com.stonerl.Thaw.MenuBarItemService.plist`,
+`com.rogueamoeba.loopbackd.plist`, and
+`com.rogueamoeba.audiohijack.RemoteAUHost.plist` in Preferences. Classify these
+helper domains before capture; their existence does not establish user settings.
+Schedules and scripts are configuration with execution effects, so restoring
+them must not start recording or launch scripts as an incidental backup restore.
+
+All captured plists, XML or binary, require `encrypt = true` from the first save.
+Private companion config files receive the same policy. Public modules contain
+capture/restore declarations and code, not actual preferences. Use native
+tracking when a live regular file supports safe external updates; CFPreferences
+domains use explicit snapshots and controlled import as specified in M10a.
+Device IDs, screen layout, audio routing, and other machine-bound data need a
+verified local application scope even though their encrypted backups travel.
+
+Exclude the observed `Loopback/RecentApps.plist`, `Audio Hijack 4/Recordings.plist`,
+and `Loopback/Loopback.app` helper bundle from config backup. Under SuperCmd's
+two support directories, exclude `CrashReporting/`, `FileIndex-v2.bin`,
+`agent-history.json`, `.Clipboard_SUPPORT/`, `Clipboard.store` and its WAL/SHM
+files, `runtime/`, and `sync-state.json`. Inspect extension installation/settings
+ownership before enrolling anything from `Extensions/` or
+`extension-catalog.json`. Do not capture either whole support directory.
+Licenses, tokens, auth state, and recording media stay outside this payload.
+
+The installed SuperCmd is the native app distributed by the current
+`shobhit99/tap` cask. Its documented preference domain and support paths match
+local inspection. Do not assume the `settings.json` layout found in older or
+forked Electron implementations. The canonical release source is
+`SuperCmdLabs/SuperCmd-v2-releases`.
+
+Existing plaintext sources are `tools/thaw/Thaw.plist` and the generated output
+of `tools/bin/config/.local/bin/thaw-config`. Retire both storage routes after
+encrypted recovery passes. The other tracked plist is the appearance LaunchAgent;
+replace its source with native TOML. No public history rewrite is part of this
+plan, and encryption does not retroactively protect earlier public commits.
+
+Primary documentation and package metadata:
+
+- https://github.com/linearmouse/linearmouse/blob/main/Documentation/Configuration.md
+- https://github.com/thaw-app/Thaw
+- https://raw.githubusercontent.com/shobhit99/homebrew-tap/main/Casks/supercmd.rb
+- https://raw.githubusercontent.com/Homebrew/homebrew-cask/master/Casks/a/audio-hijack.rb
+- https://rogueamoeba.com/support/manuals/audiohijack/
+- https://mise.jdx.dev/dotfiles/encryption.html
+
+The local `defaults(1)` manual explicitly warns that a running app may ignore or
+overwrite external changes. No live preference export, restore, encryption, or
+application restart was performed during this planning inspection.
+
+## OpenCode retirement surface
+
+`rg` found these consumers beyond `tools/opencode/`; remove them with the owning
+module so the new setup has no dangling command or plugin references:
+
+| Owner | Removal or retained boundary |
+| --- | --- |
+| Global mise config | Remove the `opencode` tool declaration and managed installation during cutover |
+| Fish `03_abbrs.fish`, `help-aliases.fish`, `tds.fish` | Remove `c`/`oc` shortcuts and OpenCode pane/autolaunch; preserve the remaining tmux layout |
+| Starship config | Remove `custom.opencode` and its prompt reference |
+| Zed settings | Remove OpenCode agent-server integration and defaults |
+| Neovim `lua/plugins/ai.lua`, `lazy-lock.json` | Remove OpenCode plugin, bindings, and lock entry; keep unrelated dependencies |
+| gh-dash config | Remove OpenCode launch from the PR action; preserve useful Worktrunk navigation |
+| Skills installer | Remove OpenCode from target agents; retain other agents |
+| `cc-safety-net` | Repository installer documents OpenCode as its plugin consumer; retire exclusive deployment after confirming no other consumer |
+| Verification | Remove OpenCode schema/autoupdate checks, completion fixtures, and exact skills-command expectations |
+| Documentation and ignore rules | Remove active OpenCode instructions and obsolete generated-file rules |
+
+Preserve untracked OpenCode conversations, credentials, and other local data.
+Do not substitute Claude/Codex for its commands without a separate user choice.
+Use a final repository search and affected editor/shell smoke check to verify
+retirement; do not add a permanent test that merely searches for the word.
+
+## Test disposition evidence
+
+These inspected examples inform D12; they are not a request to delete all tests
+in these files without separating retained behavior:
+
+| Current test/check | Decision and useful replacement |
+| --- | --- |
+| `verification/tests/install-selection.sh` | Retire profile prompts, alias/selection matrix, and many internal function fakes. Keep failed-install status and resumability at the new entrypoint. |
+| `tools/bin/tests/thaw-config.sh` | It copies a text fixture named `.plist` and counts timestamped backups. Replace with a valid typed plist encrypted save/restore scenario. |
+| `maintenance/tests/backup.sh` | Consolidate wrapper/output-string checks into the preference capture scenario; keep meaningful failure reporting. |
+| `tools/skills/tests/install.sh` | Drop exact full-command snapshots and the OpenCode target. Check intended installed agent targets only where repo behavior needs protection. |
+| `verification/check-configs.py` and schemas | Retain relevant parser/schema checks, remove OpenCode policy, and avoid maintaining redundant format parsers or string checks. |
+| Git identity/migration and config preservation tests | Keep the cases proving correct identity, unrelated-key preservation, and refusal to overwrite foreign state; port only those contracts. |
+
+Use four cohesive integration areas: safe/repeatable configuration; Git identity;
+encrypted app recovery; and manual/automatic setup exchange. A case belongs only
+if it protects a distinct retained contract. Package, TCC, and real app restore
+acceptance stays a focused macOS checklist outside normal CI. Native mise feature
+experiments are version-selection evidence, not a second upstream test suite.
 
 ## Highest-risk package cases
 
@@ -313,9 +456,10 @@ files. Observed results:
 - `mise vars --json`: unavailable on installed 2026.10.1, exit 1.
 
 The disposable probe lived under `/tmp/dotfiles-mise-research/`; it is not a
-durable test artifact. M0 must turn the relevant observations into maintained
-fixtures against the selected mise version. Only these conclusions, their
-conditions, and their limits are retained here.
+durable test artifact. M0 must use these observations to verify the selected mise
+version and the repo's preservation guard. Maintain only the cases that protect
+that boundary, not a suite retesting upstream behavior. Only these conclusions,
+their conditions, and their limits are retained here.
 
 A later module-layout probe used regular global files and no public-checkout
 symlinks. It ran `python3 /tmp/dotfiles-mise-research/module-layout-probe.py` with
@@ -332,8 +476,9 @@ sources, and stdin closed. On mise 2026.10.1, all operations exited 0:
 
 This proves the native folder structure on that build, not full adoption, package
 installation, synchronization, or task-path behavior in every module. The probe
-is a disposable design check; M0 must preserve its relevant cases as maintained
-fixtures. No live configuration or installed software changed.
+is a disposable design check; M0 must verify composition against the chosen
+release. Keep a small effective-config smoke check rather than a test for every
+module or profile combination. No live configuration or installed software changed.
 
 The user subsequently confirmed full setup synchronization, including software
 installation. D9/D10 and M10/M10b now include package declarations, setup sources,
@@ -341,6 +486,9 @@ and automatic application; the earlier composition probes do not establish that
 protocol. The subsequent user correction replaced the Stow-shaped source layout
 with native colocated modules. These revisions add planning contracts and the
 bounded structural probe above; full behavioral acceptance remains M0/M10b work.
+The latest scope correction retires installation profiles and OpenCode, makes
+five former categories common, and adds encrypted preference recovery. Local
+app/path discovery above adds no evidence of actual capture or restore.
 
 ## Planning-artifact validation
 
