@@ -1,9 +1,10 @@
-# Build a mise-native setup for a fresh Mac
+# Build a mise-native setup, starting with macOS
 
 Status: planning only; common setup, application exceptions, encrypted preference
 history, OpenCode retirement, and proportionate verification are agreed direction.
 The user will reinstall macOS; upgrading existing dotfiles installations is out
-of scope. No implementation or machine setup has started.
+of scope. A future Ubuntu or Arch mini PC must fit the design without replacing
+its shared core; Linux implementation is deferred. No machine setup has started.
 Updated: 2026-10-10. Baseline: `0c2f8fe3739a1e16e80d07d476453bf119db55dc`.
 
 Read the [decision map](mise-migration-decisions.md) for authority and tradeoffs,
@@ -15,7 +16,9 @@ delivery record; update these units rather than creating a competing checklist.
 
 Mise owns provisioning, supported packages, config deployment, and managed setup
 history on a fresh macOS installation. The repository is rebuilt around native
-mise capabilities. Existing-Mac migration is explicitly cancelled by D13.
+mise capabilities, with a portable core and explicit platform boundaries under
+D14. Initial delivery and acceptance remain macOS. Existing-Mac migration is
+explicitly cancelled by D13.
 
 Completion requires:
 
@@ -34,8 +37,9 @@ Completion requires:
    without overwriting unrelated local work.
 5. Personal, work, and agent-machine Git identity cases select the expected
    identity and signing configuration in normal repositories and worktrees.
-6. Existing safety contracts remain: macOS/non-root checks, prerequisite order,
-   explicit drift resolution, identity fallback, secret exclusion, bounded retry,
+6. Existing safety contracts remain: supported-platform/non-root checks,
+   platform-specific prerequisite order, explicit drift resolution,
+   identity fallback, secret exclusion, bounded retry,
    and accurate failure status. Dry runs do not mutate the Mac.
 7. Applicable behavioral, syntax/static, broader smoke, and fresh-Mac acceptance
    checks pass. Native bootstrap success alone is insufficient because some
@@ -45,6 +49,9 @@ Completion requires:
    files. Public sources contain declarations and adapters, not private snapshots.
 9. The old profile system and OpenCode integrations are retired. Tests protect
    retained user behavior and data; preserving the old test suite is not a goal.
+10. Shared modules, enrollment, and synchronization do not assume Darwin paths,
+    commands, or services. Platform-specific resources have explicit eligibility;
+    this boundary does not claim that Linux setup is implemented or tested.
 
 Excluded work: an in-place migrator, Homebrew receipt conversion or uninstall,
 Stow link conversion, old/new ownership coexistence, and rollback to the legacy
@@ -57,10 +64,13 @@ erase is a separate backup operation; path discovery is not a completed backup.
 
 ## Common setup and machine exceptions
 
-Install one common base everywhere: the retained core plus all software formerly
+Install one common base on every Mac: retained core plus all software formerly
 in `cloud`, `dev`, `formatters`, `image`, and `languages`. These names may still
 describe cohesive module folders, but no longer select installation profiles.
-OrbStack and its Docker setup therefore belong to the common base.
+OrbStack and its Docker setup therefore belong to the macOS common base. Portable
+tools/configuration form the reusable core; macOS apps do not become mandatory
+Linux dependencies. Linux package equivalents and its container engine are future
+work once the distribution and intended use are known.
 
 Make the remaining optional apps/tools individual machine choices. The work Mac
 excludes all former web3 software; OBS, its scene-switcher plugin, Camo Studio;
@@ -75,6 +85,34 @@ app configuration, and any service under the same selection. Git identities and
 sync mode remain independent local inputs. The inventory records exact packages
 and the complete OpenCode removal surface. D11 owns these scope changes.
 
+## Platform boundary for future Linux support
+
+The user may later add an Ubuntu or Arch mini PC; neither its distribution nor
+architecture is selected. Build macOS first, retaining these boundaries now:
+
+- Keep Fish, Git, Starship, editor settings, portable runtimes, and sync logic in
+  their owning modules. Isolate macOS package routes, paths, preferences, and
+  commands beside them; do not duplicate the source tree per operating system.
+- Use native platform environments for OS-specific module fragments and native
+  `os` package/tool filters or dotfile target variants for individual differences.
+  Platform detection and optional app selection are separate inputs, not profiles.
+- The official mise installer/enrollment path dispatches by detected OS and
+  architecture before mutation. FDA/CLT, `ioreg`, `/Applications`, `~/Library`,
+  `defaults`, and `launchctl` belong only to the macOS path. Common code uses HOME,
+  appropriate XDG/application paths, and resolved executable locations.
+- Keep the serial sync/application task independent of scheduling. Its macOS
+  trigger is launchd; Linux can later use a systemd user timer. Incoming history
+  may contain foreign-platform modules or encrypted snapshots, but apply/capture/
+  restore selects only compatible resources and this machine's enabled apps.
+- Keep machine IDs and identity inputs independent of the macOS hardware lookup.
+  Preserve current public records; defer Linux registration and package mapping.
+
+Mise can orchestrate `apt:` or `pacman:` for native Linux dependencies. Their
+availability is not a decision to install both, and a missing required manager
+must not count as success. Do not force macOS brew recipes onto Linux or select
+a distro, desktop, AUR helper, or replacement app during this macOS delivery.
+D14 records the evidence and deferred acceptance.
+
 ## Proposed structure and ownership
 
 Design the repository as a native mise configuration tree. The user explicitly
@@ -88,9 +126,11 @@ the current filesystem:
   install.sh                      official mise and first-use prerequisites
   mise.toml                       repo verification and enrollment adapter
   config.toml                     shared mise policy and setup defaults
+  miserc.toml                     native automatic platform environments
   conf.d/
     fish/
-      mise.toml                   packages, login shell, files, plugin task
+      mise.toml                   shared shell, files, and plugin setup
+      mise.macos.toml             macOS installation and integration
       config.fish
       fish_plugins
       conf.d/                     Fish startup snippets
@@ -110,19 +150,19 @@ the current filesystem:
       settings.jsonc
       keymap.jsonc
     macos/
-      mise.toml                   defaults and native LaunchAgents
+      mise.macos.toml             defaults and native LaunchAgents
       system-settings.sh          only behavior outside native declarations
     orbstack/
-      mise.toml                   common on every Mac
+      mise.macos.toml             common on every Mac
     cloud/
       mise.toml                   common cloud tools
     linearmouse/
-      mise.toml                   app and encrypted mutable config
+      mise.macos.toml             app and encrypted mutable config
     thaw/
-      mise.toml
+      mise.macos.toml
       preferences.sh              capture/restore through app/defaults APIs
     supercmd/
-      mise.toml
+      mise.macos.toml
       preferences.sh
     loopback/
       mise.loopback.toml           selected only on machines that use it
@@ -132,9 +172,10 @@ the current filesystem:
     displaylink/
       mise.displaylink.toml       optional driver
     cli/
-      mise.toml                   common CLIs without their own module
+      mise.toml                   portable CLIs without their own module
+      mise.macos.toml             native macOS package routes
     apps/
-      mise.toml                   common apps without managed config
+      mise.macos.toml             common Mac apps without managed config
   tasks/                          shared native operational commands
     sync
     update
@@ -165,19 +206,28 @@ Use similar entries for Fish snippets, completions, and the plugin manifest.
 Native groups remain useful for a homogeneous source tree; they are not the unit
 of module selection and need not mirror HOME.
 
-Use `mise.toml` for common setup and `mise.<app>.toml` for an optional capability.
+Use `mise.toml` for portable common setup, `mise.macos.toml` for macOS resources,
+and `mise.<app>.toml` for an optional capability. Set `auto_env = true` in the
+enrolled global `miserc.toml`; platform filenames do not select themselves by
+default in the inspected mise releases. Verify this in M0. Add Linux fragments
+beside their module sources when implementing that platform, not empty folders now.
+
 For example, local `env = ["loopback", "obs"]` loads those two modules. This is
 mise's module mechanism, not a replacement profile taxonomy. No extra module
 index, copied package list, profile aliases, or selection menu is needed. Keep
 all optional-only files/services/packages in the optional fragment. Empty local
-selection still installs the complete common base. Remove old profile flags,
-menus, and saved-selection handling; there is no legacy selection converter.
+selection still installs the platform's complete common base. An optional app
+must also match its OS; selecting Loopback must not bypass macOS eligibility.
+Use supported entry filters or guarded tasks, not an invented combined suffix.
+Remove old profile flags, menus, and saved-selection handling; there is no legacy
+selection converter.
 
 The active shared payload has the same relative layout under `~/.config/mise`:
 
 ```text
 ~/.config/mise/
   config.toml
+  miserc.toml                     shared platform-discovery policy
   conf.d/                         manifests and source files together
   tasks/                          shared operational tasks
   private/preferences/            encrypted history inputs, never public seeds
@@ -225,10 +275,10 @@ directories so applications cannot write runtime data into the module tree.
 
 The supported software-add path records the tool/package/plugin in its owning
 module before installation. Shared declarations reach all machines; optional
-fragments apply only to machines enabling the app. Explicit machine-only additions
-remain local. Preserve version policies and hardware eligibility, not installed
-binary copies. Report unmanaged installations for enrollment. These contracts
-also apply when an agent changes the setup.
+fragments apply only to compatible machines enabling the app. Explicit machine-only
+additions remain local. Preserve version policies and OS/hardware eligibility,
+not installed binary copies. Report unmanaged installations for enrollment.
+These contracts also apply when an agent changes the setup.
 
 ## Delivery order
 
@@ -282,6 +332,9 @@ Never use the operator's live app directory or history origin for a probe.
   must preserve private edits. Keep the public checkout separate and prove the
   allowlisted payload excludes repository tooling. Verify different home paths;
   relative group roots and relative entry sources resolve differently.
+  Include D14's automatic platform environments and their precedence alongside
+  optional selections. Prove foreign-platform declarations stay inactive on the
+  tested host; document this as a composition check, not Linux acceptance.
 - Prove D10's serial save/sync/pull/bootstrap protocol with two clients, an
   autosaving watcher, local mode overrides, and no second incoming writer. Test
   settled complete source/config revisions, native lock behavior, interrupted
@@ -290,9 +343,9 @@ Never use the operator's live app directory or history origin for a probe.
 - Verify the retained target map from the source inventory using native mise in
   a temporary HOME. Check missing optional apps, source membership, real app
   directories, and refusal to overwrite unknown files. No Stow conversion probe.
-- Build a package ledger from the retained inventory: intended manager, fresh
-  installation, dependency resolution, updates, and recovery. Installed Homebrew
-  state and receipt transfer are not inputs to the new installer.
+- Build a package ledger from the retained inventory: OS/architecture eligibility,
+  intended manager, fresh installation, dependencies, updates, and recovery.
+  Installed Homebrew state and receipt transfer are not inputs to the installer.
 - On disposable Macs, prove fresh formula and cask installation/update,
   self-updating apps, font/binary artifacts, pkg installation, third-party taps,
   and unsupported-recipe failure. No Homebrew cask handoff is required.
@@ -314,7 +367,11 @@ Refactor the first-use path in `install.sh`/`bootstrap/`, retaining useful safet
 and dry-run flags while retiring profile selection. Run on stock `/bin/bash` 3.2,
 regardless of the user's current zsh shell.
 
-Preserve Full Disk Access, Xcode Command Line Tools, and validated sudo ordering.
+Keep platform dispatch separate from common download/enrollment logic. Initially
+accept only the tested macOS target; an unsupported OS must exit before running
+macOS prerequisites or installing anything. Linux bootstrap remains future work.
+
+On macOS, preserve Full Disk Access, Command Line Tools, and validated sudo order.
 When CLT is missing, launch Apple's installer interactively and exit for rerun;
 automation reports the prerequisite instead of waiting. CLT provides initial
 Git/SSH, avoiding mise's possible host-package-manager fallback before cloning.
@@ -326,8 +383,8 @@ Keep an existing newer compatible binary; preserve rollback material for an
 actual replacement. Explicitly establish PATH for the current run and future
 stock-shell sessions. Use only SSH for cloning the dotfiles repository.
 
-Seed the native global files (`config.toml`, `conf.d/`, and `tasks/`), or restore
-the existing private setup, without overwriting unknown config. Then invoke the
+Seed `config.toml`, `miserc.toml`, `conf.d/`, and `tasks/`, or restore the existing
+private setup, without overwriting unknown config. Then invoke the
 effective setup. Preserve resumability and do not write the install marker when
 a required phase fails. Distinguish a first `--from --dry-run` that only reports
 cloning from a full configuration preview.
@@ -351,13 +408,16 @@ enrollment schema. No legacy shell-variable adapter is required. Generate local
 selection/overrides without replacing unrelated mise settings. Model optional
 modules, Git identities, and sync mode separately. Keep mode/origin local;
 incoming config must not enable automation or change another machine's selection.
+Treat OS/architecture as detected facts, distinct from user selections and stable
+machine identity. Keep the current `ioreg` lookup in the macOS enrollment path.
 
 Acceptance: inspect the real effective configuration for an empty optional list,
 the work selection, and one optional audio/app module. All include the common
 base; work contains none of its excluded resources; incoming history preserves
 local selection and mode. Remove the old profile-menu/alias tests. Both sync
 modes use native `history.sync = "manual"`; M10b owns scheduling. Verify that
-one-run `-E` replaces the local list so it cannot accidentally widen selection.
+one-run `-E` replaces the optional list without disabling platform constraints or
+accidentally widening selection.
 
 ## M3-M4: Install and maintain packages through mise
 
@@ -365,6 +425,8 @@ Use the inventory plus D11's retirements/additions as the completeness baseline.
 Preserve current version channels and deliberate trust/cooldown exceptions unless
 compatibility requires a reviewed change. Avoid unrelated tool-manager churn
 while removing brew.
+Scope native macOS package routes explicitly, even when a backend can also run
+on Linux. Preserve one package owner per capability on each supported platform.
 
 M3 maps remaining native formulae to `bootstrap.packages` and retains current
 `[tools]` declarations except OpenCode. Use canonical names and stable paths for
@@ -432,6 +494,9 @@ Use structured merge entries for the Codex settings currently merged by awk,
 preserving plugins and other unrelated keys. Evaluate Claude settings the same
 way. JSONC is not supported by native merge: retain a suitable whole-file owner
 or a format-aware task for Zed and other comment-bearing formats.
+Keep platform-specific paths and commands out of shared Git/Fish/editor defaults;
+isolate credential helpers, signing-program paths, clipboard commands, and macOS
+Fish functions/abbreviations in eligible fragments or explicit OS guards.
 
 Acceptance: retained target coverage, clean second apply, app replacing
 a symlink, identical unmanaged file, changed copy/template, foreign parent/link,
@@ -592,8 +657,9 @@ the adapter boundary, not with a separate mocked system for every plist.
 ## M10b: Apply synchronized software and setup
 
 Expose one serial exchange/application command for both modes; automatic machines
-schedule it through native launchd, manual machines run it explicitly. Keep a
-single incoming apply owner. Reuse native mise checkpoint/conflict/recovery
+schedule it through native launchd on macOS; manual machines run it explicitly.
+Keep scheduling outside the common command so Linux can later supply a timer.
+Keep a single incoming apply owner. Reuse native mise checkpoint/conflict/recovery
 semantics rather than writing a new Git synchronization engine.
 
 The cycle waits for settled valid managed inputs, captures eligible app settings,
@@ -605,8 +671,8 @@ Do not force conflict choices or run setup after a partial pull. Serialize with
 manual configuration and installation operations. M0 must prove status and lock
 interfaces; do not infer success from files appearing in place.
 
-Track a fingerprint of effective setup inputs and local selection, plus pending,
-failed, and applied results. Mark applied only after required verification.
+Track a fingerprint of effective setup inputs, platform, and local selection,
+plus pending, failed, and applied results. Mark applied only after verification.
 Coalesce repeated wakeups; retry failures with bounded backoff. Bootstrap may
 create checkpoints, so a changed history commit alone must not retrigger setup
 indefinitely. Do not call setup synchronously from `[history.reload]`.
@@ -616,6 +682,9 @@ A failed install leaves declared intent and a visible pending result for retry.
 Propagate package/plugin/version changes; locally resolve artifacts according to
 platform and version policy. New source/task files must be enrolled together
 with the declarations that reference them before publication.
+History exchange does not widen platform eligibility. Foreign-platform changes
+must not invoke local installers or preference adapters, nor count as missing
+local requirements. Preserve those sources for eligible peers.
 
 Automatic mode includes running received setup code as the enrolled user. Missing
 sudo, App Store login, TCC consent, or GUI interaction produces a visible pending
@@ -718,6 +787,11 @@ and Homebrew handoff tests. Validate native targets in a temporary HOME. Continu
 `fish --no-execute` and tests of affected interactive versus subprocess behavior,
 not plugin fixture internals. Repository gates for still-unchanged old code remain
 applicable until that code and its gate are removed together.
+
+Add platform selection to the existing effective-config/eligibility smoke case;
+do not add a distribution matrix now. Mac-only resources and paths must stay out
+of portable declarations. Real Ubuntu/Arch installation and cross-OS sync tests
+belong to the later Linux implementation on the chosen distribution.
 
 M0's compatibility experiments and fresh-Mac acceptance are not an exhaustive
 CI matrix. Keep package ownership/upgrade, App Store authentication, TCC, login/

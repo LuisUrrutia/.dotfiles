@@ -1,8 +1,9 @@
-# Mise-native macOS setup: decision map
+# Mise-native setup: decision map
 
 Status: direction established, including full setup synchronization, a common
 base with app exceptions, encrypted app preferences, and a smaller test suite.
 The user chose a fresh macOS install; existing-install migration is cancelled.
+macOS is the first delivery; D14 preserves a path to a future Ubuntu/Arch mini PC.
 Fresh-setup feasibility gates remain before implementation.
 Updated: 2026-10-10.
 Inspected repository: `0c2f8fe3739a1e16e80d07d476453bf119db55dc`.
@@ -20,6 +21,9 @@ and support configuration and software-declaration exchange between machines.
 Automatic machines receive and apply common setup and enabled-app changes;
 manual machines exchange and apply them on request. Preserve a public, reviewable
 baseline and machine records without publishing private operational state.
+Keep shared configuration and synchronization portable; macOS-specific resources
+must be isolated for the future Linux extension. Linux support is not delivered
+or verified by this plan's initial macOS acceptance.
 
 Success requires fresh installation, repeat bootstrap, and updates with `brew`
 and `stow` absent. Mise-managed bottles may use `/opt/homebrew`; the directory
@@ -46,6 +50,7 @@ verified installation route; they do not silently remove a retained tool.
 | D11 | What is common, optional, or retired? | Resolved by user; individual app enrollment remains | None | User |
 | D12 | Which tests deserve to survive the rebuild? | Resolved policy | Retained behavior | User direction; implementation |
 | D13 | Does delivery support existing Macs or only fresh setup? | Fresh setup only; migration cancelled | None | User |
+| D14 | How can Ubuntu or Arch be added later? | Portability required now; Linux delivery deferred | D3, D9, D13 | User direction; implementation boundaries |
 
 Dependencies are prerequisites. Version compatibility affects every implementation
 unit and is verified first; it does not change the user's destination.
@@ -70,7 +75,8 @@ The formula backend currently excludes Intel macOS and implements only part of
 the formula language. The current repo already assumes Apple Silicon in places.
 Make macOS arm64 the tested initial platform; detect other architectures before
 mutation and report them as unsupported, rather than silently skipping packages.
-Adding Intel support requires a separate verified installation route.
+Adding Intel macOS support requires a separate verified installation route;
+this restriction does not rule out a future Linux x64 mini PC under D14.
 
 **Would reopen:** evidence of an actively supported Intel target, or a package
 that cannot be installed without Homebrew. The latter requires finding a
@@ -123,17 +129,19 @@ https://mise.jdx.dev/bootstrap/from-repository.html
 structure designed around mise. Preserve capabilities and public machine records,
 not the old `tools/<tool>/config/.config/<tool>` layout.
 
-**Proposed direction:** the public root contains `config.toml`, `conf.d/`, and
-`tasks/`, matching mise's global configuration layout. Each `conf.d/<capability>/`
-keeps its declarations, config sources, templates, and necessary scripts together.
+**Proposed direction:** the public root contains `config.toml`, `miserc.toml`,
+`conf.d/`, and `tasks/`, matching mise's global configuration layout.
+Each `conf.d/<capability>/` keeps declarations, config sources, templates, and
+necessary scripts together.
 For example, `conf.d/fish/mise.toml` sits beside `config.fish`, `fish_plugins`,
 `conf.d/`, `functions/`, and `completions/`. The inner `conf.d` is Fish's real
 configuration structure. No synthetic HOME tree or extra `config/` wrapper is
 needed. A one-file module can keep its source beside its manifest too.
 
-A module's `mise.toml` holds its common packages, managed paths, native host
-settings/services, and task definitions. D11 removes the old installation
-profiles: cloud, development, formatting, image, and language tools always load.
+A module's `mise.toml` holds portable declarations and tasks. Platform fragments
+such as `mise.macos.toml` hold the OS-specific parts under D14. D11 removes the
+old installation profiles: cloud, development, formatting, image, and language
+capabilities belong to every Mac's base, with platform eligibility preserved.
 Use `mise.<app>.toml` for an individual optional capability, such as Loopback or
 DisplayLink. Local `env = ["loopback"]` activates that module using mise's native
 mechanism. Keep its packages, files, and services under the same selection. No
@@ -148,8 +156,8 @@ shared operational commands belong in native `tasks/`. Any retained `dotfiles`
 command is a thin convenience wrapper. Legacy CLI grammar, profile selectors,
 and old-state converters are not compatibility requirements.
 
-Enroll `config.toml`, `conf.d/`, `tasks/`, and any actual global environment files
-as regular files under `~/.config/mise`, preserving their relative structure.
+Enroll `config.toml`, `miserc.toml`, `conf.d/`, `tasks/`, and global environment
+files as regular files under `~/.config/mise`, preserving their relative structure.
 This single active tree owns both mise configuration and its supporting sources.
 There is no separate `~/.local/share/dotfiles/setup/` source mirror. Track its shared
 contents in private history; `miserc.local.toml`, `config.local.toml`, credentials,
@@ -391,7 +399,8 @@ running machine setup during the planning task.
 ## D10: Serialize exchange and setup application
 
 **Proposed direction:** one application command owns save/sync/pull and conditional
-bootstrap, with a native LaunchAgent scheduling it only on automatic machines.
+bootstrap, with a native LaunchAgent scheduling it on automatic Macs. Keep that
+trigger separate from the shared command so Linux can later supply its own timer.
 Use native history for checkpoints, exchange, conflict resolution, and recovery;
 do not implement a second Git synchronization engine.
 
@@ -403,9 +412,9 @@ local enrollment setting, not the name of mise's native sync setting.
 
 The command serializes supported mutations, waits for settled and valid inputs,
 checks for conflicts or incomplete recovery, exchanges and restores the complete
-revision, then applies the common base and local app selection. Recheck state
+revision, then applies the platform's base and local app selection. Recheck state
 before setup; record success only after required package/config/service checks
-pass. Use a setup-input fingerprint plus local selection to avoid bootstrap loops
+pass. Use a setup-input fingerprint plus platform and selection to avoid loops
 caused by its own checkpoints. Retry failures with bounded backoff and expose pending,
 failed, and applied state. Prove the protocol in M0 before relying on it.
 
@@ -418,6 +427,8 @@ Preference export/import follows M10a within this same serialized command. Save
 local app edits before exchange; retain incoming snapshots until a safe restore.
 Exclude snapshot-only changes from the package/setup fingerprint. Receiving an
 optional app's saved preferences does not enable that app on another machine.
+D14 also requires OS compatibility before app capture/restore or package setup;
+syncing a macOS module must not run its commands on a future Linux peer.
 
 Automatic mode permits received setup code to execute as the enrolled user.
 Retain noninteractive failure behavior: missing sudo, App Store authentication,
@@ -434,7 +445,7 @@ https://mise.jdx.dev/bootstrap.html
 ## D11: One common base, individual exceptions, and OpenCode retirement
 
 **Authority:** the user does not use the profile model and explicitly retired it.
-Every machine needs the former cloud, dev, formatters, image, and languages
+Every Mac needs the former cloud, dev, formatters, image, and languages
 software. The work Mac excludes web3, streaming, audio, DisplayLink, and the old
 window selection. OpenCode is removed everywhere.
 
@@ -445,6 +456,8 @@ required plugin can share one capability because they operate together. Keep
 BusyCal optional and add Audio Hijack as an optional app/config owner. The
 inventory is authoritative for exact members and known work exclusions; other
 machines' choices come from fresh enrollment.
+Under D14, retain portable capabilities for future Linux use; macOS-only apps
+such as OrbStack are common to Macs, not requirements for the mini PC.
 
 Remove profile prompts, aliases, all/subset grammar, and recovery-file handling.
 Preserve resumability for the new setup without converting the old selector's
@@ -506,6 +519,49 @@ exist in an independent backup or the new encrypted history. No such capture or
 recovery-key enrollment has happened during planning; this is separate from an
 in-place migration feature.
 
+## D14: Portable core, macOS first, Linux later
+
+**Authority:** the user may later add a mini PC with Ubuntu or Arch and wants the
+design to allow that expansion. Distribution, architecture, and desktop/server
+use are undecided. This does not request Linux implementation now.
+
+Keep modules organized by tool/capability. Shared files stay in one place;
+platform differences remain beside them. Reject separate macOS/Linux copies of
+the whole setup because shared edits would diverge. Also reject unguarded macOS
+commands in common modules, which would make future Linux enrollment unsafe.
+
+Use `auto_env = true` in the active global `miserc.toml` for native OS/architecture
+fragments such as `mise.macos.toml`; Linux fragments can be added later. Optional
+app selection remains independent. Use supported entry filters and target
+variants where appropriate, and keep platform commands guarded. A platform
+filename alone is insufficient without automatic environments enabled. M0 must
+verify these selectors on the chosen release; earlier probes did not test them.
+
+Mise's `apt:` and `pacman:` managers provide future native-package routes while
+portable tools remain under `[tools]`. Choose one verified route per capability
+on the selected distribution later. The no-Homebrew requirement does not mean
+removing Linux's system package manager. Package names and upgrade semantics
+require that distribution's own acceptance; no Linux catalog is promised now.
+
+Keep the sync/apply command portable and its launchd trigger macOS-specific.
+A systemd user timer is a future scheduling option. Preserve OS/architecture,
+app selection, and hardware eligibility through history application; a synced
+macOS plist must not cause Linux preference writes. Keep Mac hardware lookup and
+platform prerequisites outside shared enrollment/identity logic.
+
+Now: isolate platform behavior and cover selection in the existing composition
+smoke case. Later: choose the mini PC's OS/architecture, implement its package,
+bootstrap, service, and application paths, then verify clean setup and cross-OS
+history exchange there. Do not create empty Linux modules, a provider framework,
+or an Ubuntu/Arch test matrix before that work.
+
+Evidence, inspected 2026-10-10:
+
+- https://mise.jdx.dev/configuration/environments.html#platform-environments
+- https://mise.jdx.dev/bootstrap/packages/
+- https://mise.jdx.dev/dotfiles/managed.html#different-targets-on-different-machines
+- https://mise.jdx.dev/bootstrap/services.html
+
 ## Continuation
 
 No sync-coverage or installation-scope decision remains open. M0 verifies global
@@ -513,3 +569,5 @@ setup composition, fresh package installation/update, and the serial exchange/
 application protocol. Actual origin, machine modes, identities, and key references
 are enrollment inputs. Completion needs those proofs and fresh-Mac acceptance;
 the former Homebrew/Stow ownership-transfer gate is closed as out of scope.
+The future Linux distribution is intentionally undecided and does not block the
+macOS delivery or D14's portability boundaries.

@@ -12,6 +12,8 @@ here and symlink into `$HOME`.
 The proposed mise-native setup is documented in
 [the setup plan](plans/mise-migration.md). It targets a fresh macOS installation,
 package management, and configuration history; in-place migration is out of scope.
+The design keeps a portable core for a later Ubuntu or Arch extension; Linux
+setup is not implemented yet.
 The current installation workflow below remains in effect until the new setup
 is implemented.
 

@@ -6,6 +6,8 @@ This inventories source declarations for a fresh macOS setup, not existing
 machine state or proof of mise package support. D13 cancels in-place migration.
 M0 verifies fresh installation and updates for retained packages; no installed
 Homebrew inventory or transfer ledger is required.
+This remains a macOS source inventory. D14 requires portable module boundaries
+for a future Ubuntu or Arch machine; it does not assert Linux package coverage.
 
 See the [plan](mise-migration.md) and [decision
 map](mise-migration-decisions.md).
@@ -17,14 +19,14 @@ verification entries. These 183 declarations include taps and editor extensions,
 and duplicate packages between install and verification lists. They are not 183
 unique packages. Xcode is also conditionally installed by `install.sh`.
 
-Default mapping: `brew` to native `brew:` packages, `cask` to `brew-cask:`,
+Initial macOS mapping: `brew` to native `brew:` packages, `cask` to `brew-cask:`,
 existing mise tools remain `[tools]`, `mas` to `mas:`, and editor extensions to
 an idempotent editor task. Exclude Stow and the mise formula from the new setup;
 install mise through its official bootstrap. Map tap URLs explicitly and verify
 SSH Git transport; HTTP artifact/API downloads are not Git transport.
 
-Every entry below needs a row in M0's compatibility ledger with its new owner,
-fresh-install result, update result, and recovery.
+Every retained entry needs a row in M0's ledger with OS/architecture eligibility,
+its new owner, fresh-install result, update result, and recovery.
 Do not infer support from a recipe name. Record common/optional/machine scope
 and the effective declaration path as well: D9 includes software changes in
 private history, and M10b applies them on matching automatic machines. Transfer
@@ -44,10 +46,13 @@ model. D11 retires grouped profiles and their selection UI.
 | Retired everywhere | OpenCode and its exclusive integrations; old profile menus, aliases, presets, and saved selection format |
 
 Each optional capability uses a local native module selection. Do not bundle
-them back into work/personal/audio/streaming profiles. Unknown machines receive
-the common base; other optional choices are enrollment inputs. An existing
+them back into work/personal/audio/streaming profiles. Unknown supported Macs
+receive the common base; other optional choices are enrollment inputs. An existing
 installed app does not authorize deleting its data when its module is disabled.
 The work exclusions are explicit; no other machine's full selection was supplied.
+On future Linux hosts, reuse portable configuration and tools; select native
+package routes after the distribution is chosen. The macOS common base does not
+require OrbStack, macOS GUI apps, or their preference adapters on Linux.
 
 The `audio-hijack` recipe exists and is marked self-updating; that establishes a
 candidate native `brew-cask:` route, not a completed fresh-install test:
@@ -257,14 +262,14 @@ explicit in each module's declaration.
 | `tools/starship/config/.config/starship.toml` | `conf.d/starship/starship.toml` |
 | `tools/zed/config/.config/zed/` | `conf.d/zed/` with only its managed source files |
 | `tools/vim/config/.config/nvim/` | `conf.d/nvim/` with its real Lua/config subtrees |
-| `tools/macos/install.sh` | Native declarations in `conf.d/macos/mise.toml` plus necessary module scripts |
+| `tools/macos/install.sh` | Native declarations in `conf.d/macos/mise.macos.toml` plus macOS module scripts |
 | `tools/mise/config/.config/mise/config.toml` | Root policy in `config.toml`; tool ownership in the corresponding modules |
-| `brewfiles/core` | Common declarations in owning modules; config-free tools/apps in `cli`/`apps` |
-| `brewfiles/profiles/cloud` | Always-loaded `conf.d/cloud/mise.toml` declarations |
-| `brewfiles/profiles/dev`, `formatters`, `image`, `languages` | Common declarations in their owning modules, without environment suffixes |
+| `brewfiles/core` | Portable declarations in owning modules; Mac package/app routes in their `mise.macos.toml` fragments |
+| `brewfiles/profiles/cloud` | Common `conf.d/cloud/mise.toml` plus platform-specific installation declarations |
+| `brewfiles/profiles/dev`, `formatters`, `image`, `languages` | Common capabilities in owning modules, with platform fragments where required and no role profiles |
 | Optional app entries, including former core DisplayLink | `conf.d/<app>/mise.<app>.toml` with only that capability's resources |
 | `tools/thaw/Thaw.plist` and plaintext backup output | Private encrypted snapshots; public `conf.d/thaw/` contains only declarations/adapters |
-| Appearance LaunchAgent plist | Native TOML declaration in `conf.d/macos/mise.toml`; runtime plist is generated |
+| Appearance LaunchAgent plist | Native TOML declaration in `conf.d/macos/mise.macos.toml`; runtime plist is generated |
 | `maintenance/`, `config/`, `cli/` behavior | Native operational `tasks/`; optional thin convenience commands |
 | `verification/` and component test trees | Reduced `tests/` suite based on retained behavior; see D12 |
 
@@ -272,6 +277,27 @@ Enroll the native root payload into `~/.config/mise` with the same relative path
 Do not retain a separate active source mirror or deploy module manifests and
 scripts into application config directories. Public `machines/` records remain
 tracked; local enrollment files remain outside the shared payload.
+
+### Platform assumptions to isolate
+
+The current implementation is intentionally macOS-only. During the rebuild,
+isolate these concrete dependencies rather than treating existing files as
+portable merely because their tool also runs on Linux:
+
+- `install.sh` rejects non-Darwin hosts and requires FDA/CLT. Keep those checks
+  in the macOS path; common enrollment does not require Apple prerequisites.
+- `tools/bin/config/.local/bin/machash` uses `ioreg` and `IOPlatformUUID`.
+  Keep that lookup separate from the shared stable machine-record interface.
+- Fish's `00_homebrew.fish` and `01_paths.fish` assume `/opt/homebrew`.
+  `clean-rust.fish` uses `DARWIN_USER_CACHE_DIR`, `flushdns.fish` invokes macOS
+  commands, and `04_cli-abbrs.fish` has a Tailscale app-bundle path. Preserve useful
+  Mac behavior behind platform boundaries; do not export it as Linux defaults.
+- Native LaunchAgents and CFPreferences capture/restore stay on macOS. The
+  common history/application command must not invoke those adapters on Linux.
+
+The later Linux implementation must verify distro package names, service/session
+availability, and actual application paths on the selected machine. No new
+Linux support, remote inspection, or Linux acceptance result is recorded here.
 
 ## Application preference discovery
 
