@@ -114,6 +114,10 @@ font repositories, plugins, skills and the initial checkout use HTTPS. The share
 Git configuration preserves each URL's protocol instead of rewriting HTTPS to SSH.
 Private setup history still requires authentication for its chosen transport.
 
+IINA's module redirects its DMG download to the official GitHub release through
+mise's `url_replacements`. The native cask still owns its version, checksum,
+application and CLI installation, and self-update behavior.
+
 ## Release policy
 
 Flexible mise tool requests select the newest matching release at least three

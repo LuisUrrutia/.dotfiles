@@ -1,4 +1,8 @@
 
+[settings.url_replacements]
+# The official GitHub mirror serves the same DMG and keeps the cask's checksum.
+'regex:^https://dl\.iina\.io/IINA\.v([0-9]+(?:\.[0-9]+)*)\.dmg$' = "https://github.com/iina/iina/releases/download/v$1/IINA.v$1.dmg"
+
 [bootstrap.packages]
 "brew-cask:iina" = { os = "macos" }
 

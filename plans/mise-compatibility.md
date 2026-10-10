@@ -454,13 +454,58 @@ integration tests passed in **154.895 seconds**, along with static, smoke,
 secret-scan and diff checks. See `repository-verify-2password-policy.log`.
 The VM was stopped after verification.
 
+## IINA download mirror and Lato comparison
+
+On 2026-10-10, IINA's official GitHub release downloaded successfully. Its
+SHA-256, `8fad50479b10e09645053457cec46bd53d054ced2242cfe68f74586735a20dc7`,
+matches the native 1.5.0 cask. A module-scoped `settings.url_replacements` rule
+now maps the vendor DMG URL to that version's GitHub release, retaining native
+cask ownership and checksum verification without pinning a separate installer.
+
+In `dotfiles-associations-023be87`, `mise -C ~ bootstrap packages apply
+brew-cask:iina` downloaded the GitHub asset and installed 1.5.0; a repeat exited
+0 without reinstalling. `mise -C ~ run --timeout 2m setup:iina` passed repeatedly,
+as did `/opt/homebrew/bin/iina --help` and `codesign --verify --deep --strict
+/Applications/IINA.app`. The independent `spctl --assess --type execute
+--verbose=2 /Applications/IINA.app` returned **3**, `rejected`, with
+`source=Notarized Developer ID`. This resolves download and installation, not the
+VM's broader security-assessment discrepancy or GUI playback acceptance.
+Local evidence: `iina-github-*.log` and `iina-github-results.json` under
+`.tmp/macos-acceptance/evidence/`.
+
+Google's `googlefonts/LatoGFVersion` repository at commit
+`080cb69711ca050d91e9c866e58df7a73095c69a` retains all 18 original TTFs under
+`src/`. Downloads of every file matched the operator's existing Lato2OFL files
+byte for byte, without modifying that installation. The main `google/fonts`
+catalog also supplies 18 version-2.015 fonts, but renames Hairline to Thin, Thin
+to ExtraLight and Heavy to ExtraBold. A sampled comparison found identical
+Regular glyph and metric tables, but different Heavy/ExtraBold tables.
+The original `src/` files preserve compatibility; the catalog is not a
+byte-identical replacement. Lato's cask remains unchanged and its vendor archive
+still timed out. Evidence is under `.tmp/download-alternatives/`.
+
+The Zed association smoke check passed for its declared `json`, `yaml`, `toml`
+and `sh` extensions. `/bin/bash .tmp/mise-implementation/verify-entrypoint.sh`
+exited **0**, including all four integration tests in **151.285 seconds**,
+parsers, static checks, shell smoke, secret scanning and diff checks. The log is
+`repository-verify-iina-github.log`. The VM was stopped after testing.
+
+Sources:
+
+- https://github.com/iina/iina/releases/tag/v1.5.0
+- https://formulae.brew.sh/api/cask/iina.json
+- https://mise.jdx.dev/url-replacements.html
+- https://github.com/googlefonts/LatoGFVersion/tree/080cb69711ca050d91e9c866e58df7a73095c69a/src
+- https://github.com/google/fonts/tree/main/ofl/lato
+
 ## Outstanding acceptance
 
 The fresh-Mac exercise in [POST_INSTALL.md](../POST_INSTALL.md) is in progress.
 The following acceptance is still outstanding:
 
-- The four remaining common casks (NordVPN, Ghostty, IINA and Lato), optional
-  packages, App Store installation, full package updates and driver operation.
+- NordVPN, Ghostty and Lato installation; IINA's security assessment and GUI
+  playback; optional packages, App Store installation, full package updates and
+  driver operation.
 - Complete native package status with the custom-tap evaluator.
 - An untouched Setup Assistant/security flow, FileVault and immediate screen lock,
   the eight Mail/Safari defaults reported unset from Terminal, and actual launchd

@@ -47,7 +47,7 @@ package	brew-cask:ghostty	conf.d/ghostty/mise.macos.toml	macos-arm64	blocked-dow
 package	brew-cask:google-chrome	conf.d/apps/mise.macos.toml	macos-arm64	vm-installed-155.0.8059.40	pending-clean-machine	retry-native-owner
 package	brew-cask:granola	conf.d/apps/mise.macos.toml	macos-arm64	vm-installed-7.637.0	pending-clean-machine	retry-native-owner
 package	brew-cask:hammerspoon	conf.d/hammerspoon/mise.macos.toml	macos-arm64	vm-installed-1.1.1	pending-clean-machine	retry-native-owner
-package	brew-cask:iina	conf.d/iina/mise.macos.toml	macos-arm64	blocked-download-timeout	pending-clean-machine	retry-native-owner
+package	brew-cask:iina	conf.d/iina/mise.macos.toml	macos-arm64	vm-installed-1.5.0-gatekeeper-rejected	pending-clean-machine	retry-native-owner
 package	brew-cask:linearmouse	conf.d/linearmouse/mise.macos.toml	macos-arm64	vm-installed-0.12.0	pending-clean-machine	retry-native-owner
 package	brew-cask:loopback	conf.d/loopback/mise.loopback.toml	macos-arm64;optional=loopback	not-selected-in-vm	pending-clean-machine	retry-native-owner
 package	brew-cask:macfuse	conf.d/apps/mise.macos.toml	macos-arm64	vm-installed-5.4.0	pending-clean-machine	retry-native-owner
