@@ -64,6 +64,28 @@ for it.
   issues included (`https://github.com/<owner>/<repo>/issues/123`, not `#123`).
 - Back research findings with primary or trusted documentation.
 
+## Remote machines and services
+
+- For Luis's fleet inventory, machine setup, or operations on its machines,
+  use the `fleet` skill by name through the skill catalog. If unavailable,
+  report the missing skill.
+- Prefer verified Tailscale endpoints for machines and services in the tailnet.
+  Use the task's machine inventory, machine-local rules, or service-specific
+  instructions to identify the endpoint, protocol, port, and account. Retain
+  service authentication and TLS verification. External services keep their
+  documented transport and authentication.
+- For tailnet hosts configured for Tailscale SSH, prefer
+  `tailscale ssh user@host` with the documented unprivileged account. If the
+  macOS app CLI is not on PATH, locate the installed Tailscale app and use
+  its bundled CLI.
+  For other tailnet hosts, use their documented SSH authentication with
+  `BatchMode=yes`. Keep host verification enabled. If access requires
+  interactive authentication, report the blocker rather than wait for input.
+- Use the documented agent account or an approved machine-specific account
+  exception. For fleet tasks, sudo execution and authentication follow the
+  `fleet` skill's sudo policy. Changing accounts, granting privileges, or
+  modifying access policies still requires an explicit user request.
+
 ## Git transport
 
 - Use SSH for every Git network operation: clone, fetch, pull, push, and
