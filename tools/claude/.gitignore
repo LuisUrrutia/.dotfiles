@@ -1,5 +1,0 @@
-config/.claude/*
-!config/.claude/CLAUDE.md
-!config/.claude/agents/
-!config/.claude/commands/
-!config/.claude/settings.json

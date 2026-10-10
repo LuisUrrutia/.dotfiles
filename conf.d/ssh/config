@@ -1,0 +1,3 @@
+Host github.com gitlab.com
+    IdentityAgent none
+    IdentitiesOnly yes

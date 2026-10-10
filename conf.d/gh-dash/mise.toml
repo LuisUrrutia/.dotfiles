@@ -1,0 +1,5 @@
+[dotfiles]
+"~/.config/gh-dash/config.yml" = "config.yml"
+
+[tools]
+"aqua:dlvhdr/gh-dash" = "latest"

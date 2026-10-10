@@ -1,0 +1,34 @@
+min_version = "2026.10.7"
+
+[settings]
+task.run_auto_install = false
+minimum_release_age = "3d"
+
+[tools]
+python = "3"
+node = "lts"
+uv = "latest"
+actionlint = "latest"
+shellcheck = "latest"
+gitleaks = "latest"
+taplo = "latest"
+editorconfig-checker = "latest"
+stylua = "latest"
+"npm:esbuild" = "latest"
+"pipx:json5" = "latest"
+"pipx:check-jsonschema" = "latest"
+
+[bootstrap.packages]
+"brew:fish" = { os = "macos" }
+"brew:worktrunk" = { os = "macos" }
+"brew:lua" = { os = "macos" }
+"brew:luacheck" = { os = "macos" }
+"brew:git" = { os = "macos" }
+
+[tasks.verify]
+description = "Run isolated behavior, syntax, and configuration checks"
+run = "python3 tests/run.py"
+
+[tasks.enroll]
+description = "Seed or adopt the active configuration without overwriting edits"
+run = 'python3 "{{ config_root }}/bootstrap/enroll.py"'

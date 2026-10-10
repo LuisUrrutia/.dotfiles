@@ -1,0 +1,12 @@
+[dotfiles]
+"~/.config/pnpm/config.yaml" = "pnpm.yaml"
+"~/.yarnrc.yml" = "yarnrc.yml"
+
+[tools]
+bun = "latest"
+deno = "latest"
+node = "lts"
+pnpm = "latest"
+
+[tasks."setup:node"]
+run = 'bash "{{ config_root }}/setup.sh"'

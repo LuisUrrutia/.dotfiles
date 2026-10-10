@@ -1,0 +1,11 @@
+[dotfiles]
+"~/.config/nvim/init.lua" = "init.lua"
+"~/.config/nvim/lazy-lock.json" = "lazy-lock.json"
+"~/.config/nvim/lua" = { source = "lua", mode = "symlink-each" }
+"~/.config/nvim/stylua.toml" = "stylua.toml"
+
+[tools]
+"aqua:tree-sitter/tree-sitter" = "latest"
+
+[tasks."setup:nvim"]
+run = 'bash "{{ config_root }}/setup.sh"'

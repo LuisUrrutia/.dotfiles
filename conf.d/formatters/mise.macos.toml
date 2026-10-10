@@ -1,0 +1,7 @@
+
+[bootstrap.packages]
+"brew:shfmt" = { os = "macos" }
+"brew:stylua" = { os = "macos" }
+"brew:yamlfmt" = { os = "macos" }
+"brew:latexindent" = { os = "macos" }
+"brew:biome" = { os = "macos" }

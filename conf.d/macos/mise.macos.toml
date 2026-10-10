@@ -1,0 +1,491 @@
+
+[bootstrap.packages]
+"brew:dockutil" = { os = "macos" }
+
+[[bootstrap.macos.defaults_entries]]
+domain = "NSGlobalDomain"
+key = "NSAutomaticCapitalizationEnabled"
+value = false
+host = "any"
+
+[[bootstrap.macos.defaults_entries]]
+domain = "NSGlobalDomain"
+key = "NSAutomaticDashSubstitutionEnabled"
+value = false
+host = "any"
+
+[[bootstrap.macos.defaults_entries]]
+domain = "NSGlobalDomain"
+key = "NSAutomaticPeriodSubstitutionEnabled"
+value = false
+host = "any"
+
+[[bootstrap.macos.defaults_entries]]
+domain = "NSGlobalDomain"
+key = "NSAutomaticQuoteSubstitutionEnabled"
+value = false
+host = "any"
+
+[[bootstrap.macos.defaults_entries]]
+domain = "NSGlobalDomain"
+key = "NSAutomaticSpellingCorrectionEnabled"
+value = false
+host = "any"
+
+[[bootstrap.macos.defaults_entries]]
+domain = "NSGlobalDomain"
+key = "NSAutomaticInlinePredictionEnabled"
+value = false
+host = "any"
+
+[[bootstrap.macos.defaults_entries]]
+domain = "NSGlobalDomain"
+key = "NSTextShowsControlCharacters"
+value = true
+host = "any"
+
+[[bootstrap.macos.defaults_entries]]
+domain = "NSGlobalDomain"
+key = "KeyRepeat"
+value = 1
+host = "any"
+
+[[bootstrap.macos.defaults_entries]]
+domain = "NSGlobalDomain"
+key = "InitialKeyRepeat"
+value = 15
+host = "any"
+
+[[bootstrap.macos.defaults_entries]]
+domain = "NSGlobalDomain"
+key = "ApplePressAndHoldEnabled"
+value = false
+host = "any"
+
+[[bootstrap.macos.defaults_entries]]
+domain = "NSGlobalDomain"
+key = "AppleKeyboardUIMode"
+value = 2
+host = "any"
+
+[[bootstrap.macos.defaults_entries]]
+domain = "com.apple.HIToolbox"
+key = "AppleFnUsageType"
+value = 0
+host = "any"
+
+[[bootstrap.macos.defaults_entries]]
+domain = "kCFPreferencesAnyApplication"
+key = "TSMLanguageIndicatorEnabled"
+value = false
+host = "any"
+
+[[bootstrap.macos.defaults_entries]]
+domain = "com.apple.finder"
+key = "CreateDesktop"
+value = false
+host = "any"
+
+[[bootstrap.macos.defaults_entries]]
+domain = "-g"
+key = "AppleFontSmoothing"
+value = 0
+host = "current"
+
+[[bootstrap.macos.defaults_entries]]
+domain = "-g"
+key = "AppleScrollerPagingBehavior"
+value = 1
+host = "any"
+
+[[bootstrap.macos.defaults_entries]]
+domain = "com.apple.screencapture"
+key = "type"
+value = "png"
+host = "any"
+
+[[bootstrap.macos.defaults_entries]]
+domain = "com.apple.screencapture"
+key = "disable-shadow"
+value = true
+host = "any"
+
+[[bootstrap.macos.defaults_entries]]
+domain = "com.apple.screensaver"
+key = "idleTime"
+value = 900
+host = "current"
+
+[[bootstrap.macos.defaults_entries]]
+domain = "com.apple.finder"
+key = "QuitMenuItem"
+value = true
+host = "any"
+
+[[bootstrap.macos.defaults_entries]]
+domain = "NSGlobalDomain"
+key = "AppleShowAllExtensions"
+value = true
+host = "any"
+
+[[bootstrap.macos.defaults_entries]]
+domain = "com.apple.finder"
+key = "AppleShowAllFiles"
+value = true
+host = "any"
+
+[[bootstrap.macos.defaults_entries]]
+domain = "com.apple.finder"
+key = "FXEnableExtensionChangeWarning"
+value = false
+host = "any"
+
+[[bootstrap.macos.defaults_entries]]
+domain = "com.apple.finder"
+key = "FXRemoveOldTrashItems"
+value = true
+host = "any"
+
+[[bootstrap.macos.defaults_entries]]
+domain = "com.apple.finder"
+key = "ShowRemovableMediaOnDesktop"
+value = false
+host = "any"
+
+[[bootstrap.macos.defaults_entries]]
+domain = "com.apple.finder"
+key = "NewWindowTarget"
+value = "PfHm"
+host = "any"
+
+[[bootstrap.macos.defaults_entries]]
+domain = "com.apple.finder"
+key = "_FXSortFoldersFirst"
+value = true
+host = "any"
+
+[[bootstrap.macos.defaults_entries]]
+domain = "com.apple.finder"
+key = "_FXEnableColumnAutoSizing"
+value = true
+host = "any"
+
+[[bootstrap.macos.defaults_entries]]
+domain = "com.apple.finder"
+key = "FXPreferredViewStyle"
+value = "Nlsv"
+host = "any"
+
+[[bootstrap.macos.defaults_entries]]
+domain = "com.apple.finder"
+key = "FXDefaultSearchScope"
+value = "SCcf"
+host = "any"
+
+[[bootstrap.macos.defaults_entries]]
+domain = "com.apple.finder"
+key = "ShowPathbar"
+value = true
+host = "any"
+
+[[bootstrap.macos.defaults_entries]]
+domain = "com.apple.finder"
+key = "ShowStatusBar"
+value = true
+host = "any"
+
+[[bootstrap.macos.defaults_entries]]
+domain = "com.apple.finder"
+key = "_FXShowPosixPathInTitle"
+value = true
+host = "any"
+
+[[bootstrap.macos.defaults_entries]]
+domain = "com.apple.desktopservices"
+key = "DSDontWriteNetworkStores"
+value = true
+host = "any"
+
+[[bootstrap.macos.defaults_entries]]
+domain = "com.apple.dock"
+key = "tilesize"
+value = 55
+host = "any"
+
+[[bootstrap.macos.defaults_entries]]
+domain = "com.apple.dock"
+key = "autohide"
+value = true
+host = "any"
+
+[[bootstrap.macos.defaults_entries]]
+domain = "com.apple.dock"
+key = "expose-group-apps"
+value = true
+host = "any"
+
+[[bootstrap.macos.defaults_entries]]
+domain = "NSGlobalDomain"
+key = "AppleICUForce24HourTime"
+value = true
+host = "any"
+
+[[bootstrap.macos.defaults_entries]]
+domain = "com.apple.Siri"
+key = "StatusMenuVisible"
+value = 0
+host = "any"
+
+[[bootstrap.macos.defaults_entries]]
+domain = "com.apple.Spotlight"
+key = "MenuItemHidden"
+value = 1
+host = "current"
+
+[[bootstrap.macos.defaults_entries]]
+domain = "com.apple.controlcenter"
+key = "BatteryShowPercentage"
+value = true
+host = "current"
+
+[[bootstrap.macos.defaults_entries]]
+domain = "com.apple.dock"
+key = "mru-spaces"
+value = false
+host = "any"
+
+[[bootstrap.macos.defaults_entries]]
+domain = "NSGlobalDomain"
+key = "AppleSpacesSwitchOnActivate"
+value = false
+host = "any"
+
+[[bootstrap.macos.defaults_entries]]
+domain = "com.apple.WindowManager"
+key = "EnableStandardClickToShowDesktop"
+value = false
+host = "any"
+
+[[bootstrap.macos.defaults_entries]]
+domain = "NSGlobalDomain"
+key = "AppleActionOnDoubleClick"
+value = "Fill"
+host = "any"
+
+[[bootstrap.macos.defaults_entries]]
+domain = "com.apple.WindowManager"
+key = "EnableTiledWindowMargins"
+value = false
+host = "any"
+
+[[bootstrap.macos.defaults_entries]]
+domain = "com.apple.commerce"
+key = "AutoUpdate"
+value = true
+host = "any"
+
+[[bootstrap.macos.defaults_entries]]
+domain = "com.apple.AdLib"
+key = "allowApplePersonalizedAdvertising"
+value = false
+host = "any"
+
+[[bootstrap.macos.defaults_entries]]
+domain = "com.apple.LaunchServices"
+key = "LSQuarantine"
+value = false
+host = "any"
+
+[[bootstrap.macos.defaults_entries]]
+domain = "NSGlobalDomain"
+key = "NSWindowResizeTime"
+value = 0.001
+host = "any"
+
+[[bootstrap.macos.defaults_entries]]
+domain = "NSGlobalDomain"
+key = "NSNavPanelExpandedStateForSaveMode"
+value = true
+host = "any"
+
+[[bootstrap.macos.defaults_entries]]
+domain = "com.apple.TextEdit"
+key = "RichText"
+value = 0
+host = "any"
+
+[[bootstrap.macos.defaults_entries]]
+domain = "com.apple.TextEdit"
+key = "PlainTextEncoding"
+value = 4
+host = "any"
+
+[[bootstrap.macos.defaults_entries]]
+domain = "com.apple.TextEdit"
+key = "PlainTextEncodingForWrite"
+value = 4
+host = "any"
+
+[[bootstrap.macos.defaults_entries]]
+domain = "com.apple.CrashReporter"
+key = "DialogType"
+value = "developer"
+host = "any"
+
+[[bootstrap.macos.defaults_entries]]
+domain = "com.apple.loginwindow"
+key = "RetriesUntilHint"
+value = 0
+host = "any"
+
+[[bootstrap.macos.defaults_entries]]
+domain = "com.apple.controlcenter"
+key = "AirplayReceiverEnabled"
+value = false
+host = "current"
+
+[[bootstrap.macos.defaults_entries]]
+domain = "com.apple.Siri"
+key = "ConfirmSiriInvokedViaEitherCmdTwice"
+value = false
+host = "any"
+
+[[bootstrap.macos.defaults_entries]]
+domain = "com.apple.TimeMachine"
+key = "DoNotOfferNewDisksForBackup"
+value = true
+
+[[bootstrap.macos.defaults_entries]]
+domain = "com.apple.mail"
+key = "DisableInlineAttachmentViewing"
+value = true
+
+[[bootstrap.macos.defaults_entries]]
+domain = "com.apple.Safari"
+key = "IncludeDevelopMenu"
+value = true
+
+[[bootstrap.macos.defaults_entries]]
+domain = "com.apple.Safari"
+key = "WebKitDeveloperExtrasEnabledPreferenceKey"
+value = true
+
+[[bootstrap.macos.defaults_entries]]
+domain = "com.apple.Safari"
+key = "com.apple.Safari.ContentPageGroupIdentifier.WebKit2DeveloperExtrasEnabled"
+value = true
+
+[[bootstrap.macos.defaults_entries]]
+domain = "com.apple.Safari"
+key = "ShowFullURLInSmartSearchField"
+value = true
+
+[[bootstrap.macos.defaults_entries]]
+domain = "com.apple.Safari"
+key = "AutoOpenSafeDownloads"
+value = false
+
+[[bootstrap.macos.defaults_entries]]
+domain = "com.apple.Safari"
+key = "WebKitTabToLinksPreferenceKey"
+value = true
+
+[[bootstrap.macos.defaults_entries]]
+domain = "com.apple.Safari"
+key = "com.apple.Safari.ContentPageGroupIdentifier.WebKit2TabsToLinks"
+value = true
+
+[[bootstrap.macos.defaults_entries]]
+domain = "com.apple.symbolichotkeys"
+key = "AppleSymbolicHotKeys"
+path = ["176", "enabled"]
+value = false
+
+[[bootstrap.macos.defaults_entries]]
+domain = "com.apple.symbolichotkeys"
+key = "AppleSymbolicHotKeys"
+path = ["64", "enabled"]
+value = false
+
+[[bootstrap.macos.defaults_entries]]
+domain = "com.apple.symbolichotkeys"
+key = "AppleSymbolicHotKeys"
+path = ["65", "enabled"]
+value = false
+
+[[bootstrap.macos.defaults_entries]]
+domain = "com.apple.symbolichotkeys"
+key = "AppleSymbolicHotKeys"
+path = ["60", "enabled"]
+value = false
+
+[[bootstrap.macos.defaults_entries]]
+domain = "com.apple.symbolichotkeys"
+key = "AppleSymbolicHotKeys"
+path = ["61", "enabled"]
+value = false
+
+[[bootstrap.macos.defaults_entries]]
+domain = "com.apple.symbolichotkeys"
+key = "AppleSymbolicHotKeys"
+path = ["28", "enabled"]
+value = false
+
+[[bootstrap.macos.defaults_entries]]
+domain = "com.apple.symbolichotkeys"
+key = "AppleSymbolicHotKeys"
+path = ["29", "enabled"]
+value = false
+
+[[bootstrap.macos.defaults_entries]]
+domain = "com.apple.symbolichotkeys"
+key = "AppleSymbolicHotKeys"
+path = ["30", "enabled"]
+value = false
+
+[[bootstrap.macos.defaults_entries]]
+domain = "com.apple.symbolichotkeys"
+key = "AppleSymbolicHotKeys"
+path = ["31", "enabled"]
+value = false
+
+[[bootstrap.macos.defaults_entries]]
+domain = "com.apple.symbolichotkeys"
+key = "AppleSymbolicHotKeys"
+path = ["184", "enabled"]
+value = false
+
+[[bootstrap.macos.defaults_entries]]
+domain = "com.apple.symbolichotkeys"
+key = "AppleSymbolicHotKeys"
+path = ["181", "enabled"]
+value = false
+
+[[bootstrap.macos.defaults_entries]]
+domain = "com.apple.symbolichotkeys"
+key = "AppleSymbolicHotKeys"
+path = ["182", "enabled"]
+value = false
+
+[[bootstrap.macos.defaults_entries]]
+domain = "com.apple.symbolichotkeys"
+key = "AppleSymbolicHotKeys"
+path = ["27"]
+value = { "enabled" = true, "value" = { "type" = "standard", "parameters" = [96, 50, 1966080] } }
+
+[bootstrap.macos.launchd.agents.appearance]
+program = "/usr/bin/osascript"
+args = ["-e", "on darkModeForTime(secondsToday)\n    return secondsToday < 36000 or secondsToday >= 72000\nend darkModeForTime\n\non run\n    set useDarkMode to darkModeForTime(time of (current date))\n    tell application \"System Events\"\n        tell appearance preferences\n            if dark mode is not useDarkMode then set dark mode to useDarkMode\n        end tell\n    end tell\n    do shell script \"/usr/bin/defaults write -g AppleInterfaceStyleSwitchesAutomatically -bool false\"\nend run"]
+run_at_load = true
+start_calendar_interval = [{ hour = 10, minute = 0 }, { hour = 20, minute = 0 }]
+process_type = "Background"
+
+[bootstrap.services.mise-history]
+builtin = "history-watch"
+
+[tasks."setup:macos"]
+sources = ["{{ config_root }}/system-settings.sh"]
+run = 'bash "{{ config_root }}/system-settings.sh"'
+
+[tasks."setup:dock"]
+run = 'bash "{{ config_root }}/dock.sh"'

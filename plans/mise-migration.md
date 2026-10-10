@@ -1,7 +1,7 @@
 # Build a mise-native setup, starting with macOS
 
-Status: implementation authorized; common setup, application exceptions, encrypted
-preference history, OpenCode retirement, and proportionate verification are agreed.
+Status: native repository implementation delivered; isolated verification is recorded
+in the compatibility report. Fresh-Mac and real application acceptance remain open.
 The user will reinstall macOS; upgrading existing dotfiles installations is out
 of scope. A future Ubuntu or Arch mini PC must fit the design without replacing
 its shared core; Linux implementation is deferred. No machine setup has started.
@@ -285,33 +285,29 @@ These contracts also apply when an agent changes the setup.
 
 ## Delivery order
 
-Each row is a proposed review unit, not a completed task or published PR.
-No numeric PR cap was requested. The review budget is one coherent behavior;
-split the marked batches when their acceptance decisions become independent.
-Line estimates below include implementation, tests, and documentation, measured
-as additions plus deletions. They are rough scope estimates based on the current
-script/config sizes, not measured diffs; re-estimate after M0 and before execution.
+The implementation uses one coherent replacement boundary because the native
+payload, operational commands, verification and legacy retirement must agree.
+The statuses below distinguish repository delivery from real-machine acceptance.
+No PR or machine installation was requested as part of this implementation.
 
-| Unit | Result | Depends on | Estimate and readiness |
-| --- | --- | --- | --- |
-| M0 | Version, composition, and fresh-package feasibility | None | 150-350 lines; ready for isolated work |
-| M1 | Safe official mise bootstrap from stock macOS | M0 version/composition gate | 300-700; draft |
-| M2 | Common base and per-machine app enrollment | M1 | 200-450; draft |
-| M3 | Formula/tool ownership without brew | M0 package gate, M2 | 300-700 per bounded batch; draft |
-| M4 | Fresh cask/App Store/vendor app installation | M0 recipe gate, M2 | 250-600 per artifact class; draft |
-| M5 | Native modules and safe file ownership replacing Stow | M1, M2 | 350-750; draft, then small tool batches |
-| M6 | Machine Git templates and scoped identities | M5 | 200-450; draft |
-| M7 | Fish login shell, activation, plugins | M3 Fish/Fisher, M5 | 250-600; draft |
-| M8a | User defaults and appearance LaunchAgent | M5; selected apps for Dock | 300-650; draft |
-| M8b | Remaining system and app setup tasks | M8a | 250-600 per cohesive behavior; draft |
-| M9 | Remaining tool setup through mise tasks | M3-M5; M7 where Fish-dependent | 150-400 per tool family; draft |
-| M10 | Complete setup history, encryption, local enrollment | M2, M5; origin/key inputs for enrollment | 300-700; draft |
-| M10a | Encrypted application preferences and safe restore | M10; relevant M4/M5 app owners | 200-450 per distinct storage behavior; draft |
-| M10b | Serial exchange and automatic setup application | M0 protocol gate, M10/M10a; relevant setup owners | 300-700; draft |
-| M11 | Native maintenance and daily commands | M3-M10b relevant owners | 250-550; draft |
-| M12 | CI and verification without Homebrew/Stow | M3, M5; ported checks | 250-600; draft |
-| M13 | Existing-Mac migration | None | Cancelled by user; no implementation or acceptance work |
-| M14 | Fresh-Mac acceptance and old repository code removal | M0-M12 plus all acceptance evidence | Re-estimate deletion diff; draft |
+| Unit | Result | Implementation and evidence |
+| --- | --- | --- |
+| M0 | Native compatibility | 2026.10.7 selected after the structured-edit probe; isolated contracts verified |
+| M1 | Official bootstrap | Implemented; verified download, checksum rejection, preserved replacement, and rerun |
+| M2 | Enrollment | Implemented; tracked missing-file seed, actual adoption with all setup phases skipped, local choices preserved |
+| M3/M4 | Software ownership | 162 native package declarations and 25 retained tools mapped; full fresh installation/update remains open |
+| M5 | Native file ownership | Implemented; isolated deployment, partial-key capture, foreign-link and drift preservation pass |
+| M6 | Git identities | Implemented; personal/work/agent/unknown cases and real Worktrunk worktrees pass |
+| M7 | Fish | Implemented; syntax and noninteractive smoke pass; actual login shell/plugin startup remains open |
+| M8a/M8b | macOS settings | Native defaults, agents and remaining tasks implemented; privileged and GUI execution remains open |
+| M9 | Tool setup | Native module tasks implemented; fresh package/plugin execution remains open |
+| M10 | Private history | Native first-save encryption, adoption/key failure and local exclusion verified |
+| M10a | Preferences | Capture/restore adapters and reviewed structural guards implemented; real app reopen remains open |
+| M10b | Serial application | Two-client native exchange, automatic task application, conflict stop, revision changes and process cleanup verified |
+| M11 | Maintenance | Serial, independent failure handling and success-only schedules implemented; real updates remain open |
+| M12 | Verification/CI | Four integration areas and parser/static checks implemented; hosted workflow execution remains open |
+| M13 | Existing-Mac migration | Cancelled by the user; no migration implementation |
+| M14 | Cleanup and acceptance | Legacy tracked runtime removed; disposable fresh-Mac acceptance remains open |
 
 M3/M4 and M6-M10b need not form one linear PR stack. Dependencies name required
 capabilities; changes to shared entrypoints require coordination, not artificial
@@ -827,17 +823,9 @@ as part of this planning work.
 
 ## Readiness and next action
 
-M0 is ready for isolated execution. Later units are draft contracts, with explicit
-gates and estimates to refine from M0. D9 closes the sync-coverage decision:
-managed configuration and software/setup declarations travel together. Full
-completion still needs verified fresh package installation, the tested mise
-version/global-setup composition and automatic application behavior, and
-machine-specific enrollment/GUI acceptance. Cask ownership transfer and legacy
-migration are no longer gates. Actual identities, paths, origin,
-recipients, and which Macs use automatic sync are collected during enrollment;
-none were guessed during planning.
-
-Observed planning evidence is limited to source/documentation inspection and the
-isolated mise probes recorded in the decision map. No disk erase, package install,
-two-machine synchronization, permission enrollment, or complete fresh bootstrap
-was performed on a live Mac.
+Repository implementation is complete against the isolated checks recorded in
+`mise-compatibility.md`. The user owns reinstallation and the separately supplied
+private origin/recovery keys. Next, use `POST_INSTALL.md` on an authorized fresh
+Apple Silicon Mac, record package results in `mise-package-coverage.tsv`, and
+complete real app capture/restore/reopen acceptance. No live preferences were
+backed up and no machine was enrolled during repository implementation.

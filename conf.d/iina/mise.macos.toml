@@ -1,0 +1,6 @@
+
+[bootstrap.packages]
+"brew-cask:iina" = { os = "macos" }
+
+[tasks."setup:iina"]
+run = 'bash "{{ config_root }}/setup.sh"'

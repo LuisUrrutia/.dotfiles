@@ -1,0 +1,11 @@
+[dotfiles]
+"~/.config/git/allowed_signers" = "allowed_signers"
+"~/.config/git/attributes" = "attributes"
+"~/.config/git/default-commit-message" = "default-commit-message"
+"~/.config/git/delta.gitconfig" = "delta.gitconfig"
+"~/.config/git/ignore" = "ignore"
+"~/.config/git/defaults.gitconfig" = "defaults.gitconfig"
+"~/.local/bin/git-dm" = "git-dm"
+"~/.local/bin/git-recent-branches" = "git-recent-branches"
+"~/.gitconfig/shared" = { line = '[include] path = ~/.config/git/defaults.gitconfig', position = "prepend" }
+"~/.gitconfig/identity" = { source = "identity.gitconfig.tera", template = "tera" }

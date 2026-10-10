@@ -1,0 +1,15 @@
+{% if vars.git_name | default(value="") != "" and vars.git_email | default(value="") != "" %}
+[user]
+  name = {{ vars.git_name | json_encode() }}
+  email = {{ vars.git_email | json_encode() }}
+{% if vars.git_signing_key | default(value="") != "" %}
+  signingKey = {{ vars.git_signing_key | json_encode() }}
+[gpg]
+  format = ssh
+[commit]
+  gpgSign = true
+[tag]
+  gpgSign = true
+{% endif %}
+{% endif %}
+{{ vars.git_includes | default(value="") }}

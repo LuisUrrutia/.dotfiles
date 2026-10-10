@@ -1,0 +1,7 @@
+
+[bootstrap.packages]
+"brew:imagemagick" = { os = "macos" }
+"brew:vips" = { os = "macos" }
+"brew:libmagic" = { os = "macos" }
+"brew:libavif" = { os = "macos" }
+"brew:jpeg" = { os = "macos" }

@@ -13,17 +13,11 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
-env:
-  HOMEBREW_NO_ANALYTICS: 1
-  HOMEBREW_NO_AUTO_UPDATE: 1
-  HOMEBREW_NO_ENV_HINTS: 1
-  HOMEBREW_NO_INSTALL_CLEANUP: 1
-
 jobs:
   verify:
     name: Verify dotfiles
     runs-on: macos-26
-    timeout-minutes: 15
+    timeout-minutes: 20
     permissions:
       contents: read
 
@@ -33,10 +27,38 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Provision Verification Toolchain
+      - name: Isolate the native package prefix
         shell: bash
-        run: brew bundle install --file brewfiles/verification --no-upgrade
+        run: |
+          set -u
+          [[ "$GITHUB_ACTIONS" == true && "$RUNNER_ENVIRONMENT" == github-hosted ]]
+          if [[ -e /opt/homebrew ]]; then
+            sudo mv /opt/homebrew "$RUNNER_TEMP/preinstalled-homebrew"
+          fi
+          printf '%s\n' "$HOME/.local/bin" /opt/homebrew/bin /opt/homebrew/sbin >> "$GITHUB_PATH"
 
-      - name: Run Verification
+      - name: Install official mise
         shell: bash
-        run: ./dotfiles verify
+        run: /bin/bash bootstrap/install-mise.sh
+
+      - name: Provision verification tools through mise
+        shell: bash
+        env:
+          MISE_GITHUB_TOKEN: ${{ github.token }}
+          MISE_YES: 1
+        run: |
+          set -u
+          mise trust --yes
+          mise install --yes
+          mise bootstrap packages apply --yes
+          if command -v brew || command -v stow; then
+            echo 'The verification environment must not contain Homebrew or Stow.' >&2
+            exit 1
+          fi
+
+      - name: Run verification
+        shell: bash
+        env:
+          MISE_GITHUB_TOKEN: ${{ github.token }}
+          MISE_YES: 1
+        run: mise run verify

@@ -1,0 +1,6 @@
+[dotfiles]
+"~/.config/fish/completions" = { source = "completions", mode = "symlink-each" }
+"~/.config/fish/conf.d" = { source = "conf.d", mode = "symlink-each" }
+"~/.config/fish/config.fish" = "config.fish"
+"~/.config/fish/fish_plugins" = { mode = "track" }
+"~/.config/fish/functions" = { source = "functions", mode = "symlink-each" }

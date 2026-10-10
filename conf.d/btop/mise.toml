@@ -1,0 +1,3 @@
+[dotfiles]
+"~/.config/btop/btop.conf" = "btop.conf"
+"~/.config/btop/themes" = { source = "themes", mode = "symlink-each" }

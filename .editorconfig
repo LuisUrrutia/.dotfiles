@@ -10,7 +10,7 @@ charset = utf-8
 indent_style = space
 indent_size = 4
 
-[tools/vim/config/.config/nvim/**.lua]
+[conf.d/nvim/**.lua]
 indent_size = 2
 
 [*.py]

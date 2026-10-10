@@ -1,0 +1,9 @@
+[dotfiles]
+"~/.config/uv/uv.toml" = "uv.toml"
+
+[tools]
+python = "3"
+uv = "latest"
+
+[tasks."setup:python"]
+run = 'bash "{{ config_root }}/setup.sh"'

@@ -1,0 +1,6 @@
+
+[bootstrap.packages]
+"brew-cask:busycal" = { os = "macos" }
+
+[tasks."setup:busycal"]
+run = 'if [ "$(uname -s)" = Darwin ]; then dockutil --add /Applications/BusyCal.app --after com.apple.MobileSMS --no-restart --replacing BusyCal; fi'

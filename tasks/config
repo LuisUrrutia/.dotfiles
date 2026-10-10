@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+#MISE description="Inspect or apply this machine setup"
+set -euo pipefail
+exec mise exec python@3 -- python3 "${MISE_CONFIG_DIR:-$HOME/.config/mise}/conf.d/setup/config.py" "$@"

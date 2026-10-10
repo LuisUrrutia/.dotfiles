@@ -1,6 +1,6 @@
 ---
 name: fish-completion-debugging
-description: Debugs Fish shell completions, completion path loading, autoloading, and shell integration issues in this macOS dotfiles repo. Use when Fish completions, complete commands, fish_complete_path, Homebrew vendor completions, prompt side effects, or tools/fish/config/.config/fish/completions behavior is broken or being changed.
+description: Debugs Fish shell completions, completion path loading, autoloading, and shell integration issues in this macOS dotfiles repo. Use when Fish completions, complete commands, fish_complete_path, native package vendor completions, prompt side effects, or conf.d/fish/completions behavior is broken or being changed.
 ---
 
 # Fish Completion Debugging
@@ -12,21 +12,21 @@ Start with a failing completion transcript, not a guess. Capture the command, cu
 Use this minimum loop:
 
 ```sh
-fish -n tools/fish/config/.config/fish/config.fish
-fish -n tools/fish/config/.config/fish/conf.d/*.fish
-fish -n tools/fish/config/.config/fish/completions/*.fish
+fish -n conf.d/fish/config.fish
+fish -n conf.d/fish/conf.d/*.fish
+fish -n conf.d/fish/completions/*.fish
 fish -c 'set --show fish_complete_path'
 fish -c 'complete -C "wt "'
 ```
 
 ## Repo Map
 
-- Fish config root: `tools/fish/config/.config/fish`.
-- Tracked completions: `tools/fish/config/.config/fish/completions/<command>.fish`.
-- Homebrew completion paths are prepended in `conf.d/00_homebrew.fish`.
+- Fish config root: `conf.d/fish`.
+- Tracked completions: `conf.d/fish/completions/<command>.fish`.
+- Native macOS paths are configured in `macos-paths.fish`.
 - Paths and `RIPGREP_CONFIG_PATH` live in `conf.d/01_paths.fish`.
 - Interactive abbreviations live in `conf.d/03_abbrs.fish` and should stay guarded.
-- `tools/fish/install.sh` Stows config, adds Fish to `/etc/shells`, changes the shell, and runs Fisher update only when `~/.config/fish/fish_plugins` exists.
+- `conf.d/fish/mise.macos.toml` owns native packages and the login shell; `setup.sh` seeds the plugin manifest when absent and runs Fisher update.
 
 ## Diagnosis Workflow
 
@@ -50,23 +50,22 @@ fish -c 'complete -C "wt "'
 
 ## Validation Commands
 
-Use a temporary home for Stow checks so the user's live config is not touched:
+Use the isolated deployment check so live shell files stay untouched:
 
 ```sh
-tmp_home="$(mktemp -d)"
-stow -n -v -d "$PWD/tools/fish" -t "$tmp_home" config
+python3 -m unittest discover -s tests -p 'test_*.py' -k seed
 fish -c 'set --show fish_complete_path'
 fish -c 'complete -C "wt "'
 fish -c 'complete -C "awss "'
 fish -c 'functions --details fish_prompt'
 fish -c 'status is-interactive; echo $status'
-fish_indent --check tools/fish/config/.config/fish/completions/*.fish
+fish_indent --check conf.d/fish/completions/*.fish
 ```
 
 ## Common Failures
 
 - Completion file is named incorrectly, so Fish never autoloads it.
-- `$fish_complete_path` does not include the Stowed user completions or Homebrew vendor paths.
+- `$fish_complete_path` does not include the managed user completions or native package vendor paths.
 - A completion disables files with `-f` but never supplies dynamic candidates.
 - A command substitution assumes Bash word splitting or uses Bash-only syntax.
 - Noninteractive shells print output from config, breaking SSH/scp/rsync, fzf previews, or completion probes.
@@ -75,7 +74,7 @@ fish_indent --check tools/fish/config/.config/fish/completions/*.fish
 ## Change Rules
 
 - Keep Fish indentation at 4 spaces.
-- Do not add Brewfile dependencies, generated completions, or Fisher plugins unless the user explicitly asks.
+- Do not add package declarations, generated completions, or Fisher plugins unless the user explicitly asks.
 - Do not track ignored plugin-generated files such as `functions/fisher.fish`, `conf.d/fzf.fish`, or `completions/fzf_configure_bindings.fish`.
 - Prefer one regression probe per bug: the failing `complete -C` command should fail before the edit and pass after it.
 

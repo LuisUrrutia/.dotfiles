@@ -1,0 +1,4 @@
+
+[bootstrap.packages]
+"brew-cask:obs" = { os = "macos" }
+"brew-cask:obs-advanced-scene-switcher" = { os = "macos" }

@@ -29,7 +29,5 @@
 - [ ] I did not include secrets, credentials, private keys, licenses, sessions, logs, caches, or databases.
 - [ ] I preserved existing user state or made destructive intent explicit.
 - [ ] I updated user-facing documentation when behavior changed.
-- [ ] I ran the applicable repository-specific checks below, or explained why they do not apply:
-  - Bootstrap or Profile Install: relevant macOS Bash 3.2 `install.sh --dry-run` modes.
-  - Stowed Config: every package restowed into a temporary home with `--no-folding`.
-  - Machine or Git: secret scanning and the Git-specific validation commands from `AGENTS.md`.
+- [ ] I ran `mise run verify`, including isolated deployment/history and Git identity checks.
+- [ ] I distinguished repository checks from any unexecuted fresh-Mac or application restore acceptance.

@@ -17,10 +17,3 @@ read_globals = {
         },
     },
 }
-
-files["tools/hammerspoon/tests/unit.lua"] = {
-    -- The test harness builds and installs its own hs mock
-    globals = { "hs" },
-    -- Mock functions mirror real signatures and may ignore arguments
-    unused_args = false,
-}

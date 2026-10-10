@@ -1,0 +1,10 @@
+[dotfiles]
+"~/.config/ghostty/Ghostty.icns" = "Ghostty.icns"
+"~/.config/ghostty/config.ghostty" = "config.ghostty"
+"~/.config/ghostty/themes" = { source = "themes", mode = "symlink-each" }
+
+[bootstrap.packages]
+"brew-cask:ghostty" = { os = "macos" }
+
+[tasks."setup:ghostty"]
+run = 'bash "{{ config_root }}/setup.sh"'

@@ -1,0 +1,8 @@
+[dotfiles]
+"~/.agents/skills/visual-change-explainer" = { source = "visual-change-explainer", mode = "symlink-each" }
+
+[tools]
+"npm:skills" = "latest"
+
+[tasks."setup:skills"]
+run = 'bash "{{ config_root }}/setup.sh"'

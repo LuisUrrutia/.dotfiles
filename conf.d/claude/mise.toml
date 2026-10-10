@@ -1,0 +1,7 @@
+[dotfiles]
+"~/.claude/CLAUDE.md" = "CLAUDE.md"
+"~/.claude/agents" = { source = "agents", mode = "symlink-each" }
+"~/.claude/settings.json/shared" = { source = "settings.json", merge = true }
+
+[tools]
+"aqua:anthropics/claude-code" = "latest"

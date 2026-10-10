@@ -1,0 +1,6 @@
+
+[bootstrap.packages]
+"brew-cask:zed" = { os = "macos" }
+
+[tasks."setup:zed"]
+run = 'bash "{{ config_root }}/setup.sh"'

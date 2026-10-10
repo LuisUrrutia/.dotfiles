@@ -1,0 +1,7 @@
+[dotfiles]
+"~/.cspell/blockchain.txt" = "blockchain.txt"
+"~/.cspell/frontend.txt" = "frontend.txt"
+"~/.cspell/git.txt" = "git.txt"
+"~/.cspell/other.txt" = "other.txt"
+"~/.cspell/rust.txt" = "rust.txt"
+"~/.cspell/tools.txt" = "tools.txt"

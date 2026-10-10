@@ -1,0 +1,7 @@
+
+[bootstrap.packages]
+"brew:openssh" = { os = "macos" }
+"brew-cask:1password-cli" = { os = "macos" }
+
+[dotfiles]
+"~/.ssh/config" = "config.macos"
