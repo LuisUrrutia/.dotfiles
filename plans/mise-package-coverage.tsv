@@ -10,7 +10,7 @@ package	brew-cask:1password-cli	conf.d/ssh/mise.macos.toml	macos-arm64	pending-c
 package	brew-cask:android-platform-tools	conf.d/dev/mise.macos.toml	macos-arm64	pending-clean-machine	pending-clean-machine	retry-native-owner
 package	brew-cask:apparency	conf.d/dev/mise.macos.toml	macos-arm64	pending-clean-machine	pending-clean-machine	retry-native-owner
 package	brew-cask:audio-hijack	conf.d/audio-hijack/mise.audio-hijack.toml	macos-arm64;optional=audio-hijack	pending-clean-machine	pending-clean-machine	retry-native-owner
-package	brew-cask:autofirma	conf.d/apps/mise.macos.toml	macos-arm64	pending-clean-machine	pending-clean-machine	retry-native-owner
+task	setup:autofirma	conf.d/autofirma/mise.macos.toml	macos-arm64	vm-installed-1.9.2	manual-reviewed-release	requires-interactive-vendor-installer
 package	brew-cask:busycal	conf.d/busycal/mise.busycal.toml	macos-arm64;optional=busycal	pending-clean-machine	pending-clean-machine	retry-native-owner
 package	brew-cask:camo-studio	conf.d/camo/mise.camo.toml	macos-arm64;optional=camo	pending-clean-machine	pending-clean-machine	retry-native-owner
 package	brew-cask:chatgpt	conf.d/apps/mise.macos.toml	macos-arm64	pending-clean-machine	pending-clean-machine	retry-native-owner

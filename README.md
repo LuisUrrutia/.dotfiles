@@ -81,6 +81,14 @@ hardware-bound preferences can be restored.
 `mise -C ~ bootstrap --dry-run` previews the effective native resources; it may
 need network metadata. Neither command proves successful package installation.
 
+AutoFirma uses its interactive vendor installer because its cask cannot run
+unattended. `setup:autofirma` downloads the pinned archive, checks its SHA-256 and
+package signature, then prints the command to open it. Complete the installer
+and rerun `mise -C ~ run config apply`; setup remains pending until its package
+receipt and application are present. Its reviewed version, URL and checksum live
+in `conf.d/autofirma/mise.macos.toml`. Update those together for a new release;
+`update` does not discover AutoFirma releases.
+
 Third-party taps use mise's default GitHub metadata resolution. This downloads
 recipe definitions over HTTPS without cloning a Git repository. Actual Git
 operations, including setup history and plugins, use SSH.

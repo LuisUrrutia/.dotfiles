@@ -13,6 +13,9 @@ installation as a substitute.
    `command -v stow` find nothing. Inspect `mise bootstrap packages status`,
    `mise dot status`, services, defaults, and login-shell status. A required skip
    or unsupported recipe is a failure, not a completed installation.
+   Complete AutoFirma's prepared vendor installer when its task requests it,
+   then rerun setup and verify its receipt and application. Its installation
+   requires GUI interaction; do not suppress the vendor's dialogs.
 3. Launch Fish, Ghostty, Neovim, tmux, editors, OrbStack, and common GUI apps.
    Check Fisher completions/bindings, plugin restoration, Docker plugins, file
    associations, and Git identity/signing in normal repositories and worktrees.

@@ -8,7 +8,6 @@
 "brew-cask:veracrypt" = { os = "macos" }
 "brew-cask:macfuse" = { os = "macos" }
 "brew-cask:sshfs-mac" = { os = "macos" }
-"brew-cask:autofirma" = { os = "macos" }
 "brew-cask:thebrowsercompany-dia" = { os = "macos" }
 "brew-cask:google-chrome" = { os = "macos" }
 "brew-cask:figma" = { os = "macos" }
