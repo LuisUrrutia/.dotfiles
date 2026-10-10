@@ -101,6 +101,26 @@ Several tool installers have real side effects: macOS defaults, shell
 registration, tmux plugin setup, service starts, generated completions,
 language toolchains, and app-specific config.
 
+### Appearance schedule
+
+The macOS Tool Installer installs a daily LaunchAgent for every install profile:
+light appearance from 10:00 to 20:00, and dark appearance from 20:00 to 10:00,
+in the Mac's local timezone. It replaces macOS automatic appearance switching.
+The agent applies the current period at graphical login and catches missed
+calendar events when the Mac wakes from sleep.
+
+Re-run `dotfiles tool apply macos` to reload the schedule along with the other
+macOS preferences. When there is no graphical session, the installer leaves
+activation for the next graphical login. macOS may request permission for
+`osascript` to control System Events; the schedule needs that permission.
+Check `launchctl print gui/$(id -u)/com.luisurrutia.appearance-schedule` for the
+loaded schedule and its last exit status.
+
+The plist is managed by Stow under `~/Library/LaunchAgents`. An existing regular
+file, including a manually installed schedule, is preserved as a conflict.
+Inspect it with `dotfiles config diff macos` and explicitly resolve the drift
+before re-running the installer.
+
 ## Install modes
 
 Preview the default interactive plan:

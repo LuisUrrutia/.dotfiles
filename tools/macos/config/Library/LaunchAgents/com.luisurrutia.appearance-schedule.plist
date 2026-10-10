@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>Label</key>
+	<string>com.luisurrutia.appearance-schedule</string>
+	<key>ProgramArguments</key>
+	<array>
+		<string>/usr/bin/osascript</string>
+		<string>-e</string>
+		<string>on darkModeForTime(secondsToday)
+    return secondsToday &lt; 36000 or secondsToday &gt;= 72000
+end darkModeForTime
+
+on run
+    do shell script "/usr/bin/defaults write -g AppleInterfaceStyleSwitchesAutomatically -bool false"
+    set useDarkMode to darkModeForTime(time of (current date))
+    tell application "System Events"
+        tell appearance preferences
+            if dark mode is not useDarkMode then set dark mode to useDarkMode
+        end tell
+    end tell
+end run</string>
+	</array>
+	<key>RunAtLoad</key>
+	<true/>
+	<key>StartCalendarInterval</key>
+	<array>
+		<dict>
+			<key>Hour</key>
+			<integer>10</integer>
+			<key>Minute</key>
+			<integer>0</integer>
+		</dict>
+		<dict>
+			<key>Hour</key>
+			<integer>20</integer>
+			<key>Minute</key>
+			<integer>0</integer>
+		</dict>
+	</array>
+	<key>LimitLoadToSessionType</key>
+	<string>Aqua</string>
+	<key>ProcessType</key>
+	<string>Background</string>
+</dict>
+</plist>
