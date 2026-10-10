@@ -13,13 +13,13 @@
 end darkModeForTime
 
 on run
-    do shell script "/usr/bin/defaults write -g AppleInterfaceStyleSwitchesAutomatically -bool false"
     set useDarkMode to darkModeForTime(time of (current date))
     tell application "System Events"
         tell appearance preferences
             if dark mode is not useDarkMode then set dark mode to useDarkMode
         end tell
     end tell
+    do shell script "/usr/bin/defaults write -g AppleInterfaceStyleSwitchesAutomatically -bool false"
 end run</string>
 	</array>
 	<key>RunAtLoad</key>

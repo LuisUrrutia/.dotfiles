@@ -297,7 +297,7 @@ configure_appearance_schedule() {
     fi
   fi
 
-  stow_config macos
+  stow_config macos || return
   [[ -L "$agent_path" && "$agent_path" -ef "$source_path" ]] || return 1
 
   if ! launchctl print "$domain" >/dev/null 2>&1; then

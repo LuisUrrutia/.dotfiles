@@ -52,6 +52,25 @@ configure_appearance_schedule
 [[ "$(grep -c '^bootstrap ' "$fixture_dir/launchctl.log")" == 2 ]]
 [[ "$(grep -c '^bootout ' "$fixture_dir/launchctl.log")" == 1 ]]
 
+cp "$fixture_dir/launchctl.log" "$fixture_dir/before-stow-failure.log"
+stow() { return 73; }
+if configure_appearance_schedule > "$fixture_dir/stow-failure.log"; then
+  echo 'Expected Stow failure to propagate with an existing managed link' >&2
+  exit 1
+else
+  [[ "$?" == 73 ]]
+fi
+cmp "$fixture_dir/launchctl.log" "$fixture_dir/before-stow-failure.log"
+[[ ! -s "$fixture_dir/stow-failure.log" ]]
+if stow_config macos --fold > "$fixture_dir/stow-failure.log"; then
+  echo 'Expected folded Stow failure to propagate' >&2
+  exit 1
+else
+  [[ "$?" == 73 ]]
+fi
+[[ ! -s "$fixture_dir/stow-failure.log" ]]
+unset -f stow
+
 fail_bootout=true
 if configure_appearance_schedule; then
   echo 'Expected unload failure to propagate' >&2
@@ -90,7 +109,9 @@ fi
 [[ "$(readlink "$agent_path")" == "$fixture_dir/missing.plist" ]]
 
 python3 - "$ROOT_DIR" "$fixture_dir" <<'PY'
+import json
 import plistlib
+import shlex
 import subprocess
 import sys
 from pathlib import Path
@@ -110,5 +131,17 @@ end run'''
 for seconds, expected in [(0, "true"), (35999, "true"), (36000, "false"), (71999, "false"), (72000, "true"), (86399, "true")]:
     actual = subprocess.check_output(["/usr/bin/osascript", "-e", probe, str(compiled), str(seconds)], text=True).strip()
     assert actual == expected, (seconds, actual, expected)
+# Inject a denied automation event and redirect the preference write to a marker.
+marker = fixture / "automatic-switching-disabled"
+source = config["ProgramArguments"][2]
+command = "/usr/bin/defaults write -g AppleInterfaceStyleSwitchesAutomatically -bool false"
+assert source.count(command) == 1
+source = source.replace(json.dumps(command), json.dumps(f"/usr/bin/touch {shlex.quote(str(marker))}"))
+controller = 'tell application "System Events"'
+assert source.count(controller) == 1
+source = source.replace(controller, 'error "Automation denied" number -1743\n    ' + controller)
+denied = subprocess.run(["/usr/bin/osascript", "-e", source], text=True, capture_output=True)
+assert denied.returncode != 0 and "(-1743)" in denied.stderr, denied
+assert not marker.exists(), "Automation denial disabled native automatic switching"
 print("Appearance schedule: install, reload, headless login, conflicts, failures and six time boundaries passed")
 PY
