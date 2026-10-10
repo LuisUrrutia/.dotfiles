@@ -25,7 +25,10 @@ transport; HTTP artifact/API downloads are not Git transport.
 
 Every entry below needs a row in M0's compatibility ledger with its new owner,
 fresh-install result, existing-install transfer, update result, and recovery.
-Do not infer support from a recipe name.
+Do not infer support from a recipe name. Record shared/profile/machine scope
+and the effective declaration path as well: D9 includes software changes in
+private history, and M10b applies them on matching automatic machines. Transfer
+installation intent and source manifests, not downloaded binaries or app state.
 
 ### brewfiles/core
 
@@ -198,8 +201,11 @@ All 30 existing trees must be included in the Stow-to-mise parity check:
 `starship`, `tlrc`, `tmux`, `vim`, `voiceink`, `wget`, `zed`.
 
 Translate `.stow-local-ignore` in Fish, Git, Claude, and OpenCode into explicit
-mise exclusions. A Git manifest excludes untracked data, but does not replace
-those rules. Preserve `.gitignore` exceptions for the two VoiceInk source files.
+mise exclusions. A Git manifest checks public seed membership but does not
+replace those rules or provide an index for regular history-owned sources.
+Private history owns effective shared configs and setup sources under D9;
+track source contents behind links, not just the links themselves. Preserve
+`.gitignore` exceptions for the two VoiceInk source files.
 Never deploy `.stow-local-ignore` itself.
 
 Also account for targets created outside Stow: agent instruction links, machine
@@ -232,7 +238,8 @@ Inspect and migrate these consumers with their owning units:
 
 - `install.sh`, `bootstrap/`, `private-install.sh`, `dotfiles`, and `cli/`.
 - `tools/lib.sh`, `tools/catalog.sh`, and each listed Tool Installer.
-- `config/run.sh` and its lifecycle/resolution tests.
+- `config/run.sh` and its lifecycle/resolution tests; history-owned source
+  resolution, public import/promotion, and serial full-setup application.
 - `maintenance/update.sh`, `maintenance/backup.sh`, and their Fish
 abbreviations.
 - Fish PATH/completion setup, `tools/bin` wrappers, and tool-specific opt paths.
@@ -280,6 +287,12 @@ The disposable probe lived under `/tmp/dotfiles-mise-research/`; it is not a
 durable test artifact. M0 must turn the relevant observations into maintained
 fixtures against the selected mise version. Only these conclusions, their
 conditions, and their limits are retained here.
+
+The user subsequently confirmed full setup synchronization, including software
+installation. D9/D10 and M10/M10b now include package declarations, setup sources,
+and automatic application; the earlier composition probes do not establish that
+protocol. This revision adds planning contracts only. Its behavioral acceptance
+remains M0/M10b work.
 
 ## Planning-artifact validation
 

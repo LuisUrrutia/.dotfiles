@@ -1,6 +1,7 @@
 # Mise migration: decision map
 
-Status: core direction established; sync coverage awaits a user decision.
+Status: direction established, including full setup synchronization; feasibility
+gates remain before implementation.
 Updated: 2026-10-10.
 Inspected repository: `0c2f8fe3739a1e16e80d07d476453bf119db55dc`.
 
@@ -13,9 +14,10 @@ this planning request, and no package or live configuration was changed.
 
 Use mise to bootstrap fresh Macs and migrate Macs already using this repository.
 Replace Stow and the Homebrew executable, preserve the installed capabilities,
-and support configuration history and exchange between machines. Some machines
-sync automatically; others exchange changes only on request. Preserve public,
-reviewable setup code and machine records without publishing private state.
+and support configuration and software-declaration exchange between machines.
+Automatic machines receive and apply setup changes for their selected profiles;
+manual machines exchange and apply them on request. Preserve a public, reviewable
+baseline and machine records without publishing private operational state.
 
 Success requires both a fresh installation and an existing-install migration
 that work with `brew` and `stow` unavailable. Keeping `/opt/homebrew` as the
@@ -32,14 +34,15 @@ route is verified; they do not silently remove a tool from scope.
 | ID | Question | State | Depends on | Owner |
 | --- | --- | --- | --- | --- |
 | D1 | What must replace Homebrew? | Resolved by user | None | User |
-| D2 | Where does shared history live, and who applies it? | Resolved direction | None | User; implementation for enrollment |
+| D2 | Where does shared history live, and who applies it? | Resolved direction | D9 | User; implementation for enrollment |
 | D3 | How do native configuration modules fit the current repository? | Proposed design with an early proof gate | D1, D2 | Implementation |
 | D4 | Which mechanism owns each configuration file? | Resolved policy | D2, D3 | Implementation |
 | D5 | How do machine roles select Git identities? | Resolved model; enrollment inputs outstanding | D3, D4 | User supplies account/path data |
 | D6 | What belongs in declarative macOS setup? | Resolved boundary | D1, D3 | Implementation |
 | D7 | How are sensitive files recovered? | Proposed bounded design | D2, D4 | User supplies recipients at enrollment |
 | D8 | Can existing package ownership transfer safely? | Open feasibility gate | D1 | Implementation |
-| D9 | Which shared configuration edits use automatic history? | Waiting for user | D2 | User |
+| D9 | Does sync include shared configuration and installed software? | Resolved by user | None | User |
+| D10 | How are received software/setup changes applied? | Proposed serial application cycle | D2, D3, D4 | Implementation |
 
 Dependencies are prerequisites. Version compatibility affects every implementation
 unit and is verified first; it does not change the user's destination.
@@ -74,72 +77,74 @@ Evidence: `brewfiles/`, `tools/mise/config/.config/mise/config.toml`;
 https://mise.jdx.dev/bootstrap/packages/brew.html
 https://mise.jdx.dev/bootstrap/packages/brew-cask.html
 
-## D2: Public sources and private history
+## D2: Public baseline and private operational history
 
-**Authority:** user selected per-machine manual and automatic synchronization
-after the separate-private-history recommendation. The private repository's
-name and the mode of each actual machine are enrollment inputs, not invented here.
+**Authority:** the user selected per-machine manual and automatic synchronization,
+then included all managed configuration and software changes in D9. The private
+repository's name and each machine's mode are enrollment inputs.
 
-Keep this Git repository authoritative for shared setup, templates, scripts, and
-public machine records. Use a separate private mise history origin for explicitly
-selected mutable configuration. Never attach mise history to this repository's
-existing main branch: its history format and ancestry have different ownership.
+Keep this public Git repository as the shareable baseline, implementation/test
+source, and destination for reviewed publication. The separate private mise
+history origin owns the enrolled user's effective setup: declarations, supporting
+sources/tasks, and managed mutable configuration. Never attach mise history to
+the public repository's existing main branch or give both independent write
+ownership over the public checkout.
 
-Select `history.sync` locally: `manual` or `sync` per machine. Use `manual` until
-a machine explicitly chooses automatic operation. Local autosave can run in both
-modes. Git transport remains SSH. Automatic machines must prove authentication
-works from the LaunchAgent environment, not just from an interactive shell.
+Public files seed a first enrollment. Later public imports and private-to-public
+promotion use explicit diff/merge and secret review. Repeating bootstrap must not
+reset private edits from an older public seed. This replaces the initial plan's
+split in which setup code traveled only through public Git.
 
-Setup-code changes continue through Git review/commit/pull. Changes to selected
-mutable files flow through mise history. D9 determines which shared configuration
-sources also become mutable history-owned files. Do not give Git and mise history
-independent write authority over the same checkout files. A regular mutable file
-must not also be overwritten by a stale copy entry on the next bootstrap.
+Machine mode and origin remain local. Manual machines save locally and exchange
+or apply only on request. Automatic machines exchange and apply complete setup
+changes through D10, including newly received setup tasks. Git transport remains
+SSH; prove authentication from the LaunchAgent environment.
 
-`mise dot sync` exchanges checkpoints; `mise dot pull` applies them. Applying
-history does not install packages or render templates. Setup changes require a
-separate bootstrap. Automatic sync must not become automatic execution of newly
-received setup code.
+Native `mise dot sync` exchanges checkpoints and `mise dot pull` restores files.
+Neither installs packages nor renders templates. Full automatic setup therefore
+requires a separate application cycle, not just native `history.sync = "sync"`.
 
-**Alternatives:** Git alone loses the requested native history exchange. A single
-automatic public history store risks publishing app state and bypassing review.
-An automatic private store on every machine conflicts with the user's choice.
+**Alternatives:** public Git alone does not provide the requested private history
+exchange. Publishing operational history to the public repo exposes private state.
+Automatic operation on every machine contradicts the per-machine choice.
 
 Evidence:
 https://mise.jdx.dev/dotfiles/sync.html
 https://mise.jdx.dev/dotfiles/history.html
 https://mise.jdx.dev/bootstrap/from-repository.html
 
-## D3: Keep sources; use native modules
+## D3: Native global setup with history-owned sources
 
-**Proposed direction:** preserve `tools/<tool>/config` during migration. Add a
-root bootstrap project, `mise.toml` plus `mise.<profile>.toml` environments.
-Keep globally available runtimes and history policy in the existing global mise
-configuration tree, extended with native `conf.d` fragments where needed.
-Machine enrollment selects native environments through `miserc.local.toml`.
+**Proposed direction:** retain the public `tools/<tool>/config` organization as
+seeds. Enroll regular mutable native configuration under `~/.config/mise`, with
+`config.toml`, `config.<profile>.toml`, and `conf.d` as needed. This effective
+global configuration owns tools, provisioning, and history. Local machine
+selection lives in `miserc.local.toml`; local overrides are never shared blindly.
 
-The root project owns machine provisioning. Global config owns tools that must
-resolve outside the checkout and history settings that mise does not accept from
-project config. Each declaration has one authoritative file. Do not duplicate
-runtime lists in root and global config, or invent a second module interpreter.
+Place required source trees, templates, and setup tasks in a home-relative,
+history-owned workspace such as `~/.local/share/dotfiles/setup/`. Track their
+contents explicitly, keeping deployment paths portable between account names.
+Do not point effective setup back into the public checkout. Preserve current
+relative tool paths where practical, and migrate consumers of `$DOTFILES` and
+canonical instruction links explicitly.
 
-A small Bash 3.2 entrypoint installs the official mise binary, prepares access
-and safe global-config enrollment, then runs the project bootstrap. It must load
-the new global config before resolving tools in that same process sequence.
-`--from` is the repository bootstrap path once prerequisites are satisfied;
-`--adopt` is reserved for the separate history origin. Validate first-use behavior
-before promising that bare `--from` replaces the fresh-Mac entrypoint.
+The public root bootstrap becomes an enrollment entrypoint. A Bash 3.2 starter
+installs official mise, prepares access, and seeds missing effective files or
+adopts the existing private setup. Subsequent bootstrap runs use the effective
+global configuration from a neutral working directory; the public checkout must
+not override synchronized declarations. `--from` is for public distribution;
+`--adopt` is for restoring the separate private setup/history.
 
-**Alternative considered:** restructure the public repo as a global config
-checkout with `--adopt`. This is viable upstream, but changes the checkout layout
-and entangles the public checkout with later private-history adoption. Keeping
-the project at `~/.dotfiles` preserves existing consumers and isolates the two
-repositories. Moving all source files is not needed to replace Stow.
+This supersedes the initial root-project/global split: leaving provisioning only
+in the public project would prevent the software changes requested in D9 from
+traveling through native history. Avoid duplicate runtime lists or a custom
+module interpreter. Local enrollment state stays outside the shared payload.
 
-**Proof gate:** test first-run global enrollment, global/project precedence,
-module selection, watcher visibility, and no duplicate hooks. An isolated probe
-on mise 2026.10.1 confirmed global config symlinks, a local environment selection,
-and `conf.d` load together. It did not prove the full first-use bootstrap.
+**Proof gate:** test first enrollment, later private adoption, native global module
+selection, watcher visibility, source path portability, and single hook execution.
+The earlier 2026.10.1 probe proved global/local environment and `conf.d` loading,
+but used symlinked global config. It did not prove this regular-file layout or a
+complete first-use bootstrap; those require M0 fixtures.
 
 Evidence: `tools/mise/install.sh`, `tools/lib.sh`, `bootstrap/profiles.sh`;
 https://mise.jdx.dev/bootstrap/modules.html
@@ -147,16 +152,20 @@ https://mise.jdx.dev/bootstrap/from-repository.html
 
 ## D4: Explicit file ownership and preservation
 
-Use per-tool `symlink-each` groups for shared source files, with a Git manifest
-and translated Stow exclusions. Prefer regular live directories so application
-state never lands in the public checkout. Use whole-directory symlinks only when
-the entire directory is intentionally source-owned.
+Use per-tool `symlink-each` groups backed by history-owned sources, with explicit
+file membership and translated Stow exclusions. A Git manifest can verify public
+seed membership; it cannot enumerate a regular source workspace without a Git
+index. Track source contents as well as any managed links. Prefer regular live
+directories so runtime data stays outside the source tree. Use whole-directory
+symlinks only when the entire directory is intentionally source-owned.
 
 Use templates for generated machine values; structured merge edits for owned
 keys in app-written TOML/JSON/YAML; blocks or lines for compatible startup files;
-tracking for files whose live contents are authoritative. A copy is deployment,
-not bidirectional synchronization. Seed a mutable tracked file only when absent,
-then stop declaring a copy owner for it. Capture public changes explicitly.
+tracking for files whose live contents are authoritative. Their shared inputs
+also belong to private history. A copy is deployment, not bidirectional sync.
+Seed a mutable tracked file only when absent, then stop declaring a copy owner
+for it. Keep generated machine outputs local or correctly scoped; synchronize
+their shared inputs. Publish changes to the public baseline explicitly.
 
 Do not use `absent` as general cleanup: its declaration authorizes removing a
 regular file without proving ownership. Use it only for a reviewed retired path
@@ -168,10 +177,11 @@ confirmed that apply repoints a foreign symlink and overwrites an edited copy
 without force. The foreign source itself survived. All probe paths were in an
 isolated temporary HOME/XDG tree.
 
-Apply the guard at supported mutating entrypoints, including a root pre-dotfiles
-hook. Test direct `mise dot apply` separately: bootstrap hooks cannot be assumed
-to protect that command. Until an equivalent guard exists there, document it as
-a lower-level command and expose safe mutation through `dotfiles config`.
+Apply the guard at supported mutating entrypoints, including the effective setup
+pre-dotfiles hook. Test direct `mise dot apply` separately: bootstrap hooks cannot
+be assumed to protect that command. Until an equivalent guard exists there,
+document it as a lower-level command and expose safe mutation through
+`dotfiles config`.
 
 Evidence: `config/run.sh`, `config/tests/lifecycle.sh`, `tools/lib.sh`;
 https://mise.jdx.dev/dotfiles/managed.html
@@ -291,31 +301,72 @@ Evidence: current Brewfiles;
 https://mise.jdx.dev/bootstrap/packages/brew-cask.html
 https://mise.jdx.dev/bootstrap/packages/macos-app.html
 
+## D9: Synchronize the complete managed setup
+
+**Authority:** the user confirmed all changes, including what gets installed,
+when asked whether Fish, editor, and Starship changes should travel automatically.
+
+Include all managed shared configuration, package/tool declarations, plugin
+manifests, templates, and required setup code in private history. Apply shared
+changes on every enrolled machine and profile-scoped changes only on matching
+machines. Preserve distinct machine roles, identities, local choices, and the
+existing secret/runtime exclusions. "All" describes managed setup, not every file
+or installed binary on a Mac.
+
+The supported software-add workflow must record a declaration and its scope
+before installation, so another machine can reproduce it. Sync the installation
+intent and version policy; download artifacts locally. An installation outside
+that workflow needs inventory and enrollment before it can propagate. Do not
+claim that mise history automatically discovers arbitrary installers.
+
+Manual machines retain explicit exchange/application. On automatic machines,
+receiving a valid complete setup revision includes applying its packages and
+setup tasks through D10. This supersedes the earlier recommendation to exclude
+setup code and package manifests from automatic history. It does not authorize
+running this migration during the planning task.
+
+## D10: Serialize exchange and setup application
+
+**Proposed direction:** one application command owns save/sync/pull and conditional
+bootstrap, with a native LaunchAgent scheduling it only on automatic machines.
+Use native history for checkpoints, exchange, conflict resolution, and recovery;
+do not implement a second Git synchronization engine.
+
+Keep native `history.sync = "manual"` on both modes while the native watcher
+performs local autosaves. The scheduled command provides full automatic exchange
+and application; manual machines invoke it on request. This avoids a second
+background writer applying incoming files during bootstrap. Machine mode is a
+local enrollment setting, not the name of mise's native sync setting.
+
+The command serializes supported mutations, waits for settled and valid inputs,
+checks for conflicts or incomplete recovery, exchanges and restores the complete
+revision, then applies the effective local profile. Recheck state before setup;
+record success only after required package/config/service checks pass. Use a
+setup-input fingerprint plus local selection to avoid bootstrap loops caused by
+its own checkpoints. Retry failures with bounded backoff and expose pending,
+failed, and applied state. Prove the protocol in M0 before relying on it.
+
+Do not invoke bootstrap synchronously from `[history.reload]`; upstream reserves
+those hooks for reloading applications, and nested setup may contend on locks.
+Serialize the scheduled path with manual operations and ordinary software setup.
+Raw native commands retain their lower-level semantics.
+
+Automatic mode permits received setup code to execute as the enrolled user.
+Retain noninteractive failure behavior: missing sudo, App Store authentication,
+or macOS permission steps become visible prerequisites, not prompts or success.
+Never grant privileges as a side effect. Removing a declaration does not authorize
+blanket package pruning or deletion of unknown files; report destructive cleanup
+for explicit handling under the existing preservation contract.
+
+Evidence:
+https://mise.jdx.dev/dotfiles/sync.html
+https://mise.jdx.dev/dotfiles/history.html
+https://mise.jdx.dev/bootstrap.html
+
 ## Continuation
 
-The independent feasibility work is ready. Resolve D9 before finalizing shared
-configuration deployment and history enrollment. Production cutover also requires
-the compatibility results, per-machine enrollment data, and fresh/existing Mac
-acceptance. These are delivery gates, not claims that migration already works.
-
-## D9: Automatic synchronization coverage
-
-**Question pending:** on automatic machines, should edits to selected shared
-configuration such as Fish, editor settings, and Starship travel through native
-mise history, or only app-written files while source-backed configuration still
-travels through Git?
-
-**Recommendation:** include selected shared configuration in native history, with
-public publication as an explicit reviewed promotion. This most directly serves
-the user's cross-machine editing goal. Setup code, package manifests, generated
-machine identities, secrets, and runtime data remain outside that shared stream.
-
-This changes D4's per-file ownership classification. History-owned files must be
-regular live files or point into history-owned sources outside the public checkout.
-Public sources become reviewed seeds; bootstrap must not overwrite newer live
-history with an older seed. Moving reviewed changes in either direction needs
-explicit capture/reconciliation, not an unconditional copy on every apply.
-
-The narrower alternative keeps ordinary shared sources symlinked into this repo;
-it is simpler, but those edits do not automatically propagate through mise.
-M0-M4 can progress under either answer. Final M5/M10 contracts depend on the answer.
+No sync-coverage decision remains open. M0 verifies global setup composition,
+package ownership transfer, and the serial exchange/application protocol before
+implementation depends on them. Actual origin, machine modes, identities, and
+key references are enrollment inputs. Production cutover still requires those
+proofs and fresh/existing Mac acceptance.
