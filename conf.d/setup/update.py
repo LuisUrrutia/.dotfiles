@@ -1,8 +1,6 @@
 """Update declared software; independent maintenance continues after a failure."""
 
 import argparse
-import os
-import shutil
 import subprocess
 import sys
 import time
@@ -45,12 +43,12 @@ def main():
         step("github-extensions", [["gh", "extension", "upgrade", "--all"]])
         step("rust", [["rustup", "update"]])
         step("neovim", [["nvim", "--headless", "+Lazy! sync", "+qa"],
+                        ["nvim", "--headless", "+Lazy! build telescope-fzf-native.nvim",
+                        "+lua local ok, err = pcall(function() require('telescope').load_extension('fzf') end); if not ok then vim.api.nvim_err_writeln(err); vim.cmd.cquit() end", "+qa"],
                         ["nvim", "--headless", "+lua if not require('config.blink').ensure() then vim.cmd.cquit() end", "+qa"],
                         ["nvim", "--headless", "+lua if not require('config.lsp').update() then vim.cmd.cquit() end", "+qa"],
                         ["nvim", "--headless", "+lua if not require('config.treesitter').install() then vim.cmd.cquit() end", "+qa"]])
         step("skills", [["skills", "update", "--global", "--yes"]])
-        os.environ["DOTFILES_REAL_GIT"] = shutil.which("git") or "git"
-        os.environ["PATH"] = str(ROOT / "conf.d/tmux/git-bin") + os.pathsep + os.environ["PATH"]
         step("tmux", [["tpack", "update", "all"]])
         if sys.platform == "darwin":
             step("fish", [["bash", ROOT / "conf.d/fish/setup.sh"]])

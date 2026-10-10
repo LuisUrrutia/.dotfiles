@@ -2,7 +2,7 @@ local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
 vim.env.GIT_DEFAULT_REF_FORMAT = "files"
 
 if not (vim.uv or vim.loop).fs_stat(lazypath) then
-  local lazyrepo = "git@github.com:folke/lazy.nvim.git"
+  local lazyrepo = "https://github.com/folke/lazy.nvim.git"
   local out = vim.fn.system({ "git", "clone", "--filter=blob:none", "--branch=stable", lazyrepo, lazypath })
   if vim.v.shell_error ~= 0 then
     vim.api.nvim_echo({
@@ -20,5 +20,4 @@ require("lazy").setup({
     { import = "plugins" },
   },
   checker = { enabled = false },
-  git = { url_format = "git@github.com:%s.git" },
 })

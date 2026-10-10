@@ -11,8 +11,8 @@ import sys
 
 REPOSITORY = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPOSITORY / "conf.d/setup"))
-from runtime import (HOME, MISE, ROOT, atomic, document, mise, read_toml, regular_parents,
-                        ssh_origin, toml)
+from runtime import (HOME, MISE, ROOT, atomic, document, git_origin, mise, read_toml,
+                        regular_parents, toml)
 
 
 def machine_id():
@@ -82,7 +82,7 @@ def enroll(args):
     if args.record:
         record = read_toml(Path(args.record).expanduser())
     if args.adopt:
-        ssh_origin(args.adopt)
+        git_origin(args.adopt)
         if (ROOT / "config.toml").exists():
             raise RuntimeError("Adopt into a fresh active configuration; existing setup is preserved")
         phases = "plugins,packages,accounts,files,services,firewall,compose,repos,dotfiles,mise-shell-activate,macos-defaults,macos-launchd-agents,linux-systemd-units,user,tools,task,final-hook"
@@ -134,7 +134,7 @@ def enroll(args):
     subprocess.run(["git", "-C", str(REPOSITORY), "config", "core.hooksPath", ".githooks"],
                     check=True, stdin=subprocess.DEVNULL, timeout=10)
     if args.origin:
-        ssh_origin(args.origin)
+        git_origin(args.origin)
         mise("dot", "save")
         mise("dot", "origin", "set", args.origin, "--sync", "manual", "--yes")
     mise("run", "config", "apply")
@@ -146,8 +146,8 @@ def main():
     parser.add_argument("--record", help="Enrollment TOML with git.default and git.accounts")
     parser.add_argument("--apps", help="Comma-separated optional app module names")
     parser.add_argument("--sync", choices=["manual", "automatic"])
-    parser.add_argument("--origin")
-    parser.add_argument("--adopt")
+    parser.add_argument("--origin", help="Private setup repository URL (HTTPS or SSH)")
+    parser.add_argument("--adopt", help="Recover from a private setup repository URL (HTTPS or SSH)")
     parser.add_argument("--recipient", action="append", help="Public age recipient; repeat for recovery and other machines")
     parser.add_argument("--seed-only", action="store_true")
     args = parser.parse_args()

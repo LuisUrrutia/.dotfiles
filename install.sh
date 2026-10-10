@@ -9,7 +9,7 @@ Fresh macOS arm64 setup. Checks Full Disk Access, Command Line Tools and sudo,
 installs the official mise binary, then enrolls this machine.
 
 Enrollment options: --machine ID --apps app,app --sync manual|automatic
-                    --origin SSH_URL --recipient PUBLIC_KEY --adopt SSH_URL
+                    --origin GIT_URL --recipient PUBLIC_KEY --adopt GIT_URL
                     --seed-only
 Rerunning preserves the active setup and existing local choices.
 Use mise run enroll -- --help for all enrollment options.
@@ -57,8 +57,8 @@ fi
 if [[ ! -f "$source_root/bootstrap/enroll.py" ]]; then
   destination="$HOME/.dotfiles"
   [[ ! -e "$destination" ]] || { echo "Refusing existing checkout: $destination" >&2; exit 1; }
-  GIT_TERMINAL_PROMPT=0 GIT_SSH_COMMAND='ssh -o BatchMode=yes' \
-    /usr/bin/git clone git@github.com:LuisUrrutia/.dotfiles.git "$destination"
+  GIT_TERMINAL_PROMPT=0 \
+    /usr/bin/git clone https://github.com/LuisUrrutia/.dotfiles.git "$destination"
   exec /bin/bash "$destination/install.sh" "$@"
 fi
 /bin/bash "$source_root/bootstrap/install-mise.sh"

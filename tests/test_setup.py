@@ -197,6 +197,8 @@ enroll.atomic(enroll.ROOT / 'config.local.toml', enroll.document(values))
                 machine.mise("dot", "apply", "--yes")
                 machine.mise("dot", "apply", "--yes")
                 self.assertEqual(machine.run("git", "config", "--global", "--get", "custom.retained").stdout.strip(), "yes")
+                for url in ("https://github.com/google/fonts.git", "https://gitlab.com/example/project.git", "git@github.com:example/private.git"):
+                    self.assertEqual(machine.run("git", "ls-remote", "--get-url", url).stdout.strip(), url)
                 self.assertTrue((machine.home / ".gitconfig").read_text().startswith("[include] path ="))
                 expected = "fixture@example.invalid" if kind in ("work", "unknown") else "personal@example.invalid"
                 self.assertEqual(machine.run("git", "config", "user.email").stdout.strip(), expected)
@@ -278,6 +280,17 @@ assert json.loads((HOME/'.config/linearmouse/linearmouse.json').read_text()) == 
     def test_native_sync_applies_declarations_and_preserves_local_choices(self):
         a, b = Machine(self.root, "a"), Machine(self.root, "b")
         a.minimal()
+        a.python('''from runtime import git_origin
+for origin in ('https://github.com/example/setup.git', 'git@github.com:example/setup.git', 'ssh://git@example.com/setup.git', '/tmp/setup.git'):
+    assert git_origin(origin) == origin
+for origin in ('http://github.com/example/setup.git', 'https://user:secret@example.com/setup.git', 'https://example.com/setup.git?token=secret', 'https://example.com/setup.git#secret', 'https://example.com'):
+    try:
+        git_origin(origin)
+    except ValueError:
+        pass
+    else:
+        raise AssertionError('Unsafe origin accepted')
+''')
         key = a.encryption()
         a.write("codex.toml", 'personality="pragmatic"\n')
         with (a.config / "config.toml").open("a") as stream:

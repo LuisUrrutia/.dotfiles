@@ -12,6 +12,7 @@ import subprocess
 import sys
 import tempfile
 import tomllib
+from urllib.parse import urlsplit
 
 RAW_HOME = Path.home()
 HOME = RAW_HOME.resolve()
@@ -167,10 +168,14 @@ def lock():
             signal.signal(signal.SIGTERM, previous)
 
 
-def ssh_origin(value):
+def git_origin(value):
     # Local bare repositories are useful for offline recovery and integration checks.
     if value.startswith("/") or value.startswith("ssh://"):
         return value
     if ":" in value and "@" in value.split(":", 1)[0] and "://" not in value:
         return value
-    raise ValueError("Use an SSH Git origin, such as git@github.com:owner/setup.git")
+    url = urlsplit(value)
+    if (url.scheme == "https" and url.hostname and url.path.strip("/")
+            and url.username is None and not url.query and not url.fragment):
+        return value
+    raise ValueError("Use an HTTPS or SSH Git origin; keep HTTPS credentials in a credential helper, not the URL")

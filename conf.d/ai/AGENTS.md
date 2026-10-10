@@ -88,8 +88,12 @@ for it.
 
 ## Git transport
 
-- Use SSH for every Git network operation: clone, fetch, pull, push, and
-  submodules. HTTPS remotes are prohibited, including as a fallback.
+- Use HTTPS for the dotfiles bootstrap, including its public dependency
+  downloads. Private setup history supports authenticated HTTPS or SSH;
+  preserve its configured origin. Keep credentials outside repository URLs
+  and tracked files.
+- For other Git network operations, use SSH for clone, fetch, pull, push, and
+  submodules. Do not switch those remotes to HTTPS as a fallback.
 - If SSH fails, diagnose and repair the SSH path; when the available access
   cannot restore it, that is a blocker.
 

@@ -48,8 +48,8 @@ existing installation or uninstall Homebrew.
 1. Grant the terminal Full Disk Access. Install Apple's Command Line Tools and
    validate sudo when the installer requests them, then rerun it. Automation
    fails on an unavailable prerequisite instead of waiting for input.
-2. Prepare SSH access to GitHub and the private setup repository. Clone with SSH:
-   `git clone git@github.com:LuisUrrutia/.dotfiles.git ~/.dotfiles`.
+2. Clone the public setup over HTTPS; no GitHub account is required:
+   `git clone https://github.com/LuisUrrutia/.dotfiles.git ~/.dotfiles`.
 3. In the checkout, run `./install.sh --mise-only`. The installer downloads
    official mise **2026.10.7** and verifies its pinned SHA-256. Newer compatible
    installations are kept. This version is required for structured file edits.
@@ -59,20 +59,23 @@ existing installation or uninstall Homebrew.
    `~/.local/bin/mise exec age -- age-keygen -o ~/.config/mise/age.txt` after
    creating that directory, and restrict the file to mode `0600`. Store the
    recovery identity in 1Password or offline, not in this checkout or history.
-   SSH Git authentication and age decryption are separate requirements.
+   Private Git authentication and age decryption are separate requirements.
 5. Run `./install.sh --help` and select the enrollment inputs below. An existing
    machine record supplies public identity and hostname defaults. Unknown Macs
    keep existing Git identity unless a record is supplied.
 
 For initial enrollment, pass `--recipient` once for each public machine key and
-once for the independent recovery key, plus `--origin` with the private SSH URL.
+once for the independent recovery key, plus `--origin` with the private Git URL.
+HTTPS and SSH are supported. For HTTPS, authorize a Git credential helper before
+enrollment; keep credentials out of the URL and tracked files. Public dependency
+downloads do not require that authentication. Existing SSH origins stay unchanged.
 Pass `--sync manual` or `--sync automatic`. Use `--record` for a local enrollment
 TOML and `--apps` for comma-separated optional module names. `--seed-only`
 prepares missing sources and local inputs without applying the setup. It is
 useful for reviewing or editing them before installation.
 
-For another machine, recover a matching age identity and SSH access first, then
-use `./install.sh --adopt <private-SSH-origin>` with its local enrollment inputs.
+For another machine, recover a matching age identity and private Git access first,
+then use `./install.sh --adopt <private-Git-origin>` with its local enrollment inputs.
 Adoption restores history before applying resources. A missing identity stops
 recovery. A reinstall of the same hardware keeps its stable machine ID so its
 hardware-bound preferences can be restored.
@@ -106,9 +109,10 @@ receipt and application are present. Its reviewed version, URL and checksum live
 in `conf.d/autofirma/mise.macos.toml`. Update those together for a new release;
 `update` does not discover AutoFirma releases.
 
-Third-party taps use mise's default GitHub metadata resolution. This downloads
-recipe definitions over HTTPS without cloning a Git repository. Actual Git
-operations, including setup history and plugins, use SSH.
+Third-party taps use mise's default GitHub metadata resolution. Public recipes,
+font repositories, plugins, skills and the initial checkout use HTTPS. The shared
+Git configuration preserves each URL's protocol instead of rewriting HTTPS to SSH.
+Private setup history still requires authentication for its chosen transport.
 
 ## Select individual optional apps
 
@@ -208,8 +212,8 @@ operations. `mise dot undo` reverses the last file operation; it does not promis
 package downgrades. Keep ordinary exchange through `mise run sync` so a successful
 pull is followed by setup application.
 
-Public changes are a separate reviewable operation. Fetch this checkout over
-SSH, compare only the intended relative file with the active source using
+Public changes are a separate reviewable operation. Fetch this checkout, compare
+only the intended relative file with the active source using
 `git diff --no-index`, merge the selected changes, and run `config apply`.
 Enrollment only fills missing files; it never merges an updated public version
 over your active edits. To promote an active edit, compare and copy that specific

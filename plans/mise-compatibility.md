@@ -164,7 +164,8 @@ The real run exposed these corrections:
   `install.sh --seed-only` passed twice after the change.
 - Native brew taps need GitHub metadata resolution rather than explicit SSH
   URLs. Removing those overrides installed Terraform 1.16.5 and remindctl 0.3.8
-  without Homebrew. Metadata downloads use HTTPS; actual Git operations use SSH.
+  without Homebrew. At that revision, metadata downloads used HTTPS and actual
+  Git operations used SSH. The HTTPS change below supersedes that restriction.
 - AutoFirma's cask has a manual installer artifact unsupported by native mise.
   A required `setup:autofirma` task prepares the pinned vendor package, verifies
   its archive checksum and package signature, and fails with an actionable
@@ -211,8 +212,9 @@ Other observed results:
 - Fisher installed puffer-fish, autopair and fzf.fish. The bat cache, Node/Python
   setup, Rust stable components and Cursor extensions completed. `gh stack --help`
   passed after extension installation. GitHub account authentication is separate.
-  Neovim, tmux and external skill restoration failed because their Git clones
-  require GitHub SSH credentials, which this VM does not have.
+  Neovim, tmux and external skill restoration initially failed because their Git
+  clones required GitHub SSH credentials. Anonymous HTTPS restoration passed in
+  the later test copy described below.
 - Zed opened its onboarding window from the VM console; Fish rendered its prompt
   and greeting in Terminal. This does not establish editor language-server or
   signed-in agent behavior.
@@ -229,8 +231,9 @@ Other observed results:
   The underlying assessment failure remains unresolved; checks were not bypassed.
 - Lato, Ghostty and IINA downloads timed out; direct IPv4 HTTPS probes also failed
   to connect. Open Sans, Roboto, Roboto Condensed, Roboto Mono and Source Code Pro
-  require GitHub SSH access for their recipe clones. macFUSE and Noto Sans passed
-  retries after test-harness contention was removed.
+  initially failed because Git rewrote their recipe clones to SSH. All five
+  installed over HTTPS in the later test copy. macFUSE and Noto Sans passed retries
+  after test-harness contention was removed.
 - `mise -C ~ run --timeout 2m setup:macos` applied automatic updates, firewall and
   power settings, then exited 1 because FileVault is off. Immediate screen lock
   is also unset. The firewall's signed-app restrictions blocked new SSH sessions;
@@ -320,13 +323,79 @@ shell smoke path, secret scanning and diff checks. Evidence:
 The helper used for both repository and VM checks has SHA-256
 `f31b6e12a8f9f39b2965ba6034407dc8dc743d6703df45f629b9de188c056fbb`.
 
+## HTTPS bootstrap and dependency downloads
+
+The later user decision replaces the initial plan's SSH-only bootstrap transport.
+The public checkout, Neovim plugins, tmux plugins, external skills and GitHub
+extension now use HTTPS. Shared Git defaults no longer rewrite GitHub/GitLab HTTPS
+URLs to SSH, and tmux installation and maintenance no longer use a Git wrapper.
+Existing SSH repository URLs remain unchanged.
+
+Enrollment, adoption and the serial sync gate accept HTTPS history origins as well
+as SSH and local test origins. HTTPS URLs containing credentials, query strings
+or fragments are rejected. Private repositories still need an authenticated Git
+credential helper or SSH access; this change does not create a private remote or
+enroll credentials. Native mise documents both transports and credential helpers:
+https://mise.jdx.dev/dotfiles/sync.html#repository-authentication
+
+The disposable `dotfiles-associations-023be87` VM received the updated public
+sources. Git credential helpers were disabled for the acceptance process, no
+GitHub tokens were supplied, and the host's SSH agent was not forwarded. Native
+dotfile deployment passed, then anonymous HTTPS `git ls-remote` succeeded for the
+public dotfiles repository, `google/fonts`, all six external skill repositories
+and `github/gh-stack`. Evidence is local under `.tmp/macos-acceptance/evidence/`:
+`https-acceptance.log`, `https-repositories.log` and `https-source-inputs.json`.
+
+| Guest command or check | Observed result | Evidence |
+| --- | --- | --- |
+| `mise -C ~ bootstrap packages apply brew-cask:font-open-sans --yes`, repeated separately for Roboto, Roboto Condensed, Roboto Mono and Source Code Pro | All five exit 0; five native cask receipts and ten font files present | `https-results.json`, `https-font-*.log`, `https-readback.json` |
+| `mise -C ~ run setup:tmux`, repeated | All four plugins installed; all origins use HTTPS | `https-setup-tmux.log`, `https-tmux-repeat.log`, `https-readback.json` |
+| `tpack update all` | Exit 0 for all four plugins | `https-tmux-update.log` |
+| `mise -C ~ run setup:skills`, repeated | Eight selected skills from six repositories, plus Playwright skills, installed | `https-setup-skills.log`, `https-skills-repeat.log`, `https-readback.json` |
+| `mise -C ~ run --timeout 10m setup:nvim`, repeated after the build correction below | Both exit 0; all 26 Git checkouts use HTTPS and match the lockfile | `https-nvim-repaired.log`, `https-nvim-repeat.log`, `https-readback.json` |
+| Neovim component readback | Blink and Telescope native libraries load, all six Mason packages are installed, and all 18 declared Treesitter parsers load | `https-readback.json` |
+| `mise -C ~ run setup:gh`, repeated; `gh stack --help` | All exit 0; extension installed anonymously | `https-setup-gh.log`, `https-gh-repeat.log`, `https-readback.json` |
+| `gh auth status`; executable and Gatekeeper checks | No GitHub login; Homebrew and Stow absent; assessments enabled | `https-final-state.log` |
+
+This smaller test copy initially lacked CMake and Rust. After native installation
+of both declared prerequisites, Neovim returned success but Telescope still lacked
+its native library: Lazy restore had not retried the earlier failed build. Setup
+and maintenance now explicitly rebuild that plugin and fail if its extension
+cannot load. The VM regression removed the generated library from view and omitted
+CMake from PATH; the new command correctly returned 1. Restoring the prerequisites
+and rerunning setup passed, including independent library, LSP and parser readback.
+The rebuild uses Lazy's documented blocking command:
+https://lazy.folke.io/usage#-commands
+Evidence: `https-readback-before-telescope-fix.json`,
+`https-nvim-missing-build.log` and `https-nvim-regression.log`.
+
+The five font results came from this separate test copy, not a completed rerun of
+the original 50/59-cask snapshot. An unfiltered package-status probe could not
+evaluate the SuperCmd tap without Ruby 3, so it is not counted as successful
+status acceptance. A diagnostic `mise exec` without tool selectors also started
+the full tool installation and was stopped. Its npm safety checks refused
+`2password` because of package age and `@luisurrutia/bird` because of download count;
+those separate restrictions were not weakened. The scoped plugin commands passed
+afterward. The VM was stopped after the final checks.
+
+Repository verification ran `/bin/bash
+.tmp/mise-implementation/verify-entrypoint.sh` and exited **0**. All four
+integration tests passed in **151.066 seconds**, including transport preservation
+after native Git configuration deployment and HTTPS origin validation. Parser,
+typecheck, static, smoke, secret-scan and diff checks passed. The log is
+`repository-verify-https-final.log` in the same evidence directory. The common agent
+instruction exception was reviewed locally for bootstrap scope; no paired model
+review was run for this supporting instruction edit.
+
 ## Outstanding acceptance
 
 The fresh-Mac exercise in [POST_INSTALL.md](../POST_INSTALL.md) is in progress.
 The following acceptance is still outstanding:
 
-- The nine missing common casks above, optional packages, App Store installation,
-  GitHub-authenticated plugin restoration, package updates and driver operation.
+- The four remaining common casks (NordVPN, Ghostty, IINA and Lato), optional
+  packages, App Store installation, full package updates and driver operation.
+- The npm package-age/download-count refusals above after applying the shared
+  package policy, and complete native package status with the custom-tap evaluator.
 - An untouched Setup Assistant/security flow, FileVault and immediate screen lock,
   the eight Mail/Safari defaults reported unset from Terminal, and actual launchd
   GUI behavior after required privacy approvals.

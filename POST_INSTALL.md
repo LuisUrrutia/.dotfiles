@@ -6,7 +6,7 @@ this checklist on a fresh Apple Silicon Mac; do not use the old Homebrew-owned
 installation as a substitute.
 
 1. Complete Full Disk Access, Command Line Tools, and sudo prerequisites, in that
-   order. Enroll private SSH access, age identity plus recovery recipient, Git
+   order. Enroll private Git access, age identity plus recovery recipient, Git
    identity, optional apps, and manual/automatic mode. Keep private inputs out of
    the public repository.
 2. Install the common setup and selected apps. Confirm `command -v brew` and
@@ -19,6 +19,7 @@ installation as a substitute.
 3. Launch Fish, Ghostty, Neovim, tmux, editors, OrbStack, and common GUI apps.
    Check Fisher completions/bindings, plugin restoration, Docker plugins, file
    associations, and Git identity/signing in normal repositories and worktrees.
+   Verify public font and plugin downloads over HTTPS without GitHub credentials.
 4. Sign into the App Store before the optional Xcode step. Accept licenses,
    enable FileVault, record its recovery key outside history, and set immediate
    screen lock. Grant Accessibility/Screen Recording/Full Disk Access to the

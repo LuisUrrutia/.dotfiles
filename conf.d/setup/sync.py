@@ -13,7 +13,7 @@ import config
 import edits
 import preferences
 from runtime import (HOME, MISE, ROOT, atomic, home_path, local, lock, mise, native_checked, native_json,
-                        read_state, run, selected, ssh_origin, write_state)
+                        read_state, run, selected, git_origin, write_state)
 
 
 def setup_hash():
@@ -51,7 +51,7 @@ def history_ready():
     if sync.get("conflicts") or sync.get("validation_error"):
         raise RuntimeError("History needs a decision; inspect mise dot status before applying setup")
     if sync:
-        ssh_origin(sync["origin"])
+        git_origin(sync["origin"])
         if sync["mode"] != "manual":
             raise RuntimeError("Native history sync must be manual; the serial task owns network exchange")
     return sync
