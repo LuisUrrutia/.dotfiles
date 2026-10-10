@@ -1,11 +1,11 @@
-# Mise migration: scope inventory
+# Mise-native macOS setup: scope inventory
 
 Baseline: `0c2f8fe3739a1e16e80d07d476453bf119db55dc`, inspected 2026-10-10.
 
-This is a declaration inventory, not proof that every package is installed or
-supported by mise. Extend it with each target Mac's read-only installed
-inventory
-during M0. Preserve undeclared installed software until its owner is resolved.
+This inventories source declarations for a fresh macOS setup, not existing
+machine state or proof of mise package support. D13 cancels in-place migration.
+M0 verifies fresh installation and updates for retained packages; no installed
+Homebrew inventory or transfer ledger is required.
 
 See the [plan](mise-migration.md) and [decision
 map](mise-migration-decisions.md).
@@ -19,12 +19,12 @@ unique packages. Xcode is also conditionally installed by `install.sh`.
 
 Default mapping: `brew` to native `brew:` packages, `cask` to `brew-cask:`,
 existing mise tools remain `[tools]`, `mas` to `mas:`, and editor extensions to
-an idempotent editor task. Remove the mise and Stow formula declarations only
-after their replacement gates pass. Map tap URLs explicitly and verify SSH Git
-transport; HTTP artifact/API downloads are not Git transport.
+an idempotent editor task. Exclude Stow and the mise formula from the new setup;
+install mise through its official bootstrap. Map tap URLs explicitly and verify
+SSH Git transport; HTTP artifact/API downloads are not Git transport.
 
 Every entry below needs a row in M0's compatibility ledger with its new owner,
-fresh-install result, existing-install transfer, update result, and recovery.
+fresh-install result, update result, and recovery.
 Do not infer support from a recipe name. Record common/optional/machine scope
 and the effective declaration path as well: D9 includes software changes in
 private history, and M10b applies them on matching automatic machines. Transfer
@@ -50,7 +50,7 @@ installed app does not authorize deleting its data when its module is disabled.
 The work exclusions are explicit; no other machine's full selection was supplied.
 
 The `audio-hijack` recipe exists and is marked self-updating; that establishes a
-candidate native `brew-cask:` route, not a completed mise ownership test:
+candidate native `brew-cask:` route, not a completed fresh-install test:
 https://raw.githubusercontent.com/Homebrew/homebrew-cask/master/Casks/a/audio-hijack.rb
 
 ### brewfiles/core
@@ -171,9 +171,9 @@ a second runtime manifest.
 
 All 39 baseline top-level Tool Installers are covered below, including approved
 retirements. Read the exact implementation again at pickup. The source paths
-below describe the old layout,
-not the destination. Move cohesive behavior to `conf.d/<capability>`; remove a
-stow-only installer after native entries preserve eligibility and safe conflicts.
+below describe the old layout, not the destination. Move retained behavior to
+`conf.d/<capability>`. Preserve dependency eligibility and safe conflicts on
+repeat application; old layout converters are outside the new setup contract.
 
 | Tool | Planned owner or preserved behavior |
 | --- | --- |
@@ -188,40 +188,41 @@ stow-only installer after native entries preserve eligibility and safe conflicts
 | `curl` | Native module entries and native/keg-only command resolution. |
 | `dockutil` | Preserve relative Dock edits unless native complete layout is proved equivalent. |
 | `fastfetch` | Native module entries. |
-| `fish` | Native module entries, native login shell, one activation owner, Fisher setup and migration. |
+| `fish` | Native module entries, native login shell, one activation owner, fresh Fisher setup. |
 | `gh` | Idempotent extension setup task; maintenance owns extension updates. |
 | `gh-dash` | Native module entries; existing mise CLI owner. |
 | `ghostty` | Native module entries plus config validation. |
-| `git` | Native Git module entries, identity templates, guarded migration, repo hook setup. |
+| `git` | Native Git module entries, fresh identity templates, safe repeated application, repo hook setup. |
 | `hammerspoon` | Native module entries; preserve blueutil dependency and existing automation behavior. |
 | `iina` | File-association task. |
 | `linearmouse` | Encrypted mutable JSON history plus preference-domain capture; retire the recurring Stow seed owner. |
 | `luarocks` | Preserve checks and native/runtime compatibility without brew execution. |
 | `macos` | Native user defaults/LaunchAgent plus narrow system tasks. |
-| `mise` | Official first-use bootstrap and global configuration enrollment; retire brew owner. |
+| `mise` | Official first-use bootstrap and global configuration enrollment; never install through Homebrew. |
 | `node` | Native module entries, npm policy, generated completions; preserve current runtime owner. |
 | `opencode` | Retire package/config/installer and cross-tool consumers under D11; no new native module. |
-| `orbstack` | Retain safe Docker plugin-link migration; OrbStack remains engine/CLI owner. |
+| `orbstack` | Create required Docker plugin links safely; OrbStack remains engine/CLI owner. |
 | `python` | Native module entries and completion task; separate maintenance from installation. |
 | `ripgrep` | Native module entries. |
 | `rustup` | Preserve toolchain, target, and component setup under one declared owner. |
-| `skhd` | Native module entries and verified service handoff; Accessibility remains a GUI prerequisite. |
+| `skhd` | Native module entries and fresh service registration; Accessibility remains a GUI prerequisite. |
 | `skills` | Native module entries plus explicit global-skill installation task; keep SSH origins. |
 | `ssh` | Native module entries and directory permissions; preserve OrbStack include ordering and agent rules. |
 | `starship` | Native module entries. |
 | `thaw` | Replace public plist and timestamped plaintext backups with encrypted capture/restore under M10a. |
 | `tlrc` | Native module entries; maintenance retains reference-data updates. |
 | `tmux` | Native module entries, isolated validation, TPack setup and SSH transport wrappers. |
-| `vim` | Native module entries, Lazy restore, Treesitter/LSP setup, legacy migration; Mason scope remains. |
+| `vim` | Native module entries, Lazy restore, Treesitter/LSP setup; Mason scope remains. |
 | `voiceink` | Managed launcher/settings and safe local auth/skill links; never sync credentials/runtime. |
 | `wget` | Native module entries. |
 | `zed` | Native module entries or format-aware ownership; preserve file associations and JSONC compatibility. |
 
 ## Config trees and exclusions
 
-Inventory all 30 baseline trees for the transition. Compare retained targets with
-Stow; record OpenCode and its exclusive cc-safety-net deployment as intentional
-retirements. Source paths are flattened into native modules, not preserved:
+Use all 30 baseline trees to identify retained native configuration targets;
+record OpenCode and its exclusive cc-safety-net deployment as intentional
+retirements. No Stow link conversion or compatibility test is required. Source
+paths are flattened into native modules:
 
 `bat`, `bin`, `btop`, `cc-safety-net`, `claude`, `cspell`, `curl`, `fastfetch`,
 `fish`, `gh-dash`, `ghostty`, `git`, `hammerspoon`, `linearmouse`, `macos`,
@@ -264,7 +265,7 @@ explicit in each module's declaration.
 | Optional app entries, including former core DisplayLink | `conf.d/<app>/mise.<app>.toml` with only that capability's resources |
 | `tools/thaw/Thaw.plist` and plaintext backup output | Private encrypted snapshots; public `conf.d/thaw/` contains only declarations/adapters |
 | Appearance LaunchAgent plist | Native TOML declaration in `conf.d/macos/mise.toml`; runtime plist is generated |
-| `maintenance/`, `config/`, `cli/` behavior | Native operational `tasks/` and thin compatibility routing |
+| `maintenance/`, `config/`, `cli/` behavior | Native operational `tasks/`; optional thin convenience commands |
 | `verification/` and component test trees | Reduced `tests/` suite based on retained behavior; see D12 |
 
 Enroll the native root payload into `~/.config/mise` with the same relative paths.
@@ -278,7 +279,7 @@ Read-only local inspection on 2026-10-10 found the following files. Bundle IDs
 and versions came from `/Applications/<app>.app/Contents/Info.plist`; preference
 paths and Application Support entries were enumerated without reading their
 values. This is path evidence, not proof of portable contents or safe restore.
-Reconfirm schemas and storage locations against the version being migrated.
+Reconfirm schemas and storage locations against the installed version.
 
 In this table, `Preferences/` means `~/Library/Preferences/`, and `Support/`
 means `~/Library/Application Support/`.
@@ -323,10 +324,11 @@ forked Electron implementations. The canonical release source is
 `SuperCmdLabs/SuperCmd-v2-releases`.
 
 Existing plaintext sources are `tools/thaw/Thaw.plist` and the generated output
-of `tools/bin/config/.local/bin/thaw-config`. Retire both storage routes after
-encrypted recovery passes. The other tracked plist is the appearance LaunchAgent;
-replace its source with native TOML. No public history rewrite is part of this
-plan, and encryption does not retroactively protect earlier public commits.
+of `tools/bin/config/.local/bin/thaw-config`. Remove both storage routes from
+the rebuilt setup. The other tracked plist is the appearance LaunchAgent;
+replace its source with native TOML. No pre-erase backup has been performed.
+No public history rewrite is part of this plan, and encryption does not
+retroactively protect earlier public commits.
 
 Primary documentation and package metadata:
 
@@ -348,7 +350,7 @@ module so the new setup has no dangling command or plugin references:
 
 | Owner | Removal or retained boundary |
 | --- | --- |
-| Global mise config | Remove the `opencode` tool declaration and managed installation during cutover |
+| Global mise config | Remove the `opencode` declaration; omit it from the fresh setup |
 | Fish `03_abbrs.fish`, `help-aliases.fish`, `tds.fish` | Remove `c`/`oc` shortcuts and OpenCode pane/autolaunch; preserve the remaining tmux layout |
 | Starship config | Remove `custom.opencode` and its prompt reference |
 | Zed settings | Remove OpenCode agent-server integration and defaults |
@@ -376,7 +378,7 @@ in these files without separating retained behavior:
 | `maintenance/tests/backup.sh` | Consolidate wrapper/output-string checks into the preference capture scenario; keep meaningful failure reporting. |
 | `tools/skills/tests/install.sh` | Drop exact full-command snapshots and the OpenCode target. Check intended installed agent targets only where repo behavior needs protection. |
 | `verification/check-configs.py` and schemas | Retain relevant parser/schema checks, remove OpenCode policy, and avoid maintaining redundant format parsers or string checks. |
-| Git identity/migration and config preservation tests | Keep the cases proving correct identity, unrelated-key preservation, and refusal to overwrite foreign state; port only those contracts. |
+| Git identity/migration and config preservation tests | Keep correct identity, unrelated-key preservation, and refusal to overwrite foreign state; remove old Git-layout migration tests. |
 
 Use four cohesive integration areas: safe/repeatable configuration; Git identity;
 encrypted app recovery; and manual/automatic setup exchange. A case belongs only
@@ -386,9 +388,9 @@ experiments are version-selection evidence, not a second upstream test suite.
 
 ## Highest-risk package cases
 
-- Existing Homebrew-owned casks: status recognition is not ownership transfer.
 - Self-updating/TCC-sensitive apps: Slack, Discord, Zoom, ChatGPT, T3 Code,
-  Hammerspoon, CleanShot, and other apps with granted privacy permissions.
+  Hammerspoon, CleanShot, and other apps requiring privacy permissions. Verify
+  first-use grants and subsequent updates on the new setup.
 - Driver/pkg/security installs: DisplayLink, macFUSE, sshfs-mac, Tailscale,
   NordVPN, VeraCrypt, AutoFirma, and audio tools.
 - Third-party taps: remindctl, SuperCMD, Terraform, and skhd.
@@ -403,9 +405,9 @@ PATH.
 
 These are investigation priorities, not findings that those packages fail.
 
-## Cross-cutting consumers to migrate
+## Cross-cutting consumers to rebuild
 
-Inspect and migrate these current consumers with their owning units. Their names
+Inspect and rebuild these current consumers with their owning units. Their names
 are source pointers, not instructions to retain the existing structure:
 
 - `install.sh`, `bootstrap/`, `private-install.sh`, `dotfiles`, and `cli/`.
@@ -474,11 +476,11 @@ sources, and stdin closed. On mise 2026.10.1, all operations exited 0:
   real directories and did not receive the module manifest.
 - `mise run layout-probe`: discovered and ran a global task from `tasks/`.
 
-This proves the native folder structure on that build, not full adoption, package
-installation, synchronization, or task-path behavior in every module. The probe
-is a disposable design check; M0 must verify composition against the chosen
-release. Keep a small effective-config smoke check rather than a test for every
-module or profile combination. No live configuration or installed software changed.
+This proves the native folder structure on that build, not private-history
+enrollment, package installation, synchronization, or every module's task paths.
+The probe is a disposable design check; M0 must verify composition against the
+chosen release. Keep a small effective-config smoke check rather than a test for
+every module or profile combination. No live configuration or software changed.
 
 The user subsequently confirmed full setup synchronization, including software
 installation. D9/D10 and M10/M10b now include package declarations, setup sources,
@@ -486,9 +488,12 @@ and automatic application; the earlier composition probes do not establish that
 protocol. The subsequent user correction replaced the Stow-shaped source layout
 with native colocated modules. These revisions add planning contracts and the
 bounded structural probe above; full behavioral acceptance remains M0/M10b work.
-The latest scope correction retires installation profiles and OpenCode, makes
+An earlier scope correction retires installation profiles and OpenCode, makes
 five former categories common, and adds encrypted preference recovery. Local
 app/path discovery above adds no evidence of actual capture or restore.
+The latest decision, D13, limits implementation to fresh macOS installations.
+M13 and existing Homebrew/Stow transfer checks are cancelled; fresh installation,
+update, repeated application, and recovery checks remain.
 
 ## Planning-artifact validation
 
@@ -514,5 +519,5 @@ git diff --check
 A one-off Python check also verified local Markdown links, every inventoried
 package declaration, all 39 installer names, all 30 config trees, and that Git
 does not ignore the plan files. No application build or full behavioral suite
-was run for this documentation-only change. The future migration checks in the
+was run for this documentation-only change. The future setup checks in the
 plan remain unexecuted.

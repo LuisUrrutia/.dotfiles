@@ -1,58 +1,59 @@
-# Mise migration: decision map
+# Mise-native macOS setup: decision map
 
 Status: direction established, including full setup synchronization, a common
 base with app exceptions, encrypted app preferences, and a smaller test suite.
-Feasibility gates remain before implementation.
+The user chose a fresh macOS install; existing-install migration is cancelled.
+Fresh-setup feasibility gates remain before implementation.
 Updated: 2026-10-10.
 Inspected repository: `0c2f8fe3739a1e16e80d07d476453bf119db55dc`.
 
 The authoritative implementation plan is [mise-migration.md](mise-migration.md).
 The [inventory](mise-migration-inventory.md) records the existing scope.
-These are tracked planning artifacts. No machine migration is authorized by
-this planning request, and no package or live configuration was changed.
+These are tracked planning artifacts. No disk erase or machine setup is authorized
+by this planning request, and no package or live configuration was changed.
 
 ## Destination
 
-Use mise to bootstrap fresh Macs and migrate Macs already using this repository.
-Replace Stow and the Homebrew executable, preserve retained capabilities,
+Use mise to bootstrap fresh Macs after the user reinstalls macOS. Rebuild the
+repository without Stow or the Homebrew executable, preserve retained capabilities,
 and support configuration and software-declaration exchange between machines.
 Automatic machines receive and apply common setup and enabled-app changes;
 manual machines exchange and apply them on request. Preserve a public, reviewable
 baseline and machine records without publishing private operational state.
 
-Success requires both a fresh installation and an existing-install migration
-that work with `brew` and `stow` unavailable. Keeping `/opt/homebrew` as the
-location of mise-managed bottles is compatible with that outcome; deleting the
-prefix is not the objective.
+Success requires fresh installation, repeat bootstrap, and updates with `brew`
+and `stow` absent. Mise-managed bottles may use `/opt/homebrew`; the directory
+name does not imply the Homebrew executable is installed.
 
-The user chose mise and explicitly required complete Homebrew removal, including
-existing installations. Preserving Homebrew indefinitely is not an alternative.
-Unsupported recipes block the affected migration until an equivalent installation
-route is verified; they do not silently remove a tool from scope.
+The user chose mise and a setup without Homebrew, then explicitly cancelled
+existing-install migration in D13. Unsupported required recipes still need a
+verified installation route; they do not silently remove a retained tool.
 
 ## Decisions
 
 | ID | Question | State | Depends on | Owner |
 | --- | --- | --- | --- | --- |
-| D1 | What must replace Homebrew? | Resolved by user | None | User |
+| D1 | How does the fresh setup avoid Homebrew? | Resolved by user | D13 | User |
 | D2 | Where does shared history live, and who applies it? | Resolved direction | D9 | User; implementation for enrollment |
 | D3 | What structure follows mise rather than Stow? | Revised proposal; native module probe passed | D1, D2 | User direction; implementation design |
 | D4 | Which mechanism owns each configuration file? | Resolved policy | D2, D3 | Implementation |
 | D5 | How do machine roles select Git identities? | Resolved model; enrollment inputs outstanding | D3, D4 | User supplies account/path data |
 | D6 | What belongs in declarative macOS setup? | Resolved boundary | D1, D3 | Implementation |
 | D7 | How are private app preferences captured and recovered? | Mandatory encryption; proposed restore boundary | D2, D4 | User scope; implementation; recipients at enrollment |
-| D8 | Can existing package ownership transfer safely? | Open feasibility gate | D1 | Implementation |
+| D8 | Is existing package ownership transfer required? | Closed: out of scope | D13 | User |
 | D9 | Does sync include shared configuration and installed software? | Resolved by user | None | User |
 | D10 | How are received software/setup changes applied? | Proposed serial application cycle | D2, D3, D4 | Implementation |
 | D11 | What is common, optional, or retired? | Resolved by user; individual app enrollment remains | None | User |
-| D12 | Which tests deserve to survive the migration? | Resolved policy | Retained behavior | User direction; implementation |
+| D12 | Which tests deserve to survive the rebuild? | Resolved policy | Retained behavior | User direction; implementation |
+| D13 | Does delivery support existing Macs or only fresh setup? | Fresh setup only; migration cancelled | None | User |
 
 Dependencies are prerequisites. Version compatibility affects every implementation
 unit and is verified first; it does not change the user's destination.
 
-## D1: Remove the Homebrew executable
+## D1: Install without the Homebrew executable
 
-**Authority:** explicit user decision, including existing machines.
+**Authority:** the user requires no Homebrew executable. D13 narrows the
+installation target to fresh macOS and removes uninstall/transfer work.
 
 Keep existing mise runtimes and portable CLIs under `[tools]`. Use mise's native
 `brew:` and `brew-cask:` bootstrap backends for suitable formulae, apps, and fonts.
@@ -60,8 +61,8 @@ Those backends install directly; the prefix name does not imply a dependency on
 the `brew` command. Use `mas:` for App Store apps and `macos-app:` for verified
 vendor app archives where appropriate.
 
-This is a package-owner migration, not a blanket move of everything into
-versioned `[tools]`. Native libraries, shell binaries, plugins, and apps have
+Choose the manager by capability rather than moving everything into versioned
+`[tools]`. Native libraries, shell binaries, plugins, and apps have
 different installation contracts. Existing editor-scoped ownership remains
 unless a concrete compatibility issue requires changing it.
 
@@ -139,13 +140,13 @@ mechanism. Keep its packages, files, and services under the same selection. No
 profile menu, role preset, alias system, or duplicate module index is needed.
 
 The public distribution also needs `install.sh` and a small `bootstrap/` for
-first-use/migration, `machines/` for public enrollment records, `tests/` for
+first-use enrollment, `machines/` for public enrollment records, `tests/` for
 verification, and the existing planning/docs. Root `mise.toml` owns repository
 verification and the enrollment adapter, not a second machine package/config
 manifest. Ordinary setup behavior belongs in native declarations or module tasks;
-shared operational commands belong in native `tasks/`. Keep `dotfiles` only as a
-thin compatibility command for retained operations, not another implementation
-tree or a reason to preserve the retired profile interface.
+shared operational commands belong in native `tasks/`. Any retained `dotfiles`
+command is a thin convenience wrapper. Legacy CLI grammar, profile selectors,
+and old-state converters are not compatibility requirements.
 
 Enroll `config.toml`, `conf.d/`, `tasks/`, and any actual global environment files
 as regular files under `~/.config/mise`, preserving their relative structure.
@@ -209,7 +210,7 @@ their shared inputs. Publish changes to the public baseline explicitly.
 
 Do not use `absent` as general cleanup: its declaration authorizes removing a
 regular file without proving ownership. Use it only for a reviewed retired path
-after preservation and migration checks. Never use blanket force/prune flags.
+after preservation and ownership checks. Never use blanket force/prune flags.
 
 Keep the existing conflict preflight and capture/discard decision boundary.
 Native mise semantics alone are insufficient: a scratch probe on 2026.10.1
@@ -230,10 +231,11 @@ https://mise.jdx.dev/dotfiles/edits.html
 
 ## D5: Machine identities and directory scopes
 
-Keep tracked hardware records in `machines/` and preserve the existing
-`DOTFILES_HARDWARE_*`, `DOTFILES_GIT_*`, and `DOTFILES_MANAGED_GIT_*` compatibility
-until callers migrate. Enrollment produces native local mise selection/data;
-generated local files are not a second hand-maintained authority.
+Keep public hardware and identity records tracked in `machines/`; express their
+retained values in the new native enrollment schema. D13 removes the need for
+legacy `DOTFILES_*` interfaces or a converter for the former installed Git layout.
+Enrollment produces local mise selection/data; generated local files are not a
+second hand-maintained authority.
 
 The logical record contains the default Git identity and an ordered list of
 directory-scoped identity overrides. Each identity can carry name, email, public
@@ -266,7 +268,7 @@ https://mise.jdx.dev/dotfiles/managed.html
 Move supported user preferences into named macOS settings or raw defaults.
 Use explicit current-host entries and dictionary paths where needed. Preserve
 types and unrelated dictionary keys. Use native LaunchAgents for the appearance
-schedule, with an explicit handoff from its old label to `dev.mise.*`.
+schedule using `dev.mise.*` labels. Fresh setup needs no old-service handoff.
 
 System preferences, hostname changes, power policy, FileVault, screen-lock
 authentication, file associations, and other commands outside the native schema
@@ -345,28 +347,20 @@ Evidence:
 https://mise.jdx.dev/dotfiles/encryption.html
 https://mise.jdx.dev/dotfiles/history.html
 
-## D8: Existing cask ownership is the critical feasibility gate
+## D8: Existing cask ownership transfer is out of scope
 
-Mise detects Homebrew-owned casks but does not upgrade them as mise-owned casks.
-Therefore importing declarations and observing "installed" does not prove a
-completed migration. Generic `adopt = true` is not proof of receipt conversion.
+**Closed by D13.** The earlier feasibility gate concerned Homebrew-owned casks
+that mise recognizes but does not upgrade as its own. The user chose to reinstall
+macOS, so the new setup installs casks through mise from the start. Do not build
+receipt conversion, an adoption workflow for the old installation, or a Homebrew
+uninstaller. This observation no longer blocks M4 or completion.
 
-Build and test an explicit ownership-transfer procedure before touching live
-apps. Compare supported metadata handoff, vendor-managed self-updates with a
-declared installation owner, and controlled reinstall when necessary. Do not edit
-receipts speculatively or run an uninstaller that removes shared dependencies.
-Any destructive per-app step needs a concrete reviewed action at execution time.
+Fresh recipe support, pkg/driver installation, updates, and initial macOS privacy
+grants still need verification. Mise cannot grant or guarantee preservation of
+TCC permissions. Unsupported required recipes need a verified vendor route or
+package plugin; replacing an app's function still requires a user decision.
 
-First test self-updating screen-recording apps, third-party taps, pkg installers,
-drivers, and extensions. Privacy grants require a GUI check; neither a dry run
-nor successful installation proves they survived. The project must not claim
-that mise grants or universally preserves macOS TCC permissions.
-
-**Gate:** every installed in-scope package has a verified install/update owner
-without brew. If a recipe fails, test the upstream binary, vendor package, or a
-small declarative package plugin. Replacing the app itself requires a user choice.
-
-Evidence: current Brewfiles;
+Evidence:
 https://mise.jdx.dev/bootstrap/packages/brew-cask.html
 https://mise.jdx.dev/bootstrap/packages/macos-app.html
 
@@ -392,7 +386,7 @@ Manual machines retain explicit exchange/application. On automatic machines,
 receiving a valid complete setup revision includes applying its packages and
 setup tasks through D10. This supersedes the earlier recommendation to exclude
 setup code and package manifests from automatic history. It does not authorize
-running this migration during the planning task.
+running machine setup during the planning task.
 
 ## D10: Serialize exchange and setup application
 
@@ -450,12 +444,11 @@ modules; do not invent replacement work/personal/agent profiles. OBS and its
 required plugin can share one capability because they operate together. Keep
 BusyCal optional and add Audio Hijack as an optional app/config owner. The
 inventory is authoritative for exact members and known work exclusions; other
-machines' choices come from enrollment and inspected installed state.
+machines' choices come from fresh enrollment.
 
-Retire profile prompts, aliases, all/subset grammar, and recovery files. Preserve
-safe resumability for the new setup, not the old selector's implementation.
-Obsolete arguments must explain the replacement rather than silently changing
-what gets installed. Disabling an optional app does not itself delete its data
+Remove profile prompts, aliases, all/subset grammar, and recovery-file handling.
+Preserve resumability for the new setup without converting the old selector's
+state. Disabling an optional app does not itself delete its data
 or grant permission for global package pruning.
 
 Remove OpenCode's runtime declaration, installer/config tree, launch shortcuts,
@@ -465,12 +458,12 @@ separate request. Preserve unrelated terminal/editor functionality and untracked
 user data; removal of credentials, sessions, or public Git history is separate.
 
 This supersedes previous requirements to preserve all ten profiles and every
-legacy command/test. It does not weaken the retained-capability ownership gate.
+legacy command/test. Retained tools still need working installation/update routes.
 
 ## D12: Tests follow retained behavior
 
 **Authority:** the user considers the current suite excessive and poorly focused.
-The migration should reduce it, not mechanically reproduce it in a new tree.
+The rebuild should reduce it, not mechanically reproduce it in a new tree.
 
 Keep static syntax/format/schema and secret checks, plus a small real integration
 suite for the boundaries this repo owns: safe/repeatable application, Git identity,
@@ -480,7 +473,8 @@ that could lose state, apply the wrong identity/software, leak plaintext, or mar
 failed work successful. Reuse a case only if it still protects such a contract.
 
 Remove old profile-menu matrices, Stow/Brewfile implementation assertions,
-OpenCode checks, command-string snapshots, and tests of internal helper ordering.
+OpenCode checks, legacy migration tests, command-string snapshots, and tests of
+internal helper ordering.
 Do not retest upstream mise's internals or add tests for each declarative entry.
 Use narrow fakes only at real external/privileged boundaries. Keep live package,
 TCC, and app-restore acceptance separate from ordinary CI; do not build a complete
@@ -488,12 +482,34 @@ cross-product of machines, identities, sync modes, and packages.
 
 Existing quality gates apply until their owner is retired. Update the relevant
 instructions and CI together with that retirement. "Fewer tests" must not leave
-the migration's preservation and recovery behavior unverified.
+the new setup's preservation and recovery behavior unverified.
+
+## D13: Fresh macOS setup only
+
+**Authority:** the user explicitly cancelled migration of existing dotfiles
+installations and will format and reinstall macOS.
+
+Continue the mise-native repository rebuild, common base, individual app choices,
+Git identities, encrypted preferences, and manual/automatic full-setup sync.
+Support first enrollment and later restoration from the new private history.
+Neither Homebrew nor Stow is installed as part of this setup.
+
+Cancel M13 and remove its dependencies from M14. Remove old/new coexistence,
+Stow link conversion, Homebrew receipt transfer/uninstall, migration journals,
+legacy runtime adapters, and old-install rollback from the delivery scope and
+test budget. Existing source files remain an inventory of useful behavior to
+implement, not a requirement to upgrade machines running those files.
+
+Formatting belongs to the user and is not an agent operation authorized by this
+planning request. Any local settings the user wants after the erase must first
+exist in an independent backup or the new encrypted history. No such capture or
+recovery-key enrollment has happened during planning; this is separate from an
+in-place migration feature.
 
 ## Continuation
 
-No sync-coverage decision remains open. M0 verifies global setup composition,
-package ownership transfer, and the serial exchange/application protocol before
-implementation depends on them. Actual origin, machine modes, identities, and
-key references are enrollment inputs. Production cutover still requires those
-proofs and fresh/existing Mac acceptance.
+No sync-coverage or installation-scope decision remains open. M0 verifies global
+setup composition, fresh package installation/update, and the serial exchange/
+application protocol. Actual origin, machine modes, identities, and key references
+are enrollment inputs. Completion needs those proofs and fresh-Mac acceptance;
+the former Homebrew/Stow ownership-transfer gate is closed as out of scope.
