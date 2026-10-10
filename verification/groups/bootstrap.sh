@@ -5,6 +5,7 @@ set -euo pipefail
 cd "$DOTFILES"
 
 /bin/bash verification/tests/bootstrap.sh
+/bin/bash verification/tests/install-selection.sh
 /bin/bash verification/tests/github-preflight.sh
 /bin/bash install.sh --dry-run
 /bin/bash install.sh --dry-run --core-only

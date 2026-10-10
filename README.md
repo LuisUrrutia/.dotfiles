@@ -60,6 +60,8 @@ The Bootstrapper is not just a symlink script. It:
   networked phase
 - asks plain-language questions, shows the packages/apps behind each yes, then
   maps the answers to optional profile Brewfiles
+- saves the exact interactive tool selection before downloads and offers to
+  reuse it after an interrupted installation
 - installs Homebrew if missing, otherwise updates and upgrades it
 - installs the full Xcode app through `mas` on the first run only when the
   active Machine Config opts in
@@ -81,6 +83,8 @@ The Bootstrapper is not just a symlink script. It:
 - writes an install marker to `~/.local/state/dotfiles/installed` so first-run
   work does not repeat (a legacy repo-local `.installed` file is still honored
   and cleaned up)
+- after a successful interactive installation, offers to create a Machine
+  Config for unregistered hardware, then clears the saved recovery selection
 
 An unauthenticated GitHub API budget can already be exhausted on a fresh Mac.
 The Bootstrapper checks GitHub routes and `https://api.github.com/rate_limit`
@@ -167,11 +171,36 @@ Other optional questions work the same way: say yes to the need, then the
 installer immediately asks about each package/app with every item enabled by
 default.
 
+Before downloads start, an interactive installation saves its chosen groups,
+individual packages, and languages under
+`${XDG_STATE_HOME:-$HOME/.local/state}/dotfiles/install-selection/<hardware-hash>`.
+If the installation fails or is interrupted, rerun `./dotfiles install`.
+The installer shows the saved selection and asks whether to reuse it, with yes
+as the default. Recovery takes priority over Machine Config defaults. Answer
+no to use the normal machine defaults or choose tools again on unregistered
+hardware. The new selection replaces the saved one before installation starts.
+
+Explicit `--core-only`, `--all-profiles`, and `--profile` choices take priority
+over recovery. Dry runs and non-interactive installs do not read, write, or
+clear recovery state. Invalid saved choices, including removed tools, are
+reported and the normal selection flow continues. Cleanup is confirmed again
+on each interactive run. Saved recovery state is removed after successful
+completion, whether or not a Machine Config is created.
+
 ## Machines
 
 `machines/` holds one file per known laptop or desktop, named after the
 machine's hardware hash. They are tracked config, not ignored private files, so
 fork users can add their own machines and keep those choices versioned.
+
+After a successful interactive installation on unregistered hardware, the
+installer asks whether to create `machines/<hardware-hash>.sh`, with no as the
+default. Accepting saves the exact installed selection, including individual
+packages and languages. Review the generated labels and commit the file to
+keep it versioned. It does not capture Git identity or change the hostname.
+Existing files and symlinks are preserved. If hardware detection fails, profile
+creation is skipped and recovery uses an `unknown` filename in the state
+directory instead.
 
 Get this Mac's hardware hash (the script is also on `PATH` as `machash` after
 install):
@@ -189,6 +218,8 @@ MACHINE_NAME="Work Laptop"
 MACHINE_HOSTNAME="work-laptop"
 MACHINE_INSTALL_MODE="selected"
 MACHINE_PROFILES="dev,languages"
+MACHINE_LANGUAGES="go,lua"
+MACHINE_PROFILE_PACKAGES="dev:dive,dev:yaak"
 MACHINE_XCODE_SETUP=false
 MACHINE_GIT_USER_NAME="Your Name"
 MACHINE_GIT_USER_EMAIL="you@example.com"
@@ -202,6 +233,13 @@ Supported variables:
 - `MACHINE_INSTALL_MODE`: `all`, `core`, or `selected`
 - `MACHINE_PROFILES`: comma-separated profile flags when
   `MACHINE_INSTALL_MODE="selected"`
+- `MACHINE_LANGUAGES`: optional comma-separated choices from `go`, `lua`,
+  `rust`, and `perl`, limiting the selected `languages` profile; empty or
+  omitted installs that whole profile
+- `MACHINE_PROFILE_PACKAGES`: optional comma-separated `profile:package`
+  choices, limiting each listed profile to those packages; selected profiles
+  with no entries here install in full. Do not combine entries for `languages`
+  with a non-empty `MACHINE_LANGUAGES` value
 - `MACHINE_XCODE_SETUP`: `true` to install and initialize the full Xcode app
   through `mas` on this machine's first run; defaults to `false`
 - `MACHINE_GIT_USER_NAME` and `MACHINE_GIT_USER_EMAIL`: written to
