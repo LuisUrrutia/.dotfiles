@@ -14,6 +14,9 @@ source "$DOTFILES/bootstrap/profiles.sh"
 # shellcheck source=tools/catalog.sh
 # shellcheck disable=SC1091
 source "$DOTFILES/tools/catalog.sh"
+# shellcheck source=bootstrap/install-selection.sh
+# shellcheck disable=SC1091
+source "$DOTFILES/bootstrap/install-selection.sh"
 
 MACHINES_DIR="$DOTFILES/machines"
 
@@ -35,6 +38,8 @@ MACHINE_NAME=""
 MACHINE_HOSTNAME=""
 MACHINE_INSTALL_MODE=""
 MACHINE_PROFILES=""
+MACHINE_LANGUAGES=""
+MACHINE_PROFILE_PACKAGES=""
 MACHINE_XCODE_SETUP=false
 MACHINE_GIT_USER_NAME=""
 MACHINE_GIT_USER_EMAIL=""
@@ -128,6 +133,8 @@ reset_machine_config() {
   MACHINE_HOSTNAME=""
   MACHINE_INSTALL_MODE=""
   MACHINE_PROFILES=""
+  MACHINE_LANGUAGES=""
+  MACHINE_PROFILE_PACKAGES=""
   MACHINE_XCODE_SETUP=false
   MACHINE_GIT_USER_NAME=""
   MACHINE_GIT_USER_EMAIL=""
@@ -724,6 +731,11 @@ configure_machine_environment() {
 }
 
 configure_install_plan() {
+  ALL_PROFILES=false
+  SELECTED_PROFILES=()
+  SELECTED_LANGUAGES=()
+  SELECTED_PROFILE_PACKAGES=()
+
   if [[ "$ARG_ALL_PROFILES" == true ]]; then
     ALL_PROFILES=true
     return
@@ -740,30 +752,17 @@ configure_install_plan() {
     return
   fi
 
+  if offer_saved_install_selection; then
+    return
+  fi
+
   if [[ "$HAS_MACHINE_CONFIG" == true ]]; then
-    case "$MACHINE_INSTALL_MODE" in
-    all)
-      ALL_PROFILES=true
-      return
-      ;;
-    core)
-      ALL_PROFILES=false
-      return
-      ;;
-    selected)
-      ALL_PROFILES=false
-      if [[ -z "$MACHINE_PROFILES" ]]; then
-        say "Error: selected install mode for machine '$MACHINE_ID' requires explicit profiles" >&2
-        exit 1
-      fi
-      parse_profiles "$MACHINE_PROFILES"
-      return
-      ;;
-    *)
-      say "Error: invalid install mode for machine '$MACHINE_ID': $MACHINE_INSTALL_MODE" >&2
+    if ! apply_install_selection "$MACHINE_INSTALL_MODE" "$MACHINE_PROFILES" \
+      "$MACHINE_LANGUAGES" "$MACHINE_PROFILE_PACKAGES"; then
+      say "Error: invalid tool selection for machine '${MACHINE_ID:-registered}'" >&2
       exit 1
-      ;;
-    esac
+    fi
+    return
   fi
 
   section "Optional tool selection"
@@ -1530,6 +1529,7 @@ configure_and_print_install_plan() {
   detect_state
   configure_machine_environment
   configure_install_plan
+  save_install_selection
   configure_cleanup_plan
   configure_system_plan
   print_install_plan
@@ -1575,6 +1575,8 @@ main() {
   mkdir -p "$(dirname "$INSTALLED_MARKER")"
   touch "$INSTALLED_MARKER"
   rm -f "$LEGACY_INSTALLED_MARKER"
+  offer_machine_config
+  clear_install_selection
   print_next_steps
 }
 
