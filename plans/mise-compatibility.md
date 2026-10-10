@@ -118,6 +118,44 @@ SuperCmd's export can contain characters a strict XML parser rejects. Captured
 plists are binary, then encrypted by native history. These structural checks do
 not prove every opaque app field or actual reopen behavior.
 
+## Disposable macOS VM preflight
+
+On 2026-10-10, Tart **2.40.1** booted a disposable macOS **27.0 arm64** guest
+with 4 CPUs, 8 GiB RAM and a 50 GB disk. Its official release archive matched
+SHA-256 `363e2701154a8155cbc1bb6d845430c9b42697d2a186bc49574471ca2877db46`;
+macOS code-signature and notarization checks passed. The image was
+`ghcr.io/cirruslabs/macos-golden-gate-vanilla@sha256:b78a521145ebef24e9916c0b3999e165bb12b587d11524c5fa3ba4fe7bf79bb9`.
+
+The guest received only the tracked archive of `6310358` and a disposable SSH
+public key. Its host key was obtained through the guest console and pinned for
+noninteractive SSH. No operator credentials or private preferences were copied.
+The image has preconfigured login, SSH and passwordless sudo; Gatekeeper was
+re-enabled before testing because the supplied image disables it. This is a
+software-clean VM, not evidence for an untouched Setup Assistant/security flow.
+
+Observed guest results:
+
+- `command -v brew`, `command -v stow`, and `command -v mise` initially found
+  nothing; `xcode-select -p` confirmed that Command Line Tools were absent.
+- `/bin/bash install.sh --seed-only` exited 1 with the required CLT message.
+- `/bin/bash install.sh --mise-only` installed official mise 2026.10.7 and
+  succeeded again on a second run.
+- `mise exec python@3 -- python3 --version` installed and ran Python 3.15.0.
+  Metadata requests had intermittent timeouts; the command ultimately exited 0.
+- `/bin/bash -n install.sh bootstrap/install-mise.sh`, the installer dry-run,
+  and compilation of all 11 Python files with the guest's Python 3.15 passed.
+
+Full setup has not run. The Command Line Tools installer is waiting at Apple's
+license agreement. GitHub SSH access is not enrolled, and the guest initially
+has only 11 GiB free; the complete package inventory needs a larger guest disk.
+Tart's nested virtualization support excludes macOS guests, so this environment
+cannot establish OrbStack's container runtime behavior. Hardware and privacy
+acceptance also remain separate. Sources:
+https://tart.run/quick-start/ and https://tart.run/faq/#nested-virtualization-support
+
+Local VM files, access wrappers and command logs are retained under the ignored
+`.tmp/macos-acceptance/` directory. They are not part of a fresh checkout.
+
 ## Outstanding acceptance
 
 The repository implementation is ready for the separate fresh-Mac exercise in
@@ -138,8 +176,9 @@ was not repaired or changed. Self-updating casks reduce replacement, but replace
 can still reset privacy grants:
 https://mise.jdx.dev/bootstrap/packages/brew-cask.html#macos-privacy-permissions
 
-No live preferences were backed up, private origin created, credentials enrolled,
-or machine setup performed. Keep wanted old settings independently before erase.
+No operator preferences were backed up, real private origin created, user
+credentials copied, or setup applied to the operator's Mac. Keep wanted old
+settings independently before erase.
 
 References:
 
