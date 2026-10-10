@@ -65,7 +65,8 @@ https://github.com/jdx/mise/blob/v2026.10.7/src/system/driver.rs
 
 `mise run verify` is the maintained entry point. It covers:
 
-- Python compilation; TOML/JSON/JSONC/YAML/JavaScript parsing; EditorConfig;
+- Python compilation; Swift typechecking; TOML/JSON/JSONC/YAML/JavaScript parsing;
+  EditorConfig;
   Bash 3.2/ShellCheck; Fish syntax; Lua/Neovim formatting; Claude settings schema;
   Git config parsing; actionlint and pinned GitHub actions; secret scanning.
 - Four integration areas: safe native deployment and partial-key capture;
@@ -84,10 +85,11 @@ aside the runner's preinstalled Homebrew prefix. No hosted workflow was dispatch
 
 Final execution on 2026-10-10: `/bin/bash
 .tmp/mise-implementation/verify-entrypoint.sh` invoked `mise run verify` and exited
-with status **0**. All four integration tests passed in **254.790 seconds**;
-the parser/static, smoke, secret-scan and diff checks also passed. The wrapper and
-`verify-final.log` are local ignored evidence under `.tmp/mise-implementation/`,
-not required files in a fresh checkout. The maintained command is `mise run verify`.
+with status **0** for implementation `d6f939c`. All four integration tests passed
+in **192.017 seconds**; typechecking, parser/static, smoke, secret-scan and diff
+checks also passed. The wrapper is local ignored evidence, as is
+`.tmp/macos-acceptance/evidence/repository-verify-associations.log`.
+Neither is required in a fresh checkout. The maintained command is `mise run verify`.
 
 Additional isolated probes verified the official installer downloading the pinned
 release, preserving an older executable, a stable rerun, refusal of a regular
@@ -98,10 +100,11 @@ than waiting through all intervals. An unavailable local origin stops before
 application. An unchanged task with `sources` runs only once across two bootstraps.
 
 The package ownership audit compares the retained baseline with the native module
-tables: **162 package declarations, 25 retained mise tools, no missing retained
-entry, no duplicate owner, and unchanged retained tool version requests**. Aliases
+tables: **161 package declarations, one AutoFirma vendor-installer task, 25 retained
+mise tools, no missing retained entry, no duplicate owner, and unchanged retained
+tool version requests**. Aliases
 are canonicalized (`cpanm` → `cpanminus`, `pkg-config` → `pkgconf`, `libvips` → `vips`).
-Per-package fresh-install/update results remain explicitly pending in
+Per-package VM installation results and outstanding update checks are recorded in
 [mise-package-coverage.tsv](mise-package-coverage.tsv).
 
 ## Preference format evidence
@@ -118,17 +121,20 @@ SuperCmd's export can contain characters a strict XML parser rejects. Captured
 plists are binary, then encrypted by native history. These structural checks do
 not prove every opaque app field or actual reopen behavior.
 
-## Disposable macOS VM preflight
+## Disposable macOS VM acceptance
 
 On 2026-10-10, Tart **2.40.1** booted a disposable macOS **27.0 arm64** guest
-with 4 CPUs, 8 GiB RAM and a 50 GB disk. Its official release archive matched
+with 4 CPUs and 8 GiB RAM. Its initial 50 GB disk was expanded to 160 GB
+after a stopped VM backup; Recovery was preserved and APFS verification passed.
+Tart's official release archive matched
 SHA-256 `363e2701154a8155cbc1bb6d845430c9b42697d2a186bc49574471ca2877db46`;
 macOS code-signature and notarization checks passed. The image was
 `ghcr.io/cirruslabs/macos-golden-gate-vanilla@sha256:b78a521145ebef24e9916c0b3999e165bb12b587d11524c5fa3ba4fe7bf79bb9`.
 
-The guest received only the tracked archive of `6310358` and a disposable SSH
-public key. Its host key was obtained through the guest console and pinned for
-noninteractive SSH. No operator credentials or private preferences were copied.
+The guest received the tracked archive of `6310358`, the fixes through `d6f939c`,
+and a disposable SSH public key. Its host key was obtained through the guest
+console and pinned for noninteractive SSH. No operator credentials or private
+preferences were copied.
 The image has preconfigured login, SSH and passwordless sudo; Gatekeeper was
 re-enabled before testing because the supplied image disables it. This is a
 software-clean VM, not evidence for an untouched Setup Assistant/security flow.
@@ -145,9 +151,111 @@ Observed guest results:
 - `/bin/bash -n install.sh bootstrap/install-mise.sh`, the installer dry-run,
   and compilation of all 11 Python files with the guest's Python 3.15 passed.
 
-Full setup has not run. The Command Line Tools installer is waiting at Apple's
-license agreement. GitHub SSH access is not enrolled, and the guest initially
-has only 11 GiB free; the complete package inventory needs a larger guest disk.
+After the Apple license step, Command Line Tools were installed: receipt
+`27.0.0.0.1788430756`, with working `xcrun clang` and Apple Git 2.54.0.
+The full setup then ran twice and correctly returned failure on unmet resources;
+it has not completed. The guest retained a pending application record instead
+of an applied stamp.
+
+The real run exposed these corrections:
+
+- The sudo preflight now runs `sudo -n /usr/bin/true`. The image permits commands
+  without a password, but `sudo -n -v` still fails under its sudo policy.
+  `install.sh --seed-only` passed twice after the change.
+- Native brew taps need GitHub metadata resolution rather than explicit SSH
+  URLs. Removing those overrides installed Terraform 1.16.5 and remindctl 0.3.8
+  without Homebrew. Metadata downloads use HTTPS; actual Git operations use SSH.
+- AutoFirma's cask has a manual installer artifact unsupported by native mise.
+  A required `setup:autofirma` task prepares the pinned vendor package, verifies
+  its archive checksum and package signature, and fails with an actionable
+  instruction until installation is complete. With explicit authorization, the
+  GUI license and local certificate trust steps completed in the VM. The
+  `es.gob.afirma` receipt reports 1.9.2; `setup:autofirma` passed twice afterward.
+- macOS `chsh` asks for an account password even after sudo validation. A small
+  pre-user hook reads the native shell declaration and uses existing sudo
+  authorization for registration and that command. Native mise retains the
+  declaration and status verification. After resetting the guest to Zsh and
+  removing its Fish shell registration, native user bootstrap passed twice,
+  leaving Fish selected and exactly one `/etc/shells` entry.
+- `duti` returned error -50 for TOML and returned success for other extensions
+  before macOS consent completed. Zed and IINA now use `NSWorkspace` and verify
+  the resulting handler. In the VM, `mise -C ~ run setup:zed` changed TOML from
+  Cursor to Zed, passed again without a dialog, and all four handlers read back
+  as Zed. Rejecting a separate change returned 1. IINA's missing-app check also
+  returned 1; its media associations remain untested until its download works.
+
+Other observed results:
+
+- Native package status reports **88/88 common formulae and 50/59 common casks
+  installed**, plus the separate AutoFirma task. All **25 retained mise tools**
+  installed. Optional packages and the App Store Xcode selection were not enabled.
+  These counts establish installation, not every application's runtime behavior.
+- Native formula smoke commands ran Fish 4.9.3, Git 2.56.0, Terraform 1.16.5 and
+  remindctl 0.3.8. Homebrew and Stow executables remained absent.
+- Native dotfiles and structured edits applied, including separate default and
+  directory-scoped test Git accounts. Real repositories selected the expected
+  identities. Application symlinks point to regular active sources.
+- Two runs of `mise -C ~ bootstrap --only
+  dotfiles,mise-shell-activate,macos-defaults,macos-launchd-agents,services,user --yes`
+  passed. Before reboot, status reported 64 applied file declarations, three
+  tracked trees, six applied edits and 80 set defaults. After reboot, the history
+  watcher was running, appearance agent loaded, and Fish selected. History had
+  no pending operations.
+  The final status collected from Terminal reported 72 defaults set and eight
+  unset (one Mail and seven Safari keys). The previous checks ran through SSH;
+  persistence versus privacy/access differences between these execution contexts
+  remains unresolved. The final snapshot is not a clean defaults acceptance.
+  The appearance agent requested Automation permission after reboot; it was not
+  granted, so its GUI behavior remains unverified.
+- Fisher installed puffer-fish, autopair and fzf.fish. The bat cache, Node/Python
+  setup, Rust stable components and Cursor extensions completed. `gh stack --help`
+  passed after extension installation. GitHub account authentication is separate.
+  Neovim, tmux and external skill restoration failed because their Git clones
+  require GitHub SSH credentials, which this VM does not have.
+- Zed opened its onboarding window from the VM console; Fish rendered its prompt
+  and greeting in Terminal. This does not establish editor language-server or
+  signed-in agent behavior.
+- A local bare history origin stored the first private fixture as encrypted
+  content. A separate isolated home without an age identity failed adoption;
+  another home recovered the same fixture using only an independent recovery
+  key. Local enrollment files and private age identities were absent from the
+  origin's tracked tree. These were disposable keys and data, not user backups.
+- NordVPN 10.12.0 failed its vendor postinstall assessment and removed its app.
+  The VM initially allowed only App Store applications after Gatekeeper was
+  re-enabled. With authorization, the UI was changed to "App Store & Known
+  Developers". Gatekeeper remained enabled, but the retry still failed; a reboot
+  also left notarized ChatGPT and AutoFirma rejected by `spctl --assess`.
+  The underlying assessment failure remains unresolved; checks were not bypassed.
+- Lato, Ghostty and IINA downloads timed out; direct IPv4 HTTPS probes also failed
+  to connect. Open Sans, Roboto, Roboto Condensed, Roboto Mono and Source Code Pro
+  require GitHub SSH access for their recipe clones. macFUSE and Noto Sans passed
+  retries after test-harness contention was removed.
+- `mise -C ~ run --timeout 2m setup:macos` applied automatic updates, firewall and
+  power settings, then exited 1 because FileVault is off. Immediate screen lock
+  is also unset. The firewall's signed-app restrictions blocked new SSH sessions;
+  remaining checks ran from the VM console. No firewall exception was added.
+  The local application record still contains a pending fingerprint and no
+  successful applied stamp.
+
+Key guest commands and evidence (paths relative to `.tmp/macos-acceptance/evidence/`):
+
+| Command or operation | Result | Evidence |
+| --- | --- | --- |
+| `mise -C ~ install --yes` | All 25 retained tools installed | `native-tools-status.json` |
+| `mise -C ~ bootstrap packages apply brew-cask:nordvpn --yes` | Exit 1 after approved policy change | `nordvpn-retry.log` |
+| `mise -C ~ run --timeout 10m setup:bat ::: setup:node ::: setup:python ::: setup:rustup` | Exit 0 | `setup-tasks-independent.log` |
+| `mise -C ~ run setup:zed`, repeated | Both exit 0; independent handler readback agrees | `file-association-regression.log` |
+| Native resource bootstrap above, repeated | Both exit 0 | `native-resources-repeat.log` |
+| `mise -C ~ bootstrap status --json` | Final resource snapshot | `bootstrap-final-status.json` |
+| `mise -C ~ exec python@3 -- python3 ~/.config/mise/conf.d/setup/config.py check` | Exit 0 | `final-state-console.log` |
+| Encrypted local-origin recovery | Missing key refused; independent recovery key restored fixture | `native-recovery.log` |
+
+Harness errors are retained in the logs: the first final-state probe used an
+unsupported `status --only` flag and the wrong application-state field; the
+corrected probe passed in `final-check.log`. A prior resource harness ended with
+an invalid history-status command after both successful bootstrap runs. Neither
+error is counted as a setup success or a product failure.
+
 Tart's nested virtualization support excludes macOS guests, so this environment
 cannot establish OrbStack's container runtime behavior. Hardware and privacy
 acceptance also remain separate. Sources:
@@ -155,19 +263,23 @@ https://tart.run/quick-start/ and https://tart.run/faq/#nested-virtualization-su
 
 Local VM files, access wrappers and command logs are retained under the ignored
 `.tmp/macos-acceptance/` directory. They are not part of a fresh checkout.
+The VM was stopped after evidence collection, preserving its disk for another run.
 
 ## Outstanding acceptance
 
-The repository implementation is ready for the separate fresh-Mac exercise in
-[POST_INSTALL.md](../POST_INSTALL.md). This environment cannot establish:
+The fresh-Mac exercise in [POST_INSTALL.md](../POST_INSTALL.md) is in progress.
+The following acceptance is still outstanding:
 
-- Installation/update of every native formula, cask, driver, tap or App Store app
-  without Homebrew; same-run plugin/runtime behavior and receipt recovery.
-- Full Disk Access, sudo, login-shell registration, launchd services, privileged
-  defaults and system settings on a newly installed Mac.
+- The nine missing common casks above, optional packages, App Store installation,
+  GitHub-authenticated plugin restoration, package updates and driver operation.
+- An untouched Setup Assistant/security flow, FileVault and immediate screen lock,
+  the eight Mail/Safari defaults reported unset from Terminal, and actual launchd
+  GUI behavior after required privacy approvals.
 - Real capture/restore/reopen for all six apps, hardware routing and sessions,
-  helper-process consistency, and recovery with a separately held age key.
+  helper-process consistency, and recovery of real settings on another machine.
 - Cask self-update and macOS privacy behavior after an actual app replacement.
+- Automatic scheduling and real package exchange on a second machine. Two-client
+  isolated integration tests pass; this VM used manual sync and a local origin.
 - Hosted CI execution, Ubuntu/Arch setup, or a non-arm64 full installation.
 
 An isolated package dry-run still sees the operator's existing prefix and failed

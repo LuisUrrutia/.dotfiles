@@ -85,6 +85,10 @@ On macOS, the login-shell hook uses existing sudo authorization to register the
 declared shell and change the current account without a second password prompt.
 It reads native mise's declaration and leaves the final status check to mise.
 
+Run the system-settings phase from the local console. Its firewall policy
+disables automatic permission for signed applications; incoming services such
+as SSH can require an explicit firewall decision before reconnecting.
+
 Zed and IINA file associations use macOS's current application API. Confirm the
 system dialogs when requested. A missing confirmation fails after 60 seconds;
 rerun setup after accepting it. Already selected handlers are left unchanged.
