@@ -9,6 +9,11 @@ Fish shell, Starship, Ghostty, Neovim, Hammerspoon, Catppuccin, and a
 pile of modern CLI tools. The repo uses GNU Stow so tool configs stay versioned
 here and symlink into `$HOME`.
 
+The proposed migration to mise is documented in
+[the migration plan](plans/mise-migration.md). It covers fresh installations,
+existing machines, package ownership, and configuration history. The current
+installation workflow below remains in effect until that migration is implemented.
+
 ## Prerequisites
 
 - macOS with an admin user
