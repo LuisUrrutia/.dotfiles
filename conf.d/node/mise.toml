@@ -1,4 +1,5 @@
 [dotfiles]
+"~/.config/aube/config.toml" = "aube.toml"
 "~/.config/pnpm/config.yaml" = "pnpm.yaml"
 "~/.yarnrc.yml" = "yarnrc.yml"
 

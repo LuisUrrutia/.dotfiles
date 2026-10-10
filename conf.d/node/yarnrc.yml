@@ -1,3 +1,1 @@
-# Package cooldown: block releases younger than 7 days (minutes), matching
-# pnpm's minimumReleaseAge in .config/pnpm/config.yaml.
-npmMinimalAgeGate: 10080
+npmMinimalAgeGate: 4320

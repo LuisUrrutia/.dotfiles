@@ -114,6 +114,27 @@ font repositories, plugins, skills and the initial checkout use HTTPS. The share
 Git configuration preserves each URL's protocol instead of rewriting HTTPS to SSH.
 Private setup history still requires authentication for its chosen transport.
 
+## Release policy
+
+Flexible mise tool requests select the newest matching release at least three
+days old, within the declared channel (for example, Node LTS). The embedded npm
+installer, Aube, uses the same three-day window for releases and new package
+names. If no dependency version is old enough, installation fails instead of
+silently accepting a younger release. npm, pnpm, and Yarn also use three days.
+Bootstrap deploys the Aube configuration before installing tools.
+
+`npm:@luisurrutia/bird` follows `latest` without a cooldown. Its own package is
+exempt from reputation and trust-policy gates, and approved for build scripts
+and non-registry sources. These named exemptions do not extend to third-party
+dependencies. Native integrity and malicious-package checks still apply.
+The existing Claude Code and Codex cooldown exemptions remain.
+
+This is not an age guarantee for every installation source: exact pins and
+lockfiles bypass mise's release filtering, and backends need release-date
+metadata. Bootstrap casks and vendor installers have their own version rules.
+See https://mise.jdx.dev/configuration/settings.html#minimum_release_age and
+https://mise.jdx.dev/dev-tools/backends/npm.html.
+
 ## Select individual optional apps
 
 Edit `~/.config/mise/miserc.local.toml`, for example:

@@ -1,0 +1,4 @@
+minimumReleaseAge = 4320
+minimumPackageAge = 4320
+minimumReleaseAgeStrict = true
+minimumReleaseAgeExclude = ["@luisurrutia/bird"]

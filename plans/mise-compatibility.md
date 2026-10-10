@@ -375,7 +375,7 @@ evaluate the SuperCmd tap without Ruby 3, so it is not counted as successful
 status acceptance. A diagnostic `mise exec` without tool selectors also started
 the full tool installation and was stopped. Its npm safety checks refused
 `2password` because of package age and `@luisurrutia/bird` because of download count;
-those separate restrictions were not weakened. The scoped plugin commands passed
+those restrictions were unchanged in that run. The scoped plugin commands passed
 afterward. The VM was stopped after the final checks.
 
 Repository verification ran `/bin/bash
@@ -387,6 +387,50 @@ typecheck, static, smoke, secret-scan and diff checks passed. The log is
 instruction exception was reviewed locally for bootstrap scope; no paired model
 review was run for this supporting instruction edit.
 
+## Three-day release policy and Bird exemption
+
+On 2026-10-10, the same disposable `dotfiles-associations-023be87` VM tested the
+shared policy with mise 2026.10.7. These installs used `MISE_YES=1`, closed stdin,
+and no CLI `--yes`: the latter also accepts Aube reputation prompts and would
+mask the original refusals. No operator configuration was applied.
+
+Before deployment, `mise -C ~ install npm:2password` failed at Aube's separate
+30-day package-name gate, and `mise -C ~ install npm:@luisurrutia/bird` failed at
+two weekly downloads against a threshold of 1,000. The new native Aube file
+sets release and package-name age to 4,320 minutes, rejects dependency resolution
+when no candidate satisfies the age, and exempts Bird by name. Bird follows
+`latest` with native tool-scoped reputation, trust, build and source exemptions;
+its third-party dependencies retain their checks.
+
+| Command or observation | Result |
+| --- | --- |
+| `mise -C ~ install npm:@luisurrutia/bird`; repeated; `mise -C ~ exec node npm:@luisurrutia/bird -- bird --version` | Installed 1.0.0 without accepting reputation prompts; repeat and executable passed |
+| `mise -C ~ latest npm:prettier`; `mise -C ~ install npm:prettier@latest`; executable version | Selected and installed 3.9.9; registry latest 3.9.10 was published on the test date |
+| `mise -C ~ latest npm:pnpm` | Selected 12.10.1, published October 6; skipped newer October 9–10 releases |
+| `mise -C ~ latest` for `npm:2password`, `npm:typescript`, `npm:eslint` | Selected the newest stable release at least three days old in each registry snapshot |
+| `MISE_MINIMUM_RELEASE_AGE=100y mise -C ~ latest npm:@luisurrutia/bird`; same probe for Prettier | Bird still resolved 1.0.0; Prettier returned no eligible version |
+| `mise -C ~ run setup:node`, repeated; npm, pnpm and Yarn config readback | Three days: npm `3`, pnpm and Yarn `4320` |
+| pnpm readback with and without `XDG_CONFIG_HOME` | Both returned `4320`; the macOS native path now links to the same managed source |
+| Bird's generated Aube project and manifest | Named reputation/trust/source exceptions and build approval present |
+
+`2password` now passes age selection, but an install without CLI `--yes` still
+fails a different reputation gate: 917 weekly downloads against 1,000. No
+reputation exemption was added for that third-party package. This remains a
+separate acceptance limit, not a release-age failure.
+
+Evidence is retained locally under `.tmp/macos-acceptance/evidence/`:
+`package-policy-before-*.log`, `package-policy-install.log`,
+`package-policy-resolution.json`, `package-policy-registry.json`,
+`package-policy-install-results.json`, `package-policy-pnpm-path.log`, and
+`package-policy-aube-readback.json`. These ignored artifacts are not part of the
+public seed. The probes use live registries rather than a permanent test of
+mise's resolver internals.
+
+The final `/bin/bash .tmp/mise-implementation/verify-entrypoint.sh` run exited
+**0**, including all four integration tests in **150.123 seconds**, parsers,
+static checks, shell smoke, secret scanning and diff checks. Its log is
+`repository-verify-package-policy-final.log`. The VM was stopped after testing.
+
 ## Outstanding acceptance
 
 The fresh-Mac exercise in [POST_INSTALL.md](../POST_INSTALL.md) is in progress.
@@ -394,8 +438,8 @@ The following acceptance is still outstanding:
 
 - The four remaining common casks (NordVPN, Ghostty, IINA and Lato), optional
   packages, App Store installation, full package updates and driver operation.
-- The npm package-age/download-count refusals above after applying the shared
-  package policy, and complete native package status with the custom-tap evaluator.
+- The remaining `2password` download-count refusal without explicit prompt
+  acceptance, and complete native package status with the custom-tap evaluator.
 - An untouched Setup Assistant/security flow, FileVault and immediate screen lock,
   the eight Mail/Safari defaults reported unset from Terminal, and actual launchd
   GUI behavior after required privacy approvals.
