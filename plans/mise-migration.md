@@ -1,7 +1,7 @@
 # Build a mise-native setup, starting with macOS
 
-Status: planning only; common setup, application exceptions, encrypted preference
-history, OpenCode retirement, and proportionate verification are agreed direction.
+Status: implementation authorized; common setup, application exceptions, encrypted
+preference history, OpenCode retirement, and proportionate verification are agreed.
 The user will reinstall macOS; upgrading existing dotfiles installations is out
 of scope. A future Ubuntu or Arch mini PC must fit the design without replacing
 its shared core; Linux implementation is deferred. No machine setup has started.
@@ -11,6 +11,9 @@ Read the [decision map](mise-migration-decisions.md) for authority and tradeoffs
 and the [inventory](mise-migration-inventory.md) for scope. This plan is the
 delivery record; update these units rather than creating a competing checklist.
 `plans/` is intentionally used because `.gitignore` excludes `/docs/`.
+The [compatibility record](mise-compatibility.md) contains executed M0 probes and
+the remaining fresh-Mac acceptance limits. Repository work does not install the
+setup on the operator's Mac.
 
 ## Outcome and acceptance
 
