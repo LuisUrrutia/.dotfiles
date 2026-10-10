@@ -129,6 +129,10 @@ and non-registry sources. These named exemptions do not extend to third-party
 dependencies. Native integrity and malicious-package checks still apply.
 The existing Claude Code and Codex cooldown exemptions remain.
 
+`2password` keeps the three-day release cooldown and has a named
+`allow_low_downloads` exception. Aube groups download count, new package names,
+and similar-name checks under this option; dependencies remain subject to them.
+
 This is not an age guarantee for every installation source: exact pins and
 lockfiles bypass mise's release filtering, and backends need release-date
 metadata. Bootstrap casks and vendor installers have their own version rules.

@@ -413,10 +413,9 @@ its third-party dependencies retain their checks.
 | pnpm readback with and without `XDG_CONFIG_HOME` | Both returned `4320`; the macOS native path now links to the same managed source |
 | Bird's generated Aube project and manifest | Named reputation/trust/source exceptions and build approval present |
 
-`2password` now passes age selection, but an install without CLI `--yes` still
-fails a different reputation gate: 917 weekly downloads against 1,000. No
-reputation exemption was added for that third-party package. This remains a
-separate acceptance limit, not a release-age failure.
+At this stage, `2password` passed age selection, but an install without CLI
+`--yes` still failed a different reputation gate: 917 weekly downloads against
+1,000. That separate refusal was resolved in the follow-up below.
 
 Evidence is retained locally under `.tmp/macos-acceptance/evidence/`:
 `package-policy-before-*.log`, `package-policy-install.log`,
@@ -431,6 +430,30 @@ The final `/bin/bash .tmp/mise-implementation/verify-entrypoint.sh` run exited
 static checks, shell smoke, secret scanning and diff checks. Its log is
 `repository-verify-package-policy-final.log`. The VM was stopped after testing.
 
+### 2password download-count exception
+
+The user then approved a named `allow_low_downloads = true` exception for
+`npm:2password`. Aube groups download count, new package names and similar-name
+checks under this option. The three-day release cooldown, dependency checks,
+trust policy and script policy remain in force.
+
+The same VM reproduced the download-count refusal before copying the changed
+manifest. `mise -C ~ install npm:2password` then installed **0.2.0**, and a repeat
+passed without reinstalling. Both calls used closed stdin and no CLI `--yes`.
+`mise -C ~ exec bun node npm:2password -- 2password --version` and `--help`
+passed, as did the Bird version smoke check. The generated Aube config contained
+only `allowedUnpopularPackages = ["2password"]` and `minimumReleaseAge = 4320`.
+With a temporary `MISE_MINIMUM_RELEASE_AGE=100y`, native resolution returned no
+eligible 2password release, confirming that the age filter remains active.
+No vault access or credentials were needed.
+
+Local evidence: `2password-policy-results.json`, `2password-policy-readback.json`
+and `2password-policy-*.log` under `.tmp/macos-acceptance/evidence/`.
+`/bin/bash .tmp/mise-implementation/verify-entrypoint.sh` exited **0**: all four
+integration tests passed in **154.895 seconds**, along with static, smoke,
+secret-scan and diff checks. See `repository-verify-2password-policy.log`.
+The VM was stopped after verification.
+
 ## Outstanding acceptance
 
 The fresh-Mac exercise in [POST_INSTALL.md](../POST_INSTALL.md) is in progress.
@@ -438,8 +461,7 @@ The following acceptance is still outstanding:
 
 - The four remaining common casks (NordVPN, Ghostty, IINA and Lato), optional
   packages, App Store installation, full package updates and driver operation.
-- The remaining `2password` download-count refusal without explicit prompt
-  acceptance, and complete native package status with the custom-tap evaluator.
+- Complete native package status with the custom-tap evaluator.
 - An untouched Setup Assistant/security flow, FileVault and immediate screen lock,
   the eight Mail/Safari defaults reported unset from Terminal, and actual launchd
   GUI behavior after required privacy approvals.
