@@ -43,9 +43,6 @@ def entries(status=None):
 
 
 def check():
-    version = mise("--version", capture=True).stdout.decode().split()[0]
-    if tuple(map(int, version.split("."))) < (2026, 10, 7):
-        raise RuntimeError("mise 2026.10.7 or newer is required for structured edits")
     status = native_json("dot", "status")
     saved = read_state("deployed")
     for target, source, mode, state in entries(status):

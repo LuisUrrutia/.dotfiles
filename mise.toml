@@ -17,6 +17,7 @@ stylua = "latest"
 "npm:esbuild" = "latest"
 "pipx:json5" = "latest"
 "pipx:check-jsonschema" = "latest"
+worktrunk = { version = "latest", os = ["linux"] }
 
 [bootstrap.packages]
 "brew:fish" = { os = "macos" }
@@ -24,6 +25,11 @@ stylua = "latest"
 "brew:lua" = { os = "macos" }
 "brew:luacheck" = { os = "macos" }
 "brew:git" = { os = "macos" }
+"apt:fish" = { os = "linux" }
+"apt:git" = { os = "linux" }
+"apt:lua5.4" = { os = "linux" }
+"apt:lua-check" = { os = "linux" }
+"apt:ruby" = { os = "linux" }
 
 [tasks.verify]
 description = "Run isolated behavior, syntax, and configuration checks"

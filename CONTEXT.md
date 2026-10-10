@@ -10,7 +10,8 @@
 - **Local enrollment**: `config.local.toml` and `miserc.local.toml`, excluded from
   shared history. They own this machine's identity, origin, sync mode, and apps.
 - **Machine record**: public defaults in `machines/<stable-id>.toml`. Hardware
-  lookup supplies the Mac ID; explicit IDs leave room for later Linux enrollment.
+  lookup supplies the Mac ID; Linux hashes `/etc/machine-id`. `--machine` can retain
+  a Linux enrollment ID across reinstalls.
 - **Setup history**: mise's private Git-backed checkpoints of declarations,
   active sources, plugin manifests, and encrypted preference snapshots.
 - **Application state**: local pending/applied fingerprints, retries, maintenance
@@ -27,7 +28,7 @@
   resources that could not be installed or applied. A repeated seed never resets
   active changes. Optional selection does not authorize deletion.
 
-Initial supported installation target: fresh macOS arm64. Existing-Mac migration,
-Homebrew/Stow conversion, Linux installation, and destructive package pruning are
-outside this implementation. Native brew recipes are mise-owned packages and do
-not imply the Homebrew executable is present.
+Installation targets: fresh macOS arm64 and Ubuntu arm64/x86_64. Existing-machine
+migration, Homebrew/Stow conversion, Arch package mapping, and destructive package
+pruning are outside this implementation. Native brew recipes are mise-owned
+packages and do not imply the Homebrew executable is present.

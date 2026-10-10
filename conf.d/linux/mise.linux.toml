@@ -1,0 +1,6 @@
+[dotfiles]
+"~/.bashrc/local-bin" = { line = 'export PATH="$HOME/.local/bin:$PATH"', position = "prepend" }
+"~/.profile/local-bin" = { line = 'export PATH="$HOME/.local/bin:$PATH"', position = "prepend" }
+
+[bootstrap.mise_shell_activate]
+bash = true

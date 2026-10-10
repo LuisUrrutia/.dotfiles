@@ -29,7 +29,7 @@ def main():
     for path in files:
         if path.suffix == '.py':
             compile(path.read_text(), str(path), 'exec')
-        elif path.suffix == '.swift':
+        elif path.suffix == '.swift' and sys.platform == 'darwin':
             run('xcrun', 'swiftc', '-typecheck', path)
         elif path.suffix == '.toml':
             tomllib.loads(path.read_text())
@@ -72,7 +72,7 @@ def main():
     run(sys.executable, '-m', 'unittest', 'discover', '-s', 'tests', '-p', 'test_*.py', '-v')
     run('git', 'diff', '--check')
     run('git', 'diff', '--cached', '--check')
-    print('Verification passed; package installation and GUI acceptance require a fresh Mac.')
+    print('Verification passed; full setup acceptance requires disposable macOS and Ubuntu machines.')
 
 
 if __name__ == '__main__':

@@ -15,8 +15,12 @@ concurrency:
 
 jobs:
   verify:
-    name: Verify dotfiles
-    runs-on: macos-26
+    name: Verify dotfiles (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-26, ubuntu-24.04]
     timeout-minutes: 20
     permissions:
       contents: read
@@ -32,10 +36,17 @@ jobs:
         run: |
           set -u
           [[ "$GITHUB_ACTIONS" == true && "$RUNNER_ENVIRONMENT" == github-hosted ]]
-          if [[ -e /opt/homebrew ]]; then
-            sudo mv /opt/homebrew "$RUNNER_TEMP/preinstalled-homebrew"
+          package_prefix=/opt/homebrew
+          if [[ "$RUNNER_OS" == Linux ]]; then
+            package_prefix=/home/linuxbrew/.linuxbrew
           fi
-          printf '%s\n' "$HOME/.local/bin" /opt/homebrew/bin /opt/homebrew/sbin >> "$GITHUB_PATH"
+          if [[ -e "$package_prefix" ]]; then
+            sudo mv "$package_prefix" "$RUNNER_TEMP/preinstalled-homebrew"
+          fi
+          printf '%s\n' "$HOME/.local/bin" >> "$GITHUB_PATH"
+          if [[ "$RUNNER_OS" == macOS ]]; then
+            printf '%s\n' /opt/homebrew/bin /opt/homebrew/sbin >> "$GITHUB_PATH"
+          fi
 
       - name: Install official mise
         shell: bash

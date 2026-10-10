@@ -1,0 +1,5 @@
+[bootstrap.packages]
+"apt:openssh-client" = "latest"
+
+[tools]
+1password-cli = "latest"

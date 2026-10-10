@@ -1,0 +1,9 @@
+[bootstrap.macos.launchd.agents.dotfiles-sync]
+program = "~/.local/bin/mise"
+args = ["-C", "{{ env.HOME }}", "run", "sync", "--automatic"]
+working_directory = "~"
+start_interval = 300
+process_type = "Background"
+stdout_path = "~/.local/state/mise/dotfiles/sync.log"
+stderr_path = "~/.local/state/mise/dotfiles/sync.err.log"
+environment = { PATH = "{{ env.HOME }}/.local/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin" }

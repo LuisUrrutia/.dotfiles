@@ -1,5 +1,12 @@
 # Build a mise-native setup, starting with macOS
 
+> Scope update, 2026-10-11: the user brought Ubuntu installation into the current
+> implementation and requested a native-capability audit. The Linux deferrals
+> below describe the original rollout. Current commands and platform support are
+> in `README.md`; current adapter rationale and acceptance evidence are in
+> `plans/mise-compatibility.md`. Arch remains deferred. Initial mise installation
+> now follows latest stable with upstream SHA-256 verification; tool cooldowns stay.
+
 Status: native repository implementation delivered; isolated verification is recorded
 in the compatibility report. Fresh-Mac and real application acceptance remain open.
 The user will reinstall macOS; upgrading existing dotfiles installations is out

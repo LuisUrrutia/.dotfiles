@@ -50,8 +50,7 @@ def main():
                         ["nvim", "--headless", "+lua if not require('config.treesitter').install() then vim.cmd.cquit() end", "+qa"]])
         step("skills", [["skills", "update", "--global", "--yes"]])
         step("tmux", [["tpack", "update", "all"]])
-        if sys.platform == "darwin":
-            step("fish", [["bash", ROOT / "conf.d/fish/setup.sh"]])
+        step("fish", [["bash", ROOT / "conf.d/fish/setup.sh"]])
         step("reference-data", [["tldr", "--config", HOME / ".config/tlrc/config.toml", "--update"], ["uv", "cache", "prune"]])
         if sys.platform == "darwin":
             step("cleanup", [["mo", "clean"]], 604800)

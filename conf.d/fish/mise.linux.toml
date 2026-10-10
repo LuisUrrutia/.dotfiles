@@ -1,0 +1,11 @@
+[bootstrap.packages]
+"apt:fish" = "latest"
+
+[bootstrap.repos]
+"~/.local/share/fisher" = { url = "https://github.com/jorgebucaran/fisher.git" }
+
+[bootstrap.user]
+login_shell = "/usr/bin/fish"
+
+[bootstrap.hooks]
+pre-user = 'mise exec python@3 -- python3 "{{ config_root }}/login-shell.py"'

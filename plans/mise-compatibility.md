@@ -593,9 +593,10 @@ The following acceptance is still outstanding:
 - Real capture/restore/reopen for all six apps, hardware routing and sessions,
   helper-process consistency, and recovery of real settings on another machine.
 - Cask self-update and macOS privacy behavior after an actual app replacement.
-- Automatic scheduling and real package exchange on a second machine. Two-client
-  isolated integration tests pass; this VM used manual sync and a local origin.
-- Hosted CI execution, Ubuntu/Arch setup, or a non-arm64 full installation.
+- Real package exchange between two physical machines. Two-client isolated
+  integration tests pass; macOS used manual sync and a local origin. The Ubuntu
+  service acceptance below covers automatic setup application with a local origin.
+- Hosted CI execution, Arch setup, or a non-arm64 full installation.
 
 An isolated package dry-run still sees the operator's existing prefix and failed
 on an old ChatGPT Caskroom receipt. That is not fresh-install evidence; the prefix
@@ -615,3 +616,88 @@ References:
 - https://mise.jdx.dev/dotfiles/history.html
 - https://mise.jdx.dev/dotfiles/encryption.html
 - https://mise.jdx.dev/dotfiles/sync.html
+## Native capability audit
+
+Reviewed upstream `jdx/mise` at `19e8c8f` and executed the contracts with mise
+2026.10.7 on 2026-10-11. This audit follows the request to remove duplicate setup
+logic and bring Ubuntu installation into scope.
+
+| Responsibility | Native owner and remaining boundary |
+| --- | --- |
+| Install mise | `mise.run` selects the latest stable platform build and checks SHA-256. The wrapper only preserves foreign destinations, stages installation and keeps the previous executable. No mise release or checksum is pinned in this repository. |
+| Version compatibility | Native `min_version` rejects unsupported mise versions. Duplicate Python version checks were removed. The initial mise binary is exempt from the tool cooldown so it can provide current bootstrap features. |
+| Package installation | Native `[tools]`, `apt:`, `brew:` and `brew-cask:` declarations. Ubuntu has no Homebrew paths. The Mac recipe prefix remains `/opt/homebrew` because the bottles expect it; no `brew` process runs. |
+| Resource verification | One native `bootstrap status --missing --json` checks the declared resources, including tools and systemd units. Skipped required packages and native warnings still fail acceptance. |
+| Files and permissions | Native dotfiles now own OrbStack's Docker plugin links; `bootstrap.directories` owns SSH directory permissions. The file guard still protects foreign links, redirected parents and edits to copied/template files: native apply can replace those without `--force`. |
+| Agent and credential link chains | The small final adapter remains. A real isolated `dot apply` with `.agents/AGENTS.md` and `.codex/AGENTS.md` declared together fails before creating either: the second source does not exist yet. Native links also do not create the intentionally dangling VoiceInk auth link before login. |
+| App-written shared keys | Native `merge` owns deployment. It has no command to capture just the owned keys back into a shared source; `edits.py` preserves that two-way contract and refuses concurrent changes. Native `dot add --changed` handles copied files, not merge entries. |
+| macOS preference snapshots | Native history owns encryption and transfer. `macos.defaults` writes declared values but cannot export a running app's changed settings, represent binary plist data, or defer restoration until writers close. `preferences.py` owns only the allowlisted export/import and pending-restore decisions. It is not an encryption implementation. |
+| Shared setup exchange | Native `dot save`, `sync`, `pull` and `recover` own history and Git conflicts. A pull does not install tools/services or render templates, so the serialized task still runs bootstrap after changed declarations and keeps failed setup pending. Native reload hooks explicitly exclude machine setup as their purpose. |
+| Scheduling | Native LaunchAgent and systemd timer definitions are visible TOML files under `conf.d/history`. Only the local selected definition is activated. Both modes leave native history network exchange manual; the watcher saves locally. |
+| Maintenance | Native mise upgrades tools/packages. The remaining task also updates Fisher, Neovim, GitHub extensions, skills and TPack, with success-only daily/weekly stamps. Mise's artifact cache does not provide this elapsed-time maintenance policy. |
+
+Sources:
+
+- https://mise.jdx.dev/installing-mise.html
+- https://mise.jdx.dev/dotfiles/managed.html#conflicts
+- https://mise.jdx.dev/dotfiles/edits.html#merge
+- https://mise.jdx.dev/dotfiles/history.html#reload-an-application-after-restoring-files
+- https://mise.jdx.dev/dotfiles/sync.html#sync-immediately
+- https://mise.jdx.dev/dotfiles/encryption.html
+- https://mise.jdx.dev/bootstrap/macos-defaults.html
+- https://mise.jdx.dev/bootstrap/packages/brew.html
+- https://mise.jdx.dev/bootstrap/packages/apt.html
+- https://mise.jdx.dev/bootstrap/systemd.html
+
+
+## Ubuntu and latest-installer acceptance
+
+Executed on 2026-10-11 with disposable Ubuntu 26.04 arm64 and Ubuntu 24.04
+x86_64 environments. The arm64 machine had a real systemd user manager; the
+x86_64 Docker container tested installation/enrollment, not service operation.
+All private keys and Git origins used for this exercise were synthetic/local.
+GitHub's anonymous API quota was exhausted, so download verification used an
+existing authenticated token passed only through stdin into process environment.
+The test harness did not write the token to a file or to the public payload.
+
+| Command or scenario | Result |
+| --- | --- |
+| `bash bootstrap/install-mise.sh` with a scratch destination on macOS arm64 | Selected latest stable 2026.10.7, verified upstream SHA-256 and preserved the older binary. An unchanged repeat preserved the executable timestamp. |
+| Same installer with a deliberately corrupt release archive | Exit 1, checksum mismatch; the existing executable remained byte-identical and no pending replacement remained. |
+| `./install.sh --seed-only --recipient` with a synthetic public recipient on Ubuntu 24.04 x86_64 | Exit 0; installed the official Linux x64 mise and Python, derived the machine ID and loaded Linux/common manifests only. |
+| Ubuntu 24.04 `apt-cache show` for every declared system package | All 46 package names available. This is availability evidence, not a full x86_64 installation. |
+| `./install.sh` on Ubuntu 26.04 arm64 | Exit 0 after the fixes below; all 46 system packages and 68 mise tools installed, configuration deployed, Fish selected as login shell, and the native history watcher running. No Homebrew executable or prefix. |
+| `mise bootstrap status --missing --json` after application | Exit 0, including packages, tools, dotfiles, shell activation and services. |
+| `mise exec -- bash -x ~/.config/mise/conf.d/nvim/setup.sh` after moving aside both Neovim data and state | Exit 0; fresh plugin restoration, native builds, language servers and parsers. |
+| Native systemd timer/service running `mise -C ~ run sync --automatic` | Successful local history exchange and setup application, `ExecMainStatus=0`. |
+| Add a new `pipx:yamllint` declaration and a content-managed file, then start the generated sync service | Installed yamllint 1.38.0 and wrote the declared file; native resource status passed. This exercised automatic application of software changes with a local private origin. |
+| Change local mode to manual, then `mise -C ~ run config apply` | Exit 0; native apply removed both the sync service and timer, retained the history watcher, and `mise run sync --automatic` reported disabled. |
+| `mise run verify` through the isolated macOS entrypoint | Exit 0; five tests in 159.845 seconds, Swift/type/syntax/schema/workflow checks, shell smoke, secret and diff checks passed. |
+| `mise run verify` in the Ubuntu VM with an isolated verification configuration | Exit 0; five tests in 11.116 seconds and every applicable parser/static/smoke check passed. Swift framework checks run only on macOS. |
+
+Real installation found two portability defects: the shared Curl configuration's
+`remove-on-error` conflicted with Rustup's resumed downloads, and the default
+binary sources for procs, resvg and tlrc lacked Linux arm64 builds. Removing that
+Curl option preserved resume behavior; native `cargo:` declarations now install
+those three tools. TLRC now chooses its platform's default cache directory.
+
+The first Neovim setup returned a failure without a useful error. A traced rerun,
+an isolated native-library build, and a fresh data/state run succeeded; no cause
+was established and no speculative Neovim patch was added. Subsequent complete
+bootstrap and automatic service runs passed. An early scheduler probe ran outside
+the setup lock and correctly refused an in-progress native history operation;
+the serialized production path and later service runs passed.
+
+CI now declares both macOS and Ubuntu jobs. Hosted execution, Arch packages,
+a full x86_64 setup, real credentials and cross-machine network/hardware acceptance
+remain outside this evidence. The earlier macOS GUI and app acceptance gaps still
+apply. No bootstrap, package installation, preference import or service registration
+was executed on the operator's Mac.
+
+Local ignored evidence is in `.tmp/native-ubuntu/evidence/`: installer and
+checksum logs, `ubuntu-amd64-enroll.log`, `ubuntu-24-package-availability.log`,
+`ubuntu-bootstrap-retry.log`, `ubuntu-nvim-fresh.log`, `ubuntu-scheduler-journal.log`,
+`ubuntu-scheduler-application.log`, `ubuntu-scheduler-disable.log`, native status
+JSON, `repository-verify-final.log` and `repository-verify-linux.log`.
+The owned Ubuntu VM and containers were removed, and OrbStack was returned to
+its initial stopped state. The ignored logs remain available locally.

@@ -1,0 +1,6 @@
+[bootstrap.packages]
+"apt:adb" = "latest"
+"apt:fastboot" = "latest"
+
+[tools]
+dive = "latest"

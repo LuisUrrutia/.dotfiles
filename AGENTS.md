@@ -1,7 +1,8 @@
 # Agent Guide
 
-This is a native mise setup repository. Initial installation targets fresh macOS
-arm64; portable configuration stays separate from macOS packages and services.
+This is a native mise setup repository. Installation targets fresh macOS arm64
+and Ubuntu arm64/x86_64; portable configuration stays separate from OS packages
+and services.
 Read `CONTEXT.md` for ownership and `README.md` for current commands.
 
 ## Source map
@@ -14,7 +15,7 @@ Read `CONTEXT.md` for ownership and `README.md` for current commands.
 - `tasks/`: global operational task entrypoints.
 - `machines/`: tracked public enrollment records and optional local agent guidance.
 - `tests/`: four behavioral integration areas, schemas, and parser/static checks.
-- `.github/workflows/ci.yml`: the same verification command on macOS arm64.
+- `.github/workflows/ci.yml`: the same verification command on macOS and Ubuntu.
 - `plans/mise-migration*.md`, `plans/mise-compatibility.md`: agreed scope and evidence.
 - `conf.d/hammerspoon/AGENTS.md`: verified macOS automation constraints.
 

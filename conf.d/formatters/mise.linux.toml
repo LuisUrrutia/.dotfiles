@@ -1,0 +1,8 @@
+[tools]
+shfmt = "latest"
+stylua = "latest"
+yamlfmt = "latest"
+biome = "latest"
+
+[bootstrap.packages]
+"apt:texlive-extra-utils" = "latest"

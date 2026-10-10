@@ -1,0 +1,12 @@
+[bootstrap.linux.systemd.units.dotfiles-sync]
+type = "oneshot"
+exec_start = "~/.local/bin/mise -C {{ env.HOME }} run sync --automatic"
+working_directory = "~"
+environment = { PATH = "{{ env.HOME }}/.local/bin:/usr/local/bin:/usr/bin:/bin" }
+start = false
+wanted_by = []
+
+[bootstrap.linux.systemd.units.dotfiles-sync-timer]
+on_boot_sec = "5min"
+on_unit_inactive_sec = "5min"
+unit = "dotfiles-sync"

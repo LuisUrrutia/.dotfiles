@@ -59,11 +59,6 @@ def macos():
     seed_linearmouse()
     if "displaylink" in selected():
         run(["osascript", "-e", 'tell application "System Events" to if exists login item "DisplayLink Manager" then delete login item "DisplayLink Manager"'])
-    for name in ("docker-buildx", "docker-compose"):
-        source = Path("/Applications/OrbStack.app/Contents/MacOS/xbin") / name
-        if not source.is_file():
-            raise RuntimeError(f"OrbStack plugin is unavailable: {source}")
-        link(source, HOME / ".docker/cli-plugins" / name)
     titles = {"Delete Conversation…", "Delete Conversations…", "Eliminar conversación…", "Eliminar conversaciones…"}
     table = Path("/System/iOSSupport/System/Library/PrivateFrameworks/ChatKit.framework/Versions/A/Resources/ChatKit.loctable")
     if table.exists():
@@ -78,9 +73,6 @@ def macos():
 def main():
     if not local().get("id"):
         raise RuntimeError("Enroll this machine before bootstrapping")
-    regular_parents(HOME / ".ssh/config")
-    (HOME / ".ssh").mkdir(exist_ok=True, mode=0o700)
-    (HOME / ".ssh").chmod(0o700)
     instructions()
     if sys.platform == "darwin":
         macos()

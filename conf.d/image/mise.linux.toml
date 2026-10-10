@@ -1,0 +1,6 @@
+[bootstrap.packages]
+"apt:imagemagick" = "latest"
+"apt:libvips-tools" = "latest"
+"apt:libmagic-dev" = "latest"
+"apt:libavif-bin" = "latest"
+"apt:libjpeg-turbo-progs" = "latest"

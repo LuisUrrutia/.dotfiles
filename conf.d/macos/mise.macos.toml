@@ -480,8 +480,11 @@ run_at_load = true
 start_calendar_interval = [{ hour = 10, minute = 0 }, { hour = 20, minute = 0 }]
 process_type = "Background"
 
-[bootstrap.services.mise-history]
-builtin = "history-watch"
+[dotfiles]
+"~/.zshenv/local-bin" = { line = 'export PATH="$HOME/.local/bin:$PATH"', position = "prepend" }
+
+[bootstrap.mise_shell_activate]
+zsh = true
 
 [tasks."setup:macos"]
 sources = ["{{ config_root }}/system-settings.sh"]

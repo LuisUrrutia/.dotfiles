@@ -1,4 +1,4 @@
-"""Prepare macOS's declared login shell using existing sudo authorization."""
+"""Apply the declared login shell without an interactive chsh password prompt."""
 
 import os
 from pathlib import Path

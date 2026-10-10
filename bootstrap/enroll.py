@@ -17,7 +17,10 @@ from runtime import (HOME, MISE, ROOT, atomic, document, git_origin, mise, read_
 
 def machine_id():
     if sys.platform != "darwin":
-        raise ValueError("Supply --machine; automatic Linux registration is deferred")
+        identifier = Path("/etc/machine-id").read_text().strip()
+        if not identifier or identifier == "uninitialized":
+            raise ValueError("Cannot determine the machine ID; supply --machine")
+        return hashlib.sha256((identifier + "\n").encode()).hexdigest()[:12]
     result = subprocess.run(["/usr/sbin/ioreg", "-rd1", "-c", "IOPlatformExpertDevice"],
                             capture_output=True, check=True, text=True, timeout=10)
     match = re.search(r'"IOPlatformUUID" = "([^"]+)"', result.stdout)
@@ -151,9 +154,6 @@ def main():
     parser.add_argument("--recipient", action="append", help="Public age recipient; repeat for recovery and other machines")
     parser.add_argument("--seed-only", action="store_true")
     args = parser.parse_args()
-    version = mise("--version", capture=True).stdout.decode().split()[0]
-    if tuple(map(int, version.split("."))) < (2026, 10, 7):
-        raise ValueError("mise 2026.10.7 or newer is required")
     args.machine = args.machine or machine_id()
     if not re.fullmatch(r"[a-zA-Z0-9][a-zA-Z0-9_-]*", args.machine):
         parser.error("machine ID must contain letters, digits, underscores or hyphens")

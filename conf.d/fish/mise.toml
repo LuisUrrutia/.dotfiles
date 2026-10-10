@@ -4,3 +4,6 @@
 "~/.config/fish/config.fish" = "config.fish"
 "~/.config/fish/fish_plugins" = { mode = "track" }
 "~/.config/fish/functions" = { source = "functions", mode = "symlink-each" }
+
+[tasks."setup:fish"]
+run = 'bash "{{ config_root }}/setup.sh"'

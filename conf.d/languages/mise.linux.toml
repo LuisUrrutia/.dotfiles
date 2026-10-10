@@ -1,0 +1,9 @@
+[tools]
+go = "latest"
+
+[bootstrap.packages]
+"apt:lua5.4" = "latest"
+"apt:liblua5.4-dev" = "latest"
+"apt:luarocks" = "latest"
+"apt:perl" = "latest"
+"apt:cpanminus" = "latest"

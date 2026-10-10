@@ -1,13 +1,14 @@
 # Dotfiles with mise
 
-A fresh macOS setup managed by mise: software, shell, application configuration,
-preferences, and private setup history. Homebrew and Stow executables are not
+A fresh macOS or Ubuntu setup managed by mise: software, shell, application
+configuration, preferences, and private setup history. Homebrew and Stow executables are not
 part of the setup. Native `brew:` and `brew-cask:` recipes still use
 `/opt/homebrew`.
 
-The first target is **macOS on Apple Silicon**. Portable configuration and runtime
-modules are separate from macOS resources. Ubuntu/Arch installation, packages,
-and scheduling remain future work.
+Supported targets are **macOS on Apple Silicon** and **Ubuntu on arm64 or x86_64**.
+Shared configuration and runtimes load on both. Ubuntu uses native `apt:` recipes
+for system packages and mise tools for development CLIs; macOS applications and
+preferences load only on macOS. Arch still needs its own package declarations.
 
 ## Layout
 
@@ -40,19 +41,24 @@ private origin. `miserc.local.toml` selects optional apps. These files and
 `age.txt` do not travel in history. Public `machines/*.toml` records are tracked;
 credentials are not.
 
-## Start on a fresh Mac
+## Start on a fresh machine
 
-This replaces the old setup after reinstalling macOS. It does not migrate an
-existing installation or uninstall Homebrew.
+Start after a fresh OS installation. Setup does not migrate an existing
+installation or uninstall Homebrew.
 
-1. Grant the terminal Full Disk Access. Install Apple's Command Line Tools and
-   validate sudo when the installer requests them, then rerun it. Automation
-   fails on an unavailable prerequisite instead of waiting for input.
+1. On macOS, grant the terminal Full Disk Access and install Apple's Command
+   Line Tools. On Ubuntu, use your normal login account with sudo access; the
+   installer provisions curl, Git and CA certificates when missing. Run `sudo -v`
+   in your terminal before full setup. Commands fail rather than wait for input.
 2. Clone the public setup over HTTPS; no GitHub account is required:
    `git clone https://github.com/LuisUrrutia/.dotfiles.git ~/.dotfiles`.
+   On a minimal Ubuntu image without Git or curl, first run
+   `sudo apt-get update && sudo apt-get install -y git curl ca-certificates`.
 3. In the checkout, run `./install.sh --mise-only`. The installer downloads
-   official mise **2026.10.7** and verifies its pinned SHA-256. Newer compatible
-   installations are kept. This version is required for structured file edits.
+   the latest stable official mise using `mise.run`, which selects the platform
+   and verifies the release SHA-256. It keeps an equal or newer installed binary.
+   Installation is staged before replacing the executable. `min_version` in
+   the manifests is a compatibility floor for structured edits, not a pin.
 4. Prepare a dedicated age identity outside tracked state and a separate recovery
    identity. The official workflow is documented at
    https://mise.jdx.dev/dotfiles/encryption.html. Use
@@ -61,8 +67,9 @@ existing installation or uninstall Homebrew.
    recovery identity in 1Password or offline, not in this checkout or history.
    Private Git authentication and age decryption are separate requirements.
 5. Run `./install.sh --help` and select the enrollment inputs below. An existing
-   machine record supplies public identity and hostname defaults. Unknown Macs
-   keep existing Git identity unless a record is supplied.
+   machine record supplies public identity and hostname defaults. Unknown machines
+   keep existing Git identity unless a record is supplied. Linux derives its ID
+   from `/etc/machine-id`; use `--machine` to retain an ID after reinstalling.
 
 For initial enrollment, pass `--recipient` once for each public machine key and
 once for the independent recovery key, plus `--origin` with the private Git URL.
@@ -77,18 +84,29 @@ useful for reviewing or editing them before installation.
 For another machine, recover a matching age identity and private Git access first,
 then use `./install.sh --adopt <private-Git-origin>` with its local enrollment inputs.
 Adoption restores history before applying resources. A missing identity stops
-recovery. A reinstall of the same hardware keeps its stable machine ID so its
-hardware-bound preferences can be restored.
+recovery. Mac hardware keeps its stable ID across reinstalls. On Ubuntu, retain the old
+`--machine` value when you need the same enrollment after reinstalling.
 
 `./install.sh --dry-run` is a non-mutating first-use outline. After enrollment,
 `mise -C ~ bootstrap --dry-run` previews the effective native resources; it may
 need network metadata. Neither command proves successful package installation.
 
-On macOS, the login-shell hook uses existing sudo authorization to register the
-declared shell and change the current account without a second password prompt.
+On both platforms, the login-shell hook uses existing sudo authorization to
+register the declared shell and change the account without another password prompt.
 It reads native mise's declaration and leaves the final status check to mise.
 
-Run the system-settings phase from the local console. Its firewall policy
+Ubuntu needs a working systemd user session for local history saves and
+automatic exchange. A native systemd timer invokes the same serialized `sync`
+task every five minutes; macOS uses a native LaunchAgent. Containers without a
+user manager can test packages and files but cannot pass full setup acceptance.
+
+Public downloads normally need no GitHub account. If GitHub returns `403` after
+its anonymous API quota is exhausted, authenticate for downloads or retry after
+the reported reset. Mise supports an existing `gh` login or a token supplied
+only in the process environment; never put one in a tracked file. See
+https://mise.jdx.dev/dev-tools/github-tokens.html.
+
+On macOS, run the system-settings phase from the local console. Its firewall policy
 disables automatic permission for signed applications; incoming services such
 as SSH can require an explicit firewall decision before reconnecting.
 
@@ -134,6 +152,10 @@ native mise. The download-cache layout is verified against mise 2026.10.7; see
 [the Ghostty acceptance record](plans/mise-compatibility.md#ghostty-download-recovery).
 
 ## Release policy
+
+The initial mise executable follows latest stable without a cooldown so that
+bootstrap can use its current native features. Tool installs and routine updates
+keep the three-day policy below.
 
 Flexible mise tool requests select the newest matching release at least three
 days old, within the declared channel (for example, Node LTS). The embedded npm
@@ -265,6 +287,18 @@ public source file back to this checkout, review `git diff`, and run `mise run
 verify`. Never copy the whole active tree: it includes private snapshots and
 local enrollment data. The pre-commit hook scans staged content for secrets.
 
+## Native features and adapters
+
+Mise owns package installation, links, file edits, defaults, services, encryption,
+history and Git exchange. The remaining setup code handles behavior those native
+operations do not provide: preserving foreign links and locally edited copies,
+capturing only shared keys from app-written files, exporting selected macOS
+preferences, and applying newly received package declarations. It does not encrypt
+files or implement Git merging. Maintenance also covers external plugin managers.
+
+The native capability audit, including the limits checked in mise's source, is in
+[the compatibility record](plans/mise-compatibility.md#native-capability-audit).
+
 ## Encrypted application preferences
 
 Thaw, LinearMouse, SuperCmd, SoundSource, Loopback, and Audio Hijack have explicit
@@ -298,9 +332,10 @@ Install the verification tools with `mise install --yes` and
 checkout. These repository commands provision only the verification toolchain;
 `config.toml` is the separate payload for the active global setup.
 
-The suite uses real mise/Git with temporary homes and local bare origins. It
-covers file preservation, Git identities/worktrees, encrypted preferences, and
-manual/automatic exchange. A focused Ghostty recovery check rejects altered DMGs
+CI runs the same command on macOS and Ubuntu. macOS also typechecks the Swift
+helpers that use Apple frameworks. The suite uses real mise/Git with temporary
+homes and local bare origins. It covers file preservation, Git identities/worktrees,
+encrypted preferences, and manual/automatic exchange. A focused Ghostty recovery check rejects altered DMGs
 and malformed cache archives. Syntax, format/schema, workflow, secret, and shell
 smoke checks complement those four areas. There is no application build target;
 compilation/parsing and native deployment are the build-equivalent checks.
