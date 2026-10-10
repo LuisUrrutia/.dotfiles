@@ -282,6 +282,35 @@ configure_screen_display() {
   defaults -currentHost write com.apple.screensaver idleTime -int 900
 }
 
+configure_appearance_schedule() {
+  local label="com.luisurrutia.appearance-schedule"
+  local agent_path="$HOME/Library/LaunchAgents/$label.plist"
+  local source_path="$DOTFILES/tools/macos/config/Library/LaunchAgents/$label.plist"
+  local domain
+
+  domain="gui/$(id -u)"
+
+  if [[ -e "$agent_path" || -L "$agent_path" ]]; then
+    if [[ ! -L "$agent_path" || ! "$agent_path" -ef "$source_path" ]]; then
+      echo "Error: appearance schedule conflicts with $agent_path; inspect it with dotfiles config diff macos before choosing Capture or Discard." >&2
+      return 1
+    fi
+  fi
+
+  stow_config macos || return
+  [[ -L "$agent_path" && "$agent_path" -ef "$source_path" ]] || return 1
+
+  if ! launchctl print "$domain" >/dev/null 2>&1; then
+    echo "Appearance schedule installed; it will start at the next graphical login."
+    return 0
+  fi
+
+  if launchctl print "$domain/$label" >/dev/null 2>&1; then
+    launchctl bootout "$domain/$label" || return
+  fi
+  launchctl bootstrap "$domain" "$agent_path"
+}
+
 configure_screen_lock() {
   ###############################################################################
   # Screen Lock                                                                 #
@@ -750,6 +779,7 @@ main() {
   run_macos_step configure_hostname
   run_macos_step configure_keyboard_input
   run_macos_step configure_screen_display
+  run_macos_step configure_appearance_schedule
   run_macos_step configure_screen_lock
   run_macos_step configure_finder_files
   run_macos_step configure_dock_menu_bar

@@ -145,9 +145,9 @@ stow_config() {
   fi
 
   if [[ "${2:-}" == "--fold" ]]; then
-    stow -v --restow -d "$tool_dir" -t "$HOME" config
+    stow -v --restow -d "$tool_dir" -t "$HOME" config || return
   else
-    stow -v --restow --no-folding -d "$tool_dir" -t "$HOME" config
+    stow -v --restow --no-folding -d "$tool_dir" -t "$HOME" config || return
   fi
   echo "Stowed $tool config"
 }
