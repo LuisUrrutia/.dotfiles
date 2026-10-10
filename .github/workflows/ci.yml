@@ -35,7 +35,7 @@ jobs:
 
       - name: Provision Verification Toolchain
         shell: bash
-        run: brew bundle install --file brewfiles/verification --no-upgrade --jobs auto
+        run: brew bundle install --file brewfiles/verification --no-upgrade
 
       - name: Run Verification
         shell: bash
