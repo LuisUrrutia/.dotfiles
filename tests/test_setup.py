@@ -716,6 +716,19 @@ for origin in ('http://github.com/example/setup.git', 'https://user:secret@examp
             "first.sh",
             'cp "$HOME/.config/mise/next.txt" "$HOME/.config/mise/config.toml"\n',
         )
+        changing.write(
+            "conf.d/requirements/mise.toml",
+            "[doctor.checks.ready]\nrun = 'test -f \"$HOME/ready\"'\n",
+        )
+        rejected = changing.python(
+            "import sync; sync.schedule=lambda:False; sync.apply_setup()", ok=False
+        )
+        self.assertNotEqual(rejected.returncode, 0)
+        self.assertFalse((changing.home / "app.toml").exists())
+        pending = json.loads((changing.home / "state/dotfiles/apply.json").read_text())
+        self.assertIn("failed", pending)
+        self.assertNotIn("applied", pending)
+        (changing.home / "ready").touch()
         changing.python("import sync; sync.schedule=lambda:False; sync.apply_setup()")
         self.assertFalse((changing.home / "second-ran").exists())
         changing.python("import sync; sync.schedule=lambda:False; sync.apply_setup()")

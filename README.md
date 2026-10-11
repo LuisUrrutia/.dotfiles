@@ -9,7 +9,10 @@ the setup without Homebrew or Stow executables. Arch needs its own package decla
 Setup does not migrate an existing installation or uninstall Homebrew.
 
 1. **Prepare the OS.** On macOS, grant the terminal Full Disk Access and install
-   Apple's Command Line Tools. On Ubuntu, use a normal login account with sudo;
+   Apple's Command Line Tools. Enable FileVault, save its recovery key outside
+   history, and require a password immediately when the screen saver starts or
+   the display turns off.
+   On Ubuntu, use a normal login account with sudo;
    the installer adds missing curl, Git, and CA certificates. Run `sudo -v`
    before full setup. Commands fail rather than wait for input.
 
@@ -76,9 +79,10 @@ Keep `-C ~` to avoid loading another project's mise config, or run from HOME.
 
 | Command                                  | Effect                                                                      |
 | ---------------------------------------- | --------------------------------------------------------------------------- |
+| `mise -C ~ doctor project`               | Check macOS FileVault and immediate screen-lock requirements                |
 | `mise -C ~ run config status`            | Inspect file and history state                                              |
 | `mise -C ~ run config diff`              | Compare declared and live configuration                                     |
-| `mise -C ~ run config apply`             | Check preservation, then apply setup                                        |
+| `mise -C ~ run config apply`             | Check preservation and prerequisites, then apply setup                      |
 | `mise -C ~ run sync`                     | Capture, save, exchange, pull, apply changed setup, and restore preferences |
 | `mise -C ~ run preferences capture`      | Save allowlisted app settings in encrypted history                          |
 | `mise -C ~ run preferences restore`      | Retry pending restores after closing apps                                   |

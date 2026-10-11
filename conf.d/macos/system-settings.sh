@@ -16,12 +16,3 @@ if pmset -g batt | grep -q InternalBattery; then
   sudo -n pmset -b displaysleep 10 sleep 15
 fi
 sudo -n /System/Library/CoreServices/RemoteManagement/ARDAgent.app/Contents/Resources/kickstart -deactivate
-
-if ! fdesetup status | grep -q 'FileVault is On'; then
-  echo 'Enable FileVault in System Settings and store its recovery key in 1Password.' >&2
-  exit 1
-fi
-if ! sysadminctl -screenLock status 2>&1 | grep -q 'delay is 0 seconds'; then
-  echo 'Set Require password after screen saver or display is turned off to Immediately in System Settings.' >&2
-  exit 1
-fi

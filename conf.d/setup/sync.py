@@ -158,6 +158,7 @@ def apply_setup(force=False, automatic=False):
         )
         write_state("apply", state)
         try:
+            mise("doctor", "project")
             mise("bootstrap", "--yes", timeout=14400)
             if schedule():
                 platform, resource = (

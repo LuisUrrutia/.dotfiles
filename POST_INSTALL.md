@@ -13,9 +13,11 @@ checks need a Mac outside this VM. See the measured results and limitations in
 [the Gatekeeper acceptance record](plans/mise-compatibility.md#gatekeeper-resolution-and-vm-limits).
 
 1. Complete Full Disk Access, Command Line Tools, and sudo prerequisites, in that
-   order. Enroll private Git access, age identity plus recovery recipient, Git
+   order. Enable FileVault, save its recovery key outside history, and set immediate
+   screen lock. Enroll private Git access, age identity plus recovery recipient, Git
    identity, optional apps, and manual/automatic mode. Keep private inputs out of
-   the public repository.
+   the public repository. Run `mise -C ~ doctor project` to inspect both macOS
+   requirements; `config apply` runs these checks before bootstrap.
 2. Install the common setup and selected apps. Confirm `command -v brew` and
    `command -v stow` find nothing. Inspect `mise bootstrap packages status`,
    `mise dot status`, services, defaults, and login-shell status. A required skip
@@ -27,9 +29,8 @@ checks need a Mac outside this VM. See the measured results and limitations in
    Check Fisher completions/bindings, plugin restoration, Docker plugins, file
    associations, and Git identity/signing in normal repositories and worktrees.
    Verify public font and plugin downloads over HTTPS without GitHub credentials.
-4. Sign into the App Store before the optional Xcode step. Accept licenses,
-   enable FileVault, record its recovery key outside history, and set immediate
-   screen lock. Grant Accessibility/Screen Recording/Full Disk Access to the
+4. Sign into the App Store before the optional Xcode step. Accept licenses.
+   Grant Accessibility/Screen Recording/Full Disk Access to the
    applications that need them. Authorize driver/system extensions explicitly.
 5. Repeat `mise -C ~ run config apply`. Preserve edits and unknown files. Change
    an app-owned setting and check drift handling. Interrupt a disposable setup

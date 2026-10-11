@@ -1,3 +1,17 @@
+[doctor.checks.filevault]
+description = "FileVault is enabled"
+run = "/usr/bin/fdesetup status | /usr/bin/grep -q 'FileVault is On'"
+hint = "Enable FileVault in System Settings and store its recovery key in 1Password."
+timeout = "5s"
+os = "macos"
+
+[doctor.checks.screen-lock]
+description = "The screen locks immediately"
+run = "/usr/sbin/sysadminctl -screenLock status 2>&1 | /usr/bin/grep -q 'delay is 0 seconds'"
+hint = "Set Require password after screen saver or display is turned off to Immediately in System Settings."
+timeout = "5s"
+os = "macos"
+
 [bootstrap.macos.dock]
 apps = [
   "/System/Applications/Messages.app",
