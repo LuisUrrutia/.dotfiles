@@ -5,6 +5,13 @@ that a driver installed, a GUI app launched, or macOS granted permissions. Run
 this checklist on a fresh Apple Silicon Mac; do not use the old Homebrew-owned
 installation as a substitute.
 
+A disposable VM can cover software installation and first launch. Before using
+one for Gatekeeper acceptance, verify its effective policy and use quarantined
+downloads through the normal GUI flow. The Cirrus base image used here disables
+Gatekeeper by default. App Store, OrbStack's nested VM, and physical hardware
+checks need a Mac outside this VM. See the measured results and limitations in
+[the Gatekeeper acceptance record](plans/mise-compatibility.md#gatekeeper-resolution-and-vm-limits).
+
 1. Complete Full Disk Access, Command Line Tools, and sudo prerequisites, in that
    order. Enroll private Git access, age identity plus recovery recipient, Git
    identity, optional apps, and manual/automatic mode. Keep private inputs out of

@@ -230,7 +230,9 @@ Other observed results:
   re-enabled. With authorization, the UI was changed to "App Store & Known
   Developers". Gatekeeper remained enabled, but the retry still failed; a reboot
   also left notarized ChatGPT and AutoFirma rejected by `spctl --assess`.
-  The underlying assessment failure remains unresolved; checks were not bypassed.
+  The effective rules were not verified during that attempt. The later
+  [Gatekeeper recheck](#gatekeeper-resolution-and-vm-limits) resolved the failure
+  in the test copy without bypassing assessment.
 - Lato, Ghostty and IINA downloads timed out; direct IPv4 HTTPS probes also failed
   to connect. Open Sans, Roboto, Roboto Condensed, Roboto Mono and Source Code Pro
   initially failed because Git rewrote their recipe clones to SSH. All five
@@ -552,7 +554,9 @@ An independent `spctl --assess --type execute --verbose=2` of the recovered app
 returned **3**, `rejected`, `source=Notarized Developer ID`, matching the VM's
 previous security-assessment discrepancy. This proves download, installation,
 CLI and configuration validation, not GUI/Gatekeeper acceptance. No trust policy
-was changed for these tests.
+was changed for these tests. The later
+[Gatekeeper recheck](#gatekeeper-resolution-and-vm-limits) completed GUI and
+security acceptance for Ghostty 1.3.1.
 
 Local evidence under `.tmp/macos-acceptance/evidence/` includes
 `ghostty-nix-results.json`, `ghostty-official-bootstrap.log`,
@@ -578,14 +582,131 @@ Sources:
 - https://formulae.brew.sh/api/cask/ghostty.json
 - https://github.com/jdx/mise/blob/v2026.10.7/src/system/packages/brew/cask/fetch.rs
 
+## Gatekeeper resolution and VM limits
+
+On 2026-10-11, the existing `dotfiles-associations-023be87` test copy still
+allowed only App Store applications. Read-only inspection of
+`/var/db/SystemPolicyConfiguration/SystemPolicy` showed `disabled=1` for the
+Developer ID and Notarized Developer ID allow rules. After the authorized change
+to "App Store & Known Developers" and completion of its authentication dialog,
+those rules changed to `disabled=0`. Gatekeeper and SIP stayed enabled; no MDM or
+DEP enrollment was present. No rule database was modified directly.
+
+The same Ghostty 1.3.1 app and NordVPN 10.12.0 package then passed assessment.
+Here, `source=Notarized Developer ID` identified the matching rule; it did not
+override the accompanying `rejected` verdict. A disabled matching rule explains
+that combination in Apple's policy-engine source:
+https://github.com/apple-oss-distributions/Security/blob/main/OSX/libsecurity_codesigning/lib/policyengine.cpp
+
+The native installation command in that copy exited **0**:
+
+```sh
+PATH=/Users/admin/.local/bin:/usr/bin:/bin:/usr/sbin:/sbin \
+  MISE_HTTP_TIMEOUT=60 MISE_HTTP_DOWNLOAD_TIMEOUT=2m \
+  /Users/admin/.local/bin/mise -C /Users/admin \
+  bootstrap packages install brew-cask:nordvpn --yes
+```
+
+The vendor postinstall logged `App passed notarization check`. Ghostty rendered
+a terminal and ran `uname -m`, returning `arm64`. NordVPN reached its welcome
+screen after declining optional telemetry. No account login or VPN tunnel was
+tested.
+
+An independent clone, `dotfiles-gatekeeper-fresh-20261011`, started from the
+cached vanilla image recorded above, with neither app installed. Its effective
+Gatekeeper rules were enabled and verified before downloading official artifacts
+with Safari. The download files retained Safari quarantine and matched these
+SHA-256 values:
+
+| Artifact | SHA-256 |
+| --- | --- |
+| Ghostty 1.3.1 DMG | `18cff2b0a6cee90eead9c7d3064e808a252a40baf214aa752c1ecb793b8f5f69` |
+| NordVPN 10.12.0 PKG | `513c0603d3b5b36c2145853949548b3ed42a4830e4bcc73fd54d549124c1dd07` |
+
+Ghostty was copied using Finder and opened through the normal first-launch
+confirmation. macOS reported that its malware check found nothing; the terminal
+ran `uname -m` successfully. NordVPN's package installed through the GUI, passed
+its vendor postinstall checks and opened its welcome screen. A canceled Safari
+download could not resume; downloading again from the same official URL worked.
+Both installed apps and the package passed `spctl --assess` afterward, and both
+apps passed strict code-signature verification. Gatekeeper and SIP remained on.
+This follows Apple's quarantined-download and GUI workflow. Networking stayed
+enabled, so it does not establish offline first launch:
+https://developer.apple.com/forums/thread/130560
+
+Final guest commands all exited **0**:
+
+```sh
+spctl --status
+csrutil status
+spctl --assess --type install --verbose=4 /Users/admin/Downloads/NordVPN.pkg
+spctl --assess --type exec --verbose=4 /Applications/NordVPN.app
+spctl --assess --type exec --verbose=4 /Applications/Ghostty.app
+codesign --verify --deep --strict --verbose=2 /Applications/NordVPN.app
+codesign --verify --deep --strict --verbose=2 /Applications/Ghostty.app
+pkgutil --pkg-info com.nordvpn.macos
+```
+
+Both distribution containers passed `xcrun stapler validate` in the existing
+test copy. `codesign --verify --deep --strict` and the notarization requirement
+passed on the apps. `syspolicy_check distribution` on the inner apps reported
+`Notary Ticket Missing` (exit 70); this did not prevent the tested container
+installation and GUI launch. Apple's guidance distinguishes this warning from
+a fatal failure: https://developer.apple.com/forums/thread/706442
+
+The VM is useful for software acceptance, with these boundaries:
+
+- The Cirrus image disables Gatekeeper and preconfigures login, SSH and sudo.
+  It is not an untouched Setup Assistant installation. Its build recipe confirms
+  this: https://github.com/cirruslabs/macos-image-templates/blob/main/templates/vanilla-golden-gate.pkr.hcl
+- Tart 2.40.1 ran macOS 27.0 build 26A428 on arm64. The fresh clone had four CPUs,
+  8 GiB RAM and a 50 GB virtual disk. Allocate more storage for the full setup;
+  the earlier full-install VM required expansion to 160 GB.
+- The macOS guest cannot provide nested virtualization for OrbStack/Docker.
+  Tart documents nested virtualization only for supported Linux guests:
+  https://tart.run/faq/#nested-virtualization-support
+- Apple excludes Apple Media Services, including apps, from macOS VMs. App Store
+  and `mas` acceptance therefore remains a physical-Mac check. Apple Account and
+  most iCloud services can work on eligible macOS 15+ host/guest combinations;
+  no Apple login was attempted: https://support.apple.com/en-gb/120468
+- Metal was available as `Apple Paravirtual device`, and creating a command
+  queue succeeded. Ghostty's rendered terminal confirms usable graphics for
+  this test; the VM is not universally missing GPU support.
+- Audio, USB accessories and clipboard sharing were disabled by the test run's
+  flags. Physical audio routing, cameras, docks and driver operation remain
+  untested. These flags are fixture choices, not universal macOS VM limits.
+- The guest used NAT. Both official downloads succeeded during this recheck;
+  that does not establish VPN tunnel behavior or explain earlier regional
+  download failures.
+
+Local ignored evidence under `.tmp/macos-acceptance/evidence/` includes
+`gatekeeper-recheck-20261011.log`, `gatekeeper-effective-rules-20261011.log`,
+`gatekeeper-after-auth-20261011.log`,
+`nordvpn-native-retry-20261011.log`, `nordvpn-installed-20261011.log`,
+`nordvpn-apple-checks-20261011.log`, `vm-app-runtime-20261011.log`,
+`fresh-baseline-20261011.log`, `fresh-rules-after-20261011.log`,
+`fresh-vm-limits-20261011.log`, `fresh-ghostty-download-20261011.log`,
+`fresh-ghostty-launch-20261011.log`, `fresh-nordvpn-download-20261011.log` and
+`fresh-app-acceptance-20261011.log`.
+The Metal probe's output incorrectly labels command-queue creation as library
+creation; only the command queue was exercised.
+Both VMs used for this recheck were shut down after collecting evidence.
+
+`/bin/bash .tmp/mise-implementation/verify-entrypoint.sh` ran the isolated
+`mise run verify` and exited **0**. All five tests passed in **146.443 seconds**;
+compilation/parsing, static checks, shell smoke, secret scanning and diff checks
+passed. See `repository-verify-gatekeeper-20261011.log`. The coverage ledger
+retained seven columns in all 191 data rows, and the new local documentation
+link resolves to the acceptance section. No installer code changed in this pass.
+
 ## Outstanding acceptance
 
 The fresh-Mac exercise in [POST_INSTALL.md](../POST_INSTALL.md) is in progress.
 The following acceptance is still outstanding:
 
-- NordVPN and Lato installation; Ghostty and IINA's security assessment and GUI
-  acceptance; optional packages, App Store installation, full package updates
-  and driver operation.
+- Lato installation; IINA's security assessment and GUI acceptance; NordVPN's
+  authenticated tunnel; optional packages, App Store installation, full package
+  updates and driver operation.
 - Complete native package status with the custom-tap evaluator.
 - An untouched Setup Assistant/security flow, FileVault and immediate screen lock,
   the eight Mail/Safari defaults reported unset from Terminal, and actual launchd
@@ -690,8 +811,9 @@ the serialized production path and later service runs passed.
 
 CI now declares both macOS and Ubuntu jobs. Hosted execution, Arch packages,
 a full x86_64 setup, real credentials and cross-machine network/hardware acceptance
-remain outside this evidence. The earlier macOS GUI and app acceptance gaps still
-apply. No bootstrap, package installation, preference import or service registration
+remain outside this evidence. The remaining macOS GUI and app acceptance gaps
+are listed under [Outstanding acceptance](#outstanding-acceptance).
+No bootstrap, package installation, preference import or service registration
 was executed on the operator's Mac.
 
 Local ignored evidence is in `.tmp/native-ubuntu/evidence/`: installer and
