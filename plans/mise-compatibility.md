@@ -1178,12 +1178,29 @@ data and state from the operator's active setup. The narrower exchange test,
 `MISE_OFFLINE=1 bash .tmp/mise-review-20261011/verify.sh exec -- python3 -m unittest tests.test_setup.SetupTests.test_native_sync_applies_declarations_and_preserves_local_choices`,
 also passed in 166.968 seconds. There is no separate app build.
 
+The follow-up review found and repaired two additional cases. Fisher now removes
+obsolete plugin entries before installing a replacement that owns the same files;
+the replacement succeeds on its first run and retains the requested manifest.
+The macOS dispatcher refreshes changed worker declarations while idle under the
+shared lock. A running worker is preserved. Two real VM cycles verified scheduler
+replacement, a changed `MISE_DATA_DIR`, and zero exit status from both workers.
+
+After these repairs, `bash .tmp/mise-review-20261011/verify.sh run verify` exited 0
+again: all five tests passed in 177.054 seconds, and all 323 files passed the
+repository checks. Evidence is in `verify-final.log`,
+`fisher-replacement-fixed-results.json`, `fish-regression-fixed.log`, and
+`scheduler-macos-final.log` under `.tmp/mise-fixes-20261011/`. The earlier failures
+remain recorded in `review/tools.md` and `review/state.md`, with their probes.
+
 The initial systemd experiment used a privileged Docker container, whose binfmt
 service reset OrbStack's shared emulation registry. A user-authorized normal
 OrbStack restart restored the original handlers, x86 execution and all pre-existing
 workloads. The final systemd check used a dedicated Ubuntu machine. Do not start
 systemd's binfmt service in a privileged test container on a shared OrbStack host.
 No dotfiles bootstrap was applied to the operator's Mac.
+The disposable Linux resources were removed and the macOS VM was stopped after
+verification. `orbstack-final.json` confirms the original Redis container is still
+running and both Kubernetes pods are ready, accounting for all five workloads.
 
 Local ignored evidence is under `.tmp/mise-fixes-20261011/`, including
 `completions-after.log`, `fisher-after.json`, `ubuntu-tools.log`,
