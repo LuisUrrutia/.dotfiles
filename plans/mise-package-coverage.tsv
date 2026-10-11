@@ -9,6 +9,13 @@ tool	fd	conf.d/cli/mise.toml	portable-runtime	isolated-macos-arm64-ubuntu-x64-10
 tool	fzf	conf.d/cli/mise.toml	portable-runtime	isolated-macos-arm64-ubuntu-x64-0.74.4	pending-clean-machine	retry-native-owner
 tool	jq	conf.d/cli/mise.toml	portable-runtime	isolated-macos-arm64-ubuntu-x64-1.8.2	pending-clean-machine	retry-native-owner
 tool	zoxide	conf.d/cli/mise.toml	portable-runtime	isolated-macos-arm64-ubuntu-x64-0.10.0	pending-clean-machine	retry-native-owner
+tool	github:docker/docker-language-server	conf.d/nvim/mise.toml	portable-runtime	isolated-macos-arm64-ubuntu-x64-0.20.1	pending-clean-machine	retry-native-owner
+tool	lua-language-server	conf.d/nvim/mise.toml	portable-runtime	isolated-macos-arm64-ubuntu-x64-3.19.1	pending-clean-machine	retry-native-owner
+tool	npm:@astrojs/language-server	conf.d/nvim/mise.toml	portable-runtime	isolated-macos-arm64-ubuntu-x64-2.17.2	pending-clean-machine	retry-native-owner
+tool	npm:@tailwindcss/language-server	conf.d/nvim/mise.toml	portable-runtime	isolated-macos-arm64-ubuntu-x64-0.16.0	pending-clean-machine	retry-native-owner
+tool	npm:@vtsls/language-server	conf.d/nvim/mise.toml	portable-runtime	isolated-macos-arm64-ubuntu-x64-0.3.0	pending-clean-machine	retry-native-owner
+tool	npm:typescript	conf.d/nvim/mise.toml	portable-runtime	isolated-macos-arm64-ubuntu-x64-6.0.3	pending-clean-machine	retry-native-owner
+tool	rust-analyzer	conf.d/nvim/mise.toml	portable-runtime	isolated-macos-arm64-ubuntu-x64-2026-10-05	pending-clean-machine	retry-native-owner
 package	brew-cask:1password	conf.d/apps/mise.macos.toml	macos-arm64	vm-installed-8.12.40	pending-clean-machine	retry-native-owner
 package	brew-cask:1password-cli	conf.d/apps/mise.macos.toml	macos-arm64	vm-installed-2.40.0	pending-clean-machine	retry-native-owner
 package	brew-cask:android-platform-tools	conf.d/dev/mise.macos.toml	macos-arm64	vm-installed-37.0.1	pending-clean-machine	retry-native-owner
@@ -105,7 +112,7 @@ package	brew:fastfetch	conf.d/fastfetch/mise.macos.toml	macos-arm64	vm-installed
 package	brew:ffmpeg	conf.d/cli/mise.macos.toml	macos-arm64	vm-installed-9.0.2_1	pending-clean-machine	retry-native-owner
 package	brew:figlet	conf.d/cli/mise.macos.toml	macos-arm64	vm-installed-2.2.5	pending-clean-machine	retry-native-owner
 package	brew:findutils	conf.d/cli/mise.macos.toml	macos-arm64	vm-installed-4.11.0	pending-clean-machine	retry-native-owner
-package	brew:fish	conf.d/fish/mise.macos.toml	macos-arm64	vm-installed-4.9.3	pending-clean-machine	retry-native-owner
+package	brew:fish	conf.d/fish/mise.toml	macos-linux	macos-vm-ubuntu-x64-installed-4.9.3	pending-clean-machine	retry-native-owner
 package	brew:fisher	conf.d/fish/mise.macos.toml	macos-arm64	vm-installed-4.4.8	pending-clean-machine	retry-native-owner
 package	brew:foundry	conf.d/blockchain/mise.ethereum.toml	macos-arm64;optional=ethereum	not-selected-in-vm	pending-clean-machine	retry-native-owner
 package	brew:fswatch	conf.d/cli/mise.macos.toml	macos-arm64	vm-installed-1.22.0	pending-clean-machine	retry-native-owner

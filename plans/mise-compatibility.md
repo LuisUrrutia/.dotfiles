@@ -1122,3 +1122,82 @@ Native contracts:
 - https://mise.jdx.dev/dotfiles/sync.html#identify-commits-by-machine
 - https://mise.jdx.dev/bootstrap/macos-defaults.html
 - https://mise.jdx.dev/configuration/project-diagnostics.html
+
+## Second review corrections and adoption
+
+Implemented on 2026-10-11 with official mise 2026.10.8. This follow-up addresses
+all six findings and three adoption opportunities from the second review.
+
+- Bun and uv generate completions inside their installed tool directories. Native
+  managed Fish loaders resolve the active version. The preservation guard rejects
+  pre-existing custom files and foreign links at all three completion targets.
+- The native periodic scheduler dispatches synchronization to a separate OS job.
+  Applying a changed LaunchAgent or systemd timer cannot terminate its worker.
+  The worker retains serialized application, retry limits, and local mode checks.
+- Fisher updates each requested plugin separately and propagates download failure
+  even when an older copy is installed. The requested manifest survives failure.
+- Fish uses the native brew recipe on both platforms. Fish 4.9.3 supports the
+  current fzf.fish bindings; Ubuntu's Fish 3.7 package does not.
+- Image helpers support ImageMagick 6 and 7 without `sips` or BSD-only `stat`.
+  The Git date helper selects GNU `date` on Ubuntu and `gdate` on macOS.
+- The README identifies native project diagnostics as the owner of the FileVault
+  and immediate screen-lock checks.
+- Mise owns the six Neovim language servers and their updates. Mason and the
+  custom installer are removed. Astro uses a workspace TypeScript SDK when present
+  and the latest compatible TypeScript 6 SDK from mise otherwise.
+- `openclaw` selects a native macOS LaunchAgent; the mount command no longer
+  generates plists or implements its own service installation/removal.
+- Verification invokes `mise tasks validate` for the checkout and isolated active
+  configuration, both with default selection and with every optional module.
+
+Behavioral evidence:
+
+| Check                                                                              | Result                                                                                                                                                       |
+| ---------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Real Bun 1.4.2 and uv 0.12.23 completion generation and repair                     | Custom targets survive; all three managed loaders expose completions.                                                                                        |
+| Real Fisher 4.4.8 updating two installed plugins, with one HTTP 403                | Before: exit 0. After: nonzero exit, successful plugin updated, original manifest retained.                                                                  |
+| Native Fish recipe and current fzf.fish on Ubuntu 24.04 x86_64                     | Fish 4.9.3 installed without the Homebrew executable; Ctrl-R binding loads.                                                                                  |
+| Image conversions, resizing, compression and Git date editing on macOS and Ubuntu  | Correct formats and dimensions, smaller output, temporary-file cleanup, matching author/committer timestamps, unchanged Git tree.                            |
+| Native LSP installation and Neovim initialization on macOS arm64 and Ubuntu x86_64 | All six servers initialize through the locked nvim-lspconfig. This does not establish full editor UI or project diagnostics acceptance.                      |
+| Automatic scheduler replacement in the disposable macOS VM                         | Changed interval applied, replacement agent loaded, successful application stamp recorded.                                                                   |
+| Automatic scheduler replacement in a dedicated Ubuntu 24.04 arm64 machine          | Changed timer applied, timer remains active, successful application stamp recorded through a transient systemd worker.                                       |
+| Optional OpenClaw agent in an isolated home                                        | Native generation, arguments, timing, idempotent reapply and explicit removal pass with a controlled launchctl substitute. Actual mounting remains untested. |
+
+The LSP checks installed rust-analyzer 2026-10-05, Lua LS 3.19.1, Tailwind LS 0.16.0,
+Astro LS 2.17.2, Docker LS 0.20.1, VTSLS 0.3.0, and TypeScript 6.0.3. Declarations
+remain version ranges with the configured release cooldown; these are observed
+versions, not pins. The Rust probe initializes an empty workspace, and Blink's UI
+capability provider is substituted; no full Rust-project or completion UI claim
+is made.
+
+`bash .tmp/mise-review-20261011/verify.sh run verify` exited 0: five tests passed
+in 160.440 seconds, with lint/formatting for 323 repository files, source
+compilation/parsing, native task validation, schemas, workflow checks, secret
+scanning, installer dry-run and diff checks. The wrapper isolates mise's config,
+data and state from the operator's active setup. The narrower exchange test,
+`MISE_OFFLINE=1 bash .tmp/mise-review-20261011/verify.sh exec -- python3 -m unittest tests.test_setup.SetupTests.test_native_sync_applies_declarations_and_preserves_local_choices`,
+also passed in 166.968 seconds. There is no separate app build.
+
+The initial systemd experiment used a privileged Docker container, whose binfmt
+service reset OrbStack's shared emulation registry. A user-authorized normal
+OrbStack restart restored the original handlers, x86 execution and all pre-existing
+workloads. The final systemd check used a dedicated Ubuntu machine. Do not start
+systemd's binfmt service in a privileged test container on a shared OrbStack host.
+No dotfiles bootstrap was applied to the operator's Mac.
+
+Local ignored evidence is under `.tmp/mise-fixes-20261011/`, including
+`completions-after.log`, `fisher-after.json`, `ubuntu-tools.log`,
+`helpers-macos.log`, `lsp-install-{macos,linux}.log`,
+`lsp-probe-{macos,linux}.log`, `scheduler-linux.log`, `openclaw-probe.log`, and
+`orbstack-restored.json`. Real macOS scheduler evidence is in
+`.tmp/macos-acceptance/evidence/scheduler-fixes-20261011.log`. Earlier harness
+failures are retained separately. Package updates, full graphical setup,
+authenticated services and real application preference restoration keep their
+previous acceptance limits.
+
+Native contracts:
+
+- https://mise.jdx.dev/ide-integration.html
+- https://mise.jdx.dev/bootstrap/launchd.html
+- https://mise.jdx.dev/bootstrap/systemd.html
+- https://mise.jdx.dev/cli/tasks/validate.html

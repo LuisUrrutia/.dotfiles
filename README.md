@@ -106,15 +106,17 @@ Machine identity, Git inputs, sync mode, and the private origin live in
 
 Both sync modes use native `history.sync = "manual"`; the watcher saves locally.
 History commits identify the saving machine as `mise@<hostname>`.
-Manual machines exchange on request. Automatic machines run the same serialized
-`sync` task every five minutes through a macOS LaunchAgent or Ubuntu systemd timer.
+Manual machines exchange on request. A native macOS LaunchAgent or Ubuntu systemd
+timer dispatches automatic sync every five minutes. The worker runs in a separate
+OS job so replacing the scheduler cannot interrupt application.
 Automatic sync executes received setup code and installs eligible software as
 the local user. A lock prevents overlapping apply, update, and sync operations.
 
 Failed application stays pending, retries with backoff, and stops automatic retries
 after three attempts with the same inputs. Fix the prerequisite and run
 `config apply` to retry. Logs and `apply.json` (pending/applied inputs) live under
-`~/.local/state/mise/dotfiles/`.
+`~/.local/state/mise/dotfiles/`. Ubuntu worker output is also available through
+`journalctl --user -u dotfiles-sync-worker.service`.
 
 Configuration-only changes do not need sudo again for unchanged privileged macOS
 policy. New privileged software, App Store login, GUI permissions, or changed
@@ -192,10 +194,16 @@ env = ["busycal", "audio-hijack"]
 ```
 
 Choices: `audio-hijack`, `busycal`, `camo`, `displaylink`, `ethereum`, `focusrite`,
-`loopback`, `obs`, `skhd`, `soundsource`, and `stellar-cli`.
+`loopback`, `obs`, `openclaw`, `skhd`, `soundsource`, and `stellar-cli`.
 Audio apps share `conf.d/audio` but remain individually selectable. `ethereum`
 groups Geth, Foundry, and Solidity in `conf.d/blockchain`, alongside the independent
 `stellar-cli` selection. OBS includes its scene-switcher plugin.
+
+`openclaw` enables the native macOS `openclaw-sshfs` LaunchAgent. It needs a working
+Tailscale connection, SSH host alias, macFUSE, and SSHFS; `openclaw-mount status`
+checks the mount. To stop automatic mounting, remove the selection and run
+`mise -C ~ bootstrap services remove openclaw-sshfs --yes`. The mount and its data
+remain unchanged.
 
 There are no role profiles. The common macOS setup includes the former cloud,
 dev, formatters, image, and languages categories; a work Mac can leave the optional
@@ -275,10 +283,19 @@ Geth, Foundry, and Solidity support both platforms. On Linux, the Go backend bui
 the Geth command suite using the shared Go toolchain and build prerequisites;
 Foundry and Solidity use native brew recipes.
 
-Fish is the login shell, with one mise activation owner in `conf.d/fish` and no
-Bash or Zsh activation. On both platforms, the login-shell hook reads mise's
+Fish uses native brew recipes on both platforms to support current `fzf.fish`
+bindings. It is the login shell, with one mise activation owner in `conf.d/fish`
+and no Bash or Zsh activation. The login-shell hook reads mise's
 declaration and uses existing sudo authorization to register and change the shell
 without another password prompt. Mise checks the final status.
+
+Image helpers support ImageMagick 7 on macOS and Ubuntu's ImageMagick 6.
+They resize and compress without macOS-only utilities.
+
+Mise installs and updates Neovim's Rust, Lua, Tailwind, Astro, Docker, and TypeScript
+language servers. Neovim enables them through `nvim-lspconfig` and resolves tools
+through mise shims. Astro uses a workspace SDK when available, with mise's
+TypeScript 6 as fallback; Astro does not support the TypeScript 7 SDK yet.
 
 Native mise installs and updates Rust on both platforms, including Rustfmt and
 Clippy in the default profile. Project `rust-toolchain.toml` files override the
@@ -298,8 +315,9 @@ restores the declared order.
 User defaults and the screenshots directory are native declarations. Enrollment
 stores the absolute screenshot path locally because mise defaults cannot render
 templates. `system-settings.sh` handles privileged update preferences, firewall,
-power commands, Library visibility, remote-management settings, and FileVault/
-screen-lock checks. Native defaults cannot write privileged system domains.
+power commands, Library visibility, and remote-management settings. Native
+`mise doctor project` checks FileVault and immediate screen locking before setup.
+Native defaults cannot write privileged system domains.
 
 Thaw installs and updates only below macOS 27. A package hook checks the OS and
 delegates to native casks because declarations cannot express that version range.
@@ -467,9 +485,10 @@ macOS also typechecks helpers that use Apple frameworks.
 Tests use real mise/Git, temporary homes, and local bare origins. Four areas cover
 preservation, Git identities/worktrees, encrypted preferences, and manual/automatic
 exchange. A focused Ghostty recovery check rejects altered DMGs and malformed
-cache archives. Syntax, format/schema, workflow, secret, and shell smoke checks
-complete the suite. There is no app build target; compilation/parsing and native
-deployment serve that purpose.
+cache archives. Native task validation checks this checkout and the isolated
+active setup, including all optional modules. Syntax, format/schema, workflow,
+secret, and shell smoke checks complete the suite. There is no app build target;
+compilation/parsing and native deployment serve that purpose.
 
 Dependabot updates SHA-pinned GitHub Actions weekly with a three-day cooldown,
 grouping minor/patch releases and keeping majors separate. Mise maintenance owns
