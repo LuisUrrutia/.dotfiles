@@ -384,13 +384,20 @@ Install the verification tools with `mise install --yes` and
 checkout. These repository commands provision only the verification toolchain;
 `config.toml` is the separate payload for the active global setup.
 
-CI runs the same command on macOS and Ubuntu. macOS also typechecks the Swift
-helpers that use Apple frameworks. The suite uses real mise/Git with temporary
+CI runs the same command on macOS 26 arm64 and Ubuntu 24.04 arm64/x86_64.
+Each job downloads the latest official mise through the checksum-verifying
+installer and provisions the verification tools through mise. macOS also
+typechecks the Swift helpers that use Apple frameworks. The suite uses real mise/Git with temporary
 homes and local bare origins. It covers file preservation, Git identities/worktrees,
 encrypted preferences, and manual/automatic exchange. A focused Ghostty recovery check rejects altered DMGs
 and malformed cache archives. Syntax, format/schema, workflow, secret, and shell
 smoke checks complement those four areas. There is no application build target;
 compilation/parsing and native deployment are the build-equivalent checks.
+
+Dependabot maintains the SHA-pinned GitHub Actions weekly with a three-day
+release cooldown. Minor and patch updates are grouped; major updates remain
+separate. Mise owns tool and package updates through the setup's maintenance
+task; those manifests are outside Dependabot's supported ecosystems.
 
 The current evidence and outstanding acceptance steps are in
 [the compatibility record](plans/mise-compatibility.md) and

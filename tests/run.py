@@ -60,6 +60,7 @@ def main():
     run('stylua', '--check', 'conf.d/nvim')
     run('git', 'config', '--file', 'conf.d/git/defaults.gitconfig', '--list', stdout=subprocess.DEVNULL)
     run('actionlint')
+    run('check-jsonschema', '--builtin-schema', 'vendor.dependabot', '.github/dependabot.yml')
     run('/bin/bash', 'conf.d/bin/gha-pins', 'audit', '.github/workflows')
     run('/bin/bash', 'install.sh', '--dry-run')
     with tempfile.TemporaryDirectory(prefix='dotfiles-public-check-') as temporary:

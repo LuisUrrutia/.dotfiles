@@ -10,12 +10,14 @@
 
 ## Verification
 
-<!-- Include exact commands and outcomes. State why any applicable check was skipped. -->
+<!-- Include exact commands and outcomes, plus the OS/architecture for platform changes.
+Separate repository checks from package, service, GUI, and preference-restore acceptance.
+State why any applicable check was skipped. -->
 
 | Check | Command | Result |
 | --- | --- | --- |
 | Targeted behavior |  |  |
-| Syntax or static analysis |  |  |
+| Repository verification | `mise run verify` |  |
 | Broader smoke path |  |  |
 | Final diff | `git diff --check` |  |
 
@@ -30,4 +32,5 @@
 - [ ] I preserved existing user state or made destructive intent explicit.
 - [ ] I updated user-facing documentation when behavior changed.
 - [ ] I ran `mise run verify`, including isolated deployment/history and Git identity checks.
-- [ ] I distinguished repository checks from any unexecuted fresh-Mac or application restore acceptance.
+- [ ] I checked affected macOS arm64 and Ubuntu arm64/x86_64 paths, or recorded the untested platforms.
+- [ ] I distinguished repository checks from any unexecuted fresh-machine or application restore acceptance.
