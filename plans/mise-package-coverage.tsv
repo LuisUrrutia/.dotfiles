@@ -11,7 +11,7 @@ package	brew-cask:android-platform-tools	conf.d/dev/mise.macos.toml	macos-arm64	
 package	brew-cask:apparency	conf.d/dev/mise.macos.toml	macos-arm64	vm-installed-3.4	pending-clean-machine	retry-native-owner
 package	brew-cask:audio-hijack	conf.d/audio/mise.audio-hijack.toml	macos-arm64;optional=audio-hijack	not-selected-in-vm	pending-clean-machine	retry-native-owner
 task	setup:autofirma	conf.d/autofirma/mise.macos.toml	macos-arm64	vm-installed-1.9.2	latest-from-cask-api	requires-interactive-vendor-installer
-package	brew-cask:busycal	conf.d/busycal/mise.busycal.toml	macos-arm64;optional=busycal	not-selected-in-vm	pending-clean-machine	retry-native-owner
+package	brew-cask:busycal	conf.d/macos/mise.busycal.toml	macos-arm64;optional=busycal	vm-installed-2026.4.1-native-dock-passed	pending-clean-machine	retry-native-owner
 package	brew-cask:camo-studio	conf.d/media/mise.camo.toml	macos-arm64;optional=camo	not-selected-in-vm	pending-clean-machine	retry-native-owner
 package	brew-cask:chatgpt	conf.d/apps/mise.macos.toml	macos-arm64	vm-installed-26.1007.21159	pending-clean-machine	retry-native-owner
 package	brew-cask:claude	conf.d/apps/mise.macos.toml	macos-arm64	vm-installed-2.31226.1,8576520051724193e9f74fc538f9ce8125e9ddd2	pending-clean-machine	retry-native-owner
@@ -66,7 +66,7 @@ package	brew-cask:sshfs-mac	conf.d/apps/mise.macos.toml	macos-arm64	vm-installed
 package	brew-cask:t3-code@nightly	conf.d/apps/mise.macos.toml	macos-arm64	vm-installed-0.0.46-nightly.20261010.2935	pending-clean-machine	retry-native-owner
 package	brew-cask:tailscale-app	conf.d/apps/mise.macos.toml	macos-arm64	vm-installed-1.104.1	pending-clean-machine	retry-native-owner
 package	brew-cask:telegram	conf.d/apps/mise.macos.toml	macos-arm64	vm-installed-13.0,283305	pending-clean-machine	retry-native-owner
-package	brew-cask:thaw	conf.d/thaw/mise.macos.toml	macos-arm64	vm-installed-2.0.1	pending-clean-machine	retry-native-owner
+package	brew-cask:thaw	conf.d/setup/packages.py	macos-arm64;macos<27	vm-installed-2.0.1	pending-clean-machine	retry-native-owner
 package	brew-cask:the-unarchiver	conf.d/apps/mise.macos.toml	macos-arm64	vm-installed-4.3.9,147,1742287964	pending-clean-machine	retry-native-owner
 package	brew-cask:thebrowsercompany-dia	conf.d/apps/mise.macos.toml	macos-arm64	vm-installed-1.52.0,88431	pending-clean-machine	retry-native-owner
 package	brew-cask:veracrypt	conf.d/apps/mise.macos.toml	macos-arm64	vm-installed-1.26.29	pending-clean-machine	retry-native-owner
@@ -94,7 +94,6 @@ package	brew:cosign	conf.d/cloud/mise.macos.toml	macos-arm64	vm-installed-3.1.3	
 package	brew:cpanminus	conf.d/languages/mise.macos.toml	macos-arm64	vm-installed-1.7049	pending-clean-machine	retry-native-owner
 package	brew:curl	conf.d/curl/mise.macos.toml	macos-arm64	vm-installed-8.22.0_1	pending-clean-machine	retry-native-owner
 package	brew:dive	conf.d/dev/mise.macos.toml	macos-arm64	vm-installed-0.13.1	pending-clean-machine	retry-native-owner
-package	brew:dockutil	conf.d/macos/mise.macos.toml	macos-arm64	vm-installed-3.1.3	pending-clean-machine	retry-native-owner
 package	brew:duf	conf.d/cli/mise.macos.toml	macos-arm64	vm-installed-0.9.1	pending-clean-machine	retry-native-owner
 package	brew:dust	conf.d/cli/mise.macos.toml	macos-arm64	vm-installed-1.2.6	pending-clean-machine	retry-native-owner
 package	brew:duti	conf.d/apps/mise.macos.toml	macos-arm64	vm-installed-1.5.4_1	pending-clean-machine	retry-native-owner

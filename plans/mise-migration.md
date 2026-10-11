@@ -534,11 +534,11 @@ Invoke the repository's Fish debugging skills during this implementation.
 
 **M8a, defaults/agents:** translate each user preference with its type, host scope,
 and nested dictionary semantics. Preserve unrelated shortcut keys. Keep optional
-app/container failures distinguishable from invalid declarations. For Dock
-layout, preserve today's relative placement/optional-app behavior unless an
-exact layout is explicitly chosen. Native `apps` enforces a complete declared
-order and requires every referenced app to exist; it is not automatically
-equivalent to the current dockutil script.
+app/container failures distinguishable from invalid declarations. On 2026-10-11,
+the user selected a native complete Dock layout: Messages, optional BusyCal,
+Notes, Ghostty, Zed, T3 Code, Dia, App Store, and System Settings. Native `apps`
+owns that order and requires every referenced app to exist. This replaces the
+earlier requirement to preserve relative dockutil edits.
 
 Implement the 10:00/20:00 appearance schedule as a native LaunchAgent with
 graphical-login, wake, and idempotency behavior. No old-label handoff is needed.

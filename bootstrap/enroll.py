@@ -106,6 +106,9 @@ def enroll(args):
         current.setdefault("dotfiles", {}).update(git_files)
         if machine["xcode"]:
             current.setdefault("bootstrap", {}).setdefault("packages", {})["mas:497799835"] = {"os": "macos"}
+        if sys.platform == "darwin":
+            defaults = current.setdefault("bootstrap", {}).setdefault("macos", {}).setdefault("defaults", {})
+            defaults.setdefault("com.apple.screencapture", {}).setdefault("location", str(HOME / "Pictures/Screenshots"))
         current.setdefault("settings", {}).setdefault("history", {}).update(sync="manual", allow_plaintext_history=False)
         atomic(ROOT / "config.local.toml", document(current))
     elif args.sync and args.sync != machine["sync"]:

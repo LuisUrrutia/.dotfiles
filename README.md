@@ -221,9 +221,30 @@ OBS includes its scene-switcher plugin. There are no role profiles.
 The common macOS setup includes the former cloud, dev, formatters, image, and
 languages categories. The work Mac can leave the optional list empty.
 
+Thaw is installed and updated only on macOS versions below 27. The existing
+package hook checks the OS version and delegates to mise's native cask manager;
+package declarations cannot express that version range. Upgrading macOS does
+not uninstall an existing copy or erase its encrypted preference snapshots.
+
+Mise owns the complete pinned Dock order: Messages, optional BusyCal, Notes,
+Ghostty, Zed, T3 Code (Nightly), Dia, App Store, and System Settings. Its native
+defaults replace the previous dockutil task. Finder and Trash remain managed
+by macOS. Change the `apps` list in `conf.d/macos/mise.macos.toml`, and its
+BusyCal variant if selected; a later apply restores that declared order.
+
+Fish is the login shell and has one activation owner in `conf.d/fish`.
+Setup does not activate mise in Bash or Zsh.
+
 Native mise installs and updates Rust on both platforms; the default profile
 includes Rustfmt and Clippy.
 Project `rust-toolchain.toml` files take precedence over the global toolchain.
+
+User defaults and the screenshots directory are native declarations. Enrollment
+records the absolute screenshot location in this machine's local config because
+mise does not render templates in defaults. `system-settings.sh` remains for
+system-wide update preferences, firewall and power commands, Library visibility,
+remote-management settings, and FileVault/screen-lock checks. Native defaults
+cannot write privileged system domains.
 
 Removing a selection stops managing it; it does not delete application data or
 uninstall packages. Review native `mise bootstrap unapply <module> --dry-run`

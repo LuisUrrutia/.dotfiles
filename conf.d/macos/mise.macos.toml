@@ -1,6 +1,23 @@
+[bootstrap.macos.dock]
+apps = [
+  "/System/Applications/Messages.app",
+  "/System/Applications/Notes.app",
+  "/Applications/Ghostty.app",
+  "/Applications/Zed.app",
+  "/Applications/T3 Code (Nightly).app",
+  "/Applications/Dia.app",
+  "/System/Applications/App Store.app",
+  "/System/Applications/System Settings.app",
+]
+autohide = true
+tilesize = 55
+mru_spaces = false
 
-[bootstrap.packages]
-"brew:dockutil" = { os = "macos" }
+[bootstrap.macos.defaults.NSGlobalDomain]
+AppleInterfaceStyleSwitchesAutomatically = false
+
+[bootstrap.directories."~/Pictures/Screenshots"]
+os = "macos"
 
 [[bootstrap.macos.defaults_entries]]
 domain = "NSGlobalDomain"
@@ -208,18 +225,6 @@ host = "any"
 
 [[bootstrap.macos.defaults_entries]]
 domain = "com.apple.dock"
-key = "tilesize"
-value = 55
-host = "any"
-
-[[bootstrap.macos.defaults_entries]]
-domain = "com.apple.dock"
-key = "autohide"
-value = true
-host = "any"
-
-[[bootstrap.macos.defaults_entries]]
-domain = "com.apple.dock"
 key = "expose-group-apps"
 value = true
 host = "any"
@@ -247,12 +252,6 @@ domain = "com.apple.controlcenter"
 key = "BatteryShowPercentage"
 value = true
 host = "current"
-
-[[bootstrap.macos.defaults_entries]]
-domain = "com.apple.dock"
-key = "mru-spaces"
-value = false
-host = "any"
 
 [[bootstrap.macos.defaults_entries]]
 domain = "NSGlobalDomain"
@@ -475,20 +474,11 @@ value = { "enabled" = true, "value" = { "type" = "standard", "parameters" = [96,
 
 [bootstrap.macos.launchd.agents.appearance]
 program = "/usr/bin/osascript"
-args = ["-e", "on darkModeForTime(secondsToday)\n    return secondsToday < 36000 or secondsToday >= 72000\nend darkModeForTime\n\non run\n    set useDarkMode to darkModeForTime(time of (current date))\n    tell application \"System Events\"\n        tell appearance preferences\n            if dark mode is not useDarkMode then set dark mode to useDarkMode\n        end tell\n    end tell\n    do shell script \"/usr/bin/defaults write -g AppleInterfaceStyleSwitchesAutomatically -bool false\"\nend run"]
+args = ["-e", "on darkModeForTime(secondsToday)\n    return secondsToday < 36000 or secondsToday >= 72000\nend darkModeForTime\n\non run\n    set useDarkMode to darkModeForTime(time of (current date))\n    tell application \"System Events\"\n        tell appearance preferences\n            if dark mode is not useDarkMode then set dark mode to useDarkMode\n        end tell\n    end tell\nend run"]
 run_at_load = true
 start_calendar_interval = [{ hour = 10, minute = 0 }, { hour = 20, minute = 0 }]
 process_type = "Background"
 
-[dotfiles]
-"~/.zshenv/local-bin" = { line = 'export PATH="$HOME/.local/bin:$PATH"', position = "prepend" }
-
-[bootstrap.mise_shell_activate]
-zsh = true
-
 [tasks."setup:macos"]
 sources = ["{{ config_root }}/system-settings.sh"]
 run = 'bash "{{ config_root }}/system-settings.sh"'
-
-[tasks."setup:dock"]
-run = 'bash "{{ config_root }}/dock.sh"'

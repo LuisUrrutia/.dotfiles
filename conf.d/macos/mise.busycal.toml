@@ -1,0 +1,15 @@
+[bootstrap.packages]
+"brew-cask:busycal" = { os = "macos" }
+
+[bootstrap.macos.dock]
+apps = [
+  "/System/Applications/Messages.app",
+  "/Applications/BusyCal.app",
+  "/System/Applications/Notes.app",
+  "/Applications/Ghostty.app",
+  "/Applications/Zed.app",
+  "/Applications/T3 Code (Nightly).app",
+  "/Applications/Dia.app",
+  "/System/Applications/App Store.app",
+  "/System/Applications/System Settings.app",
+]

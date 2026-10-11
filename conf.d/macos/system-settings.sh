@@ -3,10 +3,9 @@ set -euo pipefail
 [[ "$(uname -s)" == Darwin ]] || exit 0
 sudo -n /usr/bin/true
 
-mkdir -p "$HOME/Pictures/Screenshots"
-defaults write com.apple.screencapture location -string "$HOME/Pictures/Screenshots"
 chflags nohidden "$HOME/Library"
 sudo -n softwareupdate --schedule on
+# Mise's native defaults support user preferences, not system domains.
 for key in AutomaticDownload ConfigDataInstall CriticalUpdateInstall; do
   sudo -n defaults write /Library/Preferences/com.apple.SoftwareUpdate "$key" -bool true
 done

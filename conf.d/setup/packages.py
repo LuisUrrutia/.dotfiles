@@ -2,12 +2,13 @@
 
 import argparse
 import json
+import platform
 import subprocess
 import sys
 import urllib.request
 
 import config
-from runtime import ROOT, run
+from runtime import ROOT, mise, run
 
 
 def main():
@@ -20,6 +21,9 @@ def main():
             version = json.load(response)["version"]
         if version == "5.3.3":
             raise RuntimeError("macFUSE 5.3.3 is blocked by this setup; wait for a corrected cask before installing packages")
+        # Native package selectors cannot express a macOS version range.
+        if int(platform.mac_ver()[0].split(".")[0]) < 27:
+            mise("bootstrap", "packages", args.action, "brew-cask:thaw", "--yes")
         run([sys.executable, ROOT / "conf.d/ghostty/package.py", args.action])
 
 

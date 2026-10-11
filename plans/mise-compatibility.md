@@ -1003,3 +1003,51 @@ toolchain current. A project `rust-toolchain.toml` selected 1.98.0 instead of th
 global 1.99.0. The first selection assertion expected an object from `mise ls`
 instead of its array; correcting that harness assertion passed without a source
 change. This run did not repeat a fresh Linux Rust installation.
+
+## Native desktop declarations and module ownership
+
+Verified on 2026-10-11 against mise 2026.10.7. Native Dock declarations replace
+dockutil and its task. Fish remains the sole shell activation owner. User
+appearance and screenshot preferences use native defaults; enrollment supplies
+the machine's absolute screenshot path because defaults values do not render
+templates. Privileged system preferences and commands remain in the system task:
+native defaults operate on user preferences and do not invoke sudo.
+See https://mise.jdx.dev/bootstrap/macos-defaults.html and
+https://mise.jdx.dev/bootstrap.html#templates.
+
+Native configuration previews verified the base Dock and BusyCal override, the
+enrolled screenshot location, and an empty native Bash/Zsh activation list.
+The disposable macOS 27.0 VM `dotfiles-clean-6310358` applied the base list,
+the BusyCal list, and the base list again. Each repeated apply reported all four
+Dock values already set. Native status reported the exact approved application
+order and `state = set` for every value, including T3 Code (Nightly) without Cursor.
+Ghostty was absent in the resumed VM; native cask apply installed 1.3.1 successfully.
+The BusyCal cask installed 2026.4.1 before its layout was applied. These checks
+cover package installation and native Dock state, not BusyCal account setup.
+
+SSH to the VM reset the connection and the Tart guest agent was unavailable.
+The test ran through the guest Terminal with mounted scripts instead. No SSH,
+firewall or access policy was changed. The VM returned to its initial stopped
+state after the test; the operator's active preferences were not changed.
+
+Thaw's existing package hook calls native cask apply/upgrade only below macOS 27;
+native package selectors cannot express an OS version range. A command-boundary
+check exercised both actions for 26.6, 27.0 and 28.1, requesting Thaw only for 26.6.
+This is selection evidence, not a new installation on macOS 26. The encrypted
+preference schema keeps its `thaw` identity after moving into `conf.d/macos`.
+
+Related manifests now share `blockchain`, `media`, `dev`, `apps` and `macos`;
+optional selectors stay independent. SKHD's `/opt/homebrew/bin/skhd` path remains
+correct: its tap recipe installs `bin/skhd`, and native mise brew links commands
+into the prefix's `bin` directory without using shims or a Homebrew executable.
+Sources: https://raw.githubusercontent.com/asmvik/homebrew-formulae/master/skhd.rb
+and https://mise.jdx.dev/bootstrap/packages/brew.html#the-prefix.
+This source check does not establish SKHD launchd or Accessibility acceptance.
+
+`bash .tmp/mise-implementation/verify-entrypoint.sh` ran `mise run verify` and
+exited 0: all five integration tests passed in 166.872 seconds, plus compilation,
+syntax, schema, shell smoke, secret scanning and diff checks. Ignored evidence
+lives in `.tmp/native-simplification/`, including `verify.log`, `rust/`,
+`preview/`, `thaw-selection.log`, and `vm-evidence/`. In the VM,
+`bash "/Volumes/My Shared Files/native/dock-check.sh"` completed the three-layout
+cycle successfully; both captured native status documents matched their lists.
