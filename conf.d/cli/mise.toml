@@ -1,7 +1,9 @@
 
 [tools]
 jq = "latest"
+fd = "latest"
 fzf = "latest"
+zoxide = "latest"
 "aqua:ollama/ollama" = "latest"
 "aqua:vercel-labs/agent-browser" = "latest"
 "npm:2password" = { version = "latest", allow_low_downloads = true }
@@ -14,30 +16,6 @@ fzf = "latest"
 "npm:clawpatch" = "latest"
 "pipx:httpie" = "latest"
 "pipx:pre-commit" = { version = "latest", uvx_args = "--with pre-commit-uv" }
-
-[tools.fd]
-version = "latest"
-postinstall = { when = "always", run = '''
-set -eu
-directory="$HOME/.config/fish/completions"
-mkdir -p "$directory"
-temporary=$(mktemp "$directory/.fd.XXXXXX")
-trap 'rm -f "$temporary"' EXIT
-fd --gen-completions fish >"$temporary"
-mv "$temporary" "$directory/fd.fish"
-''' }
-
-[tools.zoxide]
-version = "latest"
-postinstall = { when = "always", run = '''
-set -eu
-directory="$HOME/.config/fish/completions"
-mkdir -p "$directory"
-temporary=$(mktemp "$directory/.zoxide.XXXXXX")
-trap 'rm -f "$temporary"' EXIT
-cat "$MISE_TOOL_INSTALL_PATH/completions/zoxide.fish" >"$temporary"
-mv "$temporary" "$directory/zoxide.fish"
-''' }
 
 [tools."npm:@luisurrutia/bird"]
 version = "latest"
