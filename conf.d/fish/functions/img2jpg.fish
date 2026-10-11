@@ -22,8 +22,9 @@ function img2jpg -d "Convert an image to an optimized JPEG"
         return
     end
 
-    if not command -q magick
-        echo "img2jpg: ImageMagick 'magick' is required; run mise run config apply" >&2
+    set -l convert (command -s magick; or command -s convert)
+    if not set -q convert[1]
+        echo "img2jpg: ImageMagick is required; run mise run config apply" >&2
         return 1
     end
 
@@ -113,7 +114,7 @@ function img2jpg -d "Convert an image to an optimized JPEG"
     end
     set -a args -quality "$quality" -strip "$output"
 
-    magick $args
+    $convert $args
     or return
 
     set -l jpegtran

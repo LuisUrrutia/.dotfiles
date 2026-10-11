@@ -11,8 +11,9 @@ function change_commit_date -d "Change the date of the most recent commit"
         echo "Error: git not found."
         return 1
     end
-    command -q gdate; or begin
-        echo "Error: gdate not found. Install coreutils."
+    set -l date_command (command -s gdate; or command -s date)
+    if not set -q date_command[1]; or not $date_command --version >/dev/null 2>/dev/null
+        echo "Error: GNU date not found. Install coreutils."
         return 1
     end
 
@@ -27,7 +28,7 @@ function change_commit_date -d "Change the date of the most recent commit"
     end
 
     set -l date_string $argv[1]
-    set -l git_date (gdate -d "$date_string" --rfc-email 2>/dev/null)
+    set -l git_date ($date_command -d "$date_string" --rfc-email 2>/dev/null)
 
     if test $status -ne 0; or test -z "$git_date"
         echo "Error: invalid date format '$date_string'"

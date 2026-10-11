@@ -20,8 +20,9 @@ function img2png -d "Convert an image to an optimized PNG"
         return
     end
 
-    if not command -q magick
-        echo "img2png: ImageMagick 'magick' is required; run mise run config apply" >&2
+    set -l convert (command -s magick; or command -s convert)
+    if not set -q convert[1]
+        echo "img2png: ImageMagick is required; run mise run config apply" >&2
         return 1
     end
 
@@ -87,7 +88,7 @@ function img2png -d "Convert an image to an optimized PNG"
         -define png:exclude-chunk=all \
         "$output"
 
-    magick $args
+    $convert $args
     or return
 
     if test "$should_quantize" = true

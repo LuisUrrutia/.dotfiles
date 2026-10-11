@@ -1,6 +1,5 @@
 
 [bootstrap.packages]
-"brew:fish" = { os = "macos" }
 "brew:fisher" = { os = "macos" }
 
 [dotfiles]

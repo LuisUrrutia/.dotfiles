@@ -24,12 +24,11 @@ stylua = "latest"
 worktrunk = { version = "latest", os = ["linux"] }
 
 [bootstrap.packages]
-"brew:fish" = { os = "macos" }
+"brew:fish" = "latest"
 "brew:worktrunk" = { os = "macos" }
 "brew:lua" = { os = "macos" }
 "brew:luacheck" = { os = "macos" }
 "brew:git" = { os = "macos" }
-"apt:fish" = { os = "linux" }
 "apt:git" = { os = "linux" }
 "apt:lua5.4" = { os = "linux" }
 "apt:lua-check" = { os = "linux" }

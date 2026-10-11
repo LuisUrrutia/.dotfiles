@@ -38,7 +38,12 @@ function imgoptimize -d "Compress and resize images to max 5K"
         return 1
     end
 
-    for dependency in fd sips pngquant
+    set -l convert (command -s magick; or command -s convert)
+    if not set -q convert[1]
+        echo "Error: ImageMagick not found."
+        return 1
+    end
+    for dependency in fd identify pngquant
         if not command -q $dependency
             echo "Error: $dependency not found."
             return 1
@@ -58,28 +63,28 @@ function imgoptimize -d "Compress and resize images to max 5K"
         set -l file $argv[1]
         set -l max_size $argv[2]
         set -l jpegtran $argv[3]
-        set -l original_size (stat -f %z "$file")
+        set -l convert $argv[4]
+        set -l original_size (wc -c < "$file" | string trim)
         set -l work (mktemp "$file.imgoptimize.XXXXXX"); or exit 1
         cp "$file" "$work"; or begin
             rm -f "$work"
             exit 1
         end
 
-        set -l width (sips -g pixelWidth "$file" 2>/dev/null | string match -r "pixelWidth: [0-9]+" | string replace -ra "[^0-9]" "")
-        set -l height (sips -g pixelHeight "$file" 2>/dev/null | string match -r "pixelHeight: [0-9]+" | string replace -ra "[^0-9]" "")
-
-        if test -z "$width"; or test -z "$height"
+        set -l first_frame (string join "" -- "$file" "[0]")
+        set -l metadata (identify -format "%w\n%h\n%m\n" "$first_frame" 2>/dev/null)
+        if test (count $metadata) -ne 3
             rm -f "$work"
             exit 1
         end
 
-        if test "$width" -gt "$max_size"; or test "$height" -gt "$max_size"
+        if test "$metadata[1]" -gt "$max_size"; or test "$metadata[2]" -gt "$max_size"
             set -l resized (mktemp "$file.imgoptimize.XXXXXX"); or begin
                 rm -f "$work"
                 exit 1
             end
 
-            sips -Z $max_size "$work" --out "$resized" >/dev/null 2>/dev/null; and mv "$resized" "$work"; or begin
+            "$convert" "$work" -resize "$max_size"x"$max_size>" "$metadata[3]:$resized"; and mv "$resized" "$work"; or begin
                 rm -f "$work" "$resized"
                 exit 1
             end
@@ -100,11 +105,11 @@ function imgoptimize -d "Compress and resize images to max 5K"
                 "$jpegtran" -copy none -optimize -progressive "$work" > "$optimized"; and mv "$optimized" "$work"; or rm -f "$optimized"
         end
 
-        set -l optimized_size (stat -f %z "$work")
+        set -l optimized_size (wc -c < "$work" | string trim)
         if test "$optimized_size" -lt "$original_size"
             mv "$work" "$file"
         else
             rm -f "$work"
         end
-    ' {} $max_size $jpegtran
+    ' {} $max_size $jpegtran $convert
 end

@@ -1,3 +1,6 @@
+[bootstrap.packages]
+"brew:fish" = "latest"
+
 [dotfiles]
 "~/.config/fish/completions" = { source = "completions", mode = "symlink-each" }
 "~/.config/fish/conf.d" = { source = "conf.d", mode = "symlink-each" }
