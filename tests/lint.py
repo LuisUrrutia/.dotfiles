@@ -2,8 +2,10 @@
 """Lint and format repository sources without loading the active dotfiles."""
 
 import argparse
+import base64
 import json
 import plistlib
+import re
 import subprocess
 import sys
 import tomllib
@@ -89,6 +91,31 @@ def sources_by_type(paths):
     return groups
 
 
+def check_public_backup(path):
+    content = path.read_bytes()
+    if path.name == "recovery.pub":
+        if not re.fullmatch(rb"age1[a-z0-9]+\n", content):
+            raise ValueError(f"{path}: expected one public age recipient")
+        return
+    if path.name != "recovery.age" and not path.name.endswith(".plist.age"):
+        raise ValueError(
+            f"{path}: only encrypted backups and the public recipient belong here"
+        )
+    lines = content.splitlines()
+    if (
+        not lines
+        or lines[0] != b"-----BEGIN AGE ENCRYPTED FILE-----"
+        or lines[-1] != b"-----END AGE ENCRYPTED FILE-----"
+    ):
+        raise ValueError(f"{path}: expected armored age ciphertext")
+    payload = base64.b64decode(b"".join(lines[1:-1]), validate=True)
+    stanza = b"scrypt" if path.name == "recovery.age" else b"X25519"
+    if not payload.startswith(b"age-encryption.org/v1\n-> " + stanza + b" "):
+        raise ValueError(
+            f"{path}: wrong encryption type; recovery needs a password, preferences need age recipients"
+        )
+
+
 def lint_sources(paths, groups, *, fix=False):
     run("ruff", "check", *(["--fix"] if fix else []), *groups["python"])
     run("ruff", "format", *([] if fix else ["--check"]), *groups["python"])
@@ -120,6 +147,8 @@ def lint_sources(paths, groups, *, fix=False):
         *paths,
     )
     for path in paths:
+        if path.parts[0] == "backups":
+            check_public_backup(ROOT / path)
         if path.suffix == ".py":
             compile((ROOT / path).read_text(), str(path), "exec")
         elif path.suffix == ".toml":

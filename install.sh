@@ -11,7 +11,7 @@ this machine. Managed tools keep their configured release cooldown.
 
 Enrollment options: --machine ID --apps app,app --sync manual|automatic
                     --origin GIT_URL --recipient PUBLIC_KEY --adopt GIT_URL
-                    --seed-only
+                    --seed-only --recover
 Rerunning preserves the active setup and existing local choices.
 Use mise run enroll -- --help for all enrollment options.
 EOF

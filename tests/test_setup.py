@@ -3,10 +3,13 @@
 import json
 import os
 import plistlib
+import pty
+import select
 import shutil
 import subprocess
 import sys
 import tempfile
+import time
 import tomllib
 import unittest
 from pathlib import Path
@@ -83,6 +86,44 @@ class Machine:
 
     def python(self, code, **kwargs):
         return self.run(sys.executable, "-c", code, **kwargs)
+
+    def password_command(self, *args, password="synthetic recovery test passphrase"):
+        pid, terminal = pty.fork()
+        if pid == 0:
+            os.chdir(self.home)
+            os.execve(sys.executable, [sys.executable, *map(str, args)], self.env)
+        output = b""
+        deadline = time.monotonic() + 30
+        prompts = 0
+        try:
+            while time.monotonic() < deadline:
+                if not select.select([terminal], [], [], 1)[0]:
+                    continue
+                try:
+                    chunk = os.read(terminal, 4096)
+                except OSError:
+                    break
+                if not chunk:
+                    break
+                output += chunk
+                ready = (
+                    output.count(b"Enter passphrase:")
+                    + output.count(
+                        b"Enter passphrase (leave empty to autogenerate a secure one):"
+                    )
+                    + output.count(b"Confirm passphrase:")
+                )
+                if ready > prompts:
+                    os.write(terminal, password.encode() + b"\n")
+                    prompts += 1
+            else:
+                raise AssertionError("age password prompt timed out")
+        finally:
+            os.close(terminal)
+            if time.monotonic() >= deadline:
+                os.kill(pid, 9)
+            _, status = os.waitpid(pid, 0)
+        return os.waitstatus_to_exitcode(status), output.decode(errors="replace")
 
     def payload(self):
         for file in ("config.toml", "miserc.toml"):
@@ -630,6 +671,171 @@ entries = preferences.definitions(applications)
 assert [entry['name'] for entry in entries] == ['loopback']
 assert preferences.snapshot_root(entries[0]) == ROOT/'private/preferences/machines/encrypted/loopback'
 """)
+
+    def test_public_preferences_recover_with_only_a_password(self):
+        old = Machine(self.root, "before")
+        old.minimal()
+        public = old.home / "public"
+        (public / "bootstrap").mkdir(parents=True)
+        for file in ("enroll.py", "backup.py"):
+            shutil.copy2(REPO / "bootstrap" / file, public / "bootstrap" / file)
+        shutil.copytree(old.config / "conf.d", public / "conf.d")
+        shutil.copy2(old.config / "config.toml", public / "config.toml")
+        shutil.copy2(REPO / "mise.toml", public / "mise.toml")
+        old.env["MISE_TRUSTED_CONFIG_PATHS"] += os.pathsep + str(public)
+        definition = {
+            "name": "example",
+            "application": "Example",
+            "domain": "example.test",
+            "major_version": 1,
+            "scope": "machine",
+            "keys": {},
+            "files": {"~/app.plist": {"type": "dict", "fields": {"layout": "list"}}},
+        }
+        shared = {
+            **definition,
+            "name": "shared-app",
+            "scope": "shared",
+            "files": {"~/shared.plist": {"type": "dict", "fields": {"layout": "list"}}},
+        }
+        for entry in (definition, shared):
+            folder = public / "conf.d" / entry["name"]
+            folder.mkdir()
+            (folder / "preferences.json").write_text(json.dumps(entry))
+        for tool in ("age", "age-keygen"):
+            (old.home / ".local/bin" / tool).symlink_to(shutil.which(tool))
+        age_install = Path(shutil.which("age")).resolve().parent
+        age_target = old.home / "data/installs/age" / age_install.name
+        age_target.parent.mkdir(parents=True)
+        age_target.symlink_to(age_install)
+        value = {"layout": ["private-display-routing"]}
+        target = old.home / "old-dotfiles/preferences.data"
+        target.parent.mkdir()
+        target.write_bytes(plistlib.dumps(value))
+        (old.home / "app.plist").symlink_to(target)
+        (old.home / "shared.plist").write_bytes(plistlib.dumps(value))
+        original_config = old.config / "config.toml"
+        original_config.unlink()
+        original_config.symlink_to(public / "config.toml")
+
+        command = public / "bootstrap/backup.py"
+        code, output = old.password_command(
+            "-c",
+            "import os; os.execv("
+            + repr(MISE)
+            + ", "
+            + repr([MISE, "-C", str(public), "run", "backup", "init"])
+            + ")",
+        )
+        self.assertEqual(code, 0, output)
+        capture = (
+            "import sys; sys.path.insert(0, "
+            + repr(str(public / "bootstrap"))
+            + "); import backup, preferences; preferences.definitions=lambda **kwargs: "
+            + repr([definition, shared])
+            + "; backup.main()"
+        )
+        old.run(sys.executable, "-c", capture, "capture")
+        archive = public / "backups/preferences/before.plist.age"
+        ciphertext = archive.read_bytes()
+        self.assertNotIn(b"private-display-routing", ciphertext)
+        self.assertTrue(original_config.is_symlink())
+        self.assertTrue((old.home / "app.plist").is_symlink())
+        self.assertEqual(plistlib.loads(target.read_bytes()), value)
+        self.assertEqual((old.config / "age.txt").stat().st_mode & 0o777, 0o600)
+        old.run(sys.executable, "-c", capture, "capture")
+        self.assertEqual(archive.read_bytes(), ciphertext)
+        (old.config / "age.txt").unlink()
+        code, output = old.password_command(command, "verify")
+        self.assertEqual(code, 0, output)
+        self.assertFalse((old.config / "age.txt").exists())
+        old.run("git", "init", "--quiet", public)
+        old.run("git", "add", ".", cwd=public)
+        old.run(
+            "git", "commit", "--quiet", "-m", "Synthetic encrypted recovery", cwd=public
+        )
+        for path in old.run(
+            "git", "ls-files", "backups", cwd=public
+        ).stdout.splitlines():
+            blob = old.run("git", "show", "HEAD:" + path, cwd=public).stdout
+            self.assertNotIn("AGE-SECRET-KEY-", blob)
+            self.assertNotIn("private-display-routing", blob)
+
+        from lint import check_public_backup
+
+        for path in (public / "backups").rglob("*"):
+            if path.is_file():
+                check_public_backup(path)
+        invalid = old.home / "plaintext.plist.age"
+        invalid.write_bytes(plistlib.dumps(value))
+        with self.assertRaisesRegex(ValueError, "expected armored age ciphertext"):
+            check_public_backup(invalid)
+
+        fresh = Machine(self.root, "fresh")
+        checkout = fresh.home / "public"
+        shutil.copytree(public, checkout)
+        for tool in ("age", "age-keygen"):
+            (fresh.home / ".local/bin" / tool).symlink_to(shutil.which(tool))
+        (fresh.config / "config.local.toml").unlink()
+        command = checkout / "bootstrap/enroll.py"
+        args = (command, "--machine", "before", "--recover", "--seed-only")
+        code, _ = fresh.password_command(
+            *args, password="incorrect synthetic passphrase"
+        )
+        self.assertNotEqual(code, 0)
+        self.assertFalse((fresh.config / "age.txt").exists())
+        self.assertFalse((fresh.config / "private").exists())
+        code, output = fresh.password_command(*args)
+        self.assertEqual(code, 0, output)
+        snapshot = (
+            fresh.config / "private/preferences/machines/before/example/app.plist"
+        )
+        self.assertEqual(plistlib.loads(snapshot.read_bytes()), value)
+        self.assertTrue(
+            (
+                fresh.config / "private/preferences/shared/shared-app/shared.plist"
+            ).is_file()
+        )
+        self.assertFalse((fresh.home / "app.plist").exists())
+        self.assertEqual((fresh.config / "age.txt").stat().st_mode & 0o777, 0o600)
+        fresh.mise("dot", "save")
+        fresh.python(
+            "import preferences; preferences.is_running=lambda _:False; preferences.restore("
+            + repr([definition, shared])
+            + ")"
+        )
+        self.assertEqual(plistlib.loads((fresh.home / "app.plist").read_bytes()), value)
+        other = Machine(self.root, "other")
+        other_checkout = other.home / "public"
+        shutil.copytree(public, other_checkout)
+        for tool in ("age", "age-keygen"):
+            (other.home / ".local/bin" / tool).symlink_to(shutil.which(tool))
+        (other.config / "config.local.toml").unlink()
+        code, output = other.password_command(
+            other_checkout / "bootstrap/enroll.py",
+            "--machine",
+            "other",
+            "--recover",
+            "--seed-only",
+        )
+        self.assertEqual(code, 0, output)
+        self.assertTrue(
+            (
+                other.config / "private/preferences/shared/shared-app/shared.plist"
+            ).is_file()
+        )
+        self.assertFalse((other.config / "private/preferences/machines").exists())
+        snapshot.write_bytes(plistlib.dumps({"layout": ["pending"]}))
+        refused = fresh.run(sys.executable, *args, ok=False)
+        self.assertNotEqual(refused.returncode, 0)
+        self.assertIn("both copies preserved", refused.stderr)
+        self.assertEqual(plistlib.loads(snapshot.read_bytes()), {"layout": ["pending"]})
+        self.assertEqual(plistlib.loads((fresh.home / "app.plist").read_bytes()), value)
+        archive_copy = checkout / "backups/preferences/before.plist.age"
+        archive_copy.write_bytes(ciphertext.replace(b"\n", b"\nx", 1))
+        corrupted = fresh.run(sys.executable, *args, ok=False)
+        self.assertNotEqual(corrupted.returncode, 0)
+        self.assertEqual(plistlib.loads(snapshot.read_bytes()), {"layout": ["pending"]})
 
     def test_native_sync_applies_declarations_and_preserves_local_choices(self):
         a, b = Machine(self.root, "a"), Machine(self.root, "b")

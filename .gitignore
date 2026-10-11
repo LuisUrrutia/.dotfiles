@@ -6,6 +6,12 @@ age.txt
 *.log
 *.bak
 /private/
+/backups/*
+!/backups/recovery.age
+!/backups/recovery.pub
+!/backups/preferences/
+/backups/preferences/*
+!/backups/preferences/*.plist.age
 /docs/
 
 # Retired directories may still contain untracked private user data.

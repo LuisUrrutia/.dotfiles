@@ -15,6 +15,7 @@ from runtime import (
     atomic,
     document,
     git_origin,
+    lock,
     mise,
     read_toml,
     regular_parents,
@@ -123,6 +124,12 @@ def git_settings(record):
 
 
 def enroll(args):
+    recovery_recipient = None
+    if args.recover:
+        import backup
+
+        with lock():
+            recovery_recipient = backup.unlock(REPOSITORY)
     current = read_toml(ROOT / "config.local.toml")
     record = read_toml(REPOSITORY / "machines" / f"{args.machine}.toml")
     if args.record:
@@ -187,6 +194,21 @@ def enroll(args):
             "Edit miserc.local.toml explicitly to change an existing app selection"
         )
     recipients = ROOT / "conf.d/history/mise.toml"
+    if recovery_recipient:
+        configured = (
+            read_toml(recipients)
+            .get("history", {})
+            .get("encryption", {})
+            .get("recipients", [])
+        )
+        if configured and recovery_recipient not in configured:
+            raise ValueError(
+                "Add the recovery recipient to shared history explicitly before recovery"
+            )
+        if not configured:
+            args.recipient = list(
+                dict.fromkeys([*(args.recipient or []), recovery_recipient])
+            )
     if args.recipient:
         if recipients.exists():
             configured = (
@@ -205,10 +227,13 @@ def enroll(args):
                 "[history.encryption]\nrecipients = " + toml(args.recipient) + "\n",
             )
     os.chmod(ROOT / "config.local.toml", 0o600)
-    if args.recipient or not args.seed_only:
+    if args.recipient or args.recover or not args.seed_only:
         import preferences
 
         preferences.prepare_history()
+    if args.recover:
+        with lock():
+            backup.recover(REPOSITORY, machine["id"])
     if args.seed_only:
         print(f"Seeded missing setup sources in {ROOT}; existing files were preserved")
         return
@@ -243,6 +268,11 @@ def main():
         help="Public age recipient; repeat for recovery and other machines",
     )
     parser.add_argument("--seed-only", action="store_true")
+    parser.add_argument(
+        "--recover",
+        action="store_true",
+        help="Unlock the public password-protected recovery key and stage this machine's encrypted preferences",
+    )
     args = parser.parse_args()
     args.machine = args.machine or machine_id()
     if not re.fullmatch(r"[a-zA-Z0-9][a-zA-Z0-9_-]*", args.machine):

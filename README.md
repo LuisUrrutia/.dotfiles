@@ -14,7 +14,8 @@ Setup does not migrate an existing installation or uninstall Homebrew.
    the display turns off.
    On Ubuntu, use a normal login account with sudo;
    the installer adds missing curl, Git, and CA certificates. Run `sudo -v`
-   before full setup. Commands fail rather than wait for input.
+   before full setup. System commands fail rather than wait for input; age's
+   recovery password is entered through its hidden terminal prompt.
 
    Run macOS system settings from the local console: the firewall policy disables
    automatic permission for signed apps, so incoming services such as SSH may need
@@ -36,37 +37,41 @@ Setup does not migrate an existing installation or uninstall Homebrew.
    It stages the replacement and keeps an equal or newer installed binary.
    The manifests' `min_version` is a compatibility floor for structured edits, not a pin.
 
-4. **Prepare encryption and private Git access.** Create `~/.config/mise`, then run
-   `~/.local/bin/mise exec age -- age-keygen -o ~/.config/mise/age.txt` and restrict
-   the key file to mode `0600`. Keep this dedicated machine identity outside
-   tracked state. Prepare a separate recovery identity and store it in 1Password
-   or offline, outside this checkout and history.
-   See https://mise.jdx.dev/dotfiles/encryption.html.
+4. **Prepare password recovery.** If this checkout already has
+   `backups/recovery.age`, enrollment with `--recover` asks for its password.
+   For the first machine, run `~/.local/bin/mise run backup init` from this checkout
+   to create it. Age asks for the password in the terminal. The public repo holds
+   the encrypted recovery key; the unlocked identity stays in
+   `~/.config/mise/age.txt` with mode `0600`. No USB or password manager is needed
+   to recover. Native mise uses the local identity for unattended history saves.
 
    Private Git authentication and age decryption are separate requirements.
    HTTPS and SSH are supported; authorize a credential helper before using HTTPS.
    Keep credentials out of URLs and tracked files. Existing SSH origins stay unchanged.
 
-5. **Enroll the machine.** Run `./install.sh --help`, then run `./install.sh` with
-   your history origin, recipients, sync mode, and any optional settings below.
+5. **Enroll the machine.** Run `./install.sh --recover` with your history origin,
+   sync mode, and any optional settings below. Recovery stages the public backups
+   for this machine before bootstrap restores eligible app preferences.
 
-   | Option                                | Purpose                                                              |
-   | ------------------------------------- | -------------------------------------------------------------------- |
-   | `--origin`                            | Private history Git URL                                              |
-   | `--recipient`                         | Repeat for each public machine key and the independent recovery key  |
-   | `--sync manual` or `--sync automatic` | Exchange on request or every five minutes                            |
-   | `--record`                            | Local enrollment TOML, including Git identities                      |
-   | `--apps`                              | Comma-separated optional module names                                |
-   | `--machine`                           | Retain a machine ID after reinstalling                               |
-   | `--seed-only`                         | Prepare missing sources and local inputs for review without applying |
+   | Option                                | Purpose                                                                    |
+   | ------------------------------------- | -------------------------------------------------------------------------- |
+   | `--origin`                            | Private history Git URL                                                    |
+   | `--recipient`                         | Repeat for each public machine key and the independent recovery key        |
+   | `--recover`                           | Unlock the public recovery key, configure its recipient, and stage backups |
+   | `--sync manual` or `--sync automatic` | Exchange on request or every five minutes                                  |
+   | `--record`                            | Local enrollment TOML, including Git identities                            |
+   | `--apps`                              | Comma-separated optional module names                                      |
+   | `--machine`                           | Retain a machine ID after reinstalling                                     |
+   | `--seed-only`                         | Prepare missing sources and local inputs for review without applying       |
 
 Existing machine records provide public identity and hostname defaults. Unknown
 machines keep their existing Git identity unless you supply a record. Mac hardware
 IDs survive reinstalls; Linux derives its ID from `/etc/machine-id`. Retain the old
 `--machine` value to recover the same Ubuntu enrollment.
 
-To add another machine, recover a matching age identity and private Git access,
-then run `./install.sh --adopt <private-Git-origin>` with its local enrollment inputs.
+To add another machine from the latest private history, run
+`~/.local/bin/mise run backup unlock`, prepare private Git access, then run
+`./install.sh --adopt <private-Git-origin>` with its local enrollment inputs.
 Adoption restores history before applying resources; a missing identity stops recovery.
 
 For a preview, use `./install.sh --dry-run` before enrollment or
@@ -159,12 +164,51 @@ pre-commit hook scans staged content for secrets.
 <details>
 <summary>Encrypted application preferences</summary>
 
+Before formatting an existing Mac, run these commands **from this checkout**:
+
+```sh
+./install.sh --mise-only
+~/.local/bin/mise run backup init
+~/.local/bin/mise run backup capture
+~/.local/bin/mise run backup verify
+```
+
+Run `init` only once. On another machine, use `backup unlock` instead. `capture`
+reads every supported installed app, including optional audio apps, without
+enrolling the machine, replacing old links, changing preferences, or running
+package installers. It can read an existing companion-file symlink within HOME.
+`verify` asks for the recovery password and checks every archive without using
+the local identity. It does not import preferences.
+
+Review, commit, and push `backups/` before erasing the old installation:
+
+```text
+backups/
+  recovery.age                  password-encrypted recovery identity
+  recovery.pub                  public age recipient
+  preferences/
+    shared.plist.age            portable app settings
+    <machine-id>.plist.age      settings for that machine
+```
+
+Only ciphertext and the public recipient enter this directory. Use a strong,
+unique recovery password: these encrypted files will be publicly downloadable.
+The same unlocked identity permits unattended saves on enrolled machines.
+Public exports use the official age CLI; private operational history still uses
+native mise encryption and sync. Public backups change only when you run
+`backup capture` and publish the resulting Git changes. Ordinary history sync
+does not commit or push this checkout.
+
+After reinstalling, clone the repo and run `./install.sh --recover` with the
+wanted optional apps. On Ubuntu, retain the old `--machine` ID if needed.
+Recovery preserves an existing differing snapshot; resolve that conflict before
+retrying. It never applies another machine's hardware-bound settings.
+
 Thaw, LinearMouse, SuperCmd, SoundSource, Loopback, and Audio Hijack have explicit
 allowlists. All plist snapshots and companion private JSON files are encrypted
 before entering history. Enrollment creates an encrypted policy marker before
-the first checkpoint, even when no app settings exist. Public sources contain no
-plist backup, though older public commits still contain the former Thaw plist;
-this change does not rewrite that history.
+the first checkpoint, even when no app settings exist. Older public commits still
+contain the former plaintext Thaw plist; encryption does not rewrite that history.
 
 Preferences use `defaults export/import`; live CFPreferences plists are never
 symlinked. SuperCmd's allowlisted settings are shared. Display/device layouts and
@@ -442,11 +486,12 @@ format checks before integration tests, so CI rejects unformatted changes.
 | `media/`      | yt-dlp, IINA, optional OBS/Camo                     |
 | `setup/`      | Preservation, preferences, sync, maintenance        |
 
-Mise owns packages, links, file edits, defaults, services, encryption, history,
+Mise owns packages, links, file edits, defaults, services, history and its encryption,
 and Git exchange. Adapters preserve foreign links and edited copies, capture
 shared keys from app-written files, export selected macOS preferences, and apply
-received package declarations. They neither encrypt files nor implement Git
-merging. Maintenance also covers external plugin managers. For limits checked in
+received package declarations. The public backup adapter delegates standalone
+file encryption and password prompts to age. No adapter implements Git merging.
+Maintenance also covers external plugin managers. For limits checked in
 mise's source, see the [native capability audit](plans/mise-compatibility.md#native-capability-audit).
 
 </details>

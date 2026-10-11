@@ -43,7 +43,10 @@ checks need a Mac outside this VM. See the measured results and limitations in
    SoundSource, Loopback, Audio Hijack. Capture, inspect ciphertext in history,
    close the app and its writers, restore, and reopen. Check actual device,
    session, preset, and layout behavior. Confirm no recording or script starts
-   incidentally. Check recovery with the separate key and failure without a key.
+   incidentally. From the public checkout, run `mise run backup capture` and
+   `mise run backup verify`. Test `--recover` in a fresh disposable home with only
+   the public ciphertext and its password. Check incorrect-password failure,
+   machine isolation, and that an existing pending snapshot is preserved.
 8. Use a second disposable machine with the same private history. Check shared
    Fish/Starship edits, a real common package addition, a selected optional app,
    and a new setup task/source. Verify manual mode waits and automatic mode
@@ -54,5 +57,5 @@ checks need a Mac outside this VM. See the measured results and limitations in
 
 Record the Mac/mise/app versions, exact commands, results, and unresolved entries
 in `plans/mise-compatibility.md`. Back up wanted settings from the old Mac before
-formatting through a separately authorized backup; this rewrite has not captured
+formatting with the README's public encrypted backup commands; this rewrite has not captured
 the operator's live preferences or created the private remote.

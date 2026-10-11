@@ -85,19 +85,28 @@ def prepare_history():
     atomic(marker, content)
 
 
-def definitions(applications=Path("/Applications")):
-    if sys.platform != "darwin":
-        return []
-    choices = selected()
+def catalog(root=ROOT):
     result = []
-    for path in sorted((ROOT / "conf.d").glob("*/preferences*.json")):
+    for path in sorted((root / "conf.d").glob("*/preferences*.json")):
         definition = json.loads(path.read_text())
         name = (
             path.parent.name
             if path.name == "preferences.json"
             else path.stem.removeprefix("preferences.")
         )
-        if definition.get("optional") and name not in choices:
+        definition["name"] = name
+        result.append(definition)
+    return result
+
+
+def definitions(applications=Path("/Applications"), *, root=ROOT, all_installed=False):
+    if sys.platform != "darwin":
+        return []
+    choices = selected()
+    result = []
+    for definition in catalog(root):
+        name = definition["name"]
+        if definition.get("optional") and name not in choices and not all_installed:
             continue
         application = applications / (definition["application"] + ".app")
         if not application.is_dir():
@@ -108,7 +117,6 @@ def definitions(applications=Path("/Applications")):
             raise RuntimeError(
                 f"{name} {version}: review its preference schema before capture or restore"
             )
-        definition["name"] = name
         result.append(definition)
     return result
 
@@ -217,7 +225,7 @@ def snapshot_root(definition):
     return ROOT / "private/preferences" / scope / definition["name"]
 
 
-def live(definition):
+def live(definition, *, read_links=False):
     records = {}
     if definition["keys"]:
         domain = export_domain(definition["domain"])
@@ -225,17 +233,21 @@ def live(definition):
         validate(definition, "preferences.plist", owned)
         records["preferences.plist"] = serialize(owned)
     for filename in definition["files"]:
+        name = Path(filename).name
         path = home_path(filename)
+        # A pre-format export may read old links, but never changes their targets.
+        if read_links and (path.exists() or path.is_symlink()):
+            path = path.resolve(strict=True)
         regular_parents(path)
         if path.is_symlink():
             raise RuntimeError(f"Application settings must be regular files: {path}")
         if path.is_file():
             raw = path.read_bytes()
-            value = plistlib.loads(raw) if path.suffix == ".plist" else json.loads(raw)
-            validate(definition, path.name, value)
-            records[path.name] = (
+            value = plistlib.loads(raw) if name.endswith(".plist") else json.loads(raw)
+            validate(definition, name, value)
+            records[name] = (
                 serialize(value)
-                if path.suffix == ".plist"
+                if name.endswith(".plist")
                 else (json.dumps(value, sort_keys=True, indent=2) + "\n").encode()
             )
     return records

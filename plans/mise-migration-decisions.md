@@ -306,6 +306,16 @@ https://mise.jdx.dev/dev-tools/system-installs.html
 Thaw, LinearMouse, SuperCmd, SoundSource, Loopback, and Audio Hijack settings to
 scope. Encryption is mandatory for those preference backups, not an opt-in.
 
+**2026-10-11 revision:** the user selected this public dotfiles repository for
+encrypted preference backups and a password-encrypted recovery identity.
+`backups/` now holds explicit age CLI exports, while private native mise history
+continues to own active setup and automatic exchange. This supersedes the
+private-history-only backup location and password-manager-only key recovery
+below. The unlocked recovery identity is local, excluded from tracking, and
+usable by mise unattended. Capture before formatting reads existing allowlisted
+settings without enrolling or converting the old installation. Fresh enrollment
+with `--recover` stages validated snapshots for the same guarded app importer.
+
 Configure native age encryption before the first checkpoint of any captured
 plist, including companion private config files. Public modules contain package
 declarations, capture/restore policy, and necessary adapters. Actual preferences

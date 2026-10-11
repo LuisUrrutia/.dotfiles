@@ -6,6 +6,7 @@ minimum_release_age = "3d"
 
 [tools]
 python = "3"
+age = "latest"
 node = "lts"
 uv = "latest"
 actionlint = "latest"
@@ -48,3 +49,8 @@ run = "python3 tests/lint.py --fix"
 [tasks.enroll]
 description = "Seed or adopt the active configuration without overwriting edits"
 run = 'python3 "{{ config_root }}/bootstrap/enroll.py"'
+
+[tasks.backup]
+description = "Capture public encrypted backups or unlock password recovery"
+run = 'mise exec python@3 age@latest -- python3 "{{ config_root }}/bootstrap/backup.py"'
+raw = true
