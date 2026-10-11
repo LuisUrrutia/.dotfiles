@@ -9,7 +9,7 @@ package	brew-cask:1password	conf.d/apps/mise.macos.toml	macos-arm64	vm-installed
 package	brew-cask:1password-cli	conf.d/ssh/mise.macos.toml	macos-arm64	vm-installed-2.40.0	pending-clean-machine	retry-native-owner
 package	brew-cask:android-platform-tools	conf.d/dev/mise.macos.toml	macos-arm64	vm-installed-37.0.1	pending-clean-machine	retry-native-owner
 package	brew-cask:apparency	conf.d/dev/mise.macos.toml	macos-arm64	vm-installed-3.4	pending-clean-machine	retry-native-owner
-package	brew-cask:audio-hijack	conf.d/audio-hijack/mise.audio-hijack.toml	macos-arm64;optional=audio-hijack	not-selected-in-vm	pending-clean-machine	retry-native-owner
+package	brew-cask:audio-hijack	conf.d/audio/mise.audio-hijack.toml	macos-arm64;optional=audio-hijack	not-selected-in-vm	pending-clean-machine	retry-native-owner
 task	setup:autofirma	conf.d/autofirma/mise.macos.toml	macos-arm64	vm-installed-1.9.2	latest-from-cask-api	requires-interactive-vendor-installer
 package	brew-cask:busycal	conf.d/busycal/mise.busycal.toml	macos-arm64;optional=busycal	not-selected-in-vm	pending-clean-machine	retry-native-owner
 package	brew-cask:camo-studio	conf.d/camo/mise.camo.toml	macos-arm64;optional=camo	not-selected-in-vm	pending-clean-machine	retry-native-owner
@@ -20,7 +20,7 @@ package	brew-cask:cursor	conf.d/apps/mise.macos.toml	macos-arm64	vm-installed-3.
 package	brew-cask:discord	conf.d/apps/mise.macos.toml	macos-arm64	vm-installed-0.0.415	pending-clean-machine	retry-native-owner
 package	brew-cask:displaylink	conf.d/displaylink/mise.displaylink.toml	macos-arm64;optional=displaylink	not-selected-in-vm	pending-clean-machine	retry-native-owner
 package	brew-cask:figma	conf.d/apps/mise.macos.toml	macos-arm64	vm-installed-126.9.13	pending-clean-machine	retry-native-owner
-package	brew-cask:focusrite-control-2	conf.d/focusrite/mise.focusrite.toml	macos-arm64;optional=focusrite	not-selected-in-vm	pending-clean-machine	retry-native-owner
+package	brew-cask:focusrite-control-2	conf.d/audio/mise.focusrite.toml	macos-arm64;optional=focusrite	not-selected-in-vm	pending-clean-machine	retry-native-owner
 package	brew-cask:font-fira-code	conf.d/apps/mise.macos.toml	macos-arm64	vm-installed-6.2	pending-clean-machine	retry-native-owner
 package	brew-cask:font-fira-code-nerd-font	conf.d/apps/mise.macos.toml	macos-arm64	vm-installed-3.5.1	pending-clean-machine	retry-native-owner
 package	brew-cask:font-geist	conf.d/apps/mise.macos.toml	macos-arm64	vm-installed-1.7.2	pending-clean-machine	retry-native-owner
@@ -49,7 +49,7 @@ package	brew-cask:granola	conf.d/apps/mise.macos.toml	macos-arm64	vm-installed-7
 package	brew-cask:hammerspoon	conf.d/hammerspoon/mise.macos.toml	macos-arm64	vm-installed-1.1.1	pending-clean-machine	retry-native-owner
 package	brew-cask:iina	conf.d/iina/mise.macos.toml	macos-arm64	vm-installed-1.5.0-gatekeeper-rejected	pending-clean-machine	retry-native-owner
 package	brew-cask:linearmouse	conf.d/linearmouse/mise.macos.toml	macos-arm64	vm-installed-0.12.0	pending-clean-machine	retry-native-owner
-package	brew-cask:loopback	conf.d/loopback/mise.loopback.toml	macos-arm64;optional=loopback	not-selected-in-vm	pending-clean-machine	retry-native-owner
+package	brew-cask:loopback	conf.d/audio/mise.loopback.toml	macos-arm64;optional=loopback	not-selected-in-vm	pending-clean-machine	retry-native-owner
 package	brew-cask:macfuse	conf.d/apps/mise.macos.toml	macos-arm64	vm-installed-5.4.0	pending-clean-machine	retry-native-owner
 package	brew-cask:nordvpn	conf.d/apps/mise.macos.toml	macos-arm64	vm-installed-10.12.0-gatekeeper-and-welcome-passed	pending-clean-machine	vm-native-owner-retry-passed
 package	brew-cask:notion	conf.d/apps/mise.macos.toml	macos-arm64	vm-installed-7.37.1	pending-clean-machine	retry-native-owner
@@ -60,7 +60,7 @@ package	brew-cask:orbstack	conf.d/orbstack/mise.macos.toml	macos-arm64	vm-instal
 package	brew-cask:qlmarkdown	conf.d/apps/mise.macos.toml	macos-arm64	vm-installed-1.5.7	pending-clean-machine	retry-native-owner
 package	brew-cask:shobhit99/tap/supercmd	conf.d/supercmd/mise.macos.toml	macos-arm64	vm-installed-1.0.9	pending-clean-machine	retry-native-owner
 package	brew-cask:slack	conf.d/apps/mise.macos.toml	macos-arm64	vm-installed-4.52.178	pending-clean-machine	retry-native-owner
-package	brew-cask:soundsource	conf.d/soundsource/mise.soundsource.toml	macos-arm64;optional=soundsource	not-selected-in-vm	pending-clean-machine	retry-native-owner
+package	brew-cask:soundsource	conf.d/audio/mise.soundsource.toml	macos-arm64;optional=soundsource	not-selected-in-vm	pending-clean-machine	retry-native-owner
 package	brew-cask:spotify	conf.d/apps/mise.macos.toml	macos-arm64	vm-installed-1.3.4.258	pending-clean-machine	retry-native-owner
 package	brew-cask:sshfs-mac	conf.d/apps/mise.macos.toml	macos-arm64	vm-installed-3.7.5	pending-clean-machine	retry-native-owner
 package	brew-cask:t3-code@nightly	conf.d/apps/mise.macos.toml	macos-arm64	vm-installed-0.0.46-nightly.20261010.2935	pending-clean-machine	retry-native-owner
@@ -134,7 +134,7 @@ package	brew:libavif	conf.d/image/mise.macos.toml	macos-arm64	vm-installed-1.4.2
 package	brew:libmagic	conf.d/image/mise.macos.toml	macos-arm64	vm-installed-5.48	pending-clean-machine	retry-native-owner
 package	brew:lolcrab	conf.d/cli/mise.macos.toml	macos-arm64	vm-installed-0.4.1	pending-clean-machine	retry-native-owner
 package	brew:lua	conf.d/languages/mise.macos.toml	macos-arm64	vm-installed-5.5.1	pending-clean-machine	retry-native-owner
-package	brew:luarocks	conf.d/luarocks/mise.macos.toml	macos-arm64	vm-installed-3.13.0_1	pending-clean-machine	retry-native-owner
+package	brew:luarocks	conf.d/languages/mise.macos.toml	macos-arm64	vm-installed-3.13.0_1	pending-clean-machine	retry-native-owner
 package	brew:mas	conf.d/cli/mise.macos.toml	macos-arm64	vm-installed-7.0.0	pending-clean-machine	retry-native-owner
 package	brew:mole	conf.d/cli/mise.macos.toml	macos-arm64	vm-installed-1.59.1	pending-clean-machine	retry-native-owner
 package	brew:moreutils	conf.d/cli/mise.macos.toml	macos-arm64	vm-installed-0.70	pending-clean-machine	retry-native-owner

@@ -51,19 +51,20 @@ def prepare_history():
     atomic(marker, content)
 
 
-def definitions():
+def definitions(applications=Path("/Applications")):
     if sys.platform != "darwin":
         return []
     choices = selected()
     result = []
-    for path in sorted((ROOT / "conf.d").glob("*/preferences.json")):
+    for path in sorted((ROOT / "conf.d").glob("*/preferences*.json")):
         definition = json.loads(path.read_text())
-        name = path.parent.name
+        name = path.parent.name if path.name == "preferences.json" else path.stem.removeprefix("preferences.")
         if definition.get("optional") and name not in choices:
             continue
-        if not (Path("/Applications") / (definition["application"] + ".app")).is_dir():
+        application = applications / (definition["application"] + ".app")
+        if not application.is_dir():
             continue
-        bundle = Path("/Applications") / (definition["application"] + ".app") / "Contents/Info.plist"
+        bundle = application / "Contents/Info.plist"
         version = plistlib.loads(bundle.read_bytes())["CFBundleShortVersionString"]
         if version.split(".")[0] != str(definition["major_version"]):
             raise RuntimeError(f"{name} {version}: review its preference schema before capture or restore")

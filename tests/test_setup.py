@@ -277,6 +277,20 @@ preferences.is_running = lambda _: False
 preferences.restore([entry])
 assert json.loads((HOME/'.config/linearmouse/linearmouse.json').read_text()) == {'schemes':[]}
 ''')
+        shutil.copytree(REPO / "conf.d/audio", machine.config / "conf.d/audio")
+        machine.write("miserc.local.toml", 'env=["loopback"]\n')
+        machine.python('''import preferences, plistlib
+from runtime import HOME, ROOT
+applications = HOME/'Applications'
+for name, version in [('Loopback', '2.4'), ('SoundSource', '6.1')]:
+    bundle = applications/(name+'.app')/'Contents/Info.plist'
+    bundle.parent.mkdir(parents=True)
+    bundle.write_bytes(plistlib.dumps({'CFBundleShortVersionString':version}))
+preferences.sys.platform = 'darwin'
+entries = preferences.definitions(applications)
+assert [entry['name'] for entry in entries] == ['loopback']
+assert preferences.snapshot_root(entries[0]) == ROOT/'private/preferences/machines/encrypted/loopback'
+''')
 
     def test_native_sync_applies_declarations_and_preserves_local_choices(self):
         a, b = Machine(self.root, "a"), Machine(self.root, "b")

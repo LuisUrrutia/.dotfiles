@@ -7,6 +7,7 @@
 - **Module**: one capability in `conf.d/<name>`, containing native declarations
   and its real configuration sources. A `mise.macos.toml` fragment adds Mac-only
   resources. A `mise.<app>.toml` fragment selects one optional capability.
+  Related optional apps can share a module directory, as the audio apps do.
 - **Local enrollment**: `config.local.toml` and `miserc.local.toml`, excluded from
   shared history. They own this machine's identity, origin, sync mode, and apps.
 - **Machine record**: public defaults in `machines/<stable-id>.toml`. Hardware
@@ -19,6 +20,8 @@
 - **Preference snapshot**: an allowlisted app export encrypted before history
   storage. Live files remain readable. Hardware-bound snapshots are keyed by
   stable machine ID; shared ones have explicit portability scope.
+  `preferences.json` uses the module's name; `preferences.<app>.json` retains
+  an individual app's identity within a grouped module.
 - **Manual exchange**: the native watcher saves locally, while the user runs
   `sync` to exchange and apply setup.
 - **Automatic exchange**: a local scheduler runs that same serial command.
