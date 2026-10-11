@@ -28,7 +28,10 @@ allow_plaintext_history = false
 builtin = "history-watch"
 
 [bootstrap.hooks]
-pre-packages = 'mise exec python@3 -- python3 "$HOME/.config/mise/conf.d/setup/packages.py"'
+pre-packages = [
+  'mise exec python@3 -- python3 "$HOME/.config/mise/conf.d/setup/config.py" check',
+  'mise exec python@3 -- python3 "$HOME/.config/mise/conf.d/setup/packages.py"',
+]
 pre-dotfiles = 'mise exec python@3 -- python3 "$HOME/.config/mise/conf.d/setup/config.py" check'
 
 [tasks.bootstrap]

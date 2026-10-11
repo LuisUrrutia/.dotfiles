@@ -2,7 +2,6 @@
 
 import argparse
 import hashlib
-import json
 import os
 import re
 import subprocess
@@ -87,32 +86,40 @@ def git_settings(record):
     identity = record.get("git", {})
     default = identity.get("default", {})
     accounts = identity.get("accounts", {})
-    scopes = []
-    sources = {}
+    variables = {
+        "git_name": default.get("name", ""),
+        "git_email": default.get("email", ""),
+        "git_signing_key": default.get("signing_key", ""),
+        "git_accounts": " ".join(accounts),
+    }
+    files = {}
     for name, account in accounts.items():
         if not re.fullmatch(r"[a-zA-Z0-9_-]+", name):
             raise ValueError(f"Invalid Git account name: {name}")
         if not account.get("name") or not account.get("email"):
             raise ValueError(f"Git account {name} needs name and email")
-        text = "[user]\n  name = " + json.dumps(account["name"], ensure_ascii=False)
-        text += "\n  email = " + json.dumps(account["email"], ensure_ascii=False) + "\n"
-        if account.get("signing_key"):
-            text += "  signingKey = " + json.dumps(account["signing_key"]) + "\n"
-            text += "[gpg]\n  format = ssh\n[commit]\n  gpgSign = true\n[tag]\n  gpgSign = true\n"
-        else:
-            text += "[commit]\n  gpgSign = false\n[tag]\n  gpgSign = false\n"
-        file = f"~/.config/git/account-{name}.gitconfig"
-        sources[file] = {"content": text, "permissions": "0600"}
+        directories = []
         for directory in account.get("directories", []):
             if not directory.startswith(("~/", "/")) or "\n" in directory:
                 raise ValueError(
                     "Git scopes must be absolute or home-relative directories"
                 )
-            directory = str(Path(directory).expanduser().resolve())
-            scopes.append(
-                {"condition": "gitdir:" + directory.rstrip("/") + "/", "file": file}
-            )
-    return default, scopes, sources
+            directories.append(str(Path(directory).expanduser().resolve()))
+        prefix = f"git_account_{name}_"
+        variables.update(
+            {
+                prefix + "name": account["name"],
+                prefix + "email": account["email"],
+                prefix + "signing_key": account.get("signing_key", ""),
+                prefix + "directories": "\n".join(directories),
+            }
+        )
+        files[f"~/.config/git/account-{name}.gitconfig"] = {
+            "source": "conf.d/git/account.gitconfig.tera",
+            "template": True,
+            "mode": "0600",
+        }
+    return variables, files
 
 
 def enroll(args):
@@ -133,7 +140,7 @@ def enroll(args):
         seed()
     machine = current.get("_", {}).get("machine")
     if not machine:
-        default, scopes, git_files = git_settings(record)
+        git_variables, git_files = git_settings(record)
         machine = {
             "id": args.machine,
             "sync": args.sync or "manual",
@@ -141,16 +148,8 @@ def enroll(args):
             "xcode": record.get("xcode", False),
         }
         current.setdefault("_", {})["machine"] = machine
-        current.setdefault("vars", {}).update(
-            git_name=default.get("name", ""),
-            git_email=default.get("email", ""),
-            git_signing_key=default.get("signing_key", ""),
-            git_includes="\n".join(
-                f"[includeIf {json.dumps(scope['condition'], ensure_ascii=False)}]\n  path = {json.dumps(scope['file'], ensure_ascii=False)}"
-                for scope in scopes
-            ),
-        )
-        current.setdefault("dotfiles", {}).update(git_files)
+        current.setdefault("vars", {}).update(git_variables)
+        current.setdefault("bootstrap", {}).setdefault("files", {}).update(git_files)
         if machine["xcode"]:
             current.setdefault("bootstrap", {}).setdefault("packages", {})[
                 "mas:497799835"

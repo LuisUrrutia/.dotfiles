@@ -12,4 +12,13 @@
   gpgSign = true
 {% endif %}
 {% endif %}
-{{ vars.git_includes | default(value="") }}
+{% for account in vars.git_accounts | default(value="") | split(pat=" ") %}
+{% if account != "" %}
+{% for directory in vars["git_account_" ~ account ~ "_directories"] | split(pat="\n") %}
+{% if directory != "" %}
+[includeIf {{ ("gitdir:" ~ (directory | trim_end(pat="/")) ~ "/") | json_encode() }}]
+  path = {{ ("~/.config/git/account-" ~ account ~ ".gitconfig") | json_encode() }}
+{% endif %}
+{% endfor %}
+{% endif %}
+{% endfor %}

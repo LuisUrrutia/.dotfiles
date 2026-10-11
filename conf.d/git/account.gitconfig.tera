@@ -1,0 +1,14 @@
+{% set account = target | file_stem | trim_start(pat="account-") %}
+{% set prefix = "git_account_" ~ account ~ "_" %}
+[user]
+  name = {{ vars[prefix ~ "name"] | json_encode() }}
+  email = {{ vars[prefix ~ "email"] | json_encode() }}
+{% if vars[prefix ~ "signing_key"] != "" %}
+  signingKey = {{ vars[prefix ~ "signing_key"] | json_encode() }}
+[gpg]
+  format = ssh
+{% endif %}
+[commit]
+  gpgSign = {{ (vars[prefix ~ "signing_key"] != "") | json_encode() }}
+[tag]
+  gpgSign = {{ (vars[prefix ~ "signing_key"] != "") | json_encode() }}

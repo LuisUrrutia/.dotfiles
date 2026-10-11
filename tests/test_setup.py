@@ -264,30 +264,42 @@ class SetupTests(unittest.TestCase):
                 if kind in ("work", "agent"):
                     record["git"]["accounts"] = {
                         "team": {
-                            "name": "Work User",
+                            "name": 'Work "Team" Urrutía',
                             "email": "work@example.invalid",
-                            "directories": [str(machine.home / "work space")],
+                            "directories": [
+                                str(machine.home / 'work "space"'),
+                                "~/other work",
+                            ],
                         }
                     }
                 if kind == "work":
                     record["git"]["default"] = {}
-                    record["git"]["accounts"]["second"] = {
+                    record["git"]["accounts"]["second-team"] = {
                         "name": "Other User",
                         "email": "other@example.invalid",
                         "directories": [str(machine.home / "second team")],
+                        "signing_key": "~/.ssh/work key.pub",
                     }
-                machine.write("record.toml", "")
                 code = """import enroll
 record = RECORD
-default, scopes, files = enroll.git_settings(record)
-values = {'vars': {'git_name': default.get('name',''), 'git_email': default.get('email',''), 'git_signing_key': default.get('signing_key',''), 'git_includes': '\\n'.join('[includeIf '+enroll.json.dumps(s['condition'])+']\\n  path = '+enroll.json.dumps(s['file']) for s in scopes)}, 'dotfiles': files}
+variables, files = enroll.git_settings(record)
+values = {'vars': variables, 'bootstrap': {'files': files}}
 enroll.atomic(enroll.ROOT / 'config.local.toml', enroll.document(values))
 """.replace("RECORD", repr(record))
                 machine.python(code)
                 with (machine.home / ".gitconfig").open("a") as stream:
                     stream.write("[custom]\n  retained = yes\n")
-                machine.mise("dot", "apply", "--yes")
-                machine.mise("dot", "apply", "--yes")
+                account_file = machine.home / ".config/git/account-team.gitconfig"
+                if kind == "work":
+                    account_file.parent.mkdir(parents=True)
+                    account_file.write_text("Unmanaged account\n")
+                    result = machine.python("import config; config.check()", ok=False)
+                    self.assertIn("Unmanaged or edited target", result.stderr)
+                    self.assertEqual(account_file.read_text(), "Unmanaged account\n")
+                    account_file.unlink()
+                apply = "import config; config.check(); config.apply_files(); config.remember()"
+                machine.python(apply)
+                machine.python(apply)
                 self.assertEqual(
                     machine.run(
                         "git", "config", "--global", "--get", "custom.retained"
@@ -323,7 +335,9 @@ enroll.atomic(enroll.ROOT / 'config.local.toml', enroll.document(values))
                         machine.run("git", "config", "commit.gpgsign").stdout.strip(),
                         "true",
                     )
-                for account in record["git"].get("accounts", {}).values():
+                for name, account in record["git"].get("accounts", {}).items():
+                    target = machine.home / f".config/git/account-{name}.gitconfig"
+                    self.assertEqual(target.stat().st_mode & 0o777, 0o600)
                     repository = Path(account["directories"][0]) / "repo"
                     repository.mkdir(parents=True)
                     machine.run("git", "init", "--initial-branch=main", repository)
@@ -339,16 +353,30 @@ enroll.atomic(enroll.ROOT / 'config.local.toml', enroll.document(values))
                     )
                     self.assertEqual(
                         machine.run(
+                            "git", "config", "user.name", cwd=repository
+                        ).stdout.strip(),
+                        account["name"],
+                    )
+                    self.assertEqual(
+                        machine.run(
                             "git", "config", "user.email", cwd=repository
                         ).stdout.strip(),
                         account["email"],
                     )
-                    self.assertEqual(
-                        machine.run(
-                            "git", "config", "commit.gpgsign", cwd=repository
-                        ).stdout.strip(),
-                        "false",
-                    )
+                    for key in ("commit.gpgsign", "tag.gpgsign"):
+                        self.assertEqual(
+                            machine.run(
+                                "git", "config", key, cwd=repository
+                            ).stdout.strip(),
+                            "true" if account.get("signing_key") else "false",
+                        )
+                    if account.get("signing_key"):
+                        self.assertEqual(
+                            machine.run(
+                                "git", "config", "user.signingkey", cwd=repository
+                            ).stdout.strip(),
+                            account["signing_key"],
+                        )
                     result = machine.run(
                         WT,
                         "switch",
@@ -370,6 +398,35 @@ enroll.atomic(enroll.ROOT / 'config.local.toml', enroll.document(values))
                     )
                     machine.run(
                         WT, "remove", "feature", "--no-hooks", "--yes", cwd=repository
+                    )
+                if kind == "work":
+                    repository = machine.home / "other work/repo"
+                    repository.mkdir(parents=True)
+                    machine.run("git", "init", "--initial-branch=main", repository)
+                    machine.python("""from runtime import ROOT, read_toml, atomic, document
+settings = read_toml(ROOT / 'config.local.toml')
+settings['vars']['git_account_team_email'] = 'updated@example.invalid'
+atomic(ROOT / 'config.local.toml', document(settings))
+""")
+                    machine.python(apply)
+                    self.assertEqual(
+                        machine.run(
+                            "git", "config", "user.email", cwd=repository
+                        ).stdout.strip(),
+                        "updated@example.invalid",
+                    )
+                    account_file.write_text("Edited account\n")
+                    result = machine.python("import config; config.check()", ok=False)
+                    self.assertIn("Unmanaged or edited target", result.stderr)
+                    self.assertEqual(account_file.read_text(), "Edited account\n")
+                    machine.python(
+                        f"import config; config.resolve('discard', {str(account_file)!r})"
+                    )
+                    self.assertEqual(
+                        machine.run(
+                            "git", "config", "user.email", cwd=repository
+                        ).stdout.strip(),
+                        "updated@example.invalid",
                     )
 
     def test_preferences_are_encrypted_and_pending_restore_survives_capture(self):

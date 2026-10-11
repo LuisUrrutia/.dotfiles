@@ -271,7 +271,29 @@ work machine; combine a default and scoped accounts for an agent machine.
 Directory conditions also cover Git worktrees. Signing is enabled only when a
 signing key is supplied. An unsigned scoped account disables inherited signing.
 The managed Git block and first shared include preserve unrelated existing keys.
-Identity inputs are rendered into `config.local.toml`; later edits belong there.
+Enrollment stores identity data in `config.local.toml` variables and registers
+each account as a native template. Python does not generate Git configuration.
+`conf.d/git/identity.gitconfig.tera` renders the default identity and `includeIf`
+blocks; `conf.d/git/account.gitconfig.tera` renders every scoped account, including
+its signing policy. The account template uses the native `bootstrap.files`
+`target` variable to select its account, so accounts share one template:
+
+```toml
+[bootstrap.files."~/.config/git/account-work.gitconfig"]
+source = "conf.d/git/account.gitconfig.tera"
+template = true
+mode = "0600"
+```
+
+Edit `vars.git_name`, `vars.git_email`, and `vars.git_signing_key` for the default,
+or `vars.git_account_work_name`, `vars.git_account_work_email`,
+`vars.git_account_work_signing_key`, and `vars.git_account_work_directories` for
+the example account. Directory values contain one absolute path per line;
+`vars.git_accounts` lists the account names separated by spaces. Adding an account
+after enrollment also needs its name in that list and a file declaration like
+the one above. `config apply` renders the templates and checks existing account
+files for unowned content or drift before writing them.
+
 Git authorship does not select an SSH account or the authenticated `gh` actor.
 
 ## Daily commands

@@ -59,6 +59,33 @@ def entries(status=None):
                     yield target / relative, file, "symlink", entry["state"]
         else:
             yield target, source, entry["mode"], entry["state"]
+    for entry in native_json("bootstrap", "files", "status"):
+        target = expand(entry["id"]["name"])
+        if entry["id"]["kind"] != "file" or not target.is_relative_to(HOME):
+            continue
+        declarations = read_toml(entry["origin"]["config"])["bootstrap"]["files"]
+        declaration = next(
+            value for key, value in declarations.items() if expand(key) == target
+        )
+        source = entry["origin"].get("source")
+        source = expand(source) if source else None
+        if declaration.get("state") == "absent":
+            mode = "absent"
+        elif declaration.get("template"):
+            mode = "template"
+        elif source:
+            mode = "copy"
+        elif "content" in declaration:
+            mode = "content"
+        else:
+            mode = "permissions"
+        state = "applied" if entry["action"] == "noop" else entry["action"]
+        yield target, source, mode, state
+
+
+def apply_files():
+    mise("bootstrap", "files", "apply", "--yes")
+    mise("dot", "apply", "--yes")
 
 
 def check():
@@ -134,7 +161,7 @@ def resolve(action, value):
         else:
             edits.forget(target)
         check()
-        mise("dot", "apply", "--yes")
+        apply_files()
         remember()
         print(f"Preserved previous target and source at {backup}")
         return
@@ -170,7 +197,7 @@ def resolve(action, value):
     shutil.move(str(target), str(backup))
     print(f"Preserved previous target at {backup}")
     check()
-    mise("dot", "apply", "--yes")
+    apply_files()
     remember()
 
 
@@ -185,6 +212,7 @@ def main():
         check()
     elif args.action in ("status", "diff"):
         mise("dot", args.action)
+        mise("bootstrap", "files", "status")
     elif args.action == "apply":
         from sync import apply_setup
 

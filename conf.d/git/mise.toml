@@ -1,3 +1,5 @@
+[bootstrap.directories."~/.config/git"]
+
 [dotfiles]
 "~/.config/git/allowed_signers" = "allowed_signers"
 "~/.config/git/attributes" = "attributes"
