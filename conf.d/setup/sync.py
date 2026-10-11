@@ -63,23 +63,32 @@ def dispatch():
         label = "dev.mise.dotfiles-sync-worker"
         domain = f"gui/{os.getuid()}"
         service = f"{domain}/{label}"
-        if run(["launchctl", "print", service], capture=True, check=False).returncode:
-            path = STATE / "sync-worker.plist"
-            atomic(
-                path,
-                plistlib.dumps(
-                    {
-                        "Label": label,
-                        "ProgramArguments": command,
-                        "WorkingDirectory": str(HOME),
-                        "ProcessType": "Background",
-                        "EnvironmentVariables": environment,
-                        "StandardOutPath": str(STATE / "sync.log"),
-                        "StandardErrorPath": str(STATE / "sync.err.log"),
-                    }
-                ),
-            )
-            run(["launchctl", "bootstrap", domain, path])
+        path = STATE / "sync-worker.plist"
+        declaration = plistlib.dumps(
+            {
+                "Label": label,
+                "ProgramArguments": command,
+                "WorkingDirectory": str(HOME),
+                "ProcessType": "Background",
+                "EnvironmentVariables": environment,
+                "StandardOutPath": str(STATE / "sync.log"),
+                "StandardErrorPath": str(STATE / "sync.err.log"),
+            }
+        )
+        with lock():
+            status = run(["launchctl", "print", service], capture=True, check=False)
+            loaded = status.returncode == 0
+            if loaded and any(
+                line.strip().startswith(b"pid = ")
+                for line in status.stdout.splitlines()
+            ):
+                return
+            if loaded and (not path.exists() or path.read_bytes() != declaration):
+                run(["launchctl", "bootout", service])
+                loaded = False
+            if not loaded:
+                atomic(path, declaration)
+                run(["launchctl", "bootstrap", domain, path])
         run(["launchctl", "kickstart", service])
     else:
         service = "dotfiles-sync-worker.service"
