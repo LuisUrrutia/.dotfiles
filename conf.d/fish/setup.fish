@@ -20,20 +20,33 @@ function restore_manifest --on-event fish_exit --inherit-variable snapshot --inh
     command mv -f -- "$snapshot" "$manifest"
 end
 
-# Fisher can rewrite the manifest and return success after a partial download failure.
-set requested (string match --regex -- '^[^\s]+$' <"$snapshot" | string replace -- \~ ~)
-fisher update </dev/null
-set result $status
 set installed (fisher list)
-for plugin in $requested
+set requested
+for plugin in (string match --regex -- '^[^\s]+$' <"$snapshot" | string replace -- \~ ~)
     if test -e "$plugin"
         set plugin (realpath "$plugin")
     else
         set plugin (string lower -- "$plugin")
     end
-    if not contains -- "$plugin" $installed
+    contains -- "$plugin" $requested; or set -a requested "$plugin"
+end
+
+# Fisher appends the whole manifest on its first install and hides mixed download failures.
+printf '' >"$manifest"; or exit 1
+set result 0
+for plugin in $requested
+    set action install
+    contains -- "$plugin" $installed; and set action update
+    if not fisher $action "$plugin" </dev/null
+        echo "Fish plugin $action failed: $plugin" >&2
+        set result 1
+    end
+    if not contains -- "$plugin" (fisher list)
         echo "Fish plugin was not installed: $plugin" >&2
         set result 1
     end
+end
+for plugin in $installed
+    contains -- "$plugin" $requested; or fisher remove "$plugin" </dev/null; or set result 1
 end
 exit $result

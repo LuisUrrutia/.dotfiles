@@ -226,8 +226,9 @@ class SetupTests(unittest.TestCase):
         manager.write_text(
             """function fisher
     switch $argv[1]
-        case update
+        case install update
             printf 'one/plugin\\n' > "$HOME/.config/fish/fish_plugins"
+            test "$argv[2]" != two/plugin; or test ! -e "$HOME/plugin-download-fails"
         case list
             echo one/plugin
             test ! -e "$HOME/plugins-ready"; or echo two/plugin
@@ -256,6 +257,11 @@ end
         self.assertEqual(manifest.read_text(), requested)
         (machine.home / "plugins-ready").touch()
         machine.run(FISH, setup)
+        self.assertEqual(manifest.read_text(), requested)
+        (machine.home / "plugin-download-fails").touch()
+        partial = machine.run(FISH, setup, ok=False)
+        self.assertNotEqual(partial.returncode, 0)
+        self.assertIn("Fish plugin update failed: two/plugin", partial.stderr)
         self.assertEqual(manifest.read_text(), requested)
 
         (fish / "runtime-state").write_text("keep me")
