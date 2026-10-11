@@ -2,6 +2,8 @@
 
 import argparse
 import hashlib
+import os
+import plistlib
 import subprocess
 import sys
 import time
@@ -13,6 +15,7 @@ import preferences
 from runtime import (
     HOME,
     ROOT,
+    STATE,
     atomic,
     document,
     git_origin,
@@ -23,8 +26,81 @@ from runtime import (
     native_json,
     read_state,
     read_toml,
+    run,
     write_state,
 )
+
+
+def dispatch():
+    if local().get("sync") != "automatic":
+        return
+    command = [
+        str(HOME / ".local/bin/mise"),
+        "-C",
+        str(HOME),
+        "run",
+        "sync",
+        "--automatic",
+    ]
+    environment = {
+        "HOME": str(HOME),
+        "MISE_CONFIG_DIR": str(ROOT),
+        "MISE_CEILING_PATHS": str(HOME),
+        "PATH": f"{HOME}/.local/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin",
+        **{
+            key: os.environ[key]
+            for key in (
+                "MISE_DATA_DIR",
+                "MISE_STATE_DIR",
+                "MISE_CACHE_DIR",
+                "MISE_OFFLINE",
+            )
+            if key in os.environ
+        },
+    }
+    # A separate job survives replacement of the native periodic scheduler.
+    if sys.platform == "darwin":
+        label = "dev.mise.dotfiles-sync-worker"
+        domain = f"gui/{os.getuid()}"
+        service = f"{domain}/{label}"
+        if run(["launchctl", "print", service], capture=True, check=False).returncode:
+            path = STATE / "sync-worker.plist"
+            atomic(
+                path,
+                plistlib.dumps(
+                    {
+                        "Label": label,
+                        "ProgramArguments": command,
+                        "WorkingDirectory": str(HOME),
+                        "ProcessType": "Background",
+                        "EnvironmentVariables": environment,
+                        "StandardOutPath": str(STATE / "sync.log"),
+                        "StandardErrorPath": str(STATE / "sync.err.log"),
+                    }
+                ),
+            )
+            run(["launchctl", "bootstrap", domain, path])
+        run(["launchctl", "kickstart", service])
+    else:
+        service = "dotfiles-sync-worker.service"
+        if (
+            run(
+                ["systemctl", "--user", "is-active", "--quiet", service], check=False
+            ).returncode
+            == 0
+        ):
+            return
+        run(
+            [
+                "systemd-run",
+                "--user",
+                "--collect",
+                f"--unit={service}",
+                *[f"--setenv={key}={value}" for key, value in environment.items()],
+                "--",
+                *command,
+            ]
+        )
 
 
 def setup_hash():
@@ -224,7 +300,11 @@ def synchronize(automatic=False):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--automatic", action="store_true")
+    parser.add_argument("--dispatch", action="store_true")
     args = parser.parse_args()
+    if args.dispatch:
+        dispatch()
+        return
     with lock():
         synchronize(args.automatic)
 

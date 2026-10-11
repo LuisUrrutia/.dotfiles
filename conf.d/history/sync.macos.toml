@@ -1,6 +1,6 @@
 [bootstrap.macos.launchd.agents.dotfiles-sync]
 program = "~/.local/bin/mise"
-args = ["-C", "{{ env.HOME }}", "run", "sync", "--automatic"]
+args = ["-C", "{{ env.HOME }}", "run", "sync", "--dispatch"]
 working_directory = "~"
 start_interval = 300
 process_type = "Background"
