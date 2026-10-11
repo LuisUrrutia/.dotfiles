@@ -8,7 +8,7 @@ python = "3"
 version = "latest"
 postinstall = { when = "always", run = '''
 set -eu
-directory="$HOME/.config/fish/completions"
+directory="$MISE_TOOL_INSTALL_PATH/mise-completions"
 mkdir -p "$directory"
 temporary=$(mktemp -d "$directory/.uv.XXXXXX")
 trap 'rm -rf "$temporary"' EXIT

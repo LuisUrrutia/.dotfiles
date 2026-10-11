@@ -143,6 +143,21 @@ class SetupTests(unittest.TestCase):
     def test_seed_and_native_deployment_preserve_user_files(self):
         machine = Machine(self.root, "safe")
         machine.payload()
+        completions = machine.home / ".config/fish/completions"
+        completions.mkdir(parents=True)
+        foreign_completion = machine.home / "custom-completion.fish"
+        foreign_completion.write_text("# User completion\n")
+        for name, symlink in (("bun", False), ("uv", True)):
+            target = completions / f"{name}.fish"
+            if symlink:
+                target.symlink_to(foreign_completion)
+            else:
+                target.write_text("# User completion\n")
+            refused = machine.python("import config; config.check()", ok=False)
+            self.assertNotEqual(refused.returncode, 0)
+            self.assertEqual(target.read_text(), "# User completion\n")
+            self.assertEqual(target.is_symlink(), symlink)
+            target.unlink()
         (machine.home / ".codex").mkdir()
         (machine.home / ".codex/config.toml").write_text(
             "[plugins.example]\nenabled=true\n"
