@@ -13,6 +13,9 @@ minimum_release_age_excludes = [
 sync = "manual"
 allow_plaintext_history = false
 
+[history]
+git_email = "mise@{hostname}"
+
 [dotfiles]
 "~/.config/mise" = { mode = "track", exclude = [
   "/private",
