@@ -28,7 +28,7 @@ def run(*command, **kwargs):
     return subprocess.run(
         [str(arg) for arg in command],
         cwd=ROOT,
-        stdin=subprocess.DEVNULL,
+        stdin=None if "input" in kwargs else subprocess.DEVNULL,
         check=True,
         **kwargs,
     )
