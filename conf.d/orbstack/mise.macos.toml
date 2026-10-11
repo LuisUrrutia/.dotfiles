@@ -1,7 +1,0 @@
-
-[bootstrap.packages]
-"brew-cask:orbstack" = { os = "macos" }
-
-[dotfiles]
-"~/.docker/cli-plugins/docker-buildx" = "/Applications/OrbStack.app/Contents/MacOS/xbin/docker-buildx"
-"~/.docker/cli-plugins/docker-compose" = "/Applications/OrbStack.app/Contents/MacOS/xbin/docker-compose"

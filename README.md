@@ -37,9 +37,11 @@ conf.d/
   fish/                   mise declarations, config.fish, functions, completions
   git/                    defaults and identity template
   audio/                  independently selected apps and preference schemas
-  ethereum/               Geth, Foundry and Solidity on macOS and Linux
+  blockchain/             Ethereum tools and the optional Stellar CLI
+  dev/                    development apps, including Yaak and OrbStack
   languages/              runtimes, including native mise Rust and Lua packages
   macos/                  native defaults, LaunchAgents, system settings
+  media/                  yt-dlp, IINA and optional OBS/Camo
   <capability>/           packages, source files, and any required setup task
   setup/                  preservation, preferences, synchronization, maintenance
 tasks/                    config, preferences, sync, update
@@ -210,8 +212,9 @@ env = ["busycal", "audio-hijack"]
 
 Available choices: `audio-hijack`, `busycal`, `camo`, `displaylink`, `ethereum`,
 `focusrite`, `loopback`, `obs`, `skhd`, `soundsource`, and `stellar-cli`.
-`ethereum` includes Geth, Foundry and Solidity on macOS and Linux. The audio
-apps live together in `conf.d/audio` and remain individually selectable.
+`ethereum` includes Geth, Foundry and Solidity on macOS and Linux. Its manifest
+shares `conf.d/blockchain` with the independently selected `stellar-cli`.
+The audio apps live together in `conf.d/audio` and remain individually selectable.
 On Linux, mise's Go backend builds the Geth command suite using the shared Go
 toolchain and build prerequisites. Foundry and Solidity use native brew recipes.
 OBS includes its scene-switcher plugin. There are no role profiles.
