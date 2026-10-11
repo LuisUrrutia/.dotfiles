@@ -26,7 +26,7 @@ fish -c 'complete -C "wt "'
 - Native macOS paths are configured in `macos-paths.fish`.
 - Paths and `RIPGREP_CONFIG_PATH` live in `conf.d/01_paths.fish`.
 - Interactive abbreviations live in `conf.d/03_abbrs.fish` and should stay guarded.
-- `conf.d/fish/mise.macos.toml` owns native packages and the login shell; `setup.sh` seeds the plugin manifest when absent and runs Fisher update.
+- `conf.d/fish/mise.macos.toml` owns native packages and the login shell; `setup.fish` seeds the plugin manifest when absent and runs Fisher update.
 
 ## Diagnosis Workflow
 

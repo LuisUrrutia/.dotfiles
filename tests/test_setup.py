@@ -205,6 +205,44 @@ class SetupTests(unittest.TestCase):
             FISH, "-c", 'test "$PAGER" = fixture-pager; and not set -q FZF_DEFAULT_OPTS'
         )
         self.assertEqual(smoke.stdout, "")
+
+        manager = machine.home / ".local/share/fisher/functions/fisher.fish"
+        manager.parent.mkdir(parents=True)
+        manager.write_text(
+            """function fisher
+    switch $argv[1]
+        case update
+            printf 'one/plugin\\n' > "$HOME/.config/fish/fish_plugins"
+        case list
+            echo one/plugin
+            test ! -e "$HOME/plugins-ready"; or echo two/plugin
+    end
+end
+"""
+        )
+        linux = tomllib.loads((REPO / "conf.d/fish/mise.linux.toml").read_text())
+        machine.write(
+            "conf.d/fisher-test/mise.toml",
+            "[dotfiles]\n"
+            + "\n".join(
+                f"{json.dumps(target)} = {json.dumps(source)}"
+                for target, source in linux["dotfiles"].items()
+            ),
+        )
+        machine.mise("dot", "apply", "--yes")
+        self.assertEqual(machine.run(FISH, "-c", "fisher list").stdout, "one/plugin\n")
+        manifest = fish / "fish_plugins"
+        requested = "One/Plugin\nTwo/Plugin\n"
+        manifest.write_text(requested)
+        setup = machine.config / "conf.d/fish/setup.fish"
+        partial = machine.run(FISH, setup, ok=False)
+        self.assertNotEqual(partial.returncode, 0)
+        self.assertIn("Fish plugin was not installed: two/plugin", partial.stderr)
+        self.assertEqual(manifest.read_text(), requested)
+        (machine.home / "plugins-ready").touch()
+        machine.run(FISH, setup)
+        self.assertEqual(manifest.read_text(), requested)
+
         (fish / "runtime-state").write_text("keep me")
         (fish / "config.fish").unlink()
         (fish / "config.fish").write_text("set -g user_edit yes\n")

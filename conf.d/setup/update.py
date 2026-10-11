@@ -94,7 +94,13 @@ def main():
         )
         step("skills", [["skills", "update", "--global", "--yes"]])
         step("tmux", [["tpack", "update", "all"]])
-        step("fish", [["bash", ROOT / "conf.d/fish/setup.sh"]])
+        step(
+            "fish",
+            [
+                [MISE, "bootstrap", "repos", "update", "--yes"],
+                [MISE, "run", "setup:fish"],
+            ],
+        )
         step(
             "reference-data",
             [

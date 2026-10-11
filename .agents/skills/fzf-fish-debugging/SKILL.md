@@ -25,7 +25,7 @@ fish -c 'set --show FZF_DEFAULT_OPTS fzf_preview_file_cmd fzf_preview_dir_cmd fz
 - `fzf` and `fisher` are native mise packages in this dotfiles setup.
 - Main fzf settings live in `conf.d/fish/config.fish`.
 - Current settings include `FZF_DEFAULT_OPTS`, `fzf_diff_highlighter`, `fzf_history_time_format`, `fzf_preview_file_cmd`, and `fzf_preview_dir_cmd`.
-- `conf.d/fish/setup.sh` seeds the plugin manifest when absent and runs Fisher update.
+- `conf.d/fish/setup.fish` seeds the plugin manifest when absent and runs Fisher update.
 - fzf.fish generated files are outside the managed source tree, including `functions/fzf_configure_bindings.fish`, `conf.d/fzf.fish`, and `completions/fzf_configure_bindings.fish`.
 - Repo functions using fzf include `glogf.fish`, `wtpr.fish`, and `killport.fish`.
 

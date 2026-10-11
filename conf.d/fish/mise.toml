@@ -6,4 +6,4 @@
 "~/.config/fish/functions" = { source = "functions", mode = "symlink-each" }
 
 [tasks."setup:fish"]
-run = 'bash "{{ config_root }}/setup.sh"'
+run = 'fish "{{ config_root }}/setup.fish"'

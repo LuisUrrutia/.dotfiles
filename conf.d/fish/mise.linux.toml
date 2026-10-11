@@ -4,6 +4,9 @@
 [bootstrap.repos]
 "~/.local/share/fisher" = { url = "https://github.com/jorgebucaran/fisher.git" }
 
+[dotfiles]
+"~/.config/fish/functions/fisher.fish" = "~/.local/share/fisher/functions/fisher.fish"
+
 [bootstrap.user]
 login_shell = "/usr/bin/fish"
 
