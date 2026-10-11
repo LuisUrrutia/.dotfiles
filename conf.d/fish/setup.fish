@@ -34,6 +34,9 @@ end
 # Fisher appends the whole manifest on its first install and hides mixed download failures.
 printf '' >"$manifest"; or exit 1
 set result 0
+for plugin in $installed
+    contains -- "$plugin" $requested; or fisher remove "$plugin" </dev/null; or set result 1
+end
 for plugin in $requested
     set action install
     contains -- "$plugin" $installed; and set action update
@@ -45,8 +48,5 @@ for plugin in $requested
         echo "Fish plugin was not installed: $plugin" >&2
         set result 1
     end
-end
-for plugin in $installed
-    contains -- "$plugin" $requested; or fisher remove "$plugin" </dev/null; or set result 1
 end
 exit $result
