@@ -63,7 +63,7 @@ audit_file() {
         status=1
       fi
     fi
-  done < "$file"
+  done <"$file"
 
   return "$status"
 }
@@ -185,8 +185,8 @@ update_file() {
         if resolve_repo_pin "$repo"; then
           quote=""
           case "$raw_value" in
-            \"*) quote='"' ;;
-            \'*) quote="'" ;;
+          \"*) quote='"' ;;
+          \'*) quote="'" ;;
           esac
 
           new_line="$prefix$quote$action@$RESOLVED_SHA$quote # $RESOLVED_TAG"
@@ -204,7 +204,7 @@ update_file() {
     fi
 
     printf '%s\n' "$line" >>"$tmp_file"
-  done < "$file"
+  done <"$file"
 
   if [[ "$changed" == true ]]; then
     mv "$tmp_file" "$file"
@@ -260,23 +260,23 @@ run_latest() {
 }
 
 case "${1:-}" in
-  audit)
-    shift
-    run_audit "$@"
-    ;;
-  update)
-    shift
-    run_update "$@"
-    ;;
-  latest)
-    shift
-    run_latest "$@"
-    ;;
-  -h|--help|help)
-    usage
-    ;;
-  *)
-    usage >&2
-    exit 2
-    ;;
+audit)
+  shift
+  run_audit "$@"
+  ;;
+update)
+  shift
+  run_update "$@"
+  ;;
+latest)
+  shift
+  run_latest "$@"
+  ;;
+-h | --help | help)
+  usage
+  ;;
+*)
+  usage >&2
+  exit 2
+  ;;
 esac

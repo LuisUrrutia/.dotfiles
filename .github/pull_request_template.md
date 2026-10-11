@@ -14,12 +14,12 @@
 Separate repository checks from package, service, GUI, and preference-restore acceptance.
 State why any applicable check was skipped. -->
 
-| Check | Command | Result |
-| --- | --- | --- |
-| Targeted behavior |  |  |
-| Repository verification | `mise run verify` |  |
-| Broader smoke path |  |  |
-| Final diff | `git diff --check` |  |
+| Check                   | Command            | Result |
+| ----------------------- | ------------------ | ------ |
+| Targeted behavior       |                    |        |
+| Repository verification | `mise run verify`  |        |
+| Broader smoke path      |                    |        |
+| Final diff              | `git diff --check` |        |
 
 ## Risk and recovery
 

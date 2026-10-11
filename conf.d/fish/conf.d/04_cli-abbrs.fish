@@ -1,6 +1,5 @@
 status is-interactive; or return
 
-
 if command -q eza
     abbr -a -- ls 'eza --icons=auto --color=auto --group-directories-first --octal-permissions'
     abbr -a -- tree 'eza --icons=auto --color=auto --group-directories-first --octal-permissions --tree'

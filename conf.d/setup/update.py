@@ -8,7 +8,7 @@ import time
 import config
 import edits
 import preferences
-from runtime import (HOME, MISE, ROOT, lock, mise, read_state, run, write_state)
+from runtime import HOME, MISE, ROOT, lock, mise, read_state, run, write_state
 
 
 def main():
@@ -24,7 +24,10 @@ def main():
         stamps = read_state("maintenance")
 
         def step(name, commands, interval=0):
-            if not args.ignore_schedule and time.time() - stamps.get(name, 0) < interval:
+            if (
+                not args.ignore_schedule
+                and time.time() - stamps.get(name, 0) < interval
+            ):
                 print(f"{name}: skipped (schedule)")
                 return
             try:
@@ -35,24 +38,70 @@ def main():
                 print(f"{name}: completed")
             except (subprocess.CalledProcessError, subprocess.TimeoutExpired, OSError):
                 failures.append(name)
-                print(f"{name}: failed; continuing independent maintenance", file=sys.stderr)
+                print(
+                    f"{name}: failed; continuing independent maintenance",
+                    file=sys.stderr,
+                )
 
-        step("mise", [[MISE, "self-update", "--yes", "--minimum-release-age", "3d"], [MISE, "upgrade", "--yes"]])
-        step("packages", [[sys.executable, ROOT / "conf.d/setup/packages.py", "upgrade"],
-                            [MISE, "bootstrap", "packages", "upgrade", "--yes"]], 86400)
+        step(
+            "mise",
+            [
+                [MISE, "self-update", "--yes", "--minimum-release-age", "3d"],
+                [MISE, "upgrade", "--yes"],
+            ],
+        )
+        step(
+            "packages",
+            [
+                [sys.executable, ROOT / "conf.d/setup/packages.py", "upgrade"],
+                [MISE, "bootstrap", "packages", "upgrade", "--yes"],
+            ],
+            86400,
+        )
         if sys.platform == "darwin":
             step("autofirma", [[MISE, "run", "setup:autofirma"]], 86400)
         step("github-extensions", [["gh", "extension", "upgrade", "--all"]])
-        step("neovim", [["nvim", "--headless", "+Lazy! sync", "+qa"],
-                        ["nvim", "--headless", "+Lazy! build telescope-fzf-native.nvim",
-                        "+lua local ok, err = pcall(function() require('telescope').load_extension('fzf') end); if not ok then vim.api.nvim_err_writeln(err); vim.cmd.cquit() end", "+qa"],
-                        ["nvim", "--headless", "+lua if not require('config.blink').ensure() then vim.cmd.cquit() end", "+qa"],
-                        ["nvim", "--headless", "+lua if not require('config.lsp').update() then vim.cmd.cquit() end", "+qa"],
-                        ["nvim", "--headless", "+lua if not require('config.treesitter').install() then vim.cmd.cquit() end", "+qa"]])
+        step(
+            "neovim",
+            [
+                ["nvim", "--headless", "+Lazy! sync", "+qa"],
+                [
+                    "nvim",
+                    "--headless",
+                    "+Lazy! build telescope-fzf-native.nvim",
+                    "+lua local ok, err = pcall(function() require('telescope').load_extension('fzf') end); if not ok then vim.api.nvim_err_writeln(err); vim.cmd.cquit() end",
+                    "+qa",
+                ],
+                [
+                    "nvim",
+                    "--headless",
+                    "+lua if not require('config.blink').ensure() then vim.cmd.cquit() end",
+                    "+qa",
+                ],
+                [
+                    "nvim",
+                    "--headless",
+                    "+lua if not require('config.lsp').update() then vim.cmd.cquit() end",
+                    "+qa",
+                ],
+                [
+                    "nvim",
+                    "--headless",
+                    "+lua if not require('config.treesitter').install() then vim.cmd.cquit() end",
+                    "+qa",
+                ],
+            ],
+        )
         step("skills", [["skills", "update", "--global", "--yes"]])
         step("tmux", [["tpack", "update", "all"]])
         step("fish", [["bash", ROOT / "conf.d/fish/setup.sh"]])
-        step("reference-data", [["tldr", "--config", HOME / ".config/tlrc/config.toml", "--update"], ["uv", "cache", "prune"]])
+        step(
+            "reference-data",
+            [
+                ["tldr", "--config", HOME / ".config/tlrc/config.toml", "--update"],
+                ["uv", "cache", "prune"],
+            ],
+        )
         if sys.platform == "darwin":
             step("cleanup", [["mo", "clean"]], 604800)
         config.remember()

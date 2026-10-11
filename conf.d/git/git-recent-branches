@@ -8,8 +8,14 @@ usage() {
 
 color=auto
 case "${1:-}" in
--h | --help) usage; exit 0 ;;
---color=*) color="${1#--color=}"; shift ;;
+-h | --help)
+  usage
+  exit 0
+  ;;
+--color=*)
+  color="${1#--color=}"
+  shift
+  ;;
 esac
 if (($# > 2)); then
   usage >&2
@@ -21,7 +27,10 @@ auto)
   [[ ! -t 1 ]] || color=always
   ;;
 always | never) ;;
-*) usage >&2; exit 2 ;;
+*)
+  usage >&2
+  exit 2
+  ;;
 esac
 
 comparison="${1:-}"

@@ -47,7 +47,11 @@
 "brew:mole" = { os = "macos" }
 
 [env]
-_.path = ["{{ env.HOME }}/.local/bin", "/opt/homebrew/bin", "/opt/homebrew/sbin"]
+_.path = [
+  "{{ env.HOME }}/.local/bin",
+  "/opt/homebrew/bin",
+  "/opt/homebrew/sbin",
+]
 
 [bootstrap.brew]
 adopt = true

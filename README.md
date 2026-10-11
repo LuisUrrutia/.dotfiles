@@ -278,16 +278,16 @@ Git authorship does not select an SSH account or the authenticated `gh` actor.
 
 Run these from HOME, or retain `-C ~` to avoid another project's mise config:
 
-| Command | Effect |
-| --- | --- |
-| `mise -C ~ run config status` | Inspect native file and history state |
-| `mise -C ~ run config diff` | Compare declared and live configuration |
-| `mise -C ~ run config apply` | Apply the effective setup after preservation checks |
-| `mise -C ~ run sync` | Capture, save, exchange, pull, apply changed setup, restore preferences |
-| `mise -C ~ run preferences capture` | Capture allowlisted application settings into encrypted history |
-| `mise -C ~ run preferences restore` | Retry pending restores after closing apps |
-| `mise -C ~ run update` | Update declared software and plugins, respecting daily/weekly gates |
-| `mise -C ~ run update --ignore-schedule` | Run all maintenance gates now |
+| Command                                  | Effect                                                                  |
+| ---------------------------------------- | ----------------------------------------------------------------------- |
+| `mise -C ~ run config status`            | Inspect native file and history state                                   |
+| `mise -C ~ run config diff`              | Compare declared and live configuration                                 |
+| `mise -C ~ run config apply`             | Apply the effective setup after preservation checks                     |
+| `mise -C ~ run sync`                     | Capture, save, exchange, pull, apply changed setup, restore preferences |
+| `mise -C ~ run preferences capture`      | Capture allowlisted application settings into encrypted history         |
+| `mise -C ~ run preferences restore`      | Retry pending restores after closing apps                               |
+| `mise -C ~ run update`                   | Update declared software and plugins, respecting daily/weekly gates     |
+| `mise -C ~ run update --ignore-schedule` | Run all maintenance gates now                                           |
 
 Fish provides `upd` and `backup` shortcuts. For new software, add the declaration
 to the owning active module **before** running `config apply`; downloaded
@@ -383,6 +383,38 @@ Install the verification tools with `mise install --yes` and
 `mise bootstrap packages apply --yes`, then run `mise run verify` in this
 checkout. These repository commands provision only the verification toolchain;
 `config.toml` is the separate payload for the active global setup.
+
+Use `mise run format` to format sources and apply safe Ruff fixes. Use
+`mise run lint` for the same checks without edits. `mise run verify` includes
+lint and formatting checks before running the integration tests, so CI rejects
+unformatted changes.
+
+| Sources                                                           | Lint / validation                                                | Formatter               |
+| ----------------------------------------------------------------- | ---------------------------------------------------------------- | ----------------------- |
+| Python                                                            | Ruff, Python compiler                                            | Ruff                    |
+| Bash, including extensionless scripts and task wrappers           | ShellCheck, shfmt parser                                         | shfmt                   |
+| Fish                                                              | Fish parser                                                      | fish_indent             |
+| Lua, including Neovim and Hammerspoon                             | Luacheck, StyLua parser                                          | StyLua                  |
+| TOML                                                              | Taplo, Python TOML parser                                        | Taplo                   |
+| JSON / JSONC                                                      | JSON / JSON5 parsers, applicable schemas                         | Prettier                |
+| YAML and GitHub configuration                                     | Prettier parser, actionlint, Dependabot schema, action SHA audit | Prettier                |
+| Markdown                                                          | markdownlint-cli2                                                | Prettier                |
+| HTML, including embedded CSS and JavaScript                       | Prettier parser                                                  | Prettier                |
+| Swift (macOS job)                                                 | swift-format lint, Swift typechecker                             | swift-format            |
+| XML theme plists                                                  | Python plist parser                                              | Python plist serializer |
+| Git configuration                                                 | Git config parser                                                | EditorConfig whitespace |
+| Other text, application configuration, dictionaries and templates | EditorConfig; managed templates also run in the deployment tests | EditorConfig whitespace |
+
+The commands include tracked files and new files that Git does not ignore,
+including hidden files. Ignored caches, local state and binary icons are outside
+text formatting. Application-specific configuration without a dedicated parser
+gets whitespace checks, not a claim of application validation. Lua keeps four
+spaces for Hammerspoon and two for Neovim. Markdown keeps existing paragraph
+wrapping, visible URLs and the heading-free prompt/template format.
+
+Tool versions follow the repository's latest-compatible policy and three-day
+cooldown. The macOS runner supplies `swift-format` with its Apple toolchain;
+Ubuntu leaves that macOS-only helper to the macOS CI job.
 
 CI runs the same command on macOS 26 arm64 and Ubuntu 24.04 arm64/x86_64.
 Each job downloads the latest official mise through the checksum-verifying

@@ -1,17 +1,17 @@
 """Shared process and filesystem boundaries for setup adapters."""
 
-from contextlib import contextmanager
 import fcntl
 import hashlib
 import json
 import os
-from pathlib import Path
 import shutil
 import signal
 import subprocess
 import sys
 import tempfile
 import tomllib
+from contextlib import contextmanager
+from pathlib import Path
 from urllib.parse import urlsplit
 
 RAW_HOME = Path.home()
@@ -24,20 +24,35 @@ def home_path(path):
 
 
 ROOT = home_path(os.environ.get("MISE_CONFIG_DIR", HOME / ".config/mise"))
-STATE = home_path(os.environ.get("MISE_STATE_DIR", HOME / ".local/state/mise")) / "dotfiles"
-MISE = os.environ.get("MISE_BIN") or shutil.which("mise") or str(HOME / ".local/bin/mise")
+STATE = (
+    home_path(os.environ.get("MISE_STATE_DIR", HOME / ".local/state/mise")) / "dotfiles"
+)
+MISE = (
+    os.environ.get("MISE_BIN") or shutil.which("mise") or str(HOME / ".local/bin/mise")
+)
 
 
 def run(args, *, capture=False, check=True, timeout=900, input=None, **kwargs):
     env = os.environ.copy()
-    env.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", MISE_YES="1",
-                GIT_SSH_COMMAND="ssh -o BatchMode=yes", MISE_CONFIG_DIR=str(ROOT),
-                MISE_DISABLE_UPDATE_WARNING="1")
+    env.update(
+        GIT_TERMINAL_PROMPT="0",
+        GH_PROMPT_DISABLED="1",
+        MISE_YES="1",
+        GIT_SSH_COMMAND="ssh -o BatchMode=yes",
+        MISE_CONFIG_DIR=str(ROOT),
+        MISE_DISABLE_UPDATE_WARNING="1",
+    )
     command = [str(a) for a in args]
-    with subprocess.Popen(command, cwd=HOME, env=env, start_new_session=True,
-                            stdin=subprocess.PIPE if input is not None else subprocess.DEVNULL,
-                            stdout=subprocess.PIPE if capture else None,
-                            stderr=subprocess.PIPE if capture else None, **kwargs) as process:
+    with subprocess.Popen(
+        command,
+        cwd=HOME,
+        env=env,
+        start_new_session=True,
+        stdin=subprocess.PIPE if input is not None else subprocess.DEVNULL,
+        stdout=subprocess.PIPE if capture else None,
+        stderr=subprocess.PIPE if capture else None,
+        **kwargs,
+    ) as process:
         try:
             stdout, stderr = process.communicate(input=input, timeout=timeout)
         except BaseException:
@@ -54,7 +69,9 @@ def run(args, *, capture=False, check=True, timeout=900, input=None, **kwargs):
                         pass
             process.communicate()
             raise
-        result = subprocess.CompletedProcess(command, process.returncode, stdout, stderr)
+        result = subprocess.CompletedProcess(
+            command, process.returncode, stdout, stderr
+        )
         if check:
             result.check_returncode()
         return result
@@ -82,7 +99,11 @@ def read_toml(path):
 
 def toml(value):
     if isinstance(value, dict):
-        return "{ " + ", ".join(f"{json.dumps(k)} = {toml(v)}" for k, v in value.items()) + " }"
+        return (
+            "{ "
+            + ", ".join(f"{json.dumps(k)} = {toml(v)}" for k, v in value.items())
+            + " }"
+        )
     if isinstance(value, list):
         return "[" + ", ".join(toml(v) for v in value) + "]"
     return json.dumps(value, ensure_ascii=False, allow_nan=False)
@@ -90,7 +111,11 @@ def toml(value):
 
 def document(value, prefix=()):
     lines = [f"[{'.'.join(json.dumps(p) for p in prefix)}]"] if prefix else []
-    lines += [f"{json.dumps(k)} = {toml(v)}" for k, v in value.items() if not isinstance(v, dict)]
+    lines += [
+        f"{json.dumps(k)} = {toml(v)}"
+        for k, v in value.items()
+        if not isinstance(v, dict)
+    ]
     for key, child in value.items():
         if isinstance(child, dict):
             lines.extend(["", document(child, (*prefix, key))])
@@ -161,7 +186,9 @@ def lock():
             fcntl.flock(stream, fcntl.LOCK_EX | fcntl.LOCK_NB)
         except BlockingIOError as error:
             raise RuntimeError("Another setup operation is running") from error
-        previous = signal.signal(signal.SIGTERM, lambda number, _: sys.exit(128 + number))
+        previous = signal.signal(
+            signal.SIGTERM, lambda number, _: sys.exit(128 + number)
+        )
         try:
             yield
         finally:
@@ -175,7 +202,15 @@ def git_origin(value):
     if ":" in value and "@" in value.split(":", 1)[0] and "://" not in value:
         return value
     url = urlsplit(value)
-    if (url.scheme == "https" and url.hostname and url.path.strip("/")
-            and url.username is None and not url.query and not url.fragment):
+    if (
+        url.scheme == "https"
+        and url.hostname
+        and url.path.strip("/")
+        and url.username is None
+        and not url.query
+        and not url.fragment
+    ):
         return value
-    raise ValueError("Use an HTTPS or SSH Git origin; keep HTTPS credentials in a credential helper, not the URL")
+    raise ValueError(
+        "Use an HTTPS or SSH Git origin; keep HTTPS credentials in a credential helper, not the URL"
+    )

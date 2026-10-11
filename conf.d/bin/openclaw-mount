@@ -290,43 +290,43 @@ EOF
 }
 
 case "${1:-mount}" in
-  mount)
-    mount_openclaw
-    ;;
-  unmount)
-    unmount_openclaw
-    ;;
-  force-unmount)
-    unmount_openclaw true
-    ;;
-  restart)
-    unmount_openclaw
-    mount_openclaw
-    ;;
-  force-restart)
-    unmount_openclaw true
-    mount_openclaw
-    ;;
-  reconcile)
-    reconcile_openclaw
-    ;;
-  status)
-    status_openclaw
-    ;;
-  install-agent)
-    install_launch_agent
-    ;;
-  uninstall-agent)
-    uninstall_launch_agent
-    ;;
-  agent-status)
-    launch_agent_status
-    ;;
-  -h | --help | help)
-    usage
-    ;;
-  *)
-    usage >&2
-    exit 64
-    ;;
+mount)
+  mount_openclaw
+  ;;
+unmount)
+  unmount_openclaw
+  ;;
+force-unmount)
+  unmount_openclaw true
+  ;;
+restart)
+  unmount_openclaw
+  mount_openclaw
+  ;;
+force-restart)
+  unmount_openclaw true
+  mount_openclaw
+  ;;
+reconcile)
+  reconcile_openclaw
+  ;;
+status)
+  status_openclaw
+  ;;
+install-agent)
+  install_launch_agent
+  ;;
+uninstall-agent)
+  uninstall_launch_agent
+  ;;
+agent-status)
+  launch_agent_status
+  ;;
+-h | --help | help)
+  usage
+  ;;
+*)
+  usage >&2
+  exit 64
+  ;;
 esac

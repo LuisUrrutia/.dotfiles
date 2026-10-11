@@ -3,41 +3,75 @@
 import argparse
 import hashlib
 import json
-from pathlib import Path
 import plistlib
 import re
 import subprocess
 import sys
 import tempfile
 import time
+from pathlib import Path
 
-from runtime import (HOME, ROOT, STATE, atomic, home_path, local, lock, mise, native_json,
-                        read_state, read_toml, regular_parents, run, selected, write_state)
+from runtime import (
+    ROOT,
+    STATE,
+    atomic,
+    home_path,
+    local,
+    lock,
+    mise,
+    native_json,
+    read_state,
+    read_toml,
+    regular_parents,
+    run,
+    selected,
+    write_state,
+)
 
 
 def policy():
     base = read_toml(ROOT / "config.toml")
     entry = base.get("dotfiles", {}).get("~/.config/mise/private/preferences", {})
     parent = base.get("dotfiles", {}).get("~/.config/mise", {})
-    if entry.get("mode") != "track" or entry.get("encrypt") is not True or "/private" not in parent.get("exclude", []):
-        raise RuntimeError("Preferences require separate encrypted tracking and exclusion from the plaintext setup entry")
+    if (
+        entry.get("mode") != "track"
+        or entry.get("encrypt") is not True
+        or "/private" not in parent.get("exclude", [])
+    ):
+        raise RuntimeError(
+            "Preferences require separate encrypted tracking and exclusion from the plaintext setup entry"
+        )
     recipients = None
     for config in native_json("config"):
         settings = read_toml(config["path"])
         declarations = settings.get("dotfiles", {})
         private = declarations.get("~/.config/mise/private/preferences")
         parent = declarations.get("~/.config/mise")
-        if private is not None and (not isinstance(private, dict) or private.get("encrypt") is not True or private.get("mode") != "track"):
+        if private is not None and (
+            not isinstance(private, dict)
+            or private.get("encrypt") is not True
+            or private.get("mode") != "track"
+        ):
             raise RuntimeError("An override disables encrypted preference tracking")
-        if parent is not None and (not isinstance(parent, dict) or "/private" not in parent.get("exclude", [])):
-            raise RuntimeError("An override includes private preferences in plaintext setup history")
+        if parent is not None and (
+            not isinstance(parent, dict) or "/private" not in parent.get("exclude", [])
+        ):
+            raise RuntimeError(
+                "An override includes private preferences in plaintext setup history"
+            )
         encryption = settings.get("history", {}).get("encryption", {})
         if recipients is None and "recipients" in encryption:
             recipients = encryption["recipients"]
-        if settings.get("settings", {}).get("history", {}).get("allow_plaintext_history"):
+        if (
+            settings.get("settings", {})
+            .get("history", {})
+            .get("allow_plaintext_history")
+        ):
             raise RuntimeError("Plaintext history publication must remain disabled")
     if not recipients:
-        raise RuntimeError("Enroll public age recipients and a recovery recipient before capturing preferences")
+        raise RuntimeError(
+            "Enroll public age recipients and a recovery recipient before capturing preferences"
+        )
 
 
 def prepare_history():
@@ -58,7 +92,11 @@ def definitions(applications=Path("/Applications")):
     result = []
     for path in sorted((ROOT / "conf.d").glob("*/preferences*.json")):
         definition = json.loads(path.read_text())
-        name = path.parent.name if path.name == "preferences.json" else path.stem.removeprefix("preferences.")
+        name = (
+            path.parent.name
+            if path.name == "preferences.json"
+            else path.stem.removeprefix("preferences.")
+        )
         if definition.get("optional") and name not in choices:
             continue
         application = applications / (definition["application"] + ".app")
@@ -67,21 +105,28 @@ def definitions(applications=Path("/Applications")):
         bundle = application / "Contents/Info.plist"
         version = plistlib.loads(bundle.read_bytes())["CFBundleShortVersionString"]
         if version.split(".")[0] != str(definition["major_version"]):
-            raise RuntimeError(f"{name} {version}: review its preference schema before capture or restore")
+            raise RuntimeError(
+                f"{name} {version}: review its preference schema before capture or restore"
+            )
         definition["name"] = name
         result.append(definition)
     return result
 
 
 def export_domain(domain):
-    result = run(["/usr/bin/defaults", "export", domain, "-"], capture=True, check=False)
+    result = run(
+        ["/usr/bin/defaults", "export", domain, "-"], capture=True, check=False
+    )
     if result.returncode:
         if b"does not exist" in result.stderr:
             return {}
         raise RuntimeError(f"Unable to export preference domain {domain}")
     # Apple's exporter can emit control characters that strict XML parsers reject.
-    normalized = run(["/usr/bin/plutil", "-convert", "binary1", "-o", "-", "--", "-"],
-                        input=result.stdout, capture=True)
+    normalized = run(
+        ["/usr/bin/plutil", "-convert", "binary1", "-o", "-", "--", "-"],
+        input=result.stdout,
+        capture=True,
+    )
     return plistlib.loads(normalized.stdout)
 
 
@@ -89,15 +134,25 @@ def reject_credentials(value, *, check_keys=True):
     if isinstance(value, dict):
         for key, child in value.items():
             words = re.sub(r"([a-z0-9])([A-Z])", r"\1_\2", str(key)).lower()
-            sensitive = re.search(r"(?:^|[^a-z0-9])(?:passwords?|tokens?|secrets?|licen[cs]es?|registration|credentials?|api[_-]?key)(?:$|[^a-z0-9])", words)
+            sensitive = re.search(
+                r"(?:^|[^a-z0-9])(?:passwords?|tokens?|secrets?|licen[cs]es?|registration|credentials?|api[_-]?key)(?:$|[^a-z0-9])",
+                words,
+            )
             if check_keys and sensitive:
-                raise RuntimeError(f"A preference contains a credential field ({key}); classify it before capture")
+                raise RuntimeError(
+                    f"A preference contains a credential field ({key}); classify it before capture"
+                )
             reject_credentials(child, check_keys=check_keys)
     elif isinstance(value, list):
         for child in value:
             reject_credentials(child, check_keys=check_keys)
-    elif isinstance(value, str) and re.search(r"-----BEGIN .*PRIVATE KEY-----|\b(?:ghp_|github_pat_|xox[baprs]-|sk-proj-)", value):
-        raise RuntimeError("A preference contains credential-like content; exclude it before capture")
+    elif isinstance(value, str) and re.search(
+        r"-----BEGIN .*PRIVATE KEY-----|\b(?:ghp_|github_pat_|xox[baprs]-|sk-proj-)",
+        value,
+    ):
+        raise RuntimeError(
+            "A preference contains credential-like content; exclude it before capture"
+        )
 
 
 def serialize(value):
@@ -107,11 +162,16 @@ def serialize(value):
 
 def validate(definition, filename, value):
     def typed(item, expected):
-        return (type(item) in (int, float) if expected == "number"
-                else type(item).__name__ == expected)
+        return (
+            type(item) in (int, float)
+            if expected == "number"
+            else type(item).__name__ == expected
+        )
 
     def refuse():
-        raise RuntimeError(f"{definition['name']}/{filename}: incompatible preference structure; review its schema")
+        raise RuntimeError(
+            f"{definition['name']}/{filename}: incompatible preference structure; review its schema"
+        )
 
     if filename == "preferences.plist":
         if not isinstance(value, dict) or set(value) - set(definition["keys"]):
@@ -120,8 +180,14 @@ def validate(definition, filename, value):
             if not typed(item, definition["keys"][key]):
                 refuse()
     else:
-        shape = next((spec for path, spec in definition["files"].items()
-                        if Path(path).name == filename), None)
+        shape = next(
+            (
+                spec
+                for path, spec in definition["files"].items()
+                if Path(path).name == filename
+            ),
+            None,
+        )
         if not shape or not typed(value, shape["type"]):
             refuse()
         for key, expected in shape.get("fields", {}).items():
@@ -144,7 +210,9 @@ def snapshot_root(definition):
     else:
         identifier = local().get("id", "")
         if not re.fullmatch(r"[a-zA-Z0-9][a-zA-Z0-9_-]*", identifier):
-            raise RuntimeError("A stable local machine ID is required for hardware-bound preferences")
+            raise RuntimeError(
+                "A stable local machine ID is required for hardware-bound preferences"
+            )
         scope = Path("machines") / identifier
     return ROOT / "private/preferences" / scope / definition["name"]
 
@@ -165,7 +233,11 @@ def live(definition):
             raw = path.read_bytes()
             value = plistlib.loads(raw) if path.suffix == ".plist" else json.loads(raw)
             validate(definition, path.name, value)
-            records[path.name] = serialize(value) if path.suffix == ".plist" else (json.dumps(value, sort_keys=True, indent=2) + "\n").encode()
+            records[path.name] = (
+                serialize(value)
+                if path.suffix == ".plist"
+                else (json.dumps(value, sort_keys=True, indent=2) + "\n").encode()
+            )
     return records
 
 
@@ -202,7 +274,9 @@ def capture(defs=None):
         current = live(definition)
         previous = state.get(name, {})
         if incoming and fingerprint(incoming) != previous.get("snapshot"):
-            print(f"{name}: incoming restore pending; kept the live settings and snapshot")
+            print(
+                f"{name}: incoming restore pending; kept the live settings and snapshot"
+            )
             continue
         root = snapshot_root(definition)
         for filename, content in current.items():
@@ -214,7 +288,9 @@ def capture(defs=None):
 
 
 def is_running(application):
-    result = run(["/usr/bin/pgrep", "-x", application], check=False, capture=True, timeout=10)
+    result = run(
+        ["/usr/bin/pgrep", "-x", application], check=False, capture=True, timeout=10
+    )
     if result.returncode not in (0, 1):
         raise RuntimeError(f"Cannot check whether {application} is running")
     return result.returncode == 0
@@ -234,18 +310,32 @@ def restore(defs=None):
             continue
         current = live(definition)
         if previous.get("live") and fingerprint(current) != previous["live"]:
-            raise RuntimeError(f"{name}: live settings changed since capture; both versions preserved")
-        existing = {key: value for key, value in current.items()
-                    if key != "preferences.plist" or plistlib.loads(value)}
+            raise RuntimeError(
+                f"{name}: live settings changed since capture; both versions preserved"
+            )
+        existing = {
+            key: value
+            for key, value in current.items()
+            if key != "preferences.plist" or plistlib.loads(value)
+        }
         if not previous and existing and current != incoming:
-            raise RuntimeError(f"{name}: existing live settings differ; use preferences accept {name} after review")
-        if any(is_running(name) for name in [definition["application"], *definition.get("writers", [])]):
+            raise RuntimeError(
+                f"{name}: existing live settings differ; use preferences accept {name} after review"
+            )
+        if any(
+            is_running(name)
+            for name in [definition["application"], *definition.get("writers", [])]
+        ):
             pending.append(name)
             continue
         # Validate the complete app snapshot before the first import.
         parsed = {}
         for filename, content in incoming.items():
-            value = plistlib.loads(content) if filename.endswith(".plist") else json.loads(content)
+            value = (
+                plistlib.loads(content)
+                if filename.endswith(".plist")
+                else json.loads(content)
+            )
             validate(definition, filename, value)
             parsed[filename] = value
         if "preferences.plist" in parsed:
@@ -260,7 +350,14 @@ def restore(defs=None):
             with tempfile.NamedTemporaryFile(dir=STATE, suffix=".plist") as temporary:
                 temporary.write(plistlib.dumps(merged))
                 temporary.flush()
-                run(["/usr/bin/defaults", "import", definition["domain"], temporary.name])
+                run(
+                    [
+                        "/usr/bin/defaults",
+                        "import",
+                        definition["domain"],
+                        temporary.name,
+                    ]
+                )
         for filename in definition["files"]:
             target = home_path(filename)
             if target.name in incoming:
@@ -269,7 +366,9 @@ def restore(defs=None):
         write_state("preferences", state)
         print(f"{name}: restored; open the app when ready")
     if pending:
-        raise RuntimeError("Restore pending until these apps are closed: " + ", ".join(pending))
+        raise RuntimeError(
+            "Restore pending until these apps are closed: " + ", ".join(pending)
+        )
 
 
 def main():
@@ -285,7 +384,16 @@ def main():
         prepare_history()
         if args.action == "capture":
             mise("dot", "save")
-            mise("dot", "capture", "--label", "application preferences", "--", sys.executable, __file__, "_capture")
+            mise(
+                "dot",
+                "capture",
+                "--label",
+                "application preferences",
+                "--",
+                sys.executable,
+                __file__,
+                "_capture",
+            )
             mise("dot", "save")
         elif args.action == "accept":
             matches = [d for d in definitions() if d["name"] == args.app]
@@ -294,7 +402,12 @@ def main():
             definition = matches[0]
             state = read_state("preferences")
             current = live(definition)
-            backup = ROOT / "private/preferences/conflicts" / definition["name"] / str(time.time_ns())
+            backup = (
+                ROOT
+                / "private/preferences/conflicts"
+                / definition["name"]
+                / str(time.time_ns())
+            )
             for filename, content in current.items():
                 atomic(backup / filename, content)
             mise("dot", "save")

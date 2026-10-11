@@ -4,13 +4,13 @@ set -euo pipefail
 destination="${1:-$HOME/.local/bin/mise}"
 parent="$(dirname "$destination")"
 while [[ "$parent" != / && "$parent" != . ]]; do
-  if [[ -L "$parent" || ( -e "$parent" && ! -d "$parent" ) ]]; then
+  if [[ -L "$parent" || (-e "$parent" && ! -d "$parent") ]]; then
     echo "Refusing redirected mise directory: $parent" >&2
     exit 1
   fi
   parent="$(dirname "$parent")"
 done
-if [[ -L "$destination" || ( -e "$destination" && ! -f "$destination" ) ]]; then
+if [[ -L "$destination" || (-e "$destination" && ! -f "$destination") ]]; then
   echo "Refusing unowned mise destination: $destination" >&2
   exit 1
 fi

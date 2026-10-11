@@ -1,10 +1,9 @@
 """Complete the few setup steps that do not have native declarations."""
 
-import os
 import json
-from pathlib import Path
 import plistlib
 import sys
+from pathlib import Path
 
 import config
 import preferences
@@ -35,7 +34,11 @@ def seed_linearmouse():
     mouse = HOME / ".config/linearmouse/linearmouse.json"
     definition = json.loads((ROOT / "conf.d/linearmouse/preferences.json").read_text())
     definition["name"] = "linearmouse"
-    if not mouse.exists() and not mouse.is_symlink() and not preferences.snapshots(definition):
+    if (
+        not mouse.exists()
+        and not mouse.is_symlink()
+        and not preferences.snapshots(definition)
+    ):
         atomic(mouse, (ROOT / "conf.d/linearmouse/initial.json").read_bytes())
 
 
@@ -48,26 +51,60 @@ def macos():
                 run(["sudo", "-n", "/usr/sbin/scutil", "--set", key, hostname])
     if local().get("xcode"):
         developer = "/Applications/Xcode.app/Contents/Developer"
-        if run(["xcode-select", "-p"], capture=True).stdout.decode().strip() != developer:
+        if (
+            run(["xcode-select", "-p"], capture=True).stdout.decode().strip()
+            != developer
+        ):
             run(["sudo", "-n", "xcode-select", "--switch", developer])
-        if run(["xcodebuild", "-checkFirstLaunchStatus"], capture=True, check=False).returncode:
+        if run(
+            ["xcodebuild", "-checkFirstLaunchStatus"], capture=True, check=False
+        ).returncode:
             run(["sudo", "-n", "xcodebuild", "-license", "accept"])
             run(["sudo", "-n", "xcodebuild", "-runFirstLaunch"])
     for name in ("auth.json", "skills/comment-style", "skills/communicate-clearly"):
-        source = HOME / (".codex/auth.json" if name == "auth.json" else ".agents/" + name)
+        source = HOME / (
+            ".codex/auth.json" if name == "auth.json" else ".agents/" + name
+        )
         link(source, HOME / ".local/share/voiceink-codex" / name)
     seed_linearmouse()
     if "displaylink" in selected():
-        run(["osascript", "-e", 'tell application "System Events" to if exists login item "DisplayLink Manager" then delete login item "DisplayLink Manager"'])
-    titles = {"Delete Conversation…", "Delete Conversations…", "Eliminar conversación…", "Eliminar conversaciones…"}
-    table = Path("/System/iOSSupport/System/Library/PrivateFrameworks/ChatKit.framework/Versions/A/Resources/ChatKit.loctable")
+        run(
+            [
+                "osascript",
+                "-e",
+                'tell application "System Events" to if exists login item "DisplayLink Manager" then delete login item "DisplayLink Manager"',
+            ]
+        )
+    titles = {
+        "Delete Conversation…",
+        "Delete Conversations…",
+        "Eliminar conversación…",
+        "Eliminar conversaciones…",
+    }
+    table = Path(
+        "/System/iOSSupport/System/Library/PrivateFrameworks/ChatKit.framework/Versions/A/Resources/ChatKit.loctable"
+    )
     if table.exists():
         for values in plistlib.loads(table.read_bytes()).values():
             if isinstance(values, dict):
-                titles.update(value for key, value in values.items()
-                                if key in ("DELETE_CONVERSATION_ELLIPSIS", "DELETE_CONVERSATIONS_ELLIPSIS") and isinstance(value, str))
+                titles.update(
+                    value
+                    for key, value in values.items()
+                    if key
+                    in ("DELETE_CONVERSATION_ELLIPSIS", "DELETE_CONVERSATIONS_ELLIPSIS")
+                    and isinstance(value, str)
+                )
     pairs = [value for title in sorted(titles) for value in (title, "@\b")]
-    run(["defaults", "write", "com.apple.MobileSMS", "NSUserKeyEquivalents", "-dict-add", *pairs])
+    run(
+        [
+            "defaults",
+            "write",
+            "com.apple.MobileSMS",
+            "NSUserKeyEquivalents",
+            "-dict-add",
+            *pairs,
+        ]
+    )
 
 
 def main():

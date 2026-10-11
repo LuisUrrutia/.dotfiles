@@ -26,10 +26,7 @@
       "type": "string"
     },
     "percent": {
-      "type": [
-        "bar",
-        "num-color"
-      ]
+      "type": ["bar", "num-color"]
     },
     "bar": {
       "char": {

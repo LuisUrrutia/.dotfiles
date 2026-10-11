@@ -73,8 +73,5 @@
   },
   "optional": true,
   "major_version": 4,
-  "writers": [
-    "Audio Hijack Agent",
-    "RemoteAUHost"
-  ]
+  "writers": ["Audio Hijack Agent", "RemoteAUHost"]
 }

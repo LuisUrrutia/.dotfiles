@@ -17,3 +17,8 @@ read_globals = {
         },
     },
 }
+
+files["conf.d/nvim/**/*.lua"] = {
+    std = "luajit",
+    globals = { "vim" },
+}

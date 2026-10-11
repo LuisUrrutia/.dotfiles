@@ -14,9 +14,7 @@
         "schemes": "list"
       },
       "versions": {},
-      "optional": [
-        "$schema"
-      ],
+      "optional": ["$schema"],
       "array_items": {
         "schemes": "dict"
       }

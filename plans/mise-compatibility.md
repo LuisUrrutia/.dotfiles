@@ -200,7 +200,7 @@ Other observed results:
   directory-scoped test Git accounts. Real repositories selected the expected
   identities. Application symlinks point to regular active sources.
 - Two runs of `mise -C ~ bootstrap --only
-  dotfiles,mise-shell-activate,macos-defaults,macos-launchd-agents,services,user --yes`
+dotfiles,mise-shell-activate,macos-defaults,macos-launchd-agents,services,user --yes`
   passed. Before reboot, status reported 64 applied file declarations, three
   tracked trees, six applied edits and 80 set defaults. After reboot, the history
   watcher was running, appearance agent loaded, and Fish selected. History had
@@ -247,16 +247,16 @@ Other observed results:
 
 Key guest commands and evidence (paths relative to `.tmp/macos-acceptance/evidence/`):
 
-| Command or operation | Result | Evidence |
-| --- | --- | --- |
-| `mise -C ~ install --yes` | All 25 retained tools installed | `native-tools-status.json` |
-| `mise -C ~ bootstrap packages apply brew-cask:nordvpn --yes` | Exit 1 after approved policy change | `nordvpn-retry.log` |
-| `mise -C ~ run --timeout 10m setup:bat ::: setup:node ::: setup:python ::: setup:rustup` | Exit 0 | `setup-tasks-independent.log` |
-| `mise -C ~ run setup:zed`, repeated | Both exit 0; independent handler readback agrees | `file-association-regression.log` |
-| Native resource bootstrap above, repeated | Both exit 0 | `native-resources-repeat.log` |
-| `mise -C ~ bootstrap status --json` | Final resource snapshot | `bootstrap-final-status.json` |
-| `mise -C ~ exec python@3 -- python3 ~/.config/mise/conf.d/setup/config.py check` | Exit 0 | `final-state-console.log` |
-| Encrypted local-origin recovery | Missing key refused; independent recovery key restored fixture | `native-recovery.log` |
+| Command or operation                                                                     | Result                                                         | Evidence                          |
+| ---------------------------------------------------------------------------------------- | -------------------------------------------------------------- | --------------------------------- |
+| `mise -C ~ install --yes`                                                                | All 25 retained tools installed                                | `native-tools-status.json`        |
+| `mise -C ~ bootstrap packages apply brew-cask:nordvpn --yes`                             | Exit 1 after approved policy change                            | `nordvpn-retry.log`               |
+| `mise -C ~ run --timeout 10m setup:bat ::: setup:node ::: setup:python ::: setup:rustup` | Exit 0                                                         | `setup-tasks-independent.log`     |
+| `mise -C ~ run setup:zed`, repeated                                                      | Both exit 0; independent handler readback agrees               | `file-association-regression.log` |
+| Native resource bootstrap above, repeated                                                | Both exit 0                                                    | `native-resources-repeat.log`     |
+| `mise -C ~ bootstrap status --json`                                                      | Final resource snapshot                                        | `bootstrap-final-status.json`     |
+| `mise -C ~ exec python@3 -- python3 ~/.config/mise/conf.d/setup/config.py check`         | Exit 0                                                         | `final-state-console.log`         |
+| Encrypted local-origin recovery                                                          | Missing key refused; independent recovery key restored fixture | `native-recovery.log`             |
 
 Harness errors are retained in the logs: the first final-state probe used an
 unsupported `status --only` flag and the wrong application-state field; the
@@ -300,17 +300,17 @@ snapshot, with Zed 1.23.2 installed through native mise. The original acceptance
 VM's firewall was left unchanged. Gatekeeper remained enabled in the test copy.
 All evidence below is local under `.tmp/macos-acceptance/evidence/`:
 
-| Operation | Observed result | Evidence |
-| --- | --- | --- |
-| Seed preferences without reloading | YAML and shell scripts still opened with TextEdit | `association-silent-seed.log` |
-| Restart after the seed | Requested handlers read back as Zed | `association-silent-after-restart.log` |
-| Change to TextEdit, then Zed, reloading only user `lsd` | Both changes took effect without consent dialogs | `association-silent-lsd-restart.log`, `association-silent-lsd-zed.log` |
-| `mise -C ~ run setup:zed` from four TextEdit associations | Exit 0; independent file-URL lookup selected Zed for JSON, YAML, TOML and shell scripts | `association-silent-acceptance.log` |
-| Repeat `setup:zed` | Exit 0; preferences and daemon PID unchanged | `association-silent-acceptance.log` |
-| Unrelated PNG/HTTPS handlers and preference marker | Preserved through application and concurrent updates | `association-silent-acceptance.log` |
-| Mismatched `--check` and `setup:iina` without IINA | Both exit 1; no preference writes or daemon reload | `association-silent-acceptance.log` |
-| Two simultaneous updates to disjoint types | Both exit 0; all four requested associations retained | `association-silent-acceptance.log` |
-| Reboot after applying the final helper | `--check` exits 0; independent file-URL lookup still selects Zed for all four extensions; Gatekeeper enabled | `association-silent-persistence.log` |
+| Operation                                                 | Observed result                                                                                              | Evidence                                                               |
+| --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------- |
+| Seed preferences without reloading                        | YAML and shell scripts still opened with TextEdit                                                            | `association-silent-seed.log`                                          |
+| Restart after the seed                                    | Requested handlers read back as Zed                                                                          | `association-silent-after-restart.log`                                 |
+| Change to TextEdit, then Zed, reloading only user `lsd`   | Both changes took effect without consent dialogs                                                             | `association-silent-lsd-restart.log`, `association-silent-lsd-zed.log` |
+| `mise -C ~ run setup:zed` from four TextEdit associations | Exit 0; independent file-URL lookup selected Zed for JSON, YAML, TOML and shell scripts                      | `association-silent-acceptance.log`                                    |
+| Repeat `setup:zed`                                        | Exit 0; preferences and daemon PID unchanged                                                                 | `association-silent-acceptance.log`                                    |
+| Unrelated PNG/HTTPS handlers and preference marker        | Preserved through application and concurrent updates                                                         | `association-silent-acceptance.log`                                    |
+| Mismatched `--check` and `setup:iina` without IINA        | Both exit 1; no preference writes or daemon reload                                                           | `association-silent-acceptance.log`                                    |
+| Two simultaneous updates to disjoint types                | Both exit 0; all four requested associations retained                                                        | `association-silent-acceptance.log`                                    |
+| Reboot after applying the final helper                    | `--check` exits 0; independent file-URL lookup still selects Zed for all four extensions; Gatekeeper enabled | `association-silent-persistence.log`                                   |
 
 The VM console showed no association dialogs after these tests. IINA's actual
 media associations remain unverified because its application was unavailable.
@@ -350,16 +350,16 @@ public dotfiles repository, `google/fonts`, all six external skill repositories
 and `github/gh-stack`. Evidence is local under `.tmp/macos-acceptance/evidence/`:
 `https-acceptance.log`, `https-repositories.log` and `https-source-inputs.json`.
 
-| Guest command or check | Observed result | Evidence |
-| --- | --- | --- |
-| `mise -C ~ bootstrap packages apply brew-cask:font-open-sans --yes`, repeated separately for Roboto, Roboto Condensed, Roboto Mono and Source Code Pro | All five exit 0; five native cask receipts and ten font files present | `https-results.json`, `https-font-*.log`, `https-readback.json` |
-| `mise -C ~ run setup:tmux`, repeated | All four plugins installed; all origins use HTTPS | `https-setup-tmux.log`, `https-tmux-repeat.log`, `https-readback.json` |
-| `tpack update all` | Exit 0 for all four plugins | `https-tmux-update.log` |
-| `mise -C ~ run setup:skills`, repeated | Eight selected skills from six repositories, plus Playwright skills, installed | `https-setup-skills.log`, `https-skills-repeat.log`, `https-readback.json` |
-| `mise -C ~ run --timeout 10m setup:nvim`, repeated after the build correction below | Both exit 0; all 26 Git checkouts use HTTPS and match the lockfile | `https-nvim-repaired.log`, `https-nvim-repeat.log`, `https-readback.json` |
-| Neovim component readback | Blink and Telescope native libraries load, all six Mason packages are installed, and all 18 declared Treesitter parsers load | `https-readback.json` |
-| `mise -C ~ run setup:gh`, repeated; `gh stack --help` | All exit 0; extension installed anonymously | `https-setup-gh.log`, `https-gh-repeat.log`, `https-readback.json` |
-| `gh auth status`; executable and Gatekeeper checks | No GitHub login; Homebrew and Stow absent; assessments enabled | `https-final-state.log` |
+| Guest command or check                                                                                                                                 | Observed result                                                                                                              | Evidence                                                                   |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| `mise -C ~ bootstrap packages apply brew-cask:font-open-sans --yes`, repeated separately for Roboto, Roboto Condensed, Roboto Mono and Source Code Pro | All five exit 0; five native cask receipts and ten font files present                                                        | `https-results.json`, `https-font-*.log`, `https-readback.json`            |
+| `mise -C ~ run setup:tmux`, repeated                                                                                                                   | All four plugins installed; all origins use HTTPS                                                                            | `https-setup-tmux.log`, `https-tmux-repeat.log`, `https-readback.json`     |
+| `tpack update all`                                                                                                                                     | Exit 0 for all four plugins                                                                                                  | `https-tmux-update.log`                                                    |
+| `mise -C ~ run setup:skills`, repeated                                                                                                                 | Eight selected skills from six repositories, plus Playwright skills, installed                                               | `https-setup-skills.log`, `https-skills-repeat.log`, `https-readback.json` |
+| `mise -C ~ run --timeout 10m setup:nvim`, repeated after the build correction below                                                                    | Both exit 0; all 26 Git checkouts use HTTPS and match the lockfile                                                           | `https-nvim-repaired.log`, `https-nvim-repeat.log`, `https-readback.json`  |
+| Neovim component readback                                                                                                                              | Blink and Telescope native libraries load, all six Mason packages are installed, and all 18 declared Treesitter parsers load | `https-readback.json`                                                      |
+| `mise -C ~ run setup:gh`, repeated; `gh stack --help`                                                                                                  | All exit 0; extension installed anonymously                                                                                  | `https-setup-gh.log`, `https-gh-repeat.log`, `https-readback.json`         |
+| `gh auth status`; executable and Gatekeeper checks                                                                                                     | No GitHub login; Homebrew and Stow absent; assessments enabled                                                               | `https-final-state.log`                                                    |
 
 This smaller test copy initially lacked CMake and Rust. After native installation
 of both declared prerequisites, Neovim returned success but Telescope still lacked
@@ -406,16 +406,16 @@ when no candidate satisfies the age, and exempts Bird by name. Bird follows
 `latest` with native tool-scoped reputation, trust, build and source exemptions;
 its third-party dependencies retain their checks.
 
-| Command or observation | Result |
-| --- | --- |
-| `mise -C ~ install npm:@luisurrutia/bird`; repeated; `mise -C ~ exec node npm:@luisurrutia/bird -- bird --version` | Installed 1.0.0 without accepting reputation prompts; repeat and executable passed |
-| `mise -C ~ latest npm:prettier`; `mise -C ~ install npm:prettier@latest`; executable version | Selected and installed 3.9.9; registry latest 3.9.10 was published on the test date |
-| `mise -C ~ latest npm:pnpm` | Selected 12.10.1, published October 6; skipped newer October 9–10 releases |
-| `mise -C ~ latest` for `npm:2password`, `npm:typescript`, `npm:eslint` | Selected the newest stable release at least three days old in each registry snapshot |
-| `MISE_MINIMUM_RELEASE_AGE=100y mise -C ~ latest npm:@luisurrutia/bird`; same probe for Prettier | Bird still resolved 1.0.0; Prettier returned no eligible version |
-| `mise -C ~ run setup:node`, repeated; npm, pnpm and Yarn config readback | Three days: npm `3`, pnpm and Yarn `4320` |
-| pnpm readback with and without `XDG_CONFIG_HOME` | Both returned `4320`; the macOS native path now links to the same managed source |
-| Bird's generated Aube project and manifest | Named reputation/trust/source exceptions and build approval present |
+| Command or observation                                                                                             | Result                                                                               |
+| ------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------ |
+| `mise -C ~ install npm:@luisurrutia/bird`; repeated; `mise -C ~ exec node npm:@luisurrutia/bird -- bird --version` | Installed 1.0.0 without accepting reputation prompts; repeat and executable passed   |
+| `mise -C ~ latest npm:prettier`; `mise -C ~ install npm:prettier@latest`; executable version                       | Selected and installed 3.9.9; registry latest 3.9.10 was published on the test date  |
+| `mise -C ~ latest npm:pnpm`                                                                                        | Selected 12.10.1, published October 6; skipped newer October 9–10 releases           |
+| `mise -C ~ latest` for `npm:2password`, `npm:typescript`, `npm:eslint`                                             | Selected the newest stable release at least three days old in each registry snapshot |
+| `MISE_MINIMUM_RELEASE_AGE=100y mise -C ~ latest npm:@luisurrutia/bird`; same probe for Prettier                    | Bird still resolved 1.0.0; Prettier returned no eligible version                     |
+| `mise -C ~ run setup:node`, repeated; npm, pnpm and Yarn config readback                                           | Three days: npm `3`, pnpm and Yarn `4320`                                            |
+| pnpm readback with and without `XDG_CONFIG_HOME`                                                                   | Both returned `4320`; the macOS native path now links to the same managed source     |
+| Bird's generated Aube project and manifest                                                                         | Named reputation/trust/source exceptions and build approval present                  |
 
 At this stage, `2password` passed age selection, but an install without CLI
 `--yes` still failed a different reputation gate: 917 weekly downloads against
@@ -535,15 +535,15 @@ mise 2026.10.7; it does not broaden the cask release-age guarantees documented a
 The disposable `dotfiles-associations-023be87` VM ran the real bootstrap hook
 with isolated configurations, caches, state, app directories and test prefixes:
 
-| Scenario or command | Observed result |
-| --- | --- |
-| `mise bootstrap --yes`, official host allowed and Nix blocked | Installed 1.3.1 from the official DMG; no recovery |
-| `mise bootstrap --yes`, official host blocked and Nix allowed | Recovered the byte-identical DMG, verified its signature and installed through the native cask |
-| Repeat bootstrap and `python3 conf.d/setup/packages.py upgrade` | Exit 0; no recovery, app inode and executable timestamp unchanged |
-| Both download hosts blocked | Exit 1; no app or completed archive installed |
-| Corrupt pre-existing native download cache | Exit 1; corrupt file preserved, no fallback or app installation |
-| Ghostty removed from the isolated declaration | No Ghostty installation or artifact download |
-| Ghostty `+version` and `codesign --verify --deep --strict -R` with its identifier and team | Passed |
+| Scenario or command                                                                        | Observed result                                                                                |
+| ------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------- |
+| `mise bootstrap --yes`, official host allowed and Nix blocked                              | Installed 1.3.1 from the official DMG; no recovery                                             |
+| `mise bootstrap --yes`, official host blocked and Nix allowed                              | Recovered the byte-identical DMG, verified its signature and installed through the native cask |
+| Repeat bootstrap and `python3 conf.d/setup/packages.py upgrade`                            | Exit 0; no recovery, app inode and executable timestamp unchanged                              |
+| Both download hosts blocked                                                                | Exit 1; no app or completed archive installed                                                  |
+| Corrupt pre-existing native download cache                                                 | Exit 1; corrupt file preserved, no fallback or app installation                                |
+| Ghostty removed from the isolated declaration                                              | No Ghostty installation or artifact download                                                   |
+| Ghostty `+version` and `codesign --verify --deep --strict -R` with its identifier and team | Passed                                                                                         |
 
 The active VM also installed Ghostty under `/Applications` through recovery.
 Its first configuration smoke check found that this test copy had not deployed
@@ -618,9 +618,9 @@ Gatekeeper rules were enabled and verified before downloading official artifacts
 with Safari. The download files retained Safari quarantine and matched these
 SHA-256 values:
 
-| Artifact | SHA-256 |
-| --- | --- |
-| Ghostty 1.3.1 DMG | `18cff2b0a6cee90eead9c7d3064e808a252a40baf214aa752c1ecb793b8f5f69` |
+| Artifact            | SHA-256                                                            |
+| ------------------- | ------------------------------------------------------------------ |
+| Ghostty 1.3.1 DMG   | `18cff2b0a6cee90eead9c7d3064e808a252a40baf214aa752c1ecb793b8f5f69` |
 | NordVPN 10.12.0 PKG | `513c0603d3b5b36c2145853949548b3ed42a4830e4bcc73fd54d549124c1dd07` |
 
 Ghostty was copied using Finder and opened through the normal first-launch
@@ -737,25 +737,26 @@ References:
 - https://mise.jdx.dev/dotfiles/history.html
 - https://mise.jdx.dev/dotfiles/encryption.html
 - https://mise.jdx.dev/dotfiles/sync.html
+
 ## Native capability audit
 
 Reviewed upstream `jdx/mise` at `19e8c8f` and executed the contracts with mise
 2026.10.7 on 2026-10-11. This audit follows the request to remove duplicate setup
 logic and bring Ubuntu installation into scope.
 
-| Responsibility | Native owner and remaining boundary |
-| --- | --- |
-| Install mise | `mise.run` selects the latest stable platform build and checks SHA-256. The wrapper only preserves foreign destinations, stages installation and keeps the previous executable. No mise release or checksum is pinned in this repository. |
-| Version compatibility | Native `min_version` rejects unsupported mise versions. Duplicate Python version checks were removed. The initial mise binary is exempt from the tool cooldown so it can provide current bootstrap features. |
-| Package installation | Native `[tools]`, `apt:`, `brew:` and `brew-cask:` declarations. Recipes use `/opt/homebrew` on macOS and `/home/linuxbrew/.linuxbrew` for CocoaPods and MozJPEG on Linux because the bottles expect those paths; no `brew` process runs. |
-| Resource verification | One native `bootstrap status --missing --json` checks the declared resources, including tools and systemd units. Skipped required packages and native warnings still fail acceptance. |
-| Files and permissions | Native dotfiles now own OrbStack's Docker plugin links; `bootstrap.directories` owns SSH directory permissions. The file guard still protects foreign links, redirected parents and edits to copied/template files: native apply can replace those without `--force`. |
-| Agent and credential link chains | The small final adapter remains. A real isolated `dot apply` with `.agents/AGENTS.md` and `.codex/AGENTS.md` declared together fails before creating either: the second source does not exist yet. Native links also do not create the intentionally dangling VoiceInk auth link before login. |
-| App-written shared keys | Native `merge` owns deployment. It has no command to capture just the owned keys back into a shared source; `edits.py` preserves that two-way contract and refuses concurrent changes. Native `dot add --changed` handles copied files, not merge entries. |
-| macOS preference snapshots | Native history owns encryption and transfer. `macos.defaults` writes declared values but cannot export a running app's changed settings, represent binary plist data, or defer restoration until writers close. `preferences.py` owns only the allowlisted export/import and pending-restore decisions. It is not an encryption implementation. |
-| Shared setup exchange | Native `dot save`, `sync`, `pull` and `recover` own history and Git conflicts. A pull does not install tools/services or render templates, so the serialized task still runs bootstrap after changed declarations and keeps failed setup pending. Native reload hooks explicitly exclude machine setup as their purpose. |
-| Scheduling | Native LaunchAgent and systemd timer definitions are visible TOML files under `conf.d/history`. Only the local selected definition is activated. Both modes leave native history network exchange manual; the watcher saves locally. |
-| Maintenance | Native mise upgrades tools/packages. The remaining task also updates Fisher, Neovim, GitHub extensions, skills and TPack, with success-only daily/weekly stamps. Mise's artifact cache does not provide this elapsed-time maintenance policy. |
+| Responsibility                   | Native owner and remaining boundary                                                                                                                                                                                                                                                                                                             |
+| -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Install mise                     | `mise.run` selects the latest stable platform build and checks SHA-256. The wrapper only preserves foreign destinations, stages installation and keeps the previous executable. No mise release or checksum is pinned in this repository.                                                                                                       |
+| Version compatibility            | Native `min_version` rejects unsupported mise versions. Duplicate Python version checks were removed. The initial mise binary is exempt from the tool cooldown so it can provide current bootstrap features.                                                                                                                                    |
+| Package installation             | Native `[tools]`, `apt:`, `brew:` and `brew-cask:` declarations. Recipes use `/opt/homebrew` on macOS and `/home/linuxbrew/.linuxbrew` for CocoaPods and MozJPEG on Linux because the bottles expect those paths; no `brew` process runs.                                                                                                       |
+| Resource verification            | One native `bootstrap status --missing --json` checks the declared resources, including tools and systemd units. Skipped required packages and native warnings still fail acceptance.                                                                                                                                                           |
+| Files and permissions            | Native dotfiles now own OrbStack's Docker plugin links; `bootstrap.directories` owns SSH directory permissions. The file guard still protects foreign links, redirected parents and edits to copied/template files: native apply can replace those without `--force`.                                                                           |
+| Agent and credential link chains | The small final adapter remains. A real isolated `dot apply` with `.agents/AGENTS.md` and `.codex/AGENTS.md` declared together fails before creating either: the second source does not exist yet. Native links also do not create the intentionally dangling VoiceInk auth link before login.                                                  |
+| App-written shared keys          | Native `merge` owns deployment. It has no command to capture just the owned keys back into a shared source; `edits.py` preserves that two-way contract and refuses concurrent changes. Native `dot add --changed` handles copied files, not merge entries.                                                                                      |
+| macOS preference snapshots       | Native history owns encryption and transfer. `macos.defaults` writes declared values but cannot export a running app's changed settings, represent binary plist data, or defer restoration until writers close. `preferences.py` owns only the allowlisted export/import and pending-restore decisions. It is not an encryption implementation. |
+| Shared setup exchange            | Native `dot save`, `sync`, `pull` and `recover` own history and Git conflicts. A pull does not install tools/services or render templates, so the serialized task still runs bootstrap after changed declarations and keeps failed setup pending. Native reload hooks explicitly exclude machine setup as their purpose.                        |
+| Scheduling                       | Native LaunchAgent and systemd timer definitions are visible TOML files under `conf.d/history`. Only the local selected definition is activated. Both modes leave native history network exchange manual; the watcher saves locally.                                                                                                            |
+| Maintenance                      | Native mise upgrades tools/packages. The remaining task also updates Fisher, Neovim, GitHub extensions, skills and TPack, with success-only daily/weekly stamps. Mise's artifact cache does not provide this elapsed-time maintenance policy.                                                                                                   |
 
 Sources:
 
@@ -770,7 +771,6 @@ Sources:
 - https://mise.jdx.dev/bootstrap/packages/apt.html
 - https://mise.jdx.dev/bootstrap/systemd.html
 
-
 ## Ubuntu and latest-installer acceptance
 
 Executed on 2026-10-11 with disposable Ubuntu 26.04 arm64 and Ubuntu 24.04
@@ -781,20 +781,20 @@ GitHub's anonymous API quota was exhausted, so download verification used an
 existing authenticated token passed only through stdin into process environment.
 The test harness did not write the token to a file or to the public payload.
 
-| Command or scenario | Result |
-| --- | --- |
-| `bash bootstrap/install-mise.sh` with a scratch destination on macOS arm64 | Selected latest stable 2026.10.7, verified upstream SHA-256 and preserved the older binary. An unchanged repeat preserved the executable timestamp. |
-| Same installer with a deliberately corrupt release archive | Exit 1, checksum mismatch; the existing executable remained byte-identical and no pending replacement remained. |
-| `./install.sh --seed-only --recipient` with a synthetic public recipient on Ubuntu 24.04 x86_64 | Exit 0; installed the official Linux x64 mise and Python, derived the machine ID and loaded Linux/common manifests only. |
-| Ubuntu 24.04 `apt-cache show` for every declared system package | All 46 package names available. This is availability evidence, not a full x86_64 installation. |
-| `./install.sh` on Ubuntu 26.04 arm64 | Exit 0 after the fixes below; all 46 system packages and 68 mise tools installed, configuration deployed, Fish selected as login shell, and the native history watcher running. No Homebrew executable or prefix. |
-| `mise bootstrap status --missing --json` after application | Exit 0, including packages, tools, dotfiles, shell activation and services. |
-| `mise exec -- bash -x ~/.config/mise/conf.d/nvim/setup.sh` after moving aside both Neovim data and state | Exit 0; fresh plugin restoration, native builds, language servers and parsers. |
-| Native systemd timer/service running `mise -C ~ run sync --automatic` | Successful local history exchange and setup application, `ExecMainStatus=0`. |
-| Add a new `pipx:yamllint` declaration and a content-managed file, then start the generated sync service | Installed yamllint 1.38.0 and wrote the declared file; native resource status passed. This exercised automatic application of software changes with a local private origin. |
-| Change local mode to manual, then `mise -C ~ run config apply` | Exit 0; native apply removed both the sync service and timer, retained the history watcher, and `mise run sync --automatic` reported disabled. |
-| `mise run verify` through the isolated macOS entrypoint | Exit 0; five tests in 159.845 seconds, Swift/type/syntax/schema/workflow checks, shell smoke, secret and diff checks passed. |
-| `mise run verify` in the Ubuntu VM with an isolated verification configuration | Exit 0; five tests in 11.116 seconds and every applicable parser/static/smoke check passed. Swift framework checks run only on macOS. |
+| Command or scenario                                                                                      | Result                                                                                                                                                                                                            |
+| -------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `bash bootstrap/install-mise.sh` with a scratch destination on macOS arm64                               | Selected latest stable 2026.10.7, verified upstream SHA-256 and preserved the older binary. An unchanged repeat preserved the executable timestamp.                                                               |
+| Same installer with a deliberately corrupt release archive                                               | Exit 1, checksum mismatch; the existing executable remained byte-identical and no pending replacement remained.                                                                                                   |
+| `./install.sh --seed-only --recipient` with a synthetic public recipient on Ubuntu 24.04 x86_64          | Exit 0; installed the official Linux x64 mise and Python, derived the machine ID and loaded Linux/common manifests only.                                                                                          |
+| Ubuntu 24.04 `apt-cache show` for every declared system package                                          | All 46 package names available. This is availability evidence, not a full x86_64 installation.                                                                                                                    |
+| `./install.sh` on Ubuntu 26.04 arm64                                                                     | Exit 0 after the fixes below; all 46 system packages and 68 mise tools installed, configuration deployed, Fish selected as login shell, and the native history watcher running. No Homebrew executable or prefix. |
+| `mise bootstrap status --missing --json` after application                                               | Exit 0, including packages, tools, dotfiles, shell activation and services.                                                                                                                                       |
+| `mise exec -- bash -x ~/.config/mise/conf.d/nvim/setup.sh` after moving aside both Neovim data and state | Exit 0; fresh plugin restoration, native builds, language servers and parsers.                                                                                                                                    |
+| Native systemd timer/service running `mise -C ~ run sync --automatic`                                    | Successful local history exchange and setup application, `ExecMainStatus=0`.                                                                                                                                      |
+| Add a new `pipx:yamllint` declaration and a content-managed file, then start the generated sync service  | Installed yamllint 1.38.0 and wrote the declared file; native resource status passed. This exercised automatic application of software changes with a local private origin.                                       |
+| Change local mode to manual, then `mise -C ~ run config apply`                                           | Exit 0; native apply removed both the sync service and timer, retained the history watcher, and `mise run sync --automatic` reported disabled.                                                                    |
+| `mise run verify` through the isolated macOS entrypoint                                                  | Exit 0; five tests in 159.845 seconds, Swift/type/syntax/schema/workflow checks, shell smoke, secret and diff checks passed.                                                                                      |
+| `mise run verify` in the Ubuntu VM with an isolated verification configuration                           | Exit 0; five tests in 11.116 seconds and every applicable parser/static/smoke check passed. Swift framework checks run only on macOS.                                                                             |
 
 Real installation found two portability defects: the shared Curl configuration's
 `remove-on-error` conflicted with Rustup's resumed downloads, and the default
@@ -864,15 +864,15 @@ Reviewed all 45 macOS entries and nine shared tools in `conf.d/cli` on
 42 have Linux declarations; CocoaPods and MozJPEG were the two missing entries.
 The other three require macOS. The complete mapping is:
 
-| Linux owner | Tools from the macOS manifest |
-| --- | --- |
-| `apt:`, same name | coreutils, moreutils, findutils, grep, zstd, less, figlet, rename, fswatch, watchman, rsync, gnupg, aria2, ffmpeg, pngquant |
-| `apt:`, distro name | gnu-sed → sed; gnu-tar → tar; pkgconf → pkg-config; watch → procps; ykman → yubikey-manager; exiftool → libimage-exiftool-perl; p7zip → 7zip |
-| mise `[tools]`, same name | jq, cmake, eza, hyperfine, fd, ast-grep, fzf, zoxide, dust, duf, worktrunk, actionlint, shellcheck, gitleaks |
-| `cargo:` | procs, lolcrab, resvg |
-| `aqua:bensadeh/tailspin` | tailspin |
-| Native `brew:` | cocoapods, mozjpeg |
-| macOS only | remindctl (Apple Reminders), mas (Mac App Store), mole (macOS maintenance) |
+| Linux owner               | Tools from the macOS manifest                                                                                                                |
+| ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `apt:`, same name         | coreutils, moreutils, findutils, grep, zstd, less, figlet, rename, fswatch, watchman, rsync, gnupg, aria2, ffmpeg, pngquant                  |
+| `apt:`, distro name       | gnu-sed → sed; gnu-tar → tar; pkgconf → pkg-config; watch → procps; ykman → yubikey-manager; exiftool → libimage-exiftool-perl; p7zip → 7zip |
+| mise `[tools]`, same name | jq, cmake, eza, hyperfine, fd, ast-grep, fzf, zoxide, dust, duf, worktrunk, actionlint, shellcheck, gitleaks                                 |
+| `cargo:`                  | procs, lolcrab, resvg                                                                                                                        |
+| `aqua:bensadeh/tailspin`  | tailspin                                                                                                                                     |
+| Native `brew:`            | cocoapods, mozjpeg                                                                                                                           |
+| macOS only                | remindctl (Apple Reminders), mas (Mac App Store), mole (macOS maintenance)                                                                   |
 
 The formula APIs confirm arm64 and x86_64 Linux bottles for both additions:
 https://formulae.brew.sh/api/formula/cocoapods.json and

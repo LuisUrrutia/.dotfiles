@@ -1,5 +1,10 @@
 [env]
-_.path = ["{{ env.HOME }}/.local/bin", "/home/linuxbrew/.linuxbrew/opt/mozjpeg/bin", "/home/linuxbrew/.linuxbrew/bin", "/home/linuxbrew/.linuxbrew/sbin"]
+_.path = [
+  "{{ env.HOME }}/.local/bin",
+  "/home/linuxbrew/.linuxbrew/opt/mozjpeg/bin",
+  "/home/linuxbrew/.linuxbrew/bin",
+  "/home/linuxbrew/.linuxbrew/sbin",
+]
 
 [bootstrap.packages]
 # Ruby's bottle needs the formula's uses_from_macos libraries on Linux too.

@@ -6,7 +6,7 @@ Prevents sleep when on home WiFi networks and AC power
 local mod = {}
 
 ---@type { d: fun(message: string), i: fun(message: string), w: fun(message: string), e: fun(message: string) }
-local log = hs.logger.new('caffeinate_at_home')
+local log = hs.logger.new("caffeinate_at_home")
 
 -- WiFi transitions briefly report a nil SSID; wait this long before
 -- treating a nil SSID as a real network change
@@ -43,8 +43,12 @@ local function evaluate(current_SSID, power_source)
             log.w("WiFi SSID unavailable. Check Hammerspoon Location Services permission.")
         end
 
-        log.i("Allow normal sleep. Current SSID: " .. current_SSID_label ..
-            ", power: " .. (power_source or "<unavailable>"))
+        log.i(
+            "Allow normal sleep. Current SSID: "
+                .. current_SSID_label
+                .. ", power: "
+                .. (power_source or "<unavailable>")
+        )
 
         set_caffeinate(false)
     end

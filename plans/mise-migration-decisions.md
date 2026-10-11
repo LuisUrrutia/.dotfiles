@@ -35,22 +35,22 @@ verified installation route; they do not silently remove a retained tool.
 
 ## Decisions
 
-| ID | Question | State | Depends on | Owner |
-| --- | --- | --- | --- | --- |
-| D1 | How does the fresh setup avoid Homebrew? | Resolved by user | D13 | User |
-| D2 | Where does shared history live, and who applies it? | Resolved direction | D9 | User; implementation for enrollment |
-| D3 | What structure follows mise rather than Stow? | Revised proposal; native module probe passed | D1, D2 | User direction; implementation design |
-| D4 | Which mechanism owns each configuration file? | Resolved policy | D2, D3 | Implementation |
-| D5 | How do machine roles select Git identities? | Resolved model; enrollment inputs outstanding | D3, D4 | User supplies account/path data |
-| D6 | What belongs in declarative macOS setup? | Resolved boundary | D1, D3 | Implementation |
-| D7 | How are private app preferences captured and recovered? | Mandatory encryption; proposed restore boundary | D2, D4 | User scope; implementation; recipients at enrollment |
-| D8 | Is existing package ownership transfer required? | Closed: out of scope | D13 | User |
-| D9 | Does sync include shared configuration and installed software? | Resolved by user | None | User |
-| D10 | How are received software/setup changes applied? | Proposed serial application cycle | D2, D3, D4 | Implementation |
-| D11 | What is common, optional, or retired? | Resolved by user; individual app enrollment remains | None | User |
-| D12 | Which tests deserve to survive the rebuild? | Resolved policy | Retained behavior | User direction; implementation |
-| D13 | Does delivery support existing Macs or only fresh setup? | Fresh setup only; migration cancelled | None | User |
-| D14 | How can Ubuntu or Arch be added later? | Portability required now; Linux delivery deferred | D3, D9, D13 | User direction; implementation boundaries |
+| ID  | Question                                                       | State                                               | Depends on        | Owner                                                |
+| --- | -------------------------------------------------------------- | --------------------------------------------------- | ----------------- | ---------------------------------------------------- |
+| D1  | How does the fresh setup avoid Homebrew?                       | Resolved by user                                    | D13               | User                                                 |
+| D2  | Where does shared history live, and who applies it?            | Resolved direction                                  | D9                | User; implementation for enrollment                  |
+| D3  | What structure follows mise rather than Stow?                  | Revised proposal; native module probe passed        | D1, D2            | User direction; implementation design                |
+| D4  | Which mechanism owns each configuration file?                  | Resolved policy                                     | D2, D3            | Implementation                                       |
+| D5  | How do machine roles select Git identities?                    | Resolved model; enrollment inputs outstanding       | D3, D4            | User supplies account/path data                      |
+| D6  | What belongs in declarative macOS setup?                       | Resolved boundary                                   | D1, D3            | Implementation                                       |
+| D7  | How are private app preferences captured and recovered?        | Mandatory encryption; proposed restore boundary     | D2, D4            | User scope; implementation; recipients at enrollment |
+| D8  | Is existing package ownership transfer required?               | Closed: out of scope                                | D13               | User                                                 |
+| D9  | Does sync include shared configuration and installed software? | Resolved by user                                    | None              | User                                                 |
+| D10 | How are received software/setup changes applied?               | Proposed serial application cycle                   | D2, D3, D4        | Implementation                                       |
+| D11 | What is common, optional, or retired?                          | Resolved by user; individual app enrollment remains | None              | User                                                 |
+| D12 | Which tests deserve to survive the rebuild?                    | Resolved policy                                     | Retained behavior | User direction; implementation                       |
+| D13 | Does delivery support existing Macs or only fresh setup?       | Fresh setup only; migration cancelled               | None              | User                                                 |
+| D14 | How can Ubuntu or Arch be added later?                         | Portability required now; Linux delivery deferred   | D3, D9, D13       | User direction; implementation boundaries            |
 
 Dependencies are prerequisites. Version compatibility affects every implementation
 unit and is verified first; it does not change the user's destination.

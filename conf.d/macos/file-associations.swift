@@ -21,7 +21,8 @@ guard geteuid() != 0 else {
 
 // Zed and IINA setup can run concurrently, but both edit the same preference.
 if !checkOnly {
-    let lockURL = FileManager.default.temporaryDirectory.appendingPathComponent("dotfiles-file-associations.lock")
+    let lockURL = FileManager.default.temporaryDirectory.appendingPathComponent(
+        "dotfiles-file-associations.lock")
     let descriptor = open(lockURL.path, O_CREAT | O_RDWR | O_NOFOLLOW | O_CLOEXEC, 0o600)
     guard descriptor >= 0 else { fail("Cannot open the file association lock.") }
     let deadline = Date().addingTimeInterval(30)
@@ -59,7 +60,9 @@ if pending.isEmpty {
     exit(0)
 }
 if checkOnly {
-    fail("File associations are still pending for \(bundleID): \(pending.map { "." + $0.0 }.joined(separator: ", ")). Sign out and back in, then rerun setup.")
+    fail(
+        "File associations are still pending for \(bundleID): \(pending.map { "." + $0.0 }.joined(separator: ", ")). Sign out and back in, then rerun setup."
+    )
 }
 
 let domain = "com.apple.LaunchServices/com.apple.launchservices.secure" as CFString
@@ -78,8 +81,9 @@ handlers.removeAll { handler in
         return pendingTypes.contains(identifier)
     }
     if handler["LSHandlerContentTagClass"] as? String == "public.filename-extension",
-       let tag = handler["LSHandlerContentTag"] as? String,
-       let type = UTType(filenameExtension: tag.lowercased()) {
+        let tag = handler["LSHandlerContentTag"] as? String,
+        let type = UTType(filenameExtension: tag.lowercased())
+    {
         return pendingTypes.contains(type.identifier)
     }
     return false
@@ -99,7 +103,8 @@ for (fileExtension, type) in pending {
         handlers.append(handler)
     }
 }
-CFPreferencesSetValue(key, handlers as CFArray, domain, kCFPreferencesCurrentUser, kCFPreferencesAnyHost)
+CFPreferencesSetValue(
+    key, handlers as CFArray, domain, kCFPreferencesCurrentUser, kCFPreferencesAnyHost)
 guard CFPreferencesSynchronize(domain, kCFPreferencesCurrentUser, kCFPreferencesAnyHost) else {
     fail("Cannot save the requested file associations.")
 }
@@ -118,6 +123,8 @@ func run(_ executable: String, _ arguments: [String]) -> Int32 {
 // after merging preferences, then verify through the public API in a fresh process.
 let reloaded = run("/usr/bin/killall", ["-u", NSUserName(), "lsd"])
 guard reloaded == 0 || reloaded == 1 else {
-    fail("Associations saved, but LaunchServices could not reload. Sign out and back in, then rerun setup.")
+    fail(
+        "Associations saved, but LaunchServices could not reload. Sign out and back in, then rerun setup."
+    )
 }
 exit(run("/usr/bin/xcrun", ["swift", #filePath, "--check", bundleID] + extensions))

@@ -4,14 +4,24 @@ min_version = "2026.10.7"
 task.run_auto_install = false
 idiomatic_version_file_enable_tools = ["node", "python", "rust"]
 minimum_release_age = "3d"
-minimum_release_age_excludes = ["aqua:anthropics/claude-code", "aqua:openai/codex"]
+minimum_release_age_excludes = [
+  "aqua:anthropics/claude-code",
+  "aqua:openai/codex",
+]
 
 [settings.history]
 sync = "manual"
 allow_plaintext_history = false
 
 [dotfiles]
-"~/.config/mise" = { mode = "track", exclude = ["/private", "*.local.toml", "age.txt", "*.log", "__pycache__", ".DS_Store"] }
+"~/.config/mise" = { mode = "track", exclude = [
+  "/private",
+  "*.local.toml",
+  "age.txt",
+  "*.log",
+  "__pycache__",
+  ".DS_Store",
+] }
 "~/.config/mise/private/preferences" = { mode = "track", encrypt = true }
 
 [bootstrap.services.mise-history]

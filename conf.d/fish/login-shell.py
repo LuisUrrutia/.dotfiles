@@ -1,10 +1,10 @@
 """Apply the declared login shell without an interactive chsh password prompt."""
 
 import os
-from pathlib import Path
 import pwd
 import subprocess
 import sys
+from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "setup"))
 from runtime import native_json, run
@@ -25,10 +25,23 @@ def main():
         raise RuntimeError(f"Install the declared login shell first: {shell}")
     # Mise invokes chsh for an unlisted shell even when the account already matches.
     if not status["shell_listed"]:
-        run(["/usr/bin/sudo", "-n", "/bin/sh", "-c",
-                'printf "%s\\n" "$1" >> /etc/shells', "sh", shell], timeout=30)
+        run(
+            [
+                "/usr/bin/sudo",
+                "-n",
+                "/bin/sh",
+                "-c",
+                'printf "%s\\n" "$1" >> /etc/shells',
+                "sh",
+                shell,
+            ],
+            timeout=30,
+        )
     if status["current"] != shell:
-        run(["/usr/bin/sudo", "-n", "/usr/bin/chsh", "-s", shell, status["user"]], timeout=30)
+        run(
+            ["/usr/bin/sudo", "-n", "/usr/bin/chsh", "-s", shell, status["user"]],
+            timeout=30,
+        )
 
 
 if __name__ == "__main__":

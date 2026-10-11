@@ -11,17 +11,11 @@
   },
   "includeGitInstructions": false,
   "permissions": {
-    "deny": [
-      "Read(~/.ssh/**)",
-      "Read(~/.aws/**)",
-      "Read(//**/.env*)"
-    ],
+    "deny": ["Read(~/.ssh/**)", "Read(~/.aws/**)", "Read(//**/.env*)"],
     "defaultMode": "bypassPermissions"
   },
   "model": "opus",
-  "fallbackModel": [
-    "fable"
-  ],
+  "fallbackModel": ["fable"],
   "modelSettings": {
     "claude-fable-5-1": {
       "effortLevel": "xhigh"

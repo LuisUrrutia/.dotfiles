@@ -11,7 +11,7 @@ local blueutil_candidates = {
     "/usr/local/bin/blueutil",
 }
 
-local log = hs.logger.new('bluetooth')
+local log = hs.logger.new("bluetooth")
 
 ---@type fun(command: string, with_user_env?: boolean): string, boolean
 local execute = hs.execute

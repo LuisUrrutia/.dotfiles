@@ -268,16 +268,16 @@ implementation layers as useful behavior moves to native owners. The root
 repository `mise.toml` does not duplicate machine resources. Run active bootstrap
 from a neutral directory and prove same-run tool resolution.
 
-| Path category | Runtime owner | How changes travel |
-| --- | --- | --- |
-| Module manifests and supporting sources | Active `~/.config/mise/conf.d/` | Private history, then common/enabled-app bootstrap |
-| Shared operational tasks | Active `~/.config/mise/tasks/` | Private history, then serialized execution |
-| Generated machine Git includes | Module templates plus local machine inputs | Shared input changes travel; outputs stay machine-scoped |
-| App-written managed regular files | Live file plus private history | Save/sync/pull; no recurring seed overwrite |
-| App preference exports | Private encrypted snapshots plus module adapter | Save/sync/pull, then restore only on an eligible app/machine |
-| Public baseline and tests | This Git repository | Explicit reviewed import/promotion |
-| Local-only preferences and enrollment | Local files/history | Never exchanged by default |
-| Credentials and sessions | Existing secret/app owner | Excluded, or explicitly encrypted eligible file |
+| Path category                           | Runtime owner                                   | How changes travel                                           |
+| --------------------------------------- | ----------------------------------------------- | ------------------------------------------------------------ |
+| Module manifests and supporting sources | Active `~/.config/mise/conf.d/`                 | Private history, then common/enabled-app bootstrap           |
+| Shared operational tasks                | Active `~/.config/mise/tasks/`                  | Private history, then serialized execution                   |
+| Generated machine Git includes          | Module templates plus local machine inputs      | Shared input changes travel; outputs stay machine-scoped     |
+| App-written managed regular files       | Live file plus private history                  | Save/sync/pull; no recurring seed overwrite                  |
+| App preference exports                  | Private encrypted snapshots plus module adapter | Save/sync/pull, then restore only on an eligible app/machine |
+| Public baseline and tests               | This Git repository                             | Explicit reviewed import/promotion                           |
+| Local-only preferences and enrollment   | Local files/history                             | Never exchanged by default                                   |
+| Credentials and sessions                | Existing secret/app owner                       | Excluded, or explicitly encrypted eligible file              |
 
 Do not track the public checkout. Tracking a symlink records its link, not the
 source content; explicitly track the shared native payload. Keep real live
@@ -297,24 +297,24 @@ payload, operational commands, verification and legacy retirement must agree.
 The statuses below distinguish repository delivery from real-machine acceptance.
 No PR or machine installation was requested as part of this implementation.
 
-| Unit | Result | Implementation and evidence |
-| --- | --- | --- |
-| M0 | Native compatibility | 2026.10.7 selected after the structured-edit probe; isolated contracts verified |
-| M1 | Official bootstrap | Implemented; verified download, checksum rejection, preserved replacement, and rerun |
-| M2 | Enrollment | Implemented; tracked missing-file seed, actual adoption with all setup phases skipped, local choices preserved |
-| M3/M4 | Software ownership | 162 native package declarations and 25 retained tools mapped; full fresh installation/update remains open |
-| M5 | Native file ownership | Implemented; isolated deployment, partial-key capture, foreign-link and drift preservation pass |
-| M6 | Git identities | Implemented; personal/work/agent/unknown cases and real Worktrunk worktrees pass |
-| M7 | Fish | Implemented; syntax and noninteractive smoke pass; actual login shell/plugin startup remains open |
-| M8a/M8b | macOS settings | Native defaults, agents and remaining tasks implemented; privileged and GUI execution remains open |
-| M9 | Tool setup | Native module tasks implemented; fresh package/plugin execution remains open |
-| M10 | Private history | Native first-save encryption, adoption/key failure and local exclusion verified |
-| M10a | Preferences | Capture/restore adapters and reviewed structural guards implemented; real app reopen remains open |
-| M10b | Serial application | Two-client native exchange, automatic task application, conflict stop, revision changes and process cleanup verified |
-| M11 | Maintenance | Serial, independent failure handling and success-only schedules implemented; real updates remain open |
-| M12 | Verification/CI | Four integration areas and parser/static checks implemented; hosted workflow execution remains open |
-| M13 | Existing-Mac migration | Cancelled by the user; no migration implementation |
-| M14 | Cleanup and acceptance | Legacy tracked runtime removed; disposable fresh-Mac acceptance remains open |
+| Unit    | Result                 | Implementation and evidence                                                                                          |
+| ------- | ---------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| M0      | Native compatibility   | 2026.10.7 selected after the structured-edit probe; isolated contracts verified                                      |
+| M1      | Official bootstrap     | Implemented; verified download, checksum rejection, preserved replacement, and rerun                                 |
+| M2      | Enrollment             | Implemented; tracked missing-file seed, actual adoption with all setup phases skipped, local choices preserved       |
+| M3/M4   | Software ownership     | 162 native package declarations and 25 retained tools mapped; full fresh installation/update remains open            |
+| M5      | Native file ownership  | Implemented; isolated deployment, partial-key capture, foreign-link and drift preservation pass                      |
+| M6      | Git identities         | Implemented; personal/work/agent/unknown cases and real Worktrunk worktrees pass                                     |
+| M7      | Fish                   | Implemented; syntax and noninteractive smoke pass; actual login shell/plugin startup remains open                    |
+| M8a/M8b | macOS settings         | Native defaults, agents and remaining tasks implemented; privileged and GUI execution remains open                   |
+| M9      | Tool setup             | Native module tasks implemented; fresh package/plugin execution remains open                                         |
+| M10     | Private history        | Native first-save encryption, adoption/key failure and local exclusion verified                                      |
+| M10a    | Preferences            | Capture/restore adapters and reviewed structural guards implemented; real app reopen remains open                    |
+| M10b    | Serial application     | Two-client native exchange, automatic task application, conflict stop, revision changes and process cleanup verified |
+| M11     | Maintenance            | Serial, independent failure handling and success-only schedules implemented; real updates remain open                |
+| M12     | Verification/CI        | Four integration areas and parser/static checks implemented; hosted workflow execution remains open                  |
+| M13     | Existing-Mac migration | Cancelled by the user; no migration implementation                                                                   |
+| M14     | Cleanup and acceptance | Legacy tracked runtime removed; disposable fresh-Mac acceptance remains open                                         |
 
 M3/M4 and M6-M10b need not form one linear PR stack. Dependencies name required
 capabilities; changes to shared entrypoints require coordination, not artificial

@@ -4,8 +4,8 @@ Disconnect Bluetooth devices on lid close and reconnect them on lid open.
 
 local mod = {}
 
-local log = hs.logger.new('bluetooth_sleep_manager')
-local bluetooth = require('utils.bluetooth')
+local log = hs.logger.new("bluetooth_sleep_manager")
+local bluetooth = require("utils.bluetooth")
 
 local RECONNECT_DELAY = 2
 local MAX_RECONNECT_ATTEMPTS = 5
@@ -26,11 +26,17 @@ local reconnect_previous
 
 local function read_lid_closed()
     local output, ok = hs.execute("/usr/sbin/ioreg -r -n IOPMrootDomain -d 1 -l", false)
-    if not ok then return nil end
+    if not ok then
+        return nil
+    end
 
     local state = output:match('"AppleClamshellState"%s*=%s*(%a+)')
-    if state == "Yes" then return true end
-    if state == "No" then return false end
+    if state == "Yes" then
+        return true
+    end
+    if state == "No" then
+        return false
+    end
     return nil
 end
 
@@ -139,7 +145,9 @@ end
 
 local function check_lid()
     local closed = read_lid_closed()
-    if closed == nil or closed == lid_closed then return end
+    if closed == nil or closed == lid_closed then
+        return
+    end
     lid_closed = closed
 
     if closed then
@@ -147,7 +155,7 @@ local function check_lid()
         cancel_pending_connections()
         reconnect_attempts = 0
 
-        if (not bluetooth.is_powered_on()) then
+        if not bluetooth.is_powered_on() then
             return
         end
 
@@ -161,7 +169,6 @@ local function check_lid()
                 bluetooth.disconnect(device.address)
             end
         end
-
     else
         if has_previous_connected() and not reconnect_timer then
             reconnect_attempts = 0
@@ -171,10 +178,12 @@ local function check_lid()
 end
 
 local function watch(eventType)
-    if eventType == hs.caffeinate.watcher.systemWillSleep
+    if
+        eventType == hs.caffeinate.watcher.systemWillSleep
         or eventType == hs.caffeinate.watcher.systemDidWake
         or eventType == hs.caffeinate.watcher.screensDidSleep
-        or eventType == hs.caffeinate.watcher.screensDidWake then
+        or eventType == hs.caffeinate.watcher.screensDidWake
+    then
         check_lid()
     end
 end

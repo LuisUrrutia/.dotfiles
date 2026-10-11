@@ -27,6 +27,5 @@ function tds -d "Create a tmux dev layout with editor, diff watch, and terminal"
     end
     tmux send-keys -t "$diff_pane" C-m
 
-
     tmux select-pane -t "$editor_pane"
 end

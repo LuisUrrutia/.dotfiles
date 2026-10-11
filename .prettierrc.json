@@ -1,0 +1,13 @@
+{
+  "proseWrap": "preserve",
+  "overrides": [
+    {
+      "files": ".swift-format",
+      "options": { "parser": "json" }
+    },
+    {
+      "files": "*.jsonc",
+      "options": { "parser": "jsonc", "trailingComma": "none" }
+    }
+  ]
+}

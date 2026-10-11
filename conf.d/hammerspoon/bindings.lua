@@ -3,13 +3,16 @@ local mod = {}
 local log = hs.logger.new("bindings")
 
 -- Remaining Hammerspoon-specific bindings
-local hyper_key = {"cmd", "alt", "ctrl", "shift"}
+local hyper_key = { "cmd", "alt", "ctrl", "shift" }
 
 local hyper_bindings = {
-    { key = 'f12', fn = function()
-        log.i("Reloading Hammerspoon")
-        hs.reload()
-    end },
+    {
+        key = "f12",
+        fn = function()
+            log.i("Reloading Hammerspoon")
+            hs.reload()
+        end,
+    },
 }
 
 local function bind(key, opts)

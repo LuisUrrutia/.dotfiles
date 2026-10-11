@@ -24,7 +24,5 @@
   },
   "optional": true,
   "major_version": 2,
-  "writers": [
-    "loopbackd"
-  ]
+  "writers": ["loopbackd"]
 }

@@ -4,15 +4,25 @@ import argparse
 import hashlib
 import json
 import os
-from pathlib import Path
 import re
 import subprocess
 import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "conf.d/setup"))
+from runtime import (
+    HOME,
+    ROOT,
+    atomic,
+    document,
+    git_origin,
+    mise,
+    read_toml,
+    regular_parents,
+    toml,
+)
 
 REPOSITORY = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(REPOSITORY / "conf.d/setup"))
-from runtime import (HOME, MISE, ROOT, atomic, document, git_origin, mise, read_toml,
-                        regular_parents, toml)
 
 
 def machine_id():
@@ -21,8 +31,13 @@ def machine_id():
         if not identifier or identifier == "uninitialized":
             raise ValueError("Cannot determine the machine ID; supply --machine")
         return hashlib.sha256((identifier + "\n").encode()).hexdigest()[:12]
-    result = subprocess.run(["/usr/sbin/ioreg", "-rd1", "-c", "IOPlatformExpertDevice"],
-                            capture_output=True, check=True, text=True, timeout=10)
+    result = subprocess.run(
+        ["/usr/sbin/ioreg", "-rd1", "-c", "IOPlatformExpertDevice"],
+        capture_output=True,
+        check=True,
+        text=True,
+        timeout=10,
+    )
     match = re.search(r'"IOPlatformUUID" = "([^"]+)"', result.stdout)
     if not match:
         raise ValueError("Cannot determine the machine ID; supply --machine")
@@ -33,9 +48,24 @@ def seed(repository=REPOSITORY):
     regular_parents(ROOT / "config.toml")
     if ROOT.is_symlink():
         raise RuntimeError(f"Active configuration must be a real directory: {ROOT}")
-    result = subprocess.run(["git", "-C", str(repository), "ls-files", "-z", "--",
-                                "config.toml", "miserc.toml", "conf.d", "tasks", "machines"],
-                            capture_output=True, check=True, timeout=10)
+    result = subprocess.run(
+        [
+            "git",
+            "-C",
+            str(repository),
+            "ls-files",
+            "-z",
+            "--",
+            "config.toml",
+            "miserc.toml",
+            "conf.d",
+            "tasks",
+            "machines",
+        ],
+        capture_output=True,
+        check=True,
+        timeout=10,
+    )
     for relative in result.stdout.decode().split("\0"):
         if not relative:
             continue
@@ -45,7 +75,9 @@ def seed(repository=REPOSITORY):
         target = ROOT / relative
         regular_parents(target)
         if target.is_symlink():
-            raise RuntimeError(f"Refusing a symlink in the active configuration: {target}")
+            raise RuntimeError(
+                f"Refusing a symlink in the active configuration: {target}"
+            )
         if target.exists():
             continue
         atomic(target, source.read_bytes(), source.stat().st_mode & 0o777)
@@ -73,9 +105,13 @@ def git_settings(record):
         sources[file] = {"content": text, "permissions": "0600"}
         for directory in account.get("directories", []):
             if not directory.startswith(("~/", "/")) or "\n" in directory:
-                raise ValueError("Git scopes must be absolute or home-relative directories")
+                raise ValueError(
+                    "Git scopes must be absolute or home-relative directories"
+                )
             directory = str(Path(directory).expanduser().resolve())
-            scopes.append({"condition": "gitdir:" + directory.rstrip("/") + "/", "file": file})
+            scopes.append(
+                {"condition": "gitdir:" + directory.rstrip("/") + "/", "file": file}
+            )
     return default, scopes, sources
 
 
@@ -87,7 +123,9 @@ def enroll(args):
     if args.adopt:
         git_origin(args.adopt)
         if (ROOT / "config.toml").exists():
-            raise RuntimeError("Adopt into a fresh active configuration; existing setup is preserved")
+            raise RuntimeError(
+                "Adopt into a fresh active configuration; existing setup is preserved"
+            )
         phases = "plugins,packages,accounts,files,services,firewall,compose,repos,dotfiles,mise-shell-activate,macos-defaults,macos-launchd-agents,linux-systemd-units,user,tools,task,final-hook"
         mise("bootstrap", "--adopt", args.adopt, "--skip", phases, "--yes")
         current = read_toml(ROOT / "config.local.toml")
@@ -96,49 +134,91 @@ def enroll(args):
     machine = current.get("_", {}).get("machine")
     if not machine:
         default, scopes, git_files = git_settings(record)
-        machine = {"id": args.machine, "sync": args.sync or "manual",
-                    "hostname": record.get("hostname", ""), "xcode": record.get("xcode", False)}
+        machine = {
+            "id": args.machine,
+            "sync": args.sync or "manual",
+            "hostname": record.get("hostname", ""),
+            "xcode": record.get("xcode", False),
+        }
         current.setdefault("_", {})["machine"] = machine
         current.setdefault("vars", {}).update(
-            git_name=default.get("name", ""), git_email=default.get("email", ""),
+            git_name=default.get("name", ""),
+            git_email=default.get("email", ""),
             git_signing_key=default.get("signing_key", ""),
-            git_includes="\n".join(f'[includeIf {json.dumps(scope["condition"], ensure_ascii=False)}]\n  path = {json.dumps(scope["file"], ensure_ascii=False)}' for scope in scopes))
+            git_includes="\n".join(
+                f"[includeIf {json.dumps(scope['condition'], ensure_ascii=False)}]\n  path = {json.dumps(scope['file'], ensure_ascii=False)}"
+                for scope in scopes
+            ),
+        )
         current.setdefault("dotfiles", {}).update(git_files)
         if machine["xcode"]:
-            current.setdefault("bootstrap", {}).setdefault("packages", {})["mas:497799835"] = {"os": "macos"}
+            current.setdefault("bootstrap", {}).setdefault("packages", {})[
+                "mas:497799835"
+            ] = {"os": "macos"}
         if sys.platform == "darwin":
-            defaults = current.setdefault("bootstrap", {}).setdefault("macos", {}).setdefault("defaults", {})
-            defaults.setdefault("com.apple.screencapture", {}).setdefault("location", str(HOME / "Pictures/Screenshots"))
-        current.setdefault("settings", {}).setdefault("history", {}).update(sync="manual", allow_plaintext_history=False)
+            defaults = (
+                current.setdefault("bootstrap", {})
+                .setdefault("macos", {})
+                .setdefault("defaults", {})
+            )
+            defaults.setdefault("com.apple.screencapture", {}).setdefault(
+                "location", str(HOME / "Pictures/Screenshots")
+            )
+        current.setdefault("settings", {}).setdefault("history", {}).update(
+            sync="manual", allow_plaintext_history=False
+        )
         atomic(ROOT / "config.local.toml", document(current))
     elif args.sync and args.sync != machine["sync"]:
-        raise ValueError("Edit _.machine.sync in config.local.toml explicitly to change the existing mode")
+        raise ValueError(
+            "Edit _.machine.sync in config.local.toml explicitly to change the existing mode"
+        )
     choices = ROOT / "miserc.local.toml"
     apps = args.apps.split(",") if args.apps else []
-    valid = {p.stem.removeprefix("mise.") for p in (ROOT / "conf.d").glob("*/mise.*.toml")}
+    valid = {
+        p.stem.removeprefix("mise.") for p in (ROOT / "conf.d").glob("*/mise.*.toml")
+    }
     if any(app not in valid or app in ("macos", "linux") for app in apps):
-        raise ValueError("Unknown optional app; use an individual mise.<app>.toml module name")
+        raise ValueError(
+            "Unknown optional app; use an individual mise.<app>.toml module name"
+        )
     if not choices.exists():
         atomic(choices, "env = " + toml(apps) + "\n")
     elif args.apps is not None and read_toml(choices).get("env", []) != apps:
-        raise ValueError("Edit miserc.local.toml explicitly to change an existing app selection")
+        raise ValueError(
+            "Edit miserc.local.toml explicitly to change an existing app selection"
+        )
     recipients = ROOT / "conf.d/history/mise.toml"
     if args.recipient:
         if recipients.exists():
-            configured = read_toml(recipients).get("history", {}).get("encryption", {}).get("recipients", [])
+            configured = (
+                read_toml(recipients)
+                .get("history", {})
+                .get("encryption", {})
+                .get("recipients", [])
+            )
             if configured != args.recipient:
-                raise ValueError("Edit shared history recipients explicitly; enrollment does not rotate keys")
+                raise ValueError(
+                    "Edit shared history recipients explicitly; enrollment does not rotate keys"
+                )
         else:
-            atomic(recipients, "[history.encryption]\nrecipients = " + toml(args.recipient) + "\n")
+            atomic(
+                recipients,
+                "[history.encryption]\nrecipients = " + toml(args.recipient) + "\n",
+            )
     os.chmod(ROOT / "config.local.toml", 0o600)
     if args.recipient or not args.seed_only:
         import preferences
+
         preferences.prepare_history()
     if args.seed_only:
         print(f"Seeded missing setup sources in {ROOT}; existing files were preserved")
         return
-    subprocess.run(["git", "-C", str(REPOSITORY), "config", "core.hooksPath", ".githooks"],
-                    check=True, stdin=subprocess.DEVNULL, timeout=10)
+    subprocess.run(
+        ["git", "-C", str(REPOSITORY), "config", "core.hooksPath", ".githooks"],
+        check=True,
+        stdin=subprocess.DEVNULL,
+        timeout=10,
+    )
     if args.origin:
         git_origin(args.origin)
         mise("dot", "save")
@@ -149,12 +229,20 @@ def enroll(args):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--machine")
-    parser.add_argument("--record", help="Enrollment TOML with git.default and git.accounts")
+    parser.add_argument(
+        "--record", help="Enrollment TOML with git.default and git.accounts"
+    )
     parser.add_argument("--apps", help="Comma-separated optional app module names")
     parser.add_argument("--sync", choices=["manual", "automatic"])
     parser.add_argument("--origin", help="Private setup repository URL (HTTPS or SSH)")
-    parser.add_argument("--adopt", help="Recover from a private setup repository URL (HTTPS or SSH)")
-    parser.add_argument("--recipient", action="append", help="Public age recipient; repeat for recovery and other machines")
+    parser.add_argument(
+        "--adopt", help="Recover from a private setup repository URL (HTTPS or SSH)"
+    )
+    parser.add_argument(
+        "--recipient",
+        action="append",
+        help="Public age recipient; repeat for recovery and other machines",
+    )
     parser.add_argument("--seed-only", action="store_true")
     args = parser.parse_args()
     args.machine = args.machine or machine_id()

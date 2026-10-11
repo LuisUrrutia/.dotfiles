@@ -10,11 +10,15 @@ node = "lts"
 uv = "latest"
 actionlint = "latest"
 shellcheck = "latest"
+shfmt = "latest"
+ruff = "latest"
 gitleaks = "latest"
 taplo = "latest"
 editorconfig-checker = "latest"
 stylua = "latest"
 "npm:esbuild" = "latest"
+"npm:prettier" = "latest"
+"npm:markdownlint-cli2" = "latest"
 "pipx:json5" = "latest"
 "pipx:check-jsonschema" = "latest"
 worktrunk = { version = "latest", os = ["linux"] }
@@ -29,11 +33,18 @@ worktrunk = { version = "latest", os = ["linux"] }
 "apt:git" = { os = "linux" }
 "apt:lua5.4" = { os = "linux" }
 "apt:lua-check" = { os = "linux" }
-"apt:ruby" = { os = "linux" }
 
 [tasks.verify]
-description = "Run isolated behavior, syntax, and configuration checks"
+description = "Check lint, formatting, isolated behavior, and configuration"
 run = "python3 tests/run.py"
+
+[tasks.lint]
+description = "Check all repository sources without changing them"
+run = "python3 tests/lint.py"
+
+[tasks.format]
+description = "Format repository sources and apply safe lint fixes"
+run = "python3 tests/lint.py --fix"
 
 [tasks.enroll]
 description = "Seed or adopt the active configuration without overwriting edits"

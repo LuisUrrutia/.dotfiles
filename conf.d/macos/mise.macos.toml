@@ -470,11 +470,18 @@ value = false
 domain = "com.apple.symbolichotkeys"
 key = "AppleSymbolicHotKeys"
 path = ["27"]
-value = { "enabled" = true, "value" = { "type" = "standard", "parameters" = [96, 50, 1966080] } }
+value = { "enabled" = true, "value" = { "type" = "standard", "parameters" = [
+  96,
+  50,
+  1966080,
+] } }
 
 [bootstrap.macos.launchd.agents.appearance]
 program = "/usr/bin/osascript"
-args = ["-e", "on darkModeForTime(secondsToday)\n    return secondsToday < 36000 or secondsToday >= 72000\nend darkModeForTime\n\non run\n    set useDarkMode to darkModeForTime(time of (current date))\n    tell application \"System Events\"\n        tell appearance preferences\n            if dark mode is not useDarkMode then set dark mode to useDarkMode\n        end tell\n    end tell\nend run"]
+args = [
+  "-e",
+  "on darkModeForTime(secondsToday)\n    return secondsToday < 36000 or secondsToday >= 72000\nend darkModeForTime\n\non run\n    set useDarkMode to darkModeForTime(time of (current date))\n    tell application \"System Events\"\n        tell appearance preferences\n            if dark mode is not useDarkMode then set dark mode to useDarkMode\n        end tell\n    end tell\nend run",
+]
 run_at_load = true
 start_calendar_interval = [{ hour = 10, minute = 0 }, { hour = 20, minute = 0 }]
 process_type = "Background"

@@ -37,13 +37,13 @@ installation intent and source manifests, not downloaded binaries or app state.
 The source lists below remain a historical inventory, not the new selection
 model. D11 retires grouped profiles and their selection UI.
 
-| New scope | Baseline declarations or new capability |
-| --- | --- |
-| Common on every Mac | Retained core, except DisplayLink; all cloud, dev, formatters, image, and languages entries below |
+| New scope                               | Baseline declarations or new capability                                                                                                                                                            |
+| --------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Common on every Mac                     | Retained core, except DisplayLink; all cloud, dev, formatters, image, and languages entries below                                                                                                  |
 | Optional per app/tool; excluded on work | `solidity`, `ethereum`, `stellar-cli`, `foundry`; `obs` with `obs-advanced-scene-switcher`; `camo-studio`; `focusrite-control-2`; `loopback`; `soundsource`; `displaylink`; `asmvik/formulae/skhd` |
-| Other optional capability | `busycal`; keep its current optional status |
-| New optional app/config owner | `audio-hijack`; installed locally, absent from old manifests |
-| Retired everywhere | OpenCode and its exclusive integrations; old profile menus, aliases, presets, and saved selection format |
+| Other optional capability               | `busycal`; keep its current optional status                                                                                                                                                        |
+| New optional app/config owner           | `audio-hijack`; installed locally, absent from old manifests                                                                                                                                       |
+| Retired everywhere                      | OpenCode and its exclusive integrations; old profile menus, aliases, presets, and saved selection format                                                                                           |
 
 Each optional capability uses a local native module selection. Do not bundle
 them back into work/personal/audio/streaming profiles. Unknown supported Macs
@@ -180,47 +180,47 @@ below describe the old layout, not the destination. Move retained behavior to
 `conf.d/<capability>`. Preserve dependency eligibility and safe conflicts on
 repeat application; old layout converters are outside the new setup contract.
 
-| Tool | Planned owner or preserved behavior |
-| --- | --- |
-| `ai` | Mise links plus preservation guard for common/local agent instructions; retain override warning. |
-| `bat` | Native module entries plus cache-build task. |
-| `bin` | Native module entries for public commands; audit brew-dependent wrappers. |
-| `btop` | Native module entries; preserve dependency eligibility. |
+| Tool            | Planned owner or preserved behavior                                                                                                            |
+| --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ai`            | Mise links plus preservation guard for common/local agent instructions; retain override warning.                                               |
+| `bat`           | Native module entries plus cache-build task.                                                                                                   |
+| `bin`           | Native module entries for public commands; audit brew-dependent wrappers.                                                                      |
+| `btop`          | Native module entries; preserve dependency eligibility.                                                                                        |
 | `cc-safety-net` | Currently loaded only by OpenCode; retire its exclusive installer/rule deployment after a final consumer check. Preserve untracked local data. |
-| `claude` | Native module entries/structured owned-key edits; preserve instruction import and app-owned state. |
-| `codex` | Structured TOML merge for managed settings; preserve unrelated configuration. |
-| `cspell` | Native module entries; preserve dictionary paths. |
-| `curl` | Native module entries and native/keg-only command resolution. |
-| `dockutil` | Preserve relative Dock edits unless native complete layout is proved equivalent. |
-| `fastfetch` | Native module entries. |
-| `fish` | Native module entries, native login shell, one activation owner, fresh Fisher setup. |
-| `gh` | Idempotent extension setup task; maintenance owns extension updates. |
-| `gh-dash` | Native module entries; existing mise CLI owner. |
-| `ghostty` | Native module entries plus config validation. |
-| `git` | Native Git module entries, fresh identity templates, safe repeated application, repo hook setup. |
-| `hammerspoon` | Native module entries; preserve blueutil dependency and existing automation behavior. |
-| `iina` | File-association task. |
-| `linearmouse` | Encrypted mutable JSON history plus preference-domain capture; retire the recurring Stow seed owner. |
-| `luarocks` | Preserve checks and native/runtime compatibility without brew execution. |
-| `macos` | Native user defaults/LaunchAgent plus narrow system tasks. |
-| `mise` | Official first-use bootstrap and global configuration enrollment; never install through Homebrew. |
-| `node` | Native module entries, npm policy, generated completions; preserve current runtime owner. |
-| `opencode` | Retire package/config/installer and cross-tool consumers under D11; no new native module. |
-| `orbstack` | Create required Docker plugin links safely; OrbStack remains engine/CLI owner. |
-| `python` | Native module entries and completion task; separate maintenance from installation. |
-| `ripgrep` | Native module entries. |
-| `rustup` | Preserve toolchain, target, and component setup under one declared owner. |
-| `skhd` | Native module entries and fresh service registration; Accessibility remains a GUI prerequisite. |
-| `skills` | Native module entries plus explicit global-skill installation task; keep SSH origins. |
-| `ssh` | Native module entries and directory permissions; preserve OrbStack include ordering and agent rules. |
-| `starship` | Native module entries. |
-| `thaw` | Replace public plist and timestamped plaintext backups with encrypted capture/restore under M10a. |
-| `tlrc` | Native module entries; maintenance retains reference-data updates. |
-| `tmux` | Native module entries, isolated validation, TPack setup and SSH transport wrappers. |
-| `vim` | Native module entries, Lazy restore, Treesitter/LSP setup; Mason scope remains. |
-| `voiceink` | Managed launcher/settings and safe local auth/skill links; never sync credentials/runtime. |
-| `wget` | Native module entries. |
-| `zed` | Native module entries or format-aware ownership; preserve file associations and JSONC compatibility. |
+| `claude`        | Native module entries/structured owned-key edits; preserve instruction import and app-owned state.                                             |
+| `codex`         | Structured TOML merge for managed settings; preserve unrelated configuration.                                                                  |
+| `cspell`        | Native module entries; preserve dictionary paths.                                                                                              |
+| `curl`          | Native module entries and native/keg-only command resolution.                                                                                  |
+| `dockutil`      | Preserve relative Dock edits unless native complete layout is proved equivalent.                                                               |
+| `fastfetch`     | Native module entries.                                                                                                                         |
+| `fish`          | Native module entries, native login shell, one activation owner, fresh Fisher setup.                                                           |
+| `gh`            | Idempotent extension setup task; maintenance owns extension updates.                                                                           |
+| `gh-dash`       | Native module entries; existing mise CLI owner.                                                                                                |
+| `ghostty`       | Native module entries plus config validation.                                                                                                  |
+| `git`           | Native Git module entries, fresh identity templates, safe repeated application, repo hook setup.                                               |
+| `hammerspoon`   | Native module entries; preserve blueutil dependency and existing automation behavior.                                                          |
+| `iina`          | File-association task.                                                                                                                         |
+| `linearmouse`   | Encrypted mutable JSON history plus preference-domain capture; retire the recurring Stow seed owner.                                           |
+| `luarocks`      | Preserve checks and native/runtime compatibility without brew execution.                                                                       |
+| `macos`         | Native user defaults/LaunchAgent plus narrow system tasks.                                                                                     |
+| `mise`          | Official first-use bootstrap and global configuration enrollment; never install through Homebrew.                                              |
+| `node`          | Native module entries, npm policy, generated completions; preserve current runtime owner.                                                      |
+| `opencode`      | Retire package/config/installer and cross-tool consumers under D11; no new native module.                                                      |
+| `orbstack`      | Create required Docker plugin links safely; OrbStack remains engine/CLI owner.                                                                 |
+| `python`        | Native module entries and completion task; separate maintenance from installation.                                                             |
+| `ripgrep`       | Native module entries.                                                                                                                         |
+| `rustup`        | Preserve toolchain, target, and component setup under one declared owner.                                                                      |
+| `skhd`          | Native module entries and fresh service registration; Accessibility remains a GUI prerequisite.                                                |
+| `skills`        | Native module entries plus explicit global-skill installation task; keep SSH origins.                                                          |
+| `ssh`           | Native module entries and directory permissions; preserve OrbStack include ordering and agent rules.                                           |
+| `starship`      | Native module entries.                                                                                                                         |
+| `thaw`          | Replace public plist and timestamped plaintext backups with encrypted capture/restore under M10a.                                              |
+| `tlrc`          | Native module entries; maintenance retains reference-data updates.                                                                             |
+| `tmux`          | Native module entries, isolated validation, TPack setup and SSH transport wrappers.                                                            |
+| `vim`           | Native module entries, Lazy restore, Treesitter/LSP setup; Mason scope remains.                                                                |
+| `voiceink`      | Managed launcher/settings and safe local auth/skill links; never sync credentials/runtime.                                                     |
+| `wget`          | Native module entries.                                                                                                                         |
+| `zed`           | Native module entries or format-aware ownership; preserve file associations and JSONC compatibility.                                           |
 
 ## Config trees and exclusions
 
@@ -254,24 +254,24 @@ These examples establish source layout, not a second package manifest. Apply the
 same ownership rule to the rest of the inventory. Existing live target paths stay
 explicit in each module's declaration.
 
-| Current source | Proposed source |
-| --- | --- |
-| `tools/fish/config/.config/fish/config.fish` | `conf.d/fish/config.fish` |
-| `tools/fish/config/.config/fish/functions/` | `conf.d/fish/functions/` |
-| `tools/git/config/.config/git/local.gitconfig` | `conf.d/git/defaults.gitconfig` |
-| `tools/starship/config/.config/starship.toml` | `conf.d/starship/starship.toml` |
-| `tools/zed/config/.config/zed/` | `conf.d/zed/` with only its managed source files |
-| `tools/vim/config/.config/nvim/` | `conf.d/nvim/` with its real Lua/config subtrees |
-| `tools/macos/install.sh` | Native declarations in `conf.d/macos/mise.macos.toml` plus macOS module scripts |
-| `tools/mise/config/.config/mise/config.toml` | Root policy in `config.toml`; tool ownership in the corresponding modules |
-| `brewfiles/core` | Portable declarations in owning modules; Mac package/app routes in their `mise.macos.toml` fragments |
-| `brewfiles/profiles/cloud` | Common `conf.d/cloud/mise.toml` plus platform-specific installation declarations |
-| `brewfiles/profiles/dev`, `formatters`, `image`, `languages` | Common capabilities in owning modules, with platform fragments where required and no role profiles |
-| Optional app entries, including former core DisplayLink | `conf.d/<app>/mise.<app>.toml` with only that capability's resources |
-| `tools/thaw/Thaw.plist` and plaintext backup output | Private encrypted snapshots; public `conf.d/thaw/` contains only declarations/adapters |
-| Appearance LaunchAgent plist | Native TOML declaration in `conf.d/macos/mise.macos.toml`; runtime plist is generated |
-| `maintenance/`, `config/`, `cli/` behavior | Native operational `tasks/`; optional thin convenience commands |
-| `verification/` and component test trees | Reduced `tests/` suite based on retained behavior; see D12 |
+| Current source                                               | Proposed source                                                                                      |
+| ------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------- |
+| `tools/fish/config/.config/fish/config.fish`                 | `conf.d/fish/config.fish`                                                                            |
+| `tools/fish/config/.config/fish/functions/`                  | `conf.d/fish/functions/`                                                                             |
+| `tools/git/config/.config/git/local.gitconfig`               | `conf.d/git/defaults.gitconfig`                                                                      |
+| `tools/starship/config/.config/starship.toml`                | `conf.d/starship/starship.toml`                                                                      |
+| `tools/zed/config/.config/zed/`                              | `conf.d/zed/` with only its managed source files                                                     |
+| `tools/vim/config/.config/nvim/`                             | `conf.d/nvim/` with its real Lua/config subtrees                                                     |
+| `tools/macos/install.sh`                                     | Native declarations in `conf.d/macos/mise.macos.toml` plus macOS module scripts                      |
+| `tools/mise/config/.config/mise/config.toml`                 | Root policy in `config.toml`; tool ownership in the corresponding modules                            |
+| `brewfiles/core`                                             | Portable declarations in owning modules; Mac package/app routes in their `mise.macos.toml` fragments |
+| `brewfiles/profiles/cloud`                                   | Common `conf.d/cloud/mise.toml` plus platform-specific installation declarations                     |
+| `brewfiles/profiles/dev`, `formatters`, `image`, `languages` | Common capabilities in owning modules, with platform fragments where required and no role profiles   |
+| Optional app entries, including former core DisplayLink      | `conf.d/<app>/mise.<app>.toml` with only that capability's resources                                 |
+| `tools/thaw/Thaw.plist` and plaintext backup output          | Private encrypted snapshots; public `conf.d/thaw/` contains only declarations/adapters               |
+| Appearance LaunchAgent plist                                 | Native TOML declaration in `conf.d/macos/mise.macos.toml`; runtime plist is generated                |
+| `maintenance/`, `config/`, `cli/` behavior                   | Native operational `tasks/`; optional thin convenience commands                                      |
+| `verification/` and component test trees                     | Reduced `tests/` suite based on retained behavior; see D12                                           |
 
 Enroll the native root payload into `~/.config/mise` with the same relative paths.
 Do not retain a separate active source mirror or deploy module manifests and
@@ -310,14 +310,14 @@ Reconfirm schemas and storage locations against the installed version.
 In this table, `Preferences/` means `~/Library/Preferences/`, and `Support/`
 means `~/Library/Application Support/`.
 
-| App/version | Existing primary preference path | Additional configuration candidates |
-| --- | --- | --- |
-| Thaw 2.0.1 | `Preferences/com.stonerl.Thaw.plist` | `Support/Thaw/Profiles/` exists but contained no files at inspection |
-| LinearMouse 0.12.0 | `Preferences/com.lujjjh.LinearMouse.plist` | `~/.config/linearmouse/linearmouse.json` is the main config and currently a managed symlink |
-| SuperCmd 1.0.9 | `Preferences/com.supercmd.SuperCmd.plist` | Inspect user-authored `Support/SuperCmd/Skills/` and extension settings separately; do not back up runtime directories |
-| SoundSource 6.1.4 | `Preferences/com.rogueamoeba.soundsource.plist` | `Support/SoundSource/Models.v2.plist`, `Presets.v2.plist` |
-| Loopback 2.5.0 | `Preferences/com.rogueamoeba.Loopback.plist` | `Support/Loopback/Devices.plist` |
-| Audio Hijack 4.6.0 | `Preferences/com.rogueamoeba.audiohijack.plist` | `Support/Audio Hijack 4/Sessions.plist`, `Presets.plist`, `Schedule.plist`, `Scripts.plist` |
+| App/version        | Existing primary preference path                | Additional configuration candidates                                                                                    |
+| ------------------ | ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| Thaw 2.0.1         | `Preferences/com.stonerl.Thaw.plist`            | `Support/Thaw/Profiles/` exists but contained no files at inspection                                                   |
+| LinearMouse 0.12.0 | `Preferences/com.lujjjh.LinearMouse.plist`      | `~/.config/linearmouse/linearmouse.json` is the main config and currently a managed symlink                            |
+| SuperCmd 1.0.9     | `Preferences/com.supercmd.SuperCmd.plist`       | Inspect user-authored `Support/SuperCmd/Skills/` and extension settings separately; do not back up runtime directories |
+| SoundSource 6.1.4  | `Preferences/com.rogueamoeba.soundsource.plist` | `Support/SoundSource/Models.v2.plist`, `Presets.v2.plist`                                                              |
+| Loopback 2.5.0     | `Preferences/com.rogueamoeba.Loopback.plist`    | `Support/Loopback/Devices.plist`                                                                                       |
+| Audio Hijack 4.6.0 | `Preferences/com.rogueamoeba.audiohijack.plist` | `Support/Audio Hijack 4/Sessions.plist`, `Presets.plist`, `Schedule.plist`, `Scripts.plist`                            |
 
 Also present: `com.stonerl.Thaw.MenuBarItemService.plist`,
 `com.rogueamoeba.loopbackd.plist`, and
@@ -374,18 +374,18 @@ application restart was performed during this planning inspection.
 `rg` found these consumers beyond `tools/opencode/`; remove them with the owning
 module so the new setup has no dangling command or plugin references:
 
-| Owner | Removal or retained boundary |
-| --- | --- |
-| Global mise config | Remove the `opencode` declaration; omit it from the fresh setup |
-| Fish `03_abbrs.fish`, `help-aliases.fish`, `tds.fish` | Remove `c`/`oc` shortcuts and OpenCode pane/autolaunch; preserve the remaining tmux layout |
-| Starship config | Remove `custom.opencode` and its prompt reference |
-| Zed settings | Remove OpenCode agent-server integration and defaults |
-| Neovim `lua/plugins/ai.lua`, `lazy-lock.json` | Remove OpenCode plugin, bindings, and lock entry; keep unrelated dependencies |
-| gh-dash config | Remove OpenCode launch from the PR action; preserve useful Worktrunk navigation |
-| Skills installer | Remove OpenCode from target agents; retain other agents |
-| `cc-safety-net` | Repository installer documents OpenCode as its plugin consumer; retire exclusive deployment after confirming no other consumer |
-| Verification | Remove OpenCode schema/autoupdate checks, completion fixtures, and exact skills-command expectations |
-| Documentation and ignore rules | Remove active OpenCode instructions and obsolete generated-file rules |
+| Owner                                                 | Removal or retained boundary                                                                                                   |
+| ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| Global mise config                                    | Remove the `opencode` declaration; omit it from the fresh setup                                                                |
+| Fish `03_abbrs.fish`, `help-aliases.fish`, `tds.fish` | Remove `c`/`oc` shortcuts and OpenCode pane/autolaunch; preserve the remaining tmux layout                                     |
+| Starship config                                       | Remove `custom.opencode` and its prompt reference                                                                              |
+| Zed settings                                          | Remove OpenCode agent-server integration and defaults                                                                          |
+| Neovim `lua/plugins/ai.lua`, `lazy-lock.json`         | Remove OpenCode plugin, bindings, and lock entry; keep unrelated dependencies                                                  |
+| gh-dash config                                        | Remove OpenCode launch from the PR action; preserve useful Worktrunk navigation                                                |
+| Skills installer                                      | Remove OpenCode from target agents; retain other agents                                                                        |
+| `cc-safety-net`                                       | Repository installer documents OpenCode as its plugin consumer; retire exclusive deployment after confirming no other consumer |
+| Verification                                          | Remove OpenCode schema/autoupdate checks, completion fixtures, and exact skills-command expectations                           |
+| Documentation and ignore rules                        | Remove active OpenCode instructions and obsolete generated-file rules                                                          |
 
 Preserve untracked OpenCode conversations, credentials, and other local data.
 Do not substitute Claude/Codex for its commands without a separate user choice.
@@ -397,14 +397,14 @@ retirement; do not add a permanent test that merely searches for the word.
 These inspected examples inform D12; they are not a request to delete all tests
 in these files without separating retained behavior:
 
-| Current test/check | Decision and useful replacement |
-| --- | --- |
-| `verification/tests/install-selection.sh` | Retire profile prompts, alias/selection matrix, and many internal function fakes. Keep failed-install status and resumability at the new entrypoint. |
-| `tools/bin/tests/thaw-config.sh` | It copies a text fixture named `.plist` and counts timestamped backups. Replace with a valid typed plist encrypted save/restore scenario. |
-| `maintenance/tests/backup.sh` | Consolidate wrapper/output-string checks into the preference capture scenario; keep meaningful failure reporting. |
-| `tools/skills/tests/install.sh` | Drop exact full-command snapshots and the OpenCode target. Check intended installed agent targets only where repo behavior needs protection. |
-| `verification/check-configs.py` and schemas | Retain relevant parser/schema checks, remove OpenCode policy, and avoid maintaining redundant format parsers or string checks. |
-| Git identity/migration and config preservation tests | Keep correct identity, unrelated-key preservation, and refusal to overwrite foreign state; remove old Git-layout migration tests. |
+| Current test/check                                   | Decision and useful replacement                                                                                                                      |
+| ---------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `verification/tests/install-selection.sh`            | Retire profile prompts, alias/selection matrix, and many internal function fakes. Keep failed-install status and resumability at the new entrypoint. |
+| `tools/bin/tests/thaw-config.sh`                     | It copies a text fixture named `.plist` and counts timestamped backups. Replace with a valid typed plist encrypted save/restore scenario.            |
+| `maintenance/tests/backup.sh`                        | Consolidate wrapper/output-string checks into the preference capture scenario; keep meaningful failure reporting.                                    |
+| `tools/skills/tests/install.sh`                      | Drop exact full-command snapshots and the OpenCode target. Check intended installed agent targets only where repo behavior needs protection.         |
+| `verification/check-configs.py` and schemas          | Retain relevant parser/schema checks, remove OpenCode policy, and avoid maintaining redundant format parsers or string checks.                       |
+| Git identity/migration and config preservation tests | Keep correct identity, unrelated-key preservation, and refusal to overwrite foreign state; remove old Git-layout migration tests.                    |
 
 Use four cohesive integration areas: safe/repeatable configuration; Git identity;
 encrypted app recovery; and manual/automatic setup exchange. A case belongs only
@@ -424,7 +424,7 @@ experiments are version-selection evidence, not a second upstream test suite.
 - Keg-only tools/native libraries, compiler flags, dynamic linking, and commands
   depending on the current `/opt/homebrew/opt` layout.
 - Fish/Fisher/completions and services that start without interactive shell
-PATH.
+  PATH.
 - Xcode/App Store authentication and post-install setup.
 - `vscode` entries: an editor extension task must select the intended installed
   editor and preserve the existing behavior rather than silently drop them.
@@ -441,10 +441,10 @@ are source pointers, not instructions to retain the existing structure:
 - `config/run.sh` and its lifecycle/resolution tests; history-owned source
   resolution, public import/promotion, and serial full-setup application.
 - `maintenance/update.sh`, `maintenance/backup.sh`, and their Fish
-abbreviations.
+  abbreviations.
 - Fish PATH/completion setup, `tools/bin` wrappers, and tool-specific opt paths.
 - `verification/run.sh`, `verification/groups/`, `brewfiles/verification`, and
-CI.
+  CI.
 - `.githooks/`, `.config/wt.toml`, README, POST_INSTALL, CONTEXT, and AGENTS.
 
 The instructions mention a package-ownership ADR, but no separate tracked ADR

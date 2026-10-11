@@ -69,7 +69,10 @@ if [[ "$(uname -s)" == Linux ]] && { ! command -v curl >/dev/null || ! command -
 fi
 if [[ ! -f "$source_root/bootstrap/enroll.py" ]]; then
   destination="$HOME/.dotfiles"
-  [[ ! -e "$destination" ]] || { echo "Refusing existing checkout: $destination" >&2; exit 1; }
+  [[ ! -e "$destination" ]] || {
+    echo "Refusing existing checkout: $destination" >&2
+    exit 1
+  }
   GIT_TERMINAL_PROMPT=0 \
     /usr/bin/git clone https://github.com/LuisUrrutia/.dotfiles.git "$destination"
   exec /bin/bash "$destination/install.sh" "$@"
