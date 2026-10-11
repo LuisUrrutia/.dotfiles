@@ -1056,3 +1056,69 @@ lives in `.tmp/native-simplification/`, including `verify.log`, `rust/`,
 `preview/`, `thaw-selection.log`, and `vm-evidence/`. In the VM,
 `bash "/Volumes/My Shared Files/native/dock-check.sh"` completed the three-layout
 cycle successfully; both captured native status documents matched their lists.
+
+## Native adoption follow-up
+
+Implemented on 2026-10-11 after the whole-repository mise audit. Runtime probes
+used official mise 2026.10.8, isolated macOS homes, and a disposable Ubuntu 24.04
+x86_64 container. This follow-up implements the two Fish fixes and seven accepted
+adoption opportunities; it does not extend the earlier GUI or hardware acceptance.
+
+- Fisher setup preserves the requested manifest and checks every requested plugin
+  after an update. If a new plugin fails to install, setup and maintenance fail
+  without saving a shortened plugin list. The Linux repository's function is deployed by
+  a native link, and maintenance runs native repository updates before Fish plugins.
+- jq, fd, fzf, and zoxide have shared tool declarations. Fish loads fd's generated
+  completions and zoxide's bundled completions from the active tool version through
+  managed files. Existing completion files remain subject to the preservation guard.
+- All 21 font casks have shared macOS/Linux declarations. The native cask manager
+  owns installation and font locations; no Homebrew executable is installed.
+- Bun and uv/uvx completions use tool-level `postinstall` with `when = "always"`.
+  Installation and upgrades refresh them; a repeated installation repairs missing
+  or stale output. Replacement stays atomic per file. npm's release-age setting
+  remains a separate native task. Inline hook scripts pass ShellCheck and shfmt
+  through repository verification.
+- History uses `git_email = "mise@{hostname}"` to attribute each checkpoint to its
+  machine. Application Git identities remain separate.
+- Native Finder/keyboard sections and domain tables replace 59 repeated preference
+  entries. The 18 remaining entries retain their host scope or nested dictionary path.
+- Native project diagnostics declare the existing FileVault and immediate screen-lock
+  requirements. Serialized application runs them before bootstrap; failure retains
+  a pending journal without a successful application stamp. They can also be read
+  with `mise -C ~ doctor project` and are excluded on Linux.
+
+| Check                                                                                    | Result                                                                                                                                                                                                    |
+| ---------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Real Fisher 4.4.8 with one local plugin and an HTTP 403 for a new plugin                 | Before: exit 0 and a shortened manifest. After: nonzero exit and the original manifest, on macOS and Ubuntu Fish 3.7.                                                                                     |
+| Native Linux repository clone, function deployment, and update from a local origin       | A fresh Fish session finds Fisher; native update advances its checkout.                                                                                                                                   |
+| Real jq, fd, fzf, and zoxide installs and CLI/completion smoke checks                    | Passed on macOS arm64 and Ubuntu x86_64. The three-day policy selected fzf 0.74.4 while 0.74.5 was too new.                                                                                               |
+| Real Bun/uv installation, stale completion repair, Fish parsing and completion discovery | Passed on macOS; installation and completion discovery also passed on Ubuntu Fish 3.7.                                                                                                                    |
+| Native font casks on Ubuntu                                                              | Native status reports 20 installed casks and Lato missing. `fc-cache` succeeds; `fc-list` includes Fira Code and Monaspace.                                                                               |
+| Native macOS defaults status before and after the representation change                  | All 81 domain/key/host/path/value requests match. Dock app discovery and the unchanged appearance service were excluded from this comparison. No preferences were applied.                                |
+| Native history checkpoint with the configured email                                      | Uses the actual hostname and leaves the application Git identity byte-identical.                                                                                                                          |
+| Native diagnostics and failed application                                                | Both Mac commands agree with direct read-only probes; both checks skip on Linux. The integration test proves a failed check prevents file deployment and the successful stamp, then applies after repair. |
+| `bash .tmp/mise-review-20261011/verify.sh run verify`                                    | Exit 0: lint/formatting for 320 files, five tests in 174.173 seconds, source parsing/type checks, workflow checks, secret scan, installer dry-run, and diff checks.                                       |
+
+The test container's first font attempt lacked the prefix preparation normally
+provided by sudo during installation. Its retry used a prefix owned by the fixture
+user. Eighteen casks completed before the test harness's ten-minute timeout; a
+targeted retry installed the remaining two. Lato's vendor URL still times out;
+its declaration remains required and no successful Lato installation is claimed.
+
+Local ignored evidence is under `.tmp/mise-adoption/`: `fisher-before.json`,
+`fisher-after.json`, `tools-probe.log`, `completions-probe.log`,
+`defaults-equivalence.json`, `doctor-native.log`, `doctor-before.log`,
+`doctor-after.log`, `ubuntu-probe.log`, `ubuntu-fisher.log`,
+`ubuntu-completions.log`, `ubuntu-fonts.log`, `ubuntu-fonts-retry.log`,
+`ubuntu-font-status.json`, and `verify.log`. The first full verification exposed a
+stdin/input conflict in the new inline-hook lint runner; the corrected runner and
+subsequent full verification pass. No setup was applied to the operator's Mac.
+
+Native contracts:
+
+- https://mise.jdx.dev/bootstrap/repos.html
+- https://mise.jdx.dev/dev-tools/#tool-postinstall-commands
+- https://mise.jdx.dev/bootstrap/packages/brew-cask.html#linux-font-casks
+- https://mise.jdx.dev/dotfiles/sync.html#identify-commits-by-machine
+- https://mise.jdx.dev/bootstrap/macos-defaults.html
+- https://mise.jdx.dev/configuration/project-diagnostics.html

@@ -105,6 +105,7 @@ Machine identity, Git inputs, sync mode, and the private origin live in
 `age.txt` stay local. Public `machines/*.toml` records are tracked; credentials are not.
 
 Both sync modes use native `history.sync = "manual"`; the watcher saves locally.
+History commits identify the saving machine as `mise@<hostname>`.
 Manual machines exchange on request. Automatic machines run the same serialized
 `sync` task every five minutes through a macOS LaunchAgent or Ubuntu systemd timer.
 Automatic sync executes received setup code and installs eligible software as
