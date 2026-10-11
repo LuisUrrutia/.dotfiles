@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Repository lint, four integration boundaries, and an isolated shell smoke path."""
 
+import os
 import shutil
 import sys
 import tempfile
@@ -10,6 +11,7 @@ from lint import ROOT, run, source_files
 
 
 def main():
+    run(os.environ.get("MISE_BIN") or "mise", "tasks", "validate")
     run(sys.executable, "tests/lint.py")
     run("/bin/bash", "install.sh", "--dry-run")
     with tempfile.TemporaryDirectory(prefix="dotfiles-public-check-") as temporary:

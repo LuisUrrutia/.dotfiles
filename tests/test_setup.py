@@ -143,6 +143,19 @@ class SetupTests(unittest.TestCase):
     def test_seed_and_native_deployment_preserve_user_files(self):
         machine = Machine(self.root, "safe")
         machine.payload()
+        machine.mise("tasks", "validate")
+        variants = sorted(
+            {
+                path.stem.removeprefix("mise.")
+                for path in (machine.config / "conf.d").glob("*/mise.*.toml")
+            }
+            - {"macos", "linux", "local"}
+        )
+        choices = machine.write(
+            "miserc.local.toml", "env = " + json.dumps(variants) + "\n"
+        )
+        machine.mise("tasks", "validate")
+        choices.unlink()
         completions = machine.home / ".config/fish/completions"
         completions.mkdir(parents=True)
         foreign_completion = machine.home / "custom-completion.fish"
