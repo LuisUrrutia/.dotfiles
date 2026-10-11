@@ -6,7 +6,6 @@
 "brew:gnu-sed" = { os = "macos" }
 "brew:gnu-tar" = { os = "macos" }
 "brew:grep" = { os = "macos" }
-"brew:jq" = { os = "macos" }
 "brew:steipete/tap/remindctl" = { os = "macos" }
 "brew:zstd" = { os = "macos" }
 "brew:cmake" = { os = "macos" }
@@ -19,10 +18,7 @@
 "brew:figlet" = { os = "macos" }
 "brew:hyperfine" = { os = "macos" }
 "brew:lolcrab" = { os = "macos" }
-"brew:fd" = { os = "macos" }
 "brew:ast-grep" = { os = "macos" }
-"brew:fzf" = { os = "macos" }
-"brew:zoxide" = { os = "macos" }
 "brew:rename" = { os = "macos" }
 "brew:fswatch" = { os = "macos" }
 "brew:watch" = { os = "macos" }

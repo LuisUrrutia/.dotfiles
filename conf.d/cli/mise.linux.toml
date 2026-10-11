@@ -37,14 +37,10 @@ _.path = [
 "apt:dbus-user-session" = "latest"
 
 [tools]
-jq = "latest"
 cmake = "latest"
 eza = "latest"
 hyperfine = "latest"
-fd = "latest"
 ast-grep = "latest"
-fzf = "latest"
-zoxide = "latest"
 dust = "latest"
 duf = "latest"
 worktrunk = "latest"

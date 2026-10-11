@@ -1,0 +1,22 @@
+[bootstrap.packages]
+"brew-cask:font-fira-code" = { os = ["macos", "linux"] }
+"brew-cask:font-fira-code-nerd-font" = { os = ["macos", "linux"] }
+"brew-cask:font-monaspace" = { os = ["macos", "linux"] }
+"brew-cask:font-monaspice-nerd-font" = { os = ["macos", "linux"] }
+"brew-cask:font-hack-nerd-font" = { os = ["macos", "linux"] }
+"brew-cask:font-jetbrains-mono" = { os = ["macos", "linux"] }
+"brew-cask:font-jetbrains-mono-nerd-font" = { os = ["macos", "linux"] }
+"brew-cask:font-geist" = { os = ["macos", "linux"] }
+"brew-cask:font-geist-mono" = { os = ["macos", "linux"] }
+"brew-cask:font-geist-mono-nerd-font" = { os = ["macos", "linux"] }
+"brew-cask:font-inter" = { os = ["macos", "linux"] }
+"brew-cask:font-lato" = { os = ["macos", "linux"] }
+"brew-cask:font-montserrat" = { os = ["macos", "linux"] }
+"brew-cask:font-noto-sans" = { os = ["macos", "linux"] }
+"brew-cask:font-open-sans" = { os = ["macos", "linux"] }
+"brew-cask:font-poppins" = { os = ["macos", "linux"] }
+"brew-cask:font-roboto" = { os = ["macos", "linux"] }
+"brew-cask:font-roboto-condensed" = { os = ["macos", "linux"] }
+"brew-cask:font-roboto-flex" = { os = ["macos", "linux"] }
+"brew-cask:font-roboto-mono" = { os = ["macos", "linux"] }
+"brew-cask:font-source-code-pro" = { os = ["macos", "linux"] }
