@@ -1,7 +1,12 @@
 [env]
-_.path = ["{{ env.HOME }}/.local/bin"]
+_.path = ["{{ env.HOME }}/.local/bin", "/home/linuxbrew/.linuxbrew/opt/mozjpeg/bin", "/home/linuxbrew/.linuxbrew/bin", "/home/linuxbrew/.linuxbrew/sbin"]
 
 [bootstrap.packages]
+# Ruby's bottle needs the formula's uses_from_macos libraries on Linux too.
+"brew:libffi" = "latest"
+"brew:libxcrypt" = "latest"
+"brew:cocoapods" = "latest"
+"brew:mozjpeg" = "latest"
 "apt:build-essential" = "latest"
 "apt:pkg-config" = "latest"
 "apt:libssl-dev" = "latest"

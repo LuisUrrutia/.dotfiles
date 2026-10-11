@@ -2,13 +2,20 @@
 
 A fresh macOS or Ubuntu setup managed by mise: software, shell, application
 configuration, preferences, and private setup history. Homebrew and Stow executables are not
-part of the setup. Native `brew:` and `brew-cask:` recipes still use
-`/opt/homebrew`.
+part of the setup. Native `brew:` recipes use `/opt/homebrew` on macOS and
+`/home/linuxbrew/.linuxbrew` on Linux because their binaries expect those paths.
 
 Supported targets are **macOS on Apple Silicon** and **Ubuntu on arm64 or x86_64**.
 Shared configuration and runtimes load on both. Ubuntu uses native `apt:` recipes
-for system packages and mise tools for development CLIs; macOS applications and
-preferences load only on macOS. Arch still needs its own package declarations.
+for system packages and mise tools for development CLIs. CocoaPods and MozJPEG
+use native `brew:` recipes on both platforms; mise installs their Linux bottles
+without installing Homebrew. MozJPEG's commands take precedence over the distro's
+libjpeg tools. macOS applications and preferences load only on macOS. Arch still
+needs its own package declarations.
+
+All portable tools in `conf.d/cli` have Linux declarations, including jq, eza,
+fzf and zoxide. Only remindctl (Apple Reminders), mas (Mac App Store) and Mole
+(macOS maintenance) remain exclusive to macOS.
 
 ## Layout
 

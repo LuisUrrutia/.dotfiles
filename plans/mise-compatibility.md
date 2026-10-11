@@ -747,7 +747,7 @@ logic and bring Ubuntu installation into scope.
 | --- | --- |
 | Install mise | `mise.run` selects the latest stable platform build and checks SHA-256. The wrapper only preserves foreign destinations, stages installation and keeps the previous executable. No mise release or checksum is pinned in this repository. |
 | Version compatibility | Native `min_version` rejects unsupported mise versions. Duplicate Python version checks were removed. The initial mise binary is exempt from the tool cooldown so it can provide current bootstrap features. |
-| Package installation | Native `[tools]`, `apt:`, `brew:` and `brew-cask:` declarations. Ubuntu has no Homebrew paths. The Mac recipe prefix remains `/opt/homebrew` because the bottles expect it; no `brew` process runs. |
+| Package installation | Native `[tools]`, `apt:`, `brew:` and `brew-cask:` declarations. Recipes use `/opt/homebrew` on macOS and `/home/linuxbrew/.linuxbrew` for CocoaPods and MozJPEG on Linux because the bottles expect those paths; no `brew` process runs. |
 | Resource verification | One native `bootstrap status --missing --json` checks the declared resources, including tools and systemd units. Skipped required packages and native warnings still fail acceptance. |
 | Files and permissions | Native dotfiles now own OrbStack's Docker plugin links; `bootstrap.directories` owns SSH directory permissions. The file guard still protects foreign links, redirected parents and edits to copied/template files: native apply can replace those without `--force`. |
 | Agent and credential link chains | The small final adapter remains. A real isolated `dot apply` with `.agents/AGENTS.md` and `.codex/AGENTS.md` declared together fails before creating either: the second source does not exist yet. Native links also do not create the intentionally dangling VoiceInk auth link before login. |
@@ -856,3 +856,61 @@ Commands and evidence:
 The local ignored scripts and logs are under `.tmp/cli-portability/`.
 The previously completed 1.9.2 VM installation remains the GUI evidence;
 this check did not claim a new GUI installation or a real future release.
+
+## CLI platform coverage
+
+Reviewed all 45 macOS entries and nine shared tools in `conf.d/cli` on
+2026-10-11. The shared tools already load on Linux. Of the 45 macOS entries,
+42 have Linux declarations; CocoaPods and MozJPEG were the two missing entries.
+The other three require macOS. The complete mapping is:
+
+| Linux owner | Tools from the macOS manifest |
+| --- | --- |
+| `apt:`, same name | coreutils, moreutils, findutils, grep, zstd, less, figlet, rename, fswatch, watchman, rsync, gnupg, aria2, ffmpeg, pngquant |
+| `apt:`, distro name | gnu-sed → sed; gnu-tar → tar; pkgconf → pkg-config; watch → procps; ykman → yubikey-manager; exiftool → libimage-exiftool-perl; p7zip → 7zip |
+| mise `[tools]`, same name | jq, cmake, eza, hyperfine, fd, ast-grep, fzf, zoxide, dust, duf, worktrunk, actionlint, shellcheck, gitleaks |
+| `cargo:` | procs, lolcrab, resvg |
+| `aqua:bensadeh/tailspin` | tailspin |
+| Native `brew:` | cocoapods, mozjpeg |
+| macOS only | remindctl (Apple Reminders), mas (Mac App Store), mole (macOS maintenance) |
+
+The formula APIs confirm arm64 and x86_64 Linux bottles for both additions:
+https://formulae.brew.sh/api/formula/cocoapods.json and
+https://formulae.brew.sh/api/formula/mozjpeg.json. The macOS exclusions are
+documented at https://github.com/openclaw/remindctl,
+https://formulae.brew.sh/formula/mas and https://formulae.brew.sh/formula/mole.
+
+Native mise installs the bottles into `/home/linuxbrew/.linuxbrew`, without a
+Homebrew executable. MozJPEG's keg-only `bin` directory is on the Linux PATH;
+the redundant `apt:libjpeg-turbo-progs` declaration is removed. The first real
+install exposed a Ruby runtime failure on both architectures: `libcrypt.so.2`
+was missing. The Linux manifest now explicitly declares `libxcrypt` and `libffi`,
+the libraries listed in Ruby's `uses_from_macos` metadata at
+https://formulae.brew.sh/api/formula/ruby.json. Ruby's FFI, OpenSSL and YAML
+loading passed after that correction.
+
+Fresh Ubuntu 26.04 arm64 and Ubuntu 24.04 x86_64 containers installed CocoaPods
+1.17.0 and MozJPEG 4.1.5 through `mise bootstrap packages apply --manager brew
+--yes`. `pod --version` and `pod ipc spec /fixture/Fixture.podspec` passed.
+`cjpeg`, `jpegtran` and `djpeg` encoded, optimized and decoded a small image.
+A repeated apply reported all four declared recipes already installed;
+`mise bootstrap packages status --json` reported each as `installed`.
+Neither container had a `brew` executable. CocoaPods verification covers its
+CLI and podspec metadata; Xcode builds still require macOS.
+
+The fresh-install harness initially used an unsupported `--manager` flag for
+`packages status`. Removing that flag and rerunning the functional/status checks
+passed on both architectures. This was a harness error after successful package
+and runtime checks, not an installation failure.
+
+Ignored evidence in `.tmp/cli-portability/` includes `cli-audit.tsv`, the initial
+`linux-*.log` failures, `linux-*-retry.log`, `linux-*-fresh.log`, and the final
+`linux-*-final.log` functional and native-status results. These checks exercised
+the new packages; the earlier Ubuntu acceptance section retains the evidence
+for the unchanged CLI packages, full bootstrap and services.
+
+`bash .tmp/mise-implementation/verify-entrypoint.sh` ran `mise run verify`
+against the final implementation and exited 0: five tests in 154.592 seconds,
+plus compilation, syntax, schema, shell smoke, secret and diff checks. The two
+owned test containers were removed and OrbStack returned to its initial stopped
+state. No Linux packages or bootstrap state were applied to the operator's Mac.
