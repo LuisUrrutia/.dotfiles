@@ -7,15 +7,15 @@ part of the setup. Native `brew:` recipes use `/opt/homebrew` on macOS and
 
 Supported targets are **macOS on Apple Silicon** and **Ubuntu on arm64 or x86_64**.
 Shared configuration and runtimes load on both. Ubuntu uses native `apt:` recipes
-for system packages and mise tools for development CLIs. CocoaPods and MozJPEG
-use native `brew:` recipes on both platforms; mise installs their Linux bottles
-without installing Homebrew. MozJPEG's commands take precedence over the distro's
+for system packages and mise tools for development CLIs. MozJPEG uses a native
+`brew:` recipe on both platforms; mise installs its Linux bottle without
+installing Homebrew. MozJPEG's commands take precedence over the distro's
 libjpeg tools. macOS applications and preferences load only on macOS. Arch still
 needs its own package declarations.
 
-All portable tools in `conf.d/cli` have Linux declarations, including jq, eza,
-fzf and zoxide. Only remindctl (Apple Reminders), mas (Mac App Store) and Mole
-(macOS maintenance) remain exclusive to macOS.
+Linux declarations in `conf.d/cli` include jq, eza, fzf and zoxide. CocoaPods is
+installed only on macOS by choice. remindctl (Apple Reminders), mas (Mac App Store)
+and Mole (macOS maintenance) also remain exclusive to macOS.
 
 `conf.d/dev` provides Yaak, dive, adb and fastboot on both platforms; Apparency
 requires macOS. On Ubuntu, mise's GitHub backend installs the official Yaak

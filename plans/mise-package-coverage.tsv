@@ -86,9 +86,6 @@ package	brew:blueutil	conf.d/hammerspoon/mise.macos.toml	macos-arm64	vm-installe
 package	brew:btop	conf.d/btop/mise.macos.toml	macos-arm64	vm-installed-1.4.7	pending-clean-machine	retry-native-owner
 package	brew:cmake	conf.d/cli/mise.macos.toml	macos-arm64	vm-installed-4.4.4	pending-clean-machine	retry-native-owner
 package	brew:cocoapods	conf.d/cli/mise.macos.toml	macos-arm64	vm-installed-1.17.0	pending-clean-machine	retry-native-owner
-package	brew:cocoapods	conf.d/cli/mise.linux.toml	linux-arm64;linux-x86_64	container-installed-1.17.0	pod-version-and-podspec-passed	xcode-builds-require-macos
-package	brew:libffi	conf.d/cli/mise.linux.toml	linux-arm64;linux-x86_64	container-installed-3.8.0	ruby-fiddle-passed	native-ruby-runtime
-package	brew:libxcrypt	conf.d/cli/mise.linux.toml	linux-arm64;linux-x86_64	container-installed-4.5.2	ruby-runtime-passed	native-ruby-runtime
 package	brew:coreutils	conf.d/cli/mise.macos.toml	macos-arm64	vm-installed-9.12	pending-clean-machine	retry-native-owner
 package	brew:cosign	conf.d/cloud/mise.macos.toml	macos-arm64	vm-installed-3.1.3	pending-clean-machine	retry-native-owner
 package	brew:cpanminus	conf.d/languages/mise.macos.toml	macos-arm64	vm-installed-1.7049	pending-clean-machine	retry-native-owner
