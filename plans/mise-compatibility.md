@@ -823,3 +823,36 @@ checksum logs, `ubuntu-amd64-enroll.log`, `ubuntu-24-package-availability.log`,
 JSON, `repository-verify-final.log` and `repository-verify-linux.log`.
 The owned Ubuntu VM and containers were removed, and OrbStack was returned to
 its initial stopped state. The ignored logs remain available locally.
+
+## AutoFirma cask release discovery
+
+Verified on 2026-10-11. AutoFirma no longer has a pinned version, archive URL,
+checksum or package filename. Its setup task reads all four from
+https://formulae.brew.sh/api/cask/autofirma.json. The macOS `update` task checks
+this release daily and prepares a newer installer, leaving maintenance pending
+until the user completes it. Native mise still rejects this cask's
+`installer manual:` artifact, so the small vendor-installer adapter remains.
+
+The current cask returned 1.9.2. A real download into isolated state passed the
+cask SHA-256 and `pkgutil --check-signature`, including Apple's notarization
+assessment. The ZIP spells its package `Autofirma`, while the cask spells it
+`AutoFirma`; the adapter now accepts one case-insensitive filename match.
+No installer was launched on the operator's Mac.
+
+Commands and evidence:
+
+- `python3 .tmp/cli-portability/check-autofirma.py`: exit 0. An installed
+  current version avoided another archive download; changing the fixture cask
+  version and package filename prepared the new release; a checksum mismatch
+  wrote no package and did not reach signature verification.
+- `python3 .tmp/cli-portability/check-autofirma.py --live`: exit 0; actual
+  cask discovery, download, checksum and Apple package signature passed. The
+  harness expects the production task's pending-installation error.
+- `bash .tmp/mise-implementation/verify-entrypoint.sh`: exit 0; runs
+  `mise run verify` with isolated mise directories. Five integration tests
+  passed in 152.977 seconds, plus compilation, syntax, schema, shell smoke,
+  secret and diff checks.
+
+The local ignored scripts and logs are under `.tmp/cli-portability/`.
+The previously completed 1.9.2 VM installation remains the GUI evidence;
+this check did not claim a new GUI installation or a real future release.

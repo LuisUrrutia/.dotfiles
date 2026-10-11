@@ -1,4 +1,3 @@
 [tasks."setup:autofirma"]
 description = "Check AutoFirma or prepare its required interactive vendor installer"
 run = 'python3 "{{ config_root }}/setup.py"'
-env = { AUTOFIRMA_VERSION = "1.9.2", AUTOFIRMA_URL = "https://firmaelectronica.gob.es/content/dam/firmaelectronica/descargas-software/Autofirma_1_9_2_Mac_M1.zip", AUTOFIRMA_SHA256 = "858aa128f2cd2d5e7cf294129193cedb7da4839ba5157deff4b01c9780ad301a", AUTOFIRMA_PACKAGE = "Autofirma_1_9_2_aarch64_signed.pkg" }

@@ -40,6 +40,8 @@ def main():
         step("mise", [[MISE, "self-update", "--yes", "--minimum-release-age", "3d"], [MISE, "upgrade", "--yes"]])
         step("packages", [[sys.executable, ROOT / "conf.d/setup/packages.py", "upgrade"],
                             [MISE, "bootstrap", "packages", "upgrade", "--yes"]], 86400)
+        if sys.platform == "darwin":
+            step("autofirma", [[MISE, "run", "setup:autofirma"]], 86400)
         step("github-extensions", [["gh", "extension", "upgrade", "--all"]])
         step("rust", [["rustup", "update"]])
         step("neovim", [["nvim", "--headless", "+Lazy! sync", "+qa"],

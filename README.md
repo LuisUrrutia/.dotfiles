@@ -119,13 +119,15 @@ format, tested on macOS 27.0. If verification fails, setup stays pending and ask
 you to sign out and back in before retrying; it never opens confirmation dialogs
 as a fallback. See [the VM evidence](plans/mise-compatibility.md#silent-file-associations).
 
-AutoFirma uses its interactive vendor installer because its cask cannot run
-unattended. `setup:autofirma` downloads the pinned archive, checks its SHA-256 and
-package signature, then prints the command to open it. Complete the installer
-and rerun `mise -C ~ run config apply`; setup remains pending until its package
-receipt and application are present. Its reviewed version, URL and checksum live
-in `conf.d/autofirma/mise.macos.toml`. Update those together for a new release;
-`update` does not discover AutoFirma releases.
+AutoFirma uses its interactive vendor installer because mise does not support
+the cask's `installer manual:` artifact. `setup:autofirma` reads the current
+version, download URL, SHA-256 and package filename from
+https://formulae.brew.sh/api/cask/autofirma.json. It downloads that release and
+checks its checksum and package signature before printing the command to open
+it. Complete the installer and rerun `mise -C ~ run config apply`; setup remains
+pending until its package receipt and application are present at that version
+or newer. `update` checks the cask daily and prepares any new release through
+the same task. No AutoFirma version or archive URL is pinned in this repository.
 
 Third-party taps use mise's default GitHub metadata resolution. Public recipes,
 font repositories, plugins, skills and the initial checkout use HTTPS. The shared
