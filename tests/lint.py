@@ -123,7 +123,13 @@ def lint_sources(paths, groups, *, fix=False):
         if path.suffix == ".py":
             compile((ROOT / path).read_text(), str(path), "exec")
         elif path.suffix == ".toml":
-            tomllib.loads((ROOT / path).read_text())
+            document = tomllib.loads((ROOT / path).read_text())
+            for tool in document.get("tools", {}).values():
+                hook = tool.get("postinstall") if isinstance(tool, dict) else None
+                script = hook.get("run") if isinstance(hook, dict) else hook
+                if script:
+                    run("shellcheck", "--shell=sh", "-", input=script, text=True)
+                    run("shfmt", "-d", "-ln", "posix", input=script, text=True)
         elif path.suffix == ".json" or path.name == ".swift-format":
             json.loads((ROOT / path).read_text())
         elif path.suffix == ".jsonc":

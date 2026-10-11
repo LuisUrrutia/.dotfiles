@@ -3,7 +3,17 @@
 
 [tools]
 python = "3"
-uv = "latest"
 
-[tasks."setup:python"]
-run = 'bash "{{ config_root }}/setup.sh"'
+[tools.uv]
+version = "latest"
+postinstall = { when = "always", run = '''
+set -eu
+directory="$HOME/.config/fish/completions"
+mkdir -p "$directory"
+temporary=$(mktemp -d "$directory/.uv.XXXXXX")
+trap 'rm -rf "$temporary"' EXIT
+uv generate-shell-completion fish >"$temporary/uv.fish"
+uvx --generate-shell-completion fish >"$temporary/uvx.fish"
+mv "$temporary/uv.fish" "$directory/uv.fish"
+mv "$temporary/uvx.fish" "$directory/uvx.fish"
+''' }

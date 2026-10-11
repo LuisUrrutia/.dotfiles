@@ -4,10 +4,21 @@
 "~/.yarnrc.yml" = "yarnrc.yml"
 
 [tools]
-bun = "latest"
 deno = "latest"
 node = "lts"
 pnpm = "latest"
 
+[tools.bun]
+version = "latest"
+postinstall = { when = "always", run = '''
+set -eu
+directory="$HOME/.config/fish/completions"
+mkdir -p "$directory"
+temporary=$(mktemp "$directory/.bun.XXXXXX")
+trap 'rm -f "$temporary"' EXIT
+SHELL=fish bun completions >"$temporary"
+mv "$temporary" "$directory/bun.fish"
+''' }
+
 [tasks."setup:node"]
-run = 'bash "{{ config_root }}/setup.sh"'
+run = "npm config set min-release-age 3 --location=user"
