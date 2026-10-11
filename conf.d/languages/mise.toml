@@ -2,3 +2,4 @@
 [tools]
 dotnet = "10"
 java = "lts"
+rust = { version = "latest", profile = "default" }

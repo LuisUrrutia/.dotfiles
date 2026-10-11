@@ -986,3 +986,20 @@ Final verification commands and results:
 
 Both owned containers were removed and OrbStack returned to its initial stopped
 state. The operator's active setup and installed packages were not changed.
+
+## Native Rust ownership
+
+On 2026-10-11, replaced the macOS Rustup formula and setup task with one shared
+native Rust declaration in `conf.d/languages/mise.toml`. `mise upgrade` now owns
+updates on both platforms. The native backend uses Rustup internally; the default
+profile supplies Cargo, Clippy and Rustfmt without a second package owner.
+See https://mise.jdx.dev/lang/rust.html.
+
+An isolated macOS home, mise data directory, Cargo home and Rustup home installed
+Rust 1.99.0 with the three-day cooldown. `mise exec -- cargo fmt -- --check`,
+`mise exec -- cargo clippy -- -D warnings` and `mise exec -- cargo run --quiet`
+passed on a small Rust program. `mise upgrade rust --dry-run` reported the
+toolchain current. A project `rust-toolchain.toml` selected 1.98.0 instead of the
+global 1.99.0. The first selection assertion expected an object from `mise ls`
+instead of its array; correcting that harness assertion passed without a source
+change. This run did not repeat a fresh Linux Rust installation.

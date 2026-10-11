@@ -38,7 +38,7 @@ conf.d/
   git/                    defaults and identity template
   audio/                  independently selected apps and preference schemas
   ethereum/               Geth, Foundry and Solidity on macOS and Linux
-  languages/              language packages, including Lua and LuaRocks
+  languages/              runtimes, including native mise Rust and Lua packages
   macos/                  native defaults, LaunchAgents, system settings
   <capability>/           packages, source files, and any required setup task
   setup/                  preservation, preferences, synchronization, maintenance
@@ -217,6 +217,10 @@ toolchain and build prerequisites. Foundry and Solidity use native brew recipes.
 OBS includes its scene-switcher plugin. There are no role profiles.
 The common macOS setup includes the former cloud, dev, formatters, image, and
 languages categories. The work Mac can leave the optional list empty.
+
+Native mise installs and updates Rust on both platforms; the default profile
+includes Rustfmt and Clippy.
+Project `rust-toolchain.toml` files take precedence over the global toolchain.
 
 Removing a selection stops managing it; it does not delete application data or
 uninstall packages. Review native `mise bootstrap unapply <module> --dry-run`

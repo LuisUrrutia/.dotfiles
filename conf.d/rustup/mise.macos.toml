@@ -1,6 +1,0 @@
-
-[bootstrap.packages]
-"brew:rustup" = { os = "macos" }
-
-[tasks."setup:rustup"]
-run = 'bash "{{ config_root }}/setup.sh"'

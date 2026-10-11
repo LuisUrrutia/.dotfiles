@@ -2,7 +2,7 @@ min_version = "2026.10.7"
 
 [settings]
 task.run_auto_install = false
-idiomatic_version_file_enable_tools = ["node", "python"]
+idiomatic_version_file_enable_tools = ["node", "python", "rust"]
 minimum_release_age = "3d"
 minimum_release_age_excludes = ["aqua:anthropics/claude-code", "aqua:openai/codex"]
 

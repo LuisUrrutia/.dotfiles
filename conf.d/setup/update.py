@@ -43,7 +43,6 @@ def main():
         if sys.platform == "darwin":
             step("autofirma", [[MISE, "run", "setup:autofirma"]], 86400)
         step("github-extensions", [["gh", "extension", "upgrade", "--all"]])
-        step("rust", [["rustup", "update"]])
         step("neovim", [["nvim", "--headless", "+Lazy! sync", "+qa"],
                         ["nvim", "--headless", "+Lazy! build telescope-fzf-native.nvim",
                         "+lua local ok, err = pcall(function() require('telescope').load_extension('fzf') end); if not ok then vim.api.nvim_err_writeln(err); vim.cmd.cquit() end", "+qa"],

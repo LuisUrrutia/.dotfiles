@@ -151,7 +151,6 @@ package	brew:rename	conf.d/cli/mise.macos.toml	macos-arm64	vm-installed-1.601	pe
 package	brew:resvg	conf.d/cli/mise.macos.toml	macos-arm64	vm-installed-0.48.1	pending-clean-machine	retry-native-owner
 package	brew:ripgrep	conf.d/ripgrep/mise.macos.toml	macos-arm64	vm-installed-15.2.0	pending-clean-machine	retry-native-owner
 package	brew:rsync	conf.d/cli/mise.macos.toml	macos-arm64	vm-installed-3.5.1	pending-clean-machine	retry-native-owner
-package	brew:rustup	conf.d/rustup/mise.macos.toml	macos-arm64	vm-installed-1.29.1	pending-clean-machine	retry-native-owner
 package	brew:shellcheck	conf.d/cli/mise.macos.toml	macos-arm64	vm-installed-0.11.0	pending-clean-machine	retry-native-owner
 package	brew:shfmt	conf.d/formatters/mise.macos.toml	macos-arm64	vm-installed-3.14.1	pending-clean-machine	retry-native-owner
 package	brew:solidity	conf.d/ethereum/mise.ethereum.toml	macos-arm64;optional=ethereum	not-selected-in-vm	pending-clean-machine	retry-native-owner
@@ -201,3 +200,4 @@ package	brew:solidity	conf.d/ethereum/mise.ethereum.toml	ubuntu-arm64;ubuntu-x86
 package	apt:libegl1	conf.d/dev/mise.linux.toml	ubuntu-arm64;ubuntu-x86_64	installed	pending-clean-machine	retry-native-owner
 package	apt:libfuse2t64	conf.d/dev/mise.linux.toml	ubuntu-arm64;ubuntu-x86_64	installed	pending-clean-machine	retry-native-owner
 package	apt:libgles2	conf.d/dev/mise.linux.toml	ubuntu-arm64;ubuntu-x86_64	installed	pending-clean-machine	retry-native-owner
+tool	rust	conf.d/languages/mise.toml	macos-arm64;ubuntu-arm64;ubuntu-x86_64	macos-isolated-1.99.0-cargo-clippy-rustfmt-passed	native-upgrade-dry-run-current	retry-native-owner
