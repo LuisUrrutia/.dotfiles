@@ -1,0 +1,11 @@
+[bootstrap.macos.launchd.agents.openclaw-sshfs]
+program = "~/.local/bin/openclaw-mount"
+args = ["reconcile"]
+run_at_load = true
+start_interval = 60
+process_type = "Background"
+throttle_interval = 30
+working_directory = "~"
+environment = { PATH = "{{ env.HOME }}/.local/share/mise/shims:{{ env.HOME }}/.local/bin:/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin" }
+stdout_path = "~/Library/Logs/openclaw-sshfs.log"
+stderr_path = "~/Library/Logs/openclaw-sshfs.error.log"
