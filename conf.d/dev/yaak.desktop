@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Yaak
+StartupWMClass=yaak-app-client
+Comment=API client
+Exec="{{ env.HOME }}/.local/share/mise/shims/yaak" %U
+Icon=applications-development
+Terminal=false
+Categories=Development;

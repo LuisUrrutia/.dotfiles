@@ -1,6 +1,19 @@
 [bootstrap.packages]
 "apt:adb" = "latest"
 "apt:fastboot" = "latest"
+"apt:libegl1" = "latest"
+"apt:libfuse2t64" = "latest"
+"apt:libgles2" = "latest"
 
 [tools]
 dive = "latest"
+
+[tools."github:mountain-loop/yaak"]
+version = "latest"
+format = "raw"
+bin = "yaak"
+platforms.linux-x64.asset_pattern = "yaak_*_amd64.AppImage"
+platforms.linux-arm64.asset_pattern = "yaak_*_aarch64.AppImage"
+
+[dotfiles]
+"~/.local/share/applications/yaak.desktop" = { source = "yaak.desktop", mode = "template" }

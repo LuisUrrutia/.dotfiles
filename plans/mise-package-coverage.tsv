@@ -108,7 +108,7 @@ package	brew:figlet	conf.d/cli/mise.macos.toml	macos-arm64	vm-installed-2.2.5	pe
 package	brew:findutils	conf.d/cli/mise.macos.toml	macos-arm64	vm-installed-4.11.0	pending-clean-machine	retry-native-owner
 package	brew:fish	conf.d/fish/mise.macos.toml	macos-arm64	vm-installed-4.9.3	pending-clean-machine	retry-native-owner
 package	brew:fisher	conf.d/fish/mise.macos.toml	macos-arm64	vm-installed-4.4.8	pending-clean-machine	retry-native-owner
-package	brew:foundry	conf.d/foundry/mise.foundry.toml	macos-arm64;optional=foundry	not-selected-in-vm	pending-clean-machine	retry-native-owner
+package	brew:foundry	conf.d/ethereum/mise.ethereum.toml	macos-arm64;optional=ethereum	not-selected-in-vm	pending-clean-machine	retry-native-owner
 package	brew:fswatch	conf.d/cli/mise.macos.toml	macos-arm64	vm-installed-1.22.0	pending-clean-machine	retry-native-owner
 package	brew:fzf	conf.d/cli/mise.macos.toml	macos-arm64	vm-installed-0.74.4	pending-clean-machine	retry-native-owner
 package	brew:gh	conf.d/gh/mise.macos.toml	macos-arm64	vm-installed-2.102.0	pending-clean-machine	retry-native-owner
@@ -154,7 +154,7 @@ package	brew:rsync	conf.d/cli/mise.macos.toml	macos-arm64	vm-installed-3.5.1	pen
 package	brew:rustup	conf.d/rustup/mise.macos.toml	macos-arm64	vm-installed-1.29.1	pending-clean-machine	retry-native-owner
 package	brew:shellcheck	conf.d/cli/mise.macos.toml	macos-arm64	vm-installed-0.11.0	pending-clean-machine	retry-native-owner
 package	brew:shfmt	conf.d/formatters/mise.macos.toml	macos-arm64	vm-installed-3.14.1	pending-clean-machine	retry-native-owner
-package	brew:solidity	conf.d/solidity/mise.solidity.toml	macos-arm64;optional=solidity	not-selected-in-vm	pending-clean-machine	retry-native-owner
+package	brew:solidity	conf.d/ethereum/mise.ethereum.toml	macos-arm64;optional=ethereum	not-selected-in-vm	pending-clean-machine	retry-native-owner
 package	brew:starship	conf.d/starship/mise.macos.toml	macos-arm64	vm-installed-1.26.0	pending-clean-machine	retry-native-owner
 package	brew:steipete/tap/remindctl	conf.d/cli/mise.macos.toml	macos-arm64	vm-installed-0.3.8	pending-clean-machine	retry-native-owner
 package	brew:stellar-cli	conf.d/stellar-cli/mise.stellar-cli.toml	macos-arm64;optional=stellar-cli	not-selected-in-vm	pending-clean-machine	retry-native-owner
@@ -194,3 +194,10 @@ appstore	mas:497799835	bootstrap/enroll.py	macos-arm64;machine-xcode	not-selecte
 bootstrap	mise	bootstrap/install-mise.sh	macos-arm64	vm-installed-2026.10.7-and-rerun	pending-clean-machine	verified-release-download
 editor-extension	catppuccin.catppuccin-vsc,vscodevim.vim	conf.d/apps/setup.sh	macos-arm64	vm-installed-catppuccin-3.19.0-vim-1.32.4	pending-clean-machine	rerun-editor-task
 retired	stow,opencode,cc-safety-net	plans/mise-migration-decisions.md	all	approved-removal	approved-removal	not-applicable
+tool	github:mountain-loop/yaak	conf.d/dev/mise.linux.toml	ubuntu-arm64;ubuntu-x86_64	installed-2026.8.1;gui-x86_64-passed;gui-arm64-pending	latest-with-3d-cooldown	retry-native-owner
+tool	go:github.com/ethereum/go-ethereum/cmd/...	conf.d/ethereum/mise.ethereum.toml	ubuntu-arm64;ubuntu-x86_64;optional=ethereum	installed-1.17.7-command-suite-checked	latest-with-3d-cooldown	retry-native-owner
+package	brew:foundry	conf.d/ethereum/mise.ethereum.toml	ubuntu-arm64;ubuntu-x86_64;optional=ethereum	installed-1.8.5-contract-test-passed	pending-clean-machine	retry-native-owner
+package	brew:solidity	conf.d/ethereum/mise.ethereum.toml	ubuntu-arm64;ubuntu-x86_64;optional=ethereum	installed-0.8.37-contract-test-passed	pending-clean-machine	retry-native-owner
+package	apt:libegl1	conf.d/dev/mise.linux.toml	ubuntu-arm64;ubuntu-x86_64	installed	pending-clean-machine	retry-native-owner
+package	apt:libfuse2t64	conf.d/dev/mise.linux.toml	ubuntu-arm64;ubuntu-x86_64	installed	pending-clean-machine	retry-native-owner
+package	apt:libgles2	conf.d/dev/mise.linux.toml	ubuntu-arm64;ubuntu-x86_64	installed	pending-clean-machine	retry-native-owner

@@ -1,3 +1,7 @@
+[tools]
+"go:github.com/ethereum/go-ethereum/cmd/..." = { version = "latest", os = ["linux"] }
 
 [bootstrap.packages]
 "brew:ethereum" = { os = "macos" }
+"brew:foundry" = "latest"
+"brew:solidity" = "latest"

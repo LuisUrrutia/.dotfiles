@@ -17,6 +17,14 @@ All portable tools in `conf.d/cli` have Linux declarations, including jq, eza,
 fzf and zoxide. Only remindctl (Apple Reminders), mas (Mac App Store) and Mole
 (macOS maintenance) remain exclusive to macOS.
 
+`conf.d/dev` provides Yaak, dive, adb and fastboot on both platforms; Apparency
+requires macOS. On Ubuntu, mise's GitHub backend installs the official Yaak
+AppImage for the machine's architecture, with the three-day release cooldown.
+Native apt declarations provide FUSE, EGL and GLES, and a native dotfile template
+adds its desktop launcher. See the
+[Linux acceptance evidence](plans/mise-compatibility.md#dev-and-ethereum-on-linux)
+for the graphical testing limits.
+
 ## Layout
 
 ```text
@@ -28,6 +36,9 @@ miserc.toml               automatic platform environments
 conf.d/
   fish/                   mise declarations, config.fish, functions, completions
   git/                    defaults and identity template
+  audio/                  independently selected apps and preference schemas
+  ethereum/               Geth, Foundry and Solidity on macOS and Linux
+  languages/              language packages, including Lua and LuaRocks
   macos/                  native defaults, LaunchAgents, system settings
   <capability>/           packages, source files, and any required setup task
   setup/                  preservation, preferences, synchronization, maintenance
@@ -198,8 +209,12 @@ env = ["busycal", "audio-hijack"]
 ```
 
 Available choices: `audio-hijack`, `busycal`, `camo`, `displaylink`, `ethereum`,
-`focusrite`, `foundry`, `loopback`, `obs`, `skhd`, `solidity`, `soundsource`, and
-`stellar-cli`. OBS includes its scene-switcher plugin. There are no role profiles.
+`focusrite`, `loopback`, `obs`, `skhd`, `soundsource`, and `stellar-cli`.
+`ethereum` includes Geth, Foundry and Solidity on macOS and Linux. The audio
+apps live together in `conf.d/audio` and remain individually selectable.
+On Linux, mise's Go backend builds the Geth command suite using the shared Go
+toolchain and build prerequisites. Foundry and Solidity use native brew recipes.
+OBS includes its scene-switcher plugin. There are no role profiles.
 The common macOS setup includes the former cloud, dev, formatters, image, and
 languages categories. The work Mac can leave the optional list empty.
 

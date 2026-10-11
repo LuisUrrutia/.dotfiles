@@ -914,3 +914,75 @@ against the final implementation and exited 0: five tests in 154.592 seconds,
 plus compilation, syntax, schema, shell smoke, secret and diff checks. The two
 owned test containers were removed and OrbStack returned to its initial stopped
 state. No Linux packages or bootstrap state were applied to the operator's Mac.
+
+## Dev and Ethereum on Linux
+
+On 2026-10-11, reviewed every entry in `conf.d/dev`: dive and Android's adb and
+fastboot already had Linux owners; Yaak now uses the official arm64/x86_64
+AppImages through mise's GitHub backend. Apparency remains macOS-only. Yaak's
+supported formats are documented at https://yaak.app/docs/getting-started/installation.
+Native apt declarations provide FUSE, EGL and GLES; the initial minimal-container
+launch exposed missing `libEGL.so.1` and `libGLESv2.so.2` before those were added.
+Mise renders and owns the desktop launcher.
+
+The optional `ethereum` module now includes Geth, Foundry and Solidity. Foundry
+and Solidity have Linux bottles in their native recipes:
+https://formulae.brew.sh/api/formula/foundry.json and
+https://formulae.brew.sh/api/formula/solidity.json. The Geth x86_64 bottle installed
+but failed to start with `rtld_setup_main_map: Assertion GL(dl_rtld_map).l_libname
+failed`. Explicit loader invocation worked; a second emulator and a brewed
+glibc reproduced the normal-launch failure. Its root cause is not established.
+Linux therefore uses mise's native Go backend for `go-ethereum/cmd/...`, retaining
+the whole command suite without a loader wrapper. macOS keeps its existing recipe.
+
+Ubuntu 26.04 arm64 and Ubuntu 24.04 x86_64 containers installed Yaak 2026.8.1,
+Geth 1.17.7, Foundry 1.8.5 and Solidity 0.8.37. Mise excluded the newer Yaak and
+Geth releases through the configured three-day cooldown. Both containers passed
+`geth version`, the Foundry command version checks, `solc --version`, the existing
+dev CLI checks and `desktop-file-validate`. All eleven Geth command binaries were
+present. `forge test --offline` compiled a small Solidity fixture with the installed
+Solc and passed its EVM test. Repeated native package/tool apply reported the
+declared resources installed; neither environment contained a Homebrew executable.
+
+Yaak's x86_64 first-run interface rendered under Xvfb, Openbox and a D-Bus session,
+using `WEBKIT_DISABLE_DMABUF_RENDERER=1` for the virtual display. The AppImage was
+extracted for this container-only GUI check because FUSE was unavailable. The
+arm64 package installed, but the GUI never produced a visible interface in that
+environment, including with Yaak's documented software-rendering options. Native
+Ubuntu desktop/FUSE and arm64 GUI acceptance remain open. No display workaround
+or sandbox bypass was added to the installed launcher.
+
+Local, ignored evidence lives in `.tmp/dev-portability/`: `check-modules.py`,
+`input/check-dev.sh`, `final-arm64.log`, `final-amd64.log`, the Geth failure/probe
+logs and the Yaak GUI logs/screenshots. `check-dev.sh` invokes native package
+apply, tool install, dotfile apply, the runtime checks and native status commands.
+The original containers began from clean images; final runtime checks ran after
+the failed Geth bottle links and temporary glibc probe were removed from use.
+
+## Grouped optional modules
+
+The audio manifests and preference schemas now share `conf.d/audio`; their four
+selectors stay independent. Named `preferences.<app>.json` files preserve the
+existing encrypted snapshot IDs. LuaRocks joins Lua in `conf.d/languages`.
+Foundry and Solidity are selected through `ethereum` rather than separate modules.
+
+`check-modules.py` passed native config discovery for `macos`, `macos,loopback`
+and `linux,ethereum`. The encrypted-preferences integration test checks that
+selecting Loopback alone excludes an installed SoundSource and keeps the original
+machine-scoped Loopback snapshot path. These checks do not claim new audio app
+installation, hardware interaction or real preference restoration acceptance.
+
+Final verification commands and results:
+
+- `bash .tmp/mise-implementation/verify-entrypoint.sh`: exit 0; `mise run verify`
+  passed all five tests in 144.525 seconds, compilation, syntax, schemas, shell
+  smoke, secret scanning and diff checks. The prior run failed because commit
+  preparation changed Git's tracked-file index during the seed test. The final
+  run kept the index stable; no test expectation or production guard was changed.
+- `docker --context orbstack exec -u tester dotfiles-dev-arm64-20261011 bash /fixture/check-dev.sh`:
+  exit 0; native install/apply/status, CLI checks and the offline contract passed.
+- `docker --context orbstack exec -u tester dotfiles-dev-amd64-20261011 bash /fixture/check-dev.sh`:
+  exit 0 with the same checks.
+
+Both owned containers were removed and OrbStack returned to its initial stopped
+state. The operator's active setup and installed packages were not changed.
