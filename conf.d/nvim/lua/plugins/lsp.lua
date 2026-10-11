@@ -1,32 +1,35 @@
 return {
-  { "neovim/nvim-lspconfig" },
-  { "mason-org/mason.nvim", opts = {} },
   {
-    "mason-org/mason-lspconfig.nvim",
-    opts = {
-      automatic_enable = true,
-      ensure_installed = {
-        "rust_analyzer",
-        "lua_ls",
-        "tailwindcss",
-        "astro",
-        "docker_language_server",
-        "vtsls",
-      },
-    },
-    dependencies = {
-      "mason-org/mason.nvim",
-      "neovim/nvim-lspconfig",
-      "saghen/blink.cmp",
-    },
-    config = function(_, opts)
+    "neovim/nvim-lspconfig",
+    dependencies = { "saghen/blink.cmp" },
+    config = function()
       local capabilities = require("blink.cmp").get_lsp_capabilities()
 
       vim.lsp.config("*", {
         capabilities = capabilities,
       })
 
-      require("mason-lspconfig").setup(opts)
+      vim.lsp.config("astro", {
+        before_init = function(_, config)
+          local tsdk = require("lspconfig.util").get_typescript_server_path(config.root_dir)
+          if tsdk == "" then
+            local installed = vim.system({ "mise", "where", "npm:typescript@6" }, { text = true }):wait()
+            if installed.code ~= 0 then
+              error("Astro needs the mise-managed TypeScript 6 SDK: " .. installed.stderr)
+            end
+            local root = vim.trim(installed.stdout)
+            for _, directory in ipairs({ "/node_modules/typescript/lib", "/lib/node_modules/typescript/lib" }) do
+              if vim.uv.fs_stat(root .. directory .. "/tsserverlibrary.js") then
+                tsdk = root .. directory
+                break
+              end
+            end
+            assert(tsdk ~= "", "The mise-managed TypeScript 6 SDK is missing")
+          end
+          config.init_options.typescript.tsdk = tsdk
+        end,
+      })
+      vim.lsp.enable({ "rust_analyzer", "lua_ls", "tailwindcss", "astro", "docker_language_server", "vtsls" })
     end,
   },
   {
@@ -34,7 +37,6 @@ return {
     event = "InsertEnter",
     dependencies = {
       "saghen/blink.lib",
-      "neovim/nvim-lspconfig",
       "L3MON4D3/LuaSnip",
     },
     build = function()

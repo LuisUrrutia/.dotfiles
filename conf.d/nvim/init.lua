@@ -1,3 +1,6 @@
+local data = vim.env.MISE_DATA_DIR or ((vim.env.XDG_DATA_HOME or (vim.env.HOME .. "/.local/share")) .. "/mise")
+vim.env.PATH = data .. "/shims:" .. vim.env.PATH
+
 require("config.options")
 require("config.lazy")
 require("config.treesitter")
