@@ -60,10 +60,17 @@ Linux/aarch64 | Linux/x86_64)
   exit 1
   ;;
 esac
-if ! sudo -n true; then
-  echo 'Run sudo -v in your terminal, then rerun setup.' >&2
-  exit 1
+if ! sudo -n -v 2>/dev/null; then
+  if [[ ! -t 0 ]]; then
+    echo 'Setup needs administrator authorization. Run ./install.sh in a terminal.' >&2
+    exit 1
+  fi
+  echo 'Authorizing system installation. Enter your login password at the sudo prompt.'
+  sudo -v
 fi
+while sleep 60; do sudo -n -v || exit; done &
+sudo_keepalive=$!
+trap 'kill "$sudo_keepalive" 2>/dev/null || true; wait "$sudo_keepalive" 2>/dev/null || true' EXIT
 if [[ "$(uname -s)" == Linux ]] && { ! command -v curl >/dev/null || ! command -v git >/dev/null || [[ ! -s /etc/ssl/certs/ca-certificates.crt ]]; }; then
   sudo -n apt-get update
   sudo -n env DEBIAN_FRONTEND=noninteractive apt-get install --yes ca-certificates curl git
@@ -76,9 +83,10 @@ if [[ ! -f "$source_root/bootstrap/enroll.py" ]]; then
   }
   GIT_TERMINAL_PROMPT=0 \
     /usr/bin/git clone https://github.com/LuisUrrutia/.dotfiles.git "$destination"
-  exec /bin/bash "$destination/install.sh" "$@"
+  /bin/bash "$destination/install.sh" "$@"
+  exit
 fi
 /bin/bash "$source_root/bootstrap/install-mise.sh"
 export PATH="$HOME/.local/bin:$PATH"
 export MISE_MINIMUM_RELEASE_AGE="${MISE_MINIMUM_RELEASE_AGE:-3d}"
-exec "$HOME/.local/bin/mise" exec python@3 -- python3 "$source_root/bootstrap/enroll.py" "$@"
+"$HOME/.local/bin/mise" exec python@3 -- python3 "$source_root/bootstrap/enroll.py" "$@"

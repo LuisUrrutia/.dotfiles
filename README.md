@@ -14,10 +14,11 @@ Setup does not migrate an existing installation or uninstall Homebrew.
    macOS's own password prompt in the terminal. It does not ask again when the
    setting is already correct.
    On Ubuntu, use a normal login account with sudo;
-   the installer adds missing curl, Git, and CA certificates. Run `sudo -v`
-   before full setup. Initial enrollment can ask for the Mac login password and
-   age's recovery password through their hidden terminal prompts. Background
-   maintenance and diagnostics never prompt.
+   the installer adds missing curl, Git, and CA certificates. Setup requests
+   administrator authorization when needed and refreshes it until installation
+   ends. Initial enrollment can also ask for the Mac login password and age's
+   recovery password through their hidden terminal prompts. Background maintenance
+   and diagnostics never prompt.
 
    Run macOS system settings from the local console: the firewall policy disables
    automatic permission for signed apps, so incoming services such as SSH may need
@@ -115,8 +116,9 @@ Edit this active tree: private mise history owns it, and application links point
 here. Shared sources, installation declarations, plugin manifests, and setup tasks
 travel together. The public checkout remains separate.
 
-A full macOS retry also repairs the previously shipped screen-lock check and
-prints that specific diff. Custom commands and other active settings are preserved.
+A full retry repairs the previously shipped terminal handling and, on macOS,
+the screen-lock check. It prints a short confirmation for each repair.
+Custom checks and other active settings are preserved.
 
 Machine identity, Git inputs, sync mode, and the private origin live in
 `config.local.toml`; optional apps live in `miserc.local.toml`. These files and
@@ -356,6 +358,9 @@ mise development CLIs. Native `brew:` binaries expect `/opt/homebrew` on macOS
 and `/home/linuxbrew/.linuxbrew` on Linux; mise uses these paths without installing
 Homebrew. MozJPEG uses this backend on both platforms, including a Linux bottle,
 and its commands take precedence over distro libjpeg tools.
+
+On macOS, a native pre-packages hook installs mise-managed Ruby before evaluating
+third-party casks such as SuperCmd. Ruby follows the three-day release cooldown.
 
 `conf.d/cli` includes Linux jq, eza, fzf, and zoxide. CocoaPods is macOS-only by
 choice. remindctl (Apple Reminders), mas (Mac App Store), and Mole (macOS maintenance)

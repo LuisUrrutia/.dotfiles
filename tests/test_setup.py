@@ -258,6 +258,18 @@ fi
         machine.minimal()
         machine.encryption()
         machine.env["MISE_ENV"] = "macos"
+        runtime = machine.config / "conf.d/setup/runtime.py"
+        current_runtime = runtime.read_text()
+        old_runtime = current_runtime.replace(
+            "process_group=0,", "start_new_session=True,"
+        ).replace('        MISE_RAW="1",\n', "")
+        runtime.write_text(old_runtime + "\n# Keep my local setup changes.\n")
+        runtime.chmod(0o640)
+        ruby = machine.home / "data/installs/ruby/4.0.0/bin/ruby"
+        ruby.parent.mkdir(parents=True)
+        ruby.symlink_to(shutil.which("true"))
+        local = machine.config / "config.local.toml"
+        local.write_text(local.read_text() + '\n[tools]\nruby = "4.0.0"\n')
         previous = {
             "run": "/usr/sbin/sysadminctl -screenLock status 2>&1 | /usr/bin/grep -q 'delay is 0 seconds'",
             "hint": "Set Require password after screen saver or display is turned off to Immediately in System Settings.",
@@ -288,9 +300,29 @@ fi
         (checkout / "tasks").mkdir()
         task = checkout / "tasks/config"
         task.write_text(
-            '#!/bin/bash\nset -euo pipefail\nmise doctor project\ntouch "$HOME/setup-applied"\n'
+            """#!/bin/bash
+#MISE description="Inspect or apply this machine setup"
+#MISE raw=true
+set -euo pipefail
+mise doctor project
+mise bootstrap --only packages --yes
+mise exec python@3 -- python3 - <<'PY'
+import os, sys
+sys.path.insert(0, os.environ['MISE_CONFIG_DIR'] + '/conf.d/setup')
+from runtime import run
+if 'EXPECTED_SESSION' in os.environ:
+    run([sys.executable, '-c', 'import os; assert os.getsid(0) == int(os.environ["EXPECTED_SESSION"]); open("/dev/tty").close()'])
+PY
+touch "$HOME/setup-applied"
+"""
         )
         task.chmod(0o755)
+        for name in ("sync", "update"):
+            shutil.copy2(REPO / "tasks" / name, checkout / "tasks" / name)
+        active_task = machine.write(
+            "tasks/config", task.read_text().replace("#MISE raw=true\n", "")
+        )
+        active_task.chmod(0o755)
         machine.run("git", "init", "-q", checkout)
         machine.run("git", "-C", checkout, "add", "conf.d", "tasks")
         invocation = (
@@ -302,17 +334,39 @@ fi
             invocation.replace("; runpy.", "; sys.argv.append('--seed-only'); runpy.")
         )
         self.assertEqual(active.read_text(), old + personal)
+        self.assertEqual(
+            runtime.read_text(), old_runtime + "\n# Keep my local setup changes.\n"
+        )
 
-        applied = machine.python(invocation)
+        code, output = machine.password_command(
+            "-c",
+            "import os; os.environ['EXPECTED_SESSION'] = str(os.getsid(0)); "
+            + invocation,
+        )
 
-        self.assertIn("PASS screen-lock", applied.stdout + applied.stderr)
+        self.assertEqual(code, 0, output)
+        self.assertIn("PASS screen-lock", output)
+        self.assertNotIn("-run =", output)
+        self.assertNotIn("+run =", output)
         self.assertTrue((machine.home / "setup-applied").exists())
         self.assertEqual(active.read_text(), declaration + personal)
         self.assertEqual(active.stat().st_mode & 0o777, 0o640)
+        self.assertEqual(
+            runtime.read_text(), current_runtime + "\n# Keep my local setup changes.\n"
+        )
+        self.assertEqual(runtime.stat().st_mode & 0o777, 0o640)
         self.assertFalse(authorized.exists())
         updated = active.stat().st_mtime_ns
+        runtime_updated = runtime.stat().st_mtime_ns
+        code, output = machine.password_command(
+            "-c",
+            "import os, subprocess; os.environ['EXPECTED_SESSION'] = str(os.getsid(0)); "
+            "subprocess.run(['mise', 'run', 'config', 'apply'], check=True)",
+        )
+        self.assertEqual(code, 0, output)
         machine.python(invocation)
         self.assertEqual(active.stat().st_mtime_ns, updated)
+        self.assertEqual(runtime.stat().st_mtime_ns, runtime_updated)
         custom = (declaration + personal).replace(
             json.dumps(current["run"]), '"exit 1"'
         )

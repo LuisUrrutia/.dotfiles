@@ -1,0 +1,5 @@
+[tools]
+ruby = "latest"
+
+[bootstrap.hooks]
+pre-packages = "mise install ruby"

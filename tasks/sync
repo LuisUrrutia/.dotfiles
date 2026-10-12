@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
 #MISE description="Exchange and apply configuration and software declarations"
+#MISE raw=true
 set -euo pipefail
 exec mise exec python@3 -- python3 "${MISE_CONFIG_DIR:-$HOME/.config/mise}/conf.d/setup/sync.py" "$@"

@@ -1,7 +1,6 @@
 """Seed or adopt a regular, history-owned mise configuration."""
 
 import argparse
-import difflib
 import hashlib
 import os
 import re
@@ -119,20 +118,44 @@ def repair_screen_lock_check():
     if tomllib.loads(after) != settings:
         raise RuntimeError(f"Cannot safely repair the old screen-lock check: {path}")
     atomic(path, after, path.stat().st_mode & 0o777)
-    print("Repaired the previously shipped screen-lock check:")
-    print(
-        "".join(
-            difflib.unified_diff(
-                before.splitlines(keepends=True),
-                after.splitlines(keepends=True),
-                fromfile=str(path),
-                tofile=str(path),
-                n=0,
-            )
-        ),
-        end="",
-        flush=True,
-    )
+    print("Updated the screen-lock check.", flush=True)
+
+
+def repair_terminal_session():
+    repairs = {
+        "conf.d/setup/runtime.py": [
+            ("        start_new_session=True,\n", "        process_group=0,\n"),
+            (
+                '        MISE_YES="1",\n        GIT_SSH_COMMAND=',
+                '        MISE_YES="1",\n        MISE_RAW="1",\n        GIT_SSH_COMMAND=',
+            ),
+        ]
+    }
+    for name in ("config", "sync", "update"):
+        relative = "tasks/" + name
+        header = (REPOSITORY / relative).read_text().split("#MISE raw=true\n")[0]
+        repairs[relative] = [(header, header + "#MISE raw=true\n")]
+    changed = False
+    for relative, replacements in repairs.items():
+        path = ROOT / relative
+        regular_parents(path)
+        if path.is_symlink():
+            raise RuntimeError(f"Refusing symlink: {path}")
+        before = path.read_text()
+        if relative.startswith("tasks/") and re.search(r"(?m)^#MISE raw\s*=", before):
+            continue
+        after = before
+        for previous, replacement in replacements:
+            if after.count(previous) > 1:
+                raise RuntimeError(
+                    f"Cannot safely repair the old terminal handling: {path}"
+                )
+            after = after.replace(previous, replacement, 1)
+        if after != before:
+            atomic(path, after, path.stat().st_mode & 0o777)
+            changed = True
+    if changed:
+        print("Updated setup commands to preserve terminal authorization.", flush=True)
 
 
 def git_settings(record):
@@ -294,6 +317,8 @@ def enroll(args):
     if args.seed_only:
         print(f"Seeded missing setup sources in {ROOT}; existing files were preserved")
         return
+    with lock():
+        repair_terminal_session()
     if sys.platform == "darwin":
         with lock():
             repair_screen_lock_check()

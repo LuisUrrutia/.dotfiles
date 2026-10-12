@@ -38,6 +38,7 @@ def run(args, *, capture=False, check=True, timeout=900, input: bytes | None = N
         GIT_TERMINAL_PROMPT="0",
         GH_PROMPT_DISABLED="1",
         MISE_YES="1",
+        MISE_RAW="1",
         GIT_SSH_COMMAND="ssh -o BatchMode=yes",
         MISE_CONFIG_DIR=str(ROOT),
         MISE_DISABLE_UPDATE_WARNING="1",
@@ -47,7 +48,8 @@ def run(args, *, capture=False, check=True, timeout=900, input: bytes | None = N
         command,
         cwd=HOME,
         env=env,
-        start_new_session=True,
+        # Keep sudo's terminal session while isolating the group for cancellation.
+        process_group=0,
         stdin=subprocess.PIPE if input is not None else subprocess.DEVNULL,
         stdout=subprocess.PIPE if capture else None,
         stderr=subprocess.PIPE if capture else None,
