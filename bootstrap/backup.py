@@ -229,11 +229,8 @@ def capture(repository, identifier, definitions=None):
             print(f"  {name}:")
             if not entry["files"]:
                 print("    No preference files in this backup")
-            for filename, content in sorted(entry["files"].items()):
+            for filename in sorted(entry["files"]):
                 print(f"    {filename}")
-                if filename == "preferences.plist":
-                    keys = sorted(plistlib.loads(content))
-                    print(f"      Keys: {', '.join(keys) if keys else '(none)'}")
 
 
 def recover(repository, identifier):
