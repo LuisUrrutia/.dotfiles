@@ -216,15 +216,24 @@ def capture(repository, identifier, definitions=None):
         path = archive_path(repository, scope)
         if path.exists() and read_archive(path, key, scope, catalog) == data:
             print(f"{path.relative_to(repository)}: unchanged")
-            continue
-        plaintext = plistlib.dumps(data, fmt=plistlib.FMT_BINARY, sort_keys=True)
-        encrypted = age(
-            "age", "--armor", "--recipient", recipient(key), input=plaintext
-        )
-        atomic(path, encrypted, 0o644)
-        print(
-            f"{path.relative_to(repository)}: encrypted {len(data['apps'])} app snapshots"
-        )
+        else:
+            plaintext = plistlib.dumps(data, fmt=plistlib.FMT_BINARY, sort_keys=True)
+            encrypted = age(
+                "age", "--armor", "--recipient", recipient(key), input=plaintext
+            )
+            atomic(path, encrypted, 0o644)
+            print(
+                f"{path.relative_to(repository)}: encrypted {len(data['apps'])} app snapshots"
+            )
+        for name, entry in sorted(data["apps"].items()):
+            print(f"  {name}:")
+            if not entry["files"]:
+                print("    No preference files in this backup")
+            for filename, content in sorted(entry["files"].items()):
+                print(f"    {filename}")
+                if filename == "preferences.plist":
+                    keys = sorted(plistlib.loads(content))
+                    print(f"      Keys: {', '.join(keys) if keys else '(none)'}")
 
 
 def recover(repository, identifier):
