@@ -38,7 +38,7 @@ def run(args, *, capture=False, check=True, timeout=900, input: bytes | None = N
         GIT_TERMINAL_PROMPT="0",
         GH_PROMPT_DISABLED="1",
         MISE_YES="1",
-        MISE_RAW="1",
+        MISE_TASK_PGID_MANAGED="1",
         GIT_SSH_COMMAND="ssh -o BatchMode=yes",
         MISE_CONFIG_DIR=str(ROOT),
         MISE_DISABLE_UPDATE_WARNING="1",

@@ -127,7 +127,11 @@ def repair_terminal_session():
             ("        start_new_session=True,\n", "        process_group=0,\n"),
             (
                 '        MISE_YES="1",\n        GIT_SSH_COMMAND=',
+                '        MISE_YES="1",\n        MISE_TASK_PGID_MANAGED="1",\n        GIT_SSH_COMMAND=',
+            ),
+            (
                 '        MISE_YES="1",\n        MISE_RAW="1",\n        GIT_SSH_COMMAND=',
+                '        MISE_YES="1",\n        MISE_TASK_PGID_MANAGED="1",\n        GIT_SSH_COMMAND=',
             ),
         ]
     }
@@ -155,7 +159,10 @@ def repair_terminal_session():
             atomic(path, after, path.stat().st_mode & 0o777)
             changed = True
     if changed:
-        print("Updated setup commands to preserve terminal authorization.", flush=True)
+        print(
+            "Updated setup commands to preserve terminal access and native parallelism.",
+            flush=True,
+        )
 
 
 def repair_https_downloads():

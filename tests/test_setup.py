@@ -349,7 +349,7 @@ fi
         current_runtime = runtime.read_text()
         old_runtime = current_runtime.replace(
             "process_group=0,", "start_new_session=True,"
-        ).replace('        MISE_RAW="1",\n', "")
+        ).replace('        MISE_TASK_PGID_MANAGED="1",\n', "")
         runtime.write_text(old_runtime + "\n# Keep my local setup changes.\n")
         runtime.chmod(0o640)
         ruby = machine.home / "data/installs/ruby/4.0.0/bin/ruby"
@@ -454,6 +454,15 @@ touch "$HOME/setup-applied"
         machine.python(invocation)
         self.assertEqual(active.stat().st_mtime_ns, updated)
         self.assertEqual(runtime.stat().st_mtime_ns, runtime_updated)
+        runtime.write_text(
+            current_runtime.replace('MISE_TASK_PGID_MANAGED="1"', 'MISE_RAW="1"')
+            + "\n# Keep my local setup changes.\n"
+        )
+        machine.python(invocation)
+        self.assertEqual(
+            runtime.read_text(), current_runtime + "\n# Keep my local setup changes.\n"
+        )
+        self.assertEqual(runtime.stat().st_mode & 0o777, 0o640)
         custom = (declaration + personal).replace(
             json.dumps(current["run"]), '"exit 1"'
         )
@@ -689,21 +698,40 @@ INSTALLER_POLICY = "local"
         self.assertNotEqual(json.loads(state.read_text())["applied"], applied)
         self.assertEqual(buildx.read_text(), "Updated package fixture\n")
 
-    def test_autofirma_runs_after_unattended_setup(self):
+    def test_bootstrap_parallelism_and_final_installer(self):
         machine = Machine(self.root, "autofirma-order")
         bootstrap = (
             (REPO / "config.toml").read_text().split("[tasks.bootstrap]\n", 1)[1]
         )
         machine.write(
             "config.toml",
-            "[tasks.bootstrap]\n"
+            "[settings]\njobs = 2\n[tasks.bootstrap]\n"
             + bootstrap
-            + '\n[tasks."setup:fixture"]\nrun = \'touch "$HOME/configured"\'\n',
+            + '\n[tasks."setup:first"]\nrun = \'python3 "$HOME/worker.py" first second\'\n'
+            + '\n[tasks."setup:second"]\nrun = \'python3 "$HOME/worker.py" second first\'\n',
         )
+        (machine.home / "worker.py").write_text("""import sys, time
+from pathlib import Path
+home = Path.home()
+(home / sys.argv[1]).touch()
+deadline = time.monotonic() + 5
+while not (home / sys.argv[2]).exists():
+    if time.monotonic() >= deadline:
+        raise RuntimeError("Independent setup tasks did not run concurrently")
+    time.sleep(0.01)
+(home / (sys.argv[1] + "-done")).touch()
+""")
+        machine.write(
+            "conf.d/setup/config.py",
+            'from runtime import mise\nmise("bootstrap", "--yes")\n',
+        )
+        task = machine.write("tasks/config", (REPO / "tasks/config").read_text())
+        task.chmod(0o755)
         machine.write(
             "conf.d/setup/finish.py",
             "from pathlib import Path\np = Path.home()\n"
-            "assert (p / 'configured').exists()\n(p / 'finished').touch()\n",
+            "assert (p / 'first-done').exists() and (p / 'second-done').exists()\n"
+            "(p / 'finished').touch()\n",
         )
         declaration = machine.write(
             "conf.d/autofirma/mise.toml",
@@ -716,13 +744,14 @@ INSTALLER_POLICY = "local"
             "(p / 'installer-opened').touch()\nraise SystemExit(19)\n",
         )
 
-        pending = machine.mise("bootstrap", "--yes", ok=False)
+        invocation = "from runtime import mise; mise('run', 'config', 'apply')"
+        pending = machine.python(invocation, ok=False)
 
         self.assertNotEqual(pending.returncode, 0)
         self.assertTrue((machine.home / "finished").exists(), pending.stderr)
         self.assertTrue((machine.home / "installer-opened").exists(), pending.stderr)
         declaration.unlink()
-        machine.mise("bootstrap", "--yes")
+        machine.python(invocation)
 
     def test_autofirma_waits_for_interactive_installation(self):
         machine = Machine(self.root, "autofirma")
@@ -1810,7 +1839,7 @@ assert read_state('preferences')['resume']['snapshot'] == preferences.fingerprin
     def test_interrupted_setup_recovers_without_discarding_edits(self):
         invocation = "from runtime import lock; import sync\nwith lock(): sync.apply_setup(force=True)"
 
-        def interrupt(machine):
+        def interrupt(machine, *, crash=True):
             machine.minimal()
             machine.encryption()
             config = machine.config / "config.toml"
@@ -1820,7 +1849,7 @@ assert read_state('preferences')['resume']['snapshot'] == preferences.fingerprin
                     '"~/shared.txt" = { source="shared.txt", mode="copy" }',
                 )
                 + "\n[tasks.bootstrap]\n"
-                + 'run = \'if [ ! -f "$HOME/started" ]; then touch "$HOME/started"; sleep 60; fi\'\n'
+                + 'run = \'if [ ! -f "$HOME/started" ]; then echo $$ > "$HOME/started"; sleep 60; fi\'\n'
             )
             log = machine.home / "interrupted.log"
             with log.open("w") as stream:
@@ -1835,11 +1864,19 @@ assert read_state('preferences')['resume']['snapshot'] == preferences.fingerprin
                 )
                 try:
                     deadline = time.monotonic() + 20
-                    while not (machine.home / "started").exists():
+                    started = machine.home / "started"
+                    while not started.exists() or not started.read_text().strip():
                         self.assertIsNone(process.poll(), log.read_text())
                         self.assertLess(time.monotonic(), deadline, log.read_text())
                         time.sleep(0.05)
-                    process.send_signal(signal.SIGINT)
+                    if crash:
+                        # Ctrl+C can close the journal; a hard crash leaves recovery pending.
+                        group = os.getpgid(int(started.read_text()))
+                        self.assertNotEqual(group, os.getpgid(process.pid))
+                        self.assertNotEqual(group, os.getpgrp())
+                        os.killpg(group, signal.SIGKILL)
+                    else:
+                        process.send_signal(signal.SIGINT)
                     process.wait(timeout=10)
                 finally:
                     if process.poll() is None:
@@ -1850,12 +1887,20 @@ assert read_state('preferences')['resume']['snapshot'] == preferences.fingerprin
                 json.loads(machine.mise("dot", "status", "--json").stdout)["history"][
                     "pending_operations"
                 ],
-                1,
+                1 if crash else 0,
             )
             self.assertEqual((machine.home / "shared.txt").read_text(), "initial\n")
             state = machine.home / "state/dotfiles/apply.json"
             self.assertNotIn("applied", json.loads(state.read_text()))
             return state
+
+        cancelled = Machine(self.root, "cancelled")
+        state = interrupt(cancelled, crash=False)
+
+        cancelled.python(invocation)
+
+        self.assertIn("applied", json.loads(state.read_text()))
+        self.assertEqual((cancelled.home / "shared.txt").read_text(), "initial\n")
 
         resumed = Machine(self.root, "resumed")
         state = interrupt(resumed)

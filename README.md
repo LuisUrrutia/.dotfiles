@@ -81,6 +81,11 @@ For a preview, use `./install.sh --dry-run` before enrollment or
 `mise -C ~ bootstrap --dry-run` afterward. The first changes nothing; the second
 may need network metadata. Neither proves that packages will install successfully.
 
+Mise uses its native `jobs` setting (eight by default) for concurrent downloads,
+tool installs, repository checkouts, and independent setup tasks. App placement
+and dependent phases keep their required order. To change the limit for one run,
+use `MISE_JOBS=4 ./install.sh --recover`.
+
 ## Daily commands
 
 Keep `-C ~` to avoid loading another project's mise config, or run from HOME.
