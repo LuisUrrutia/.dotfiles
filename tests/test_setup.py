@@ -704,7 +704,9 @@ assert preferences.snapshot_root(entries[0]) == ROOT/'private/preferences/machin
             "scope": "shared",
             "files": {"~/shared.plist": {"type": "dict", "fields": {"layout": "list"}}},
         }
-        for entry in (definition, shared):
+        obs = json.loads((REPO / "conf.d/media/preferences.obs.json").read_text())
+        obs["name"] = "obs"
+        for entry in (definition, shared, obs):
             folder = public / "conf.d" / entry["name"]
             folder.mkdir()
             (folder / "preferences.json").write_text(json.dumps(entry))
@@ -720,6 +722,26 @@ assert preferences.snapshot_root(entries[0]) == ROOT/'private/preferences/machin
         target.write_bytes(plistlib.dumps(value))
         (old.home / "app.plist").symlink_to(target)
         (old.home / "shared.plist").write_bytes(plistlib.dumps(value))
+        obs_files = {
+            "global.ini": b"[General]\nName=Fixture\n",
+            "user.ini": b"[Auth]\nRefreshToken=synthetic-obs-token\n",
+            "basic/profiles/Work/basic.ini": b"[General]\nName=Work\n",
+            "basic/profiles/Personal/basic.ini": b"[General]\nName=Personal\n",
+            "basic/profiles/service.json": b'{"settings":{"key":"synthetic-obs-stream-key"}}',
+            "basic/scenes/Scene.json": b'{"sources":[{"settings":{"password":"synthetic-source-password"}}]}',
+            "plugin_config/obs-websocket/config.json": b'{"server_password":"synthetic-websocket-password"}',
+            "plugin_config/advanced-scene-switcher/settings.json": b'{"macros":[]}',
+            "plugin_manager/modules.json": b"[]",
+        }
+        obs_root = old.home / "Library/Application Support/obs-studio"
+        for relative, content in obs_files.items():
+            path = obs_root / relative
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(content)
+        excluded = obs_root / "plugin_config/rtmp-services/services.json"
+        excluded.parent.mkdir(parents=True)
+        excluded.write_text("Downloaded service cache, not a settings object")
+        (obs_root / "basic/scenes/Scene.json.bak").write_text("Old backup")
         original_config = old.config / "config.toml"
         original_config.unlink()
         original_config.symlink_to(public / "config.toml")
@@ -738,13 +760,28 @@ assert preferences.snapshot_root(entries[0]) == ROOT/'private/preferences/machin
             "import sys; sys.path.insert(0, "
             + repr(str(public / "bootstrap"))
             + "); import backup, preferences; preferences.definitions=lambda **kwargs: "
-            + repr([definition, shared])
+            + repr([definition, shared, obs])
             + "; backup.main()"
         )
-        old.run(sys.executable, "-c", capture, "capture")
+        captured = old.run(sys.executable, "-c", capture, "capture")
         archive = public / "backups/preferences/before.plist.age"
         ciphertext = archive.read_bytes()
         self.assertNotIn(b"private-display-routing", ciphertext)
+        self.assertNotIn(b"synthetic-obs-token", ciphertext)
+        self.assertIn("basic/profiles/Work/basic.ini", captured.stdout)
+        self.assertNotIn("synthetic-", captured.stdout + captured.stderr)
+        obs_global = obs_root / "global.ini"
+        obs_global.write_text("synthetic-obs-token is not valid INI")
+        invalid_obs = old.run(sys.executable, "-c", capture, "capture", ok=False)
+        self.assertNotEqual(invalid_obs.returncode, 0)
+        self.assertNotIn("synthetic-obs-token", invalid_obs.stdout + invalid_obs.stderr)
+        self.assertEqual(archive.read_bytes(), ciphertext)
+        obs_global.write_bytes(obs_files["global.ini"])
+        removed_profile = obs_root / "basic/profiles/Personal/basic.ini"
+        removed_profile.unlink()
+        old.run(sys.executable, "-c", capture, "capture")
+        self.assertEqual(archive.read_bytes(), ciphertext)
+        removed_profile.write_bytes(obs_files["basic/profiles/Personal/basic.ini"])
         self.assertTrue(original_config.is_symlink())
         self.assertTrue((old.home / "app.plist").is_symlink())
         self.assertEqual(plistlib.loads(target.read_bytes()), value)
@@ -782,6 +819,7 @@ assert preferences.snapshot_root(entries[0]) == ROOT/'private/preferences/machin
             blob = old.run("git", "show", "HEAD:" + path, cwd=public).stdout
             self.assertNotIn("AGE-SECRET-KEY-", blob)
             self.assertNotIn("private-display-routing", blob)
+            self.assertNotIn("synthetic-obs-token", blob)
 
         from lint import check_public_backup
 
@@ -849,12 +887,47 @@ assert preferences.snapshot_root(entries[0]) == ROOT/'private/preferences/machin
         self.assertFalse((fresh.home / "app.plist").exists())
         self.assertEqual((fresh.config / "age.txt").stat().st_mode & 0o777, 0o600)
         fresh.mise("dot", "save")
+        history = fresh.home / "state/history/repo.git"
+        tracked = fresh.run(
+            "git", "--git-dir=" + str(history), "ls-tree", "-r", "--name-only", "HEAD"
+        ).stdout.splitlines()
+        obs_snapshot_path = next(p for p in tracked if p.endswith("obs-studio.plist"))
+        encrypted_obs = subprocess.check_output(
+            ["git", "--git-dir=" + str(history), "show", "HEAD:" + obs_snapshot_path],
+            env=fresh.env,
+        )
+        self.assertNotIn(b"synthetic-obs-token", encrypted_obs)
         fresh.python(
             "import preferences; preferences.is_running=lambda _:False; preferences.restore("
-            + repr([definition, shared])
+            + repr([definition, shared, obs])
             + ")"
         )
         self.assertEqual(plistlib.loads((fresh.home / "app.plist").read_bytes()), value)
+        restored_obs = fresh.home / "Library/Application Support/obs-studio"
+        restored_files = {
+            path.relative_to(restored_obs).as_posix(): path.read_bytes()
+            for path in restored_obs.rglob("*")
+            if path.is_file()
+        }
+        self.assertEqual(restored_files, obs_files)
+        obs_snapshot = (
+            fresh.config / "private/preferences/machines/before/obs/obs-studio.plist"
+        )
+        obs_snapshot.write_bytes(plistlib.dumps({"../outside.ini": b"[General]\n"}))
+        invalid_obs = fresh.python(
+            "import preferences; preferences.is_running=lambda _:False; preferences.restore(["
+            + repr(obs)
+            + "])",
+            ok=False,
+        )
+        self.assertNotEqual(invalid_obs.returncode, 0)
+        self.assertFalse((restored_obs.parent / "outside.ini").exists())
+        self.assertEqual(
+            (restored_obs / "global.ini").read_bytes(), obs_files["global.ini"]
+        )
+        obs_snapshot.write_bytes(
+            plistlib.dumps(obs_files, fmt=plistlib.FMT_BINARY, sort_keys=True)
+        )
         other = Machine(self.root, "other")
         other_checkout = other.home / "public"
         shutil.copytree(public, other_checkout)

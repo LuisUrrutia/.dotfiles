@@ -163,9 +163,7 @@ def read_archive(path, key, scope, definitions):
             or not isinstance(entry.get("files"), dict)
         ):
             raise RuntimeError(f"{name}: review the backup schema before recovery")
-        allowed = {Path(filename).name for filename in definition["files"]}
-        if definition["keys"]:
-            allowed.add("preferences.plist")
+        allowed = preferences.snapshot_names(definition)
         for filename, content in entry["files"].items():
             if filename not in allowed or not isinstance(content, bytes):
                 raise RuntimeError(f"{name}: unexpected backup file")
@@ -194,6 +192,7 @@ def capture(repository, identifier, definitions=None):
             "No supported installed applications found; no backup changed"
         )
     catalog = preferences.catalog(repository)
+    known = {entry["name"]: entry for entry in catalog}
     prepared = {}
     for definition in definitions:
         scope = scope_name(definition, identifier)
@@ -220,7 +219,7 @@ def capture(repository, identifier, definitions=None):
         existing = apps.get(definition["name"], {}).get("files", {})
         apps[definition["name"]] = {
             "major_version": definition["major_version"],
-            "files": existing | current,
+            "files": preferences.merge_snapshots(definition, existing, current),
         }
     for scope, data in prepared.items():
         path = archive_path(repository, scope)
@@ -241,6 +240,9 @@ def capture(repository, identifier, definitions=None):
                 print("    No preference files in this backup")
             for filename in sorted(entry["files"]):
                 print(f"    {filename}")
+                if filename in known[name].get("collections", {}):
+                    for relative in sorted(plistlib.loads(entry["files"][filename])):
+                        print(f"      {relative}")
 
 
 def recover(repository, identifier):

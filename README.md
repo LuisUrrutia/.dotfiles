@@ -217,7 +217,17 @@ Recovery preserves an existing differing snapshot; resolve that conflict before
 retrying. It never applies another machine's hardware-bound settings.
 
 Thaw, LinearMouse, SuperCmd, SoundSource, Loopback, and Audio Hijack have explicit
-allowlists. All plist snapshots and companion private JSON files are encrypted
+allowlists. OBS also captures general settings, profiles, scene collections, and
+INI/JSON plugin settings from `~/Library/Application Support/obs-studio`, including
+streaming credentials and WebSocket passwords. The encrypted `obs-studio.plist`
+snapshot preserves their relative paths and original contents. Capture lists the
+included filenames without showing their values.
+
+OBS snapshots restore only to the same machine ID, with OBS closed. Referenced
+images, videos, fonts, and scripts are not bundled; preserve those files separately.
+Browser cookies, logs, caches, recordings, and plugin binaries are excluded.
+
+All plist snapshots and companion private configuration files are encrypted
 before entering history. Enrollment creates an encrypted policy marker before
 the first checkpoint, even when no app settings exist. Older public commits still
 contain the former plaintext Thaw plist; encryption does not rewrite that history.
@@ -225,7 +235,8 @@ contain the former plaintext Thaw plist; encryption does not rewrite that histor
 Preferences use `defaults export/import`; live CFPreferences plists are never
 symlinked. SuperCmd's allowlisted settings are shared. Display/device layouts and
 audio routing use `private/preferences/machines/<stable-id>/`: they travel for
-recovery but restore only on that machine. Licenses, tokens, AI credentials,
+recovery but restore only on that machine. Outside the explicit OBS credential
+exception, licenses, tokens, AI credentials,
 recordings, clipboard databases, caches, and recent-item history are excluded.
 
 Capture and restore validate owned key types, companion-file structure, and

@@ -1,15 +1,18 @@
 """Capture encrypted application settings and restore them while apps are closed."""
 
 import argparse
+import configparser
 import hashlib
 import json
+import os
 import plistlib
 import re
 import subprocess
 import sys
 import tempfile
 import time
-from pathlib import Path
+from fnmatch import fnmatchcase
+from pathlib import Path, PurePosixPath
 
 from runtime import (
     ROOT,
@@ -168,7 +171,60 @@ def serialize(value):
     return plistlib.dumps(value, fmt=plistlib.FMT_BINARY, sort_keys=True)
 
 
+def collection_matches(spec, name):
+    path = PurePosixPath(name)
+    return (
+        bool(name)
+        and not path.is_absolute()
+        and path.as_posix() == name
+        and ".." not in path.parts
+        and "\\" not in name
+        and not any(ord(char) < 32 for char in name)
+        and any(fnmatchcase(name, pattern) for pattern in spec["include"])
+        and not any(fnmatchcase(name, pattern) for pattern in spec.get("exclude", []))
+    )
+
+
+def validate_collection(spec, files):
+    if not isinstance(files, dict):
+        raise RuntimeError("Invalid preference file collection")
+    for name, content in files.items():
+        if not isinstance(name, str) or not collection_matches(spec, name):
+            raise RuntimeError("Unexpected path in preference file collection")
+        if not isinstance(content, bytes):
+            raise RuntimeError("Invalid content in preference file collection")
+        try:
+            if name.endswith(".json"):
+                value = json.loads(content)
+                if not isinstance(value, (dict, list)):
+                    raise ValueError("Expected a JSON object or array")
+            elif name.endswith(".ini"):
+                parser = configparser.ConfigParser(interpolation=None, strict=False)
+                parser.optionxform = str
+                parser.read_string(content.decode("utf-8-sig"))
+                value = {section: dict(parser[section]) for section in parser}
+            else:
+                raise ValueError("Unsupported configuration format")
+        except (ValueError, UnicodeError, configparser.Error):
+            # Parser errors can contain the original line, including credentials.
+            raise RuntimeError(f"Invalid configuration file: {name}") from None
+        if spec.get("credentials") is not True:
+            reject_credentials(value)
+
+
+def snapshot_names(definition):
+    names = {Path(path).name for path in definition["files"]}
+    if definition["keys"]:
+        names.add("preferences.plist")
+    return names | set(definition.get("collections", {}))
+
+
 def validate(definition, filename, value):
+    collection = definition.get("collections", {}).get(filename)
+    if collection is not None:
+        validate_collection(collection, value)
+        return
+
     def typed(item, expected):
         return (
             type(item) in (int, float)
@@ -250,6 +306,43 @@ def live(definition, *, read_links=False):
                 if name.endswith(".plist")
                 else (json.dumps(value, sort_keys=True, indent=2) + "\n").encode()
             )
+    for name, spec in definition.get("collections", {}).items():
+        root = home_path(spec["root"])
+        if read_links and (root.exists() or root.is_symlink()):
+            root = root.resolve(strict=True)
+        regular_parents(root)
+        if root.is_symlink() or (root.exists() and not root.is_dir()):
+            raise RuntimeError(f"Expected a regular configuration directory: {root}")
+        if not root.exists():
+            continue
+        files = {}
+
+        def unreadable(error):
+            raise error
+
+        for folder, directories, filenames in os.walk(root, onerror=unreadable):
+            for directory in directories[:]:
+                path = Path(folder) / directory
+                relative = path.relative_to(root).as_posix() + "/"
+                if any(fnmatchcase(relative, p) for p in spec.get("exclude", [])):
+                    directories.remove(directory)
+                elif path.is_symlink():
+                    raise RuntimeError(
+                        f"Refusing linked configuration directory: {path}"
+                    )
+            for filename in filenames:
+                path = Path(folder) / filename
+                relative = path.relative_to(root).as_posix()
+                if not collection_matches(spec, relative):
+                    continue
+                if read_links:
+                    path = path.resolve(strict=True)
+                regular_parents(path)
+                if path.is_symlink() or not path.is_file():
+                    raise RuntimeError(f"Expected a regular configuration file: {path}")
+                files[relative] = path.read_bytes()
+        validate_collection(spec, files)
+        records[name] = plistlib.dumps(files, fmt=plistlib.FMT_BINARY, sort_keys=True)
     return records
 
 
@@ -260,6 +353,17 @@ def fingerprint(records):
     return digest.hexdigest()
 
 
+def merge_snapshots(definition, incoming, current):
+    merged = incoming | current
+    for name in definition.get("collections", {}):
+        if name in incoming and name in current:
+            files = plistlib.loads(incoming[name]) | plistlib.loads(current[name])
+            merged[name] = plistlib.dumps(
+                files, fmt=plistlib.FMT_BINARY, sort_keys=True
+            )
+    return merged
+
+
 def snapshots(definition):
     root = snapshot_root(definition)
     regular_parents(root)
@@ -267,9 +371,7 @@ def snapshots(definition):
         raise RuntimeError(f"Preference snapshots must be a regular directory: {root}")
     if not root.exists():
         return {}
-    allowed = {Path(p).name for p in definition["files"]}
-    if definition["keys"]:
-        allowed.add("preferences.plist")
+    allowed = snapshot_names(definition)
     result = {}
     for path in root.iterdir():
         if path.name not in allowed or not path.is_file() or path.is_symlink():
@@ -291,10 +393,10 @@ def capture(defs=None):
             )
             continue
         root = snapshot_root(definition)
-        for filename, content in current.items():
-            atomic(root / filename, content)
         # A missing app file is not evidence of intended deletion.
-        merged = incoming | current
+        merged = merge_snapshots(definition, incoming, current)
+        for filename, content in merged.items():
+            atomic(root / filename, content)
         state[name] = {"snapshot": fingerprint(merged), "live": fingerprint(current)}
         write_state("preferences", state)
 
@@ -350,6 +452,18 @@ def restore(defs=None):
             )
             validate(definition, filename, value)
             parsed[filename] = value
+        writes = [
+            (home_path(filename), incoming[Path(filename).name])
+            for filename in definition["files"]
+            if Path(filename).name in incoming
+        ]
+        for filename, spec in definition.get("collections", {}).items():
+            for relative, content in parsed.get(filename, {}).items():
+                writes.append((home_path(spec["root"]) / relative, content))
+        for target, _ in writes:
+            regular_parents(target)
+            if target.is_symlink() or (target.exists() and not target.is_file()):
+                raise RuntimeError(f"Refusing non-regular preference target: {target}")
         if "preferences.plist" in parsed:
             value = parsed["preferences.plist"]
             if not isinstance(value, dict) or set(value) - set(definition["keys"]):
@@ -370,10 +484,8 @@ def restore(defs=None):
                         temporary.name,
                     ]
                 )
-        for filename in definition["files"]:
-            target = home_path(filename)
-            if target.name in incoming:
-                atomic(target, incoming[target.name])
+        for target, content in writes:
+            atomic(target, content)
         state[name] = {"snapshot": incoming_hash, "live": fingerprint(live(definition))}
         write_state("preferences", state)
         print(f"{name}: restored; open the app when ready")
