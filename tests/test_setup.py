@@ -185,6 +185,41 @@ class SetupTests(unittest.TestCase):
         machine = Machine(self.root, "safe")
         machine.payload()
         machine.mise("tasks", "validate")
+        self.assertEqual(
+            machine.mise("tool-alias", "ls", "dotnet").stdout.split(),
+            ["dotnet", "lts", "10"],
+        )
+        machine.python("""import runpy
+from datetime import date
+from runtime import ROOT, STATE, atomic
+module = runpy.run_path(str(ROOT/'conf.d/languages/dotnet-lts.py'))
+metadata = module['METADATA']
+channels = [
+    {'channel-version': version, 'release-type': kind, 'support-phase': phase}
+    for version, kind, phase in [('10.0','lts','maintenance'), ('13.0','sts','active'), ('12.0','lts','active'), ('14.0','lts','preview'), ('8.0','lts','eol')]
+]
+responses = {
+    metadata+'/releases-index.json': {'releases-index': channels},
+    metadata+'/12.0/releases.json': {'releases': [
+        {'release-date':'2028-10-12','sdk':{'version':'12.0.102'}},
+        {'release-date':'2028-10-09','sdks':[{'version':'12.0.99'},{'version':'12.0.100'}]},
+        {'release-date':'2028-10-01','sdk':{'version':'12.0.101-preview.1'}},
+    ]},
+    metadata+'/10.0/releases.json': {'releases': [
+        {'release-date':'2028-09-12','sdk':{'version':'10.0.500'}},
+    ]},
+}
+resolve = module['latest_lts']
+assert resolve(read=responses.__getitem__, today=date(2028,10,10)) == '10.0.500'
+assert resolve(read=responses.__getitem__, today=date(2028,10,12)) == '12.0.100'
+assert resolve(read=responses.__getitem__, today=date(2028,10,15)) == '12.0.102'
+atomic(STATE/'dotnet-lts', '12.0.100\\n')
+""")
+        self.assertEqual(
+            machine.mise("tool-alias", "ls", "dotnet").stdout.split(),
+            ["dotnet", "lts", "12.0.100"],
+        )
+        (Path(machine.env["MISE_STATE_DIR"]) / "dotfiles/dotnet-lts").unlink()
         variants = sorted(
             {
                 path.stem.removeprefix("mise.")

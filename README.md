@@ -331,6 +331,12 @@ after enrollment, add its name, variables, and a file declaration like the one a
 <details>
 <summary>Linux packages, Fish, and Rust</summary>
 
+`.NET` installs the 10.x SDK and the current supported LTS SDK. Bootstrap and
+`update` refresh the LTS alias from Microsoft's release metadata, excluding
+previews and releases younger than three days. The alias is stored locally;
+ordinary mise commands need no network lookup. Both requests currently select
+.NET 10. A later LTS is added alongside 10 on the next successful setup or update.
+
 Shared configuration and runtimes load on both platforms; macOS apps and
 preferences load only on macOS. Ubuntu uses native `apt:` system packages and
 mise development CLIs. Native `brew:` binaries expect `/opt/homebrew` on macOS

@@ -1,5 +1,14 @@
 
 [tools]
-dotnet = "10"
+dotnet = ["10", "lts"]
 java = "lts"
 rust = { version = "latest", profile = "default" }
+
+[tool_alias.dotnet.versions]
+lts = "{% set file = env.MISE_STATE_DIR | default(value=home ~ '/.local/state/mise') ~ '/dotfiles/dotnet-lts' %}{% if file is file %}{{ read_file(path=file) | trim }}{% else %}10{% endif %}"
+
+[tasks."setup:dotnet-lts"]
+run = [
+  'python3 "$HOME/.config/mise/conf.d/languages/dotnet-lts.py"',
+  'mise install dotnet@lts',
+]

@@ -50,6 +50,7 @@ def main():
                 [MISE, "upgrade", "--yes"],
             ],
         )
+        step("dotnet-lts", [[MISE, "run", "setup:dotnet-lts"]])
         step(
             "packages",
             [
