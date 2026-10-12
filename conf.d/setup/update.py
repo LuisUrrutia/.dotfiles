@@ -59,8 +59,6 @@ def main():
             ],
             86400,
         )
-        if sys.platform == "darwin":
-            step("autofirma", [[MISE, "run", "setup:autofirma"]], 86400)
         step("github-extensions", [["gh", "extension", "upgrade", "--all"]])
         step(
             "neovim",
@@ -103,6 +101,8 @@ def main():
             step("cleanup", [["mo", "clean"]], 604800)
         config.remember()
         mise("dot", "save")
+        if sys.platform == "darwin":
+            step("autofirma", [[MISE, "run", "autofirma"]], 86400)
     if failures:
         raise RuntimeError("Maintenance failed: " + ", ".join(failures))
 

@@ -311,6 +311,45 @@ def repair_autofirma_installer():
     )
 
 
+def repair_autofirma_order():
+    previous_step = (
+        '        if sys.platform == "darwin":\n'
+        '            step("autofirma", [[MISE, "run", "setup:autofirma"]], 86400)\n'
+    )
+    repairs = [
+        (
+            "conf.d/autofirma/mise.macos.toml",
+            '[tasks."setup:autofirma"]\n',
+            '[bootstrap.hooks]\nfinal = "mise run autofirma"\n\n[tasks.autofirma]\n',
+        ),
+        ("conf.d/setup/update.py", previous_step, ""),
+    ]
+    for relative, previous, replacement in repairs:
+        path = ROOT / relative
+        regular_parents(path)
+        if path.is_symlink():
+            raise RuntimeError(f"Refusing symlink: {path}")
+        if not path.exists():
+            continue
+        before = path.read_text()
+        if previous not in before:
+            continue
+        if before.count(previous) != 1:
+            raise RuntimeError(f"Cannot safely reorder AutoFirma: {path}")
+        after = before.replace(previous, replacement, 1)
+        if path.suffix == ".toml":
+            tomllib.loads(after)
+        else:
+            anchor = '        config.remember()\n        mise("dot", "save")\n'
+            if after.count(anchor) != 1:
+                raise RuntimeError(f"Cannot safely reorder AutoFirma: {path}")
+            final_step = previous_step.replace('"setup:autofirma"', '"autofirma"')
+            after = after.replace(anchor, anchor + final_step, 1)
+            compile(after, str(path), "exec")
+        atomic(path, after, path.stat().st_mode & 0o777)
+        print(f"Moved AutoFirma to the final step in {relative}.", flush=True)
+
+
 def git_settings(record):
     identity = record.get("git", {})
     default = identity.get("default", {})
@@ -481,6 +520,7 @@ def enroll(args):
         repair_public_skills_clone()
         repair_setup_hash()
         repair_autofirma_installer()
+        repair_autofirma_order()
     if sys.platform == "darwin":
         with lock():
             repair_screen_lock_check()

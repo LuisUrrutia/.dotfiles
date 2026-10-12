@@ -1,3 +1,6 @@
-[tasks."setup:autofirma"]
+[bootstrap.hooks]
+final = "mise run autofirma"
+
+[tasks.autofirma]
 description = "Verify AutoFirma and open its vendor installer from an interactive terminal"
 run = 'python3 "{{ config_root }}/setup.py"'

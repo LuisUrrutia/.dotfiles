@@ -516,6 +516,31 @@ INSTALLER_POLICY = "local"
 """
         autofirma = machine.write("conf.d/autofirma/setup.py", previous_autofirma)
         autofirma.chmod(0o640)
+        current_task = (REPO / "conf.d/autofirma/mise.macos.toml").read_text()
+        autofirma_task = machine.write(
+            "conf.d/autofirma/mise.macos.toml",
+            current_task.replace(
+                '[bootstrap.hooks]\nfinal = "mise run autofirma"\n\n[tasks.autofirma]\n',
+                '[tasks."setup:autofirma"]\n',
+            )
+            + "\n# Keep my local task changes.\n",
+        )
+        autofirma_task.chmod(0o640)
+        update = machine.config / "conf.d/setup/update.py"
+        current_update = update.read_text()
+        final_step = (
+            '        if sys.platform == "darwin":\n'
+            '            step("autofirma", [[MISE, "run", "autofirma"]], 86400)\n'
+        )
+        old_step = final_step.replace('"autofirma"]', '"setup:autofirma"]')
+        github_step = '        step("github-extensions", [["gh", "extension", "upgrade", "--all"]])\n'
+        update.write_text(
+            current_update.replace(final_step, "").replace(
+                github_step, old_step + github_step
+            )
+            + "\n# Keep my local maintenance changes.\n"
+        )
+        update.chmod(0o640)
         (machine.config / "conf.d/setup/downloads.py").unlink(missing_ok=True)
         checkout = machine.home / "public"
         (checkout / "bootstrap").mkdir(parents=True)
@@ -570,6 +595,16 @@ INSTALLER_POLICY = "local"
         self.assertIn('INSTALLER_POLICY = "local"', autofirma.read_text())
         self.assertEqual(autofirma.stat().st_mode & 0o777, 0o640)
         self.assertTrue((autofirma.parent / "installer.py").is_file())
+        self.assertEqual(
+            autofirma_task.read_text(),
+            current_task + "\n# Keep my local task changes.\n",
+        )
+        self.assertEqual(autofirma_task.stat().st_mode & 0o777, 0o640)
+        self.assertEqual(
+            update.read_text(),
+            current_update + "\n# Keep my local maintenance changes.\n",
+        )
+        self.assertEqual(update.stat().st_mode & 0o777, 0o640)
         pending = machine.python(
             "import os, runpy, sys; os.setsid(); sys.path.insert(0, "
             + repr(str(autofirma.parent))
@@ -591,11 +626,15 @@ INSTALLER_POLICY = "local"
         skills_updated = skills.stat().st_mtime_ns
         sync_updated = sync.stat().st_mtime_ns
         autofirma_updated = autofirma.stat().st_mtime_ns
+        task_updated = autofirma_task.stat().st_mtime_ns
+        maintenance_updated = update.stat().st_mtime_ns
         machine.python(invocation)
         self.assertEqual(active.stat().st_mtime_ns, updated)
         self.assertEqual(skills.stat().st_mtime_ns, skills_updated)
         self.assertEqual(sync.stat().st_mtime_ns, sync_updated)
         self.assertEqual(autofirma.stat().st_mtime_ns, autofirma_updated)
+        self.assertEqual(autofirma_task.stat().st_mtime_ns, task_updated)
+        self.assertEqual(update.stat().st_mtime_ns, maintenance_updated)
         custom = previous_skills.replace(
             "git@github.com:LuisUrrutia/skills.git", "git@github.com:example/skills.git"
         )
@@ -649,6 +688,41 @@ INSTALLER_POLICY = "local"
 
         self.assertNotEqual(json.loads(state.read_text())["applied"], applied)
         self.assertEqual(buildx.read_text(), "Updated package fixture\n")
+
+    def test_autofirma_runs_after_unattended_setup(self):
+        machine = Machine(self.root, "autofirma-order")
+        bootstrap = (
+            (REPO / "config.toml").read_text().split("[tasks.bootstrap]\n", 1)[1]
+        )
+        machine.write(
+            "config.toml",
+            "[tasks.bootstrap]\n"
+            + bootstrap
+            + '\n[tasks."setup:fixture"]\nrun = \'touch "$HOME/configured"\'\n',
+        )
+        machine.write(
+            "conf.d/setup/finish.py",
+            "from pathlib import Path\np = Path.home()\n"
+            "assert (p / 'configured').exists()\n(p / 'finished').touch()\n",
+        )
+        declaration = machine.write(
+            "conf.d/autofirma/mise.toml",
+            (REPO / "conf.d/autofirma/mise.macos.toml").read_text(),
+        )
+        machine.write(
+            "conf.d/autofirma/setup.py",
+            "from pathlib import Path\np = Path.home()\n"
+            "assert (p / 'finished').exists(), 'AutoFirma started before setup finished'\n"
+            "(p / 'installer-opened').touch()\nraise SystemExit(19)\n",
+        )
+
+        pending = machine.mise("bootstrap", "--yes", ok=False)
+
+        self.assertNotEqual(pending.returncode, 0)
+        self.assertTrue((machine.home / "finished").exists(), pending.stderr)
+        self.assertTrue((machine.home / "installer-opened").exists(), pending.stderr)
+        declaration.unlink()
+        machine.mise("bootstrap", "--yes")
 
     def test_autofirma_waits_for_interactive_installation(self):
         machine = Machine(self.root, "autofirma")
