@@ -121,6 +121,35 @@ def repair_screen_lock_check():
     print("Updated the screen-lock check.", flush=True)
 
 
+def repair_dock_reload():
+    relative = "conf.d/macos/mise.macos.toml"
+    path = ROOT / relative
+    regular_parents(path)
+    if path.is_symlink():
+        raise RuntimeError(f"Refusing symlink: {path}")
+    settings = read_toml(path)
+    bootstrap = settings.get("bootstrap", {})
+    if "apps" not in bootstrap.get("macos", {}).get("dock", {}):
+        return
+    hooks = bootstrap.setdefault("hooks", {})
+    if "post-defaults" in hooks:
+        return
+    hooks["post-defaults"] = read_toml(REPOSITORY / relative)["bootstrap"]["hooks"][
+        "post-defaults"
+    ]
+    line = "post-defaults = " + toml(hooks["post-defaults"]) + "\n"
+    before = path.read_text()
+    section = re.search(r"(?m)^\[bootstrap\.hooks\][ \t]*\n", before)
+    if section:
+        after = before[: section.end()] + line + before[section.end() :]
+    else:
+        after = before.rstrip() + "\n\n[bootstrap.hooks]\n" + line
+    if tomllib.loads(after) != settings:
+        raise RuntimeError(f"Cannot safely add the Dock reload hook: {path}")
+    atomic(path, after, path.stat().st_mode & 0o777)
+    print("Enabled Dock reload after applying its preferences.", flush=True)
+
+
 def repair_terminal_session():
     repairs = {
         "conf.d/setup/runtime.py": [
@@ -560,6 +589,7 @@ def enroll(args):
         repair_resource_diagnostics()
         repair_autofirma_installer()
         repair_autofirma_order()
+        repair_dock_reload()
     if sys.platform == "darwin":
         with lock():
             repair_screen_lock_check()

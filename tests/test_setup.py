@@ -501,6 +501,12 @@ BLOCKED_VERSION = "5.3.3"
         )
         skills = machine.write("conf.d/skills/mise.toml", previous_skills)
         skills.chmod(0o640)
+        previous_macos = (
+            '[bootstrap.macos.dock]\napps = ["/Applications/Personal.app"]\n'
+            '\n# Keep my local Dock settings.\n[bootstrap.hooks]\npre-defaults = "true"\n'
+        )
+        macos = machine.write("conf.d/macos/mise.macos.toml", previous_macos)
+        macos.chmod(0o640)
         sync = machine.config / "conf.d/setup/sync.py"
         current_sync = sync.read_text()
         previous_sync = current_sync.replace(
@@ -567,6 +573,8 @@ INSTALLER_POLICY = "local"
         )
         shutil.copytree(REPO / "tasks", checkout / "tasks")
         shutil.copytree(REPO / "conf.d/skills", checkout / "conf.d/skills")
+        (checkout / "conf.d/macos").mkdir()
+        shutil.copy2(REPO / "conf.d/macos/mise.macos.toml", checkout / "conf.d/macos")
         shutil.copytree(
             REPO / "conf.d/autofirma",
             checkout / "conf.d/autofirma",
@@ -600,6 +608,20 @@ INSTALLER_POLICY = "local"
             ),
         )
         self.assertEqual(skills.stat().st_mode & 0o777, 0o640)
+        macos_settings = tomllib.loads(macos.read_text())["bootstrap"]
+        self.assertIn("post-defaults", macos_settings["hooks"])
+        self.assertEqual(macos_settings["hooks"]["pre-defaults"], "true")
+        self.assertEqual(
+            macos_settings["macos"]["dock"]["apps"], ["/Applications/Personal.app"]
+        )
+        self.assertIn("# Keep my local Dock settings.", macos.read_text())
+        self.assertEqual(macos.stat().st_mode & 0o777, 0o640)
+        macos.write_text(previous_macos.split("[bootstrap.hooks]")[0])
+        machine.python(invocation)
+        self.assertEqual(
+            tomllib.loads(macos.read_text())["bootstrap"]["hooks"],
+            {"post-defaults": macos_settings["hooks"]["post-defaults"]},
+        )
         self.assertEqual(
             sync.read_text(), current_sync + "\n# Keep my local sync changes.\n"
         )
@@ -639,6 +661,7 @@ INSTALLER_POLICY = "local"
         )
         updated = active.stat().st_mtime_ns
         skills_updated = skills.stat().st_mtime_ns
+        macos_updated = macos.stat().st_mtime_ns
         sync_updated = sync.stat().st_mtime_ns
         autofirma_updated = autofirma.stat().st_mtime_ns
         task_updated = autofirma_task.stat().st_mtime_ns
@@ -646,6 +669,7 @@ INSTALLER_POLICY = "local"
         machine.python(invocation)
         self.assertEqual(active.stat().st_mtime_ns, updated)
         self.assertEqual(skills.stat().st_mtime_ns, skills_updated)
+        self.assertEqual(macos.stat().st_mtime_ns, macos_updated)
         self.assertEqual(sync.stat().st_mtime_ns, sync_updated)
         self.assertEqual(autofirma.stat().st_mtime_ns, autofirma_updated)
         self.assertEqual(autofirma_task.stat().st_mtime_ns, task_updated)
@@ -654,8 +678,11 @@ INSTALLER_POLICY = "local"
             "git@github.com:LuisUrrutia/skills.git", "git@github.com:example/skills.git"
         )
         skills.write_text(custom)
+        custom_macos = previous_macos + 'post-defaults = "echo personal"\n'
+        macos.write_text(custom_macos)
         machine.python(invocation)
         self.assertEqual(skills.read_text(), custom)
+        self.assertEqual(macos.read_text(), custom_macos)
         foreign = machine.home / "foreign.py"
         foreign.write_text(previous)
         active.unlink()

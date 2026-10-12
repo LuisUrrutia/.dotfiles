@@ -12,6 +12,9 @@ hint = "Run ./install.sh from the public checkout to configure immediate screen 
 timeout = "5s"
 os = "macos"
 
+[bootstrap.hooks]
+post-defaults = 'if pgrep -u "$(id -u)" -x Dock >/dev/null; then killall -u "$(id -un)" Dock; fi'
+
 [bootstrap.macos.dock]
 apps = [
   "/System/Applications/Messages.app",
