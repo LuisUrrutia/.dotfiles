@@ -1,6 +1,5 @@
 
 [bootstrap.packages]
-"brew-cask:cursor" = { os = "macos" }
 "brew:duti" = { os = "macos" }
 "brew-cask:1password" = { os = "macos" }
 "brew-cask:1password-cli" = { os = "macos" }
@@ -27,6 +26,3 @@
 "brew-cask:claude" = { os = "macos" }
 "brew-cask:granola" = { os = "macos" }
 "brew-cask:t3-code@nightly" = { os = "macos" }
-
-[tasks."setup:apps"]
-run = 'bash "{{ config_root }}/setup.sh"'

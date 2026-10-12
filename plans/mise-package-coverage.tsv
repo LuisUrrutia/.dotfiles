@@ -27,7 +27,6 @@ package	brew-cask:camo-studio	conf.d/media/mise.camo.toml	macos-arm64;optional=c
 package	brew-cask:chatgpt	conf.d/apps/mise.macos.toml	macos-arm64	vm-installed-26.1007.21159	pending-clean-machine	retry-native-owner
 package	brew-cask:claude	conf.d/apps/mise.macos.toml	macos-arm64	vm-installed-2.31226.1,8576520051724193e9f74fc538f9ce8125e9ddd2	pending-clean-machine	retry-native-owner
 package	brew-cask:cleanshot	conf.d/apps/mise.macos.toml	macos-arm64	vm-installed-5.0.1	pending-clean-machine	retry-native-owner
-package	brew-cask:cursor	conf.d/apps/mise.macos.toml	macos-arm64	vm-installed-3.24.12,37b865941ccb31e2fc90c685157534efca87f964	pending-clean-machine	retry-native-owner
 package	brew-cask:discord	conf.d/apps/mise.macos.toml	macos-arm64	vm-installed-0.0.415	pending-clean-machine	retry-native-owner
 package	brew-cask:displaylink	conf.d/macos/mise.displaylink.toml	macos-arm64;optional=displaylink	not-selected-in-vm	pending-clean-machine	retry-native-owner
 package	brew-cask:figma	conf.d/apps/mise.macos.toml	macos-arm64	vm-installed-126.9.13	pending-clean-machine	retry-native-owner
@@ -194,7 +193,7 @@ tool	python	conf.d/python/mise.toml	portable-runtime	vm-installed-3.15.0	pending
 tool	uv	conf.d/python/mise.toml	portable-runtime	vm-installed-0.12.23	pending-clean-machine	retry-native-owner
 appstore	mas:497799835	bootstrap/enroll.py	macos-arm64;machine-xcode	not-selected-in-vm	pending-clean-machine	App-Store-login-and-retry
 bootstrap	mise	bootstrap/install-mise.sh	macos-arm64	vm-installed-2026.10.7-and-rerun	pending-clean-machine	verified-release-download
-editor-extension	catppuccin.catppuccin-vsc,vscodevim.vim	conf.d/apps/setup.sh	macos-arm64	vm-installed-catppuccin-3.19.0-vim-1.32.4	pending-clean-machine	rerun-editor-task
+retired	cursor,catppuccin.catppuccin-vsc,vscodevim.vim	plans/mise-migration-inventory.md	all	approved-removal	approved-removal	not-applicable
 retired	stow,opencode,cc-safety-net	plans/mise-migration-decisions.md	all	approved-removal	approved-removal	not-applicable
 tool	github:mountain-loop/yaak	conf.d/dev/mise.linux.toml	ubuntu-arm64;ubuntu-x86_64	installed-2026.8.1;gui-x86_64-passed;gui-arm64-pending	latest-with-3d-cooldown	retry-native-owner
 tool	go:github.com/ethereum/go-ethereum/cmd/...	conf.d/blockchain/mise.ethereum.toml	ubuntu-arm64;ubuntu-x86_64;optional=ethereum	installed-1.17.7-command-suite-checked	latest-with-3d-cooldown	retry-native-owner

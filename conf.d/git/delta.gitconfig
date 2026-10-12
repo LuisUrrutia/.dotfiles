@@ -35,7 +35,6 @@
   line-numbers = true
   side-by-side = true
   hyperlinks = true
-  hyperlinks-file-link-format = "cursor://file/{path}:{line}"
 
 [interactive]
   diffFilter = delta --color-only
