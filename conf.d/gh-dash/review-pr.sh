@@ -23,6 +23,6 @@ review_path="$(printf '%s\n' "$worktree_json" | jq -er '.path | strings | select
   exit 1
 }
 
-review_prompt="Use the pr-review skill to review pull request #$pr_number against its base. Invoke \$pr-review in Codex or /pr-review in Claude Code. If the skill is unavailable, stop and report that it needs to be installed. Do not modify the worktree. Report findings with file and line references."
+review_prompt="Use \$pr-review in Codex or /pr-review in Claude Code to review pull request #$pr_number against its base. After the review, continue with \$pr-review-followup in Codex or /pr-review-followup in Claude Code for the same PR. If a required skill is unavailable, stop that phase and report it. Do not modify the reviewed code."
 exec t3code handover --cwd "$review_path" --checkout current --open desktop \
-  --mode plan --permission approval-required --prompt "$review_prompt" </dev/null
+  --mode default --permission approval-required --prompt "$review_prompt" </dev/null
