@@ -158,6 +158,72 @@ def repair_terminal_session():
         print("Updated setup commands to preserve terminal authorization.", flush=True)
 
 
+def repair_https_downloads():
+    repairs = {
+        "conf.d/setup/packages.py": [
+            (
+                "        with urllib.request.urlopen(\n"
+                '            "https://formulae.brew.sh/api/cask/macfuse.json", timeout=30\n'
+                "        ) as response:\n"
+                '            version = json.load(response)["version"]\n',
+                "        version = json.loads(\n"
+                '            download("https://formulae.brew.sh/api/cask/macfuse.json")\n'
+                '        )["version"]\n',
+            ),
+        ],
+        "conf.d/autofirma/setup.py": [
+            (
+                "    with urllib.request.urlopen(CASK, timeout=30) as response:\n"
+                "        cask = json.load(response)\n",
+                "    cask = json.loads(download(CASK))\n",
+            ),
+            (
+                "    with urllib.request.urlopen(url, timeout=60) as response:\n"
+                "        archive = response.read()\n",
+                "    archive = download(url, timeout=60)\n",
+            ),
+        ],
+        "conf.d/languages/dotnet-lts.py": [
+            (
+                "    with urllib.request.urlopen(url, timeout=30) as response:\n"
+                "        return json.load(response)\n",
+                "    return json.loads(download(url))\n",
+            ),
+        ],
+    }
+    changed = False
+    for relative, replacements in repairs.items():
+        path = ROOT / relative
+        regular_parents(path)
+        if path.is_symlink():
+            raise RuntimeError(f"Refusing symlink: {path}")
+        if not path.exists():
+            continue
+        before = path.read_text()
+        after = before
+        for previous, replacement in replacements:
+            if after.count(previous) > 1:
+                raise RuntimeError(f"Cannot safely repair HTTPS downloads: {path}")
+            after = after.replace(previous, replacement, 1)
+        if after == before:
+            continue
+        if "from downloads import download\n" not in after:
+            if after.count("from runtime import ") != 1:
+                raise RuntimeError(f"Cannot safely repair HTTPS imports: {path}")
+            after = after.replace(
+                "from runtime import ",
+                "from downloads import download\nfrom runtime import ",
+                1,
+            )
+        without_import = after.replace("import urllib.request\n", "")
+        if "urllib." not in without_import:
+            after = without_import
+        atomic(path, after, path.stat().st_mode & 0o777)
+        changed = True
+    if changed:
+        print("Updated setup downloads to use system certificate trust.", flush=True)
+
+
 def git_settings(record):
     identity = record.get("git", {})
     default = identity.get("default", {})
@@ -324,6 +390,7 @@ def enroll(args):
         return
     with lock():
         repair_terminal_session()
+        repair_https_downloads()
     if sys.platform == "darwin":
         with lock():
             repair_screen_lock_check()

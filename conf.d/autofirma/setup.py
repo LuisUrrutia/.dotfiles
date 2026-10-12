@@ -9,11 +9,11 @@ import re
 import shlex
 import subprocess
 import sys
-import urllib.request
 import zipfile
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "setup"))
+from downloads import download
 from runtime import STATE, atomic, regular_parents
 
 CASK = "https://formulae.brew.sh/api/cask/autofirma.json"
@@ -23,8 +23,7 @@ APP_INFO = Path("/Applications/AutoFirma.app/Contents/Info.plist")
 def current_release():
     if platform.system() != "Darwin" or platform.machine() != "arm64":
         raise RuntimeError("AutoFirma setup requires macOS arm64")
-    with urllib.request.urlopen(CASK, timeout=30) as response:
-        cask = json.load(response)
+    cask = json.loads(download(CASK))
     packages = [
         installer["manual"]
         for artifact in cask["artifacts"]
@@ -66,8 +65,7 @@ def main():
                     return
     installer = STATE / "installers/autofirma" / version / package
     regular_parents(installer)
-    with urllib.request.urlopen(url, timeout=60) as response:
-        archive = response.read()
+    archive = download(url, timeout=60)
     if hashlib.sha256(archive).hexdigest() != checksum:
         raise RuntimeError("AutoFirma archive checksum does not match its current cask")
     with zipfile.ZipFile(io.BytesIO(archive)) as bundle:

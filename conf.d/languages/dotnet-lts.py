@@ -3,19 +3,18 @@
 import json
 import re
 import sys
-import urllib.request
 from datetime import date, timedelta
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "setup"))
+from downloads import download
 from runtime import STATE, atomic
 
 METADATA = "https://builds.dotnet.microsoft.com/dotnet/release-metadata"
 
 
 def read_json(url):
-    with urllib.request.urlopen(url, timeout=30) as response:
-        return json.load(response)
+    return json.loads(download(url))
 
 
 def latest_lts(read=read_json, today=None):

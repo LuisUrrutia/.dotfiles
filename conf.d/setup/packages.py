@@ -5,9 +5,9 @@ import json
 import platform
 import subprocess
 import sys
-import urllib.request
 
 import config
+from downloads import download
 from runtime import mise
 
 
@@ -19,10 +19,9 @@ def main():
     args = parser.parse_args()
     config.check()
     if sys.platform == "darwin":
-        with urllib.request.urlopen(
-            "https://formulae.brew.sh/api/cask/macfuse.json", timeout=30
-        ) as response:
-            version = json.load(response)["version"]
+        version = json.loads(
+            download("https://formulae.brew.sh/api/cask/macfuse.json")
+        )["version"]
         if version == "5.3.3":
             raise RuntimeError(
                 "macFUSE 5.3.3 is blocked by this setup; wait for a corrected cask before installing packages"

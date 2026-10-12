@@ -1,5 +1,6 @@
 """Integration boundaries owned by this repository; native mise and Git are real."""
 
+import http.server
 import json
 import os
 import plistlib
@@ -7,9 +8,11 @@ import pty
 import select
 import shutil
 import signal
+import ssl
 import subprocess
 import sys
 import tempfile
+import threading
 import time
 import tomllib
 import unittest
@@ -188,6 +191,89 @@ class SetupTests(unittest.TestCase):
 
     def tearDown(self):
         self.scratch.cleanup()
+
+    def test_setup_downloads_use_system_trust(self):
+        machine = Machine(self.root, "https")
+        certificate = machine.home / "test-ca.pem"
+        key = machine.home / "test-key.pem"
+        options = machine.home / "openssl.cnf"
+        options.write_text(
+            "[req]\nprompt=no\ndistinguished_name=subject\nx509_extensions=extensions\n"
+            "[subject]\nCN=localhost\n[extensions]\nsubjectAltName=DNS:localhost\n"
+            "basicConstraints=critical,CA:true\nkeyUsage=critical,digitalSignature,keyEncipherment,keyCertSign\n"
+        )
+        machine.run(
+            "openssl",
+            "req",
+            "-x509",
+            "-newkey",
+            "rsa:2048",
+            "-nodes",
+            "-days",
+            "1",
+            "-config",
+            options,
+            "-keyout",
+            key,
+            "-out",
+            certificate,
+        )
+
+        class Metadata(http.server.BaseHTTPRequestHandler):
+            def do_GET(self):
+                if self.path == "/redirect":
+                    self.send_response(302)
+                    self.send_header("Location", "http://localhost/metadata")
+                    self.end_headers()
+                    return
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(b'{"version":"1.2.3"}')
+
+            def log_message(self, format, *args):
+                pass
+
+        context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+        context.load_cert_chain(certificate, key)
+        with http.server.ThreadingHTTPServer(("127.0.0.1", 0), Metadata) as server:
+            server.socket = context.wrap_socket(server.socket, server_side=True)
+            thread = threading.Thread(target=server.serve_forever, daemon=True)
+            thread.start()
+            try:
+                url = f"https://localhost:{server.server_port}/metadata"
+                invocation = (
+                    "import json, runpy; read = runpy.run_path("
+                    + repr(str(REPO / "conf.d/languages/dotnet-lts.py"))
+                    + ')["read_json"]; print(json.dumps(read('
+                    + repr(url)
+                    + ")))"
+                )
+                machine.env["CURL_CA_BUNDLE"] = str(certificate)
+                machine.env["SSL_CERT_FILE"] = str(machine.home / "missing-roots.pem")
+
+                downloaded = machine.python(invocation)
+
+                self.assertEqual(json.loads(downloaded.stdout), {"version": "1.2.3"})
+                refused = machine.python(
+                    invocation.replace("/metadata", "/redirect"), ok=False
+                )
+                self.assertNotEqual(refused.returncode, 0)
+                self.assertIn("HTTPS download failed", refused.stderr)
+                self.assertIn("curl: (1)", refused.stderr)
+                del machine.env["CURL_CA_BUNDLE"]
+                del machine.env["SSL_CERT_FILE"]
+                (machine.home / ".curlrc").write_text("insecure\n")
+
+                refused = machine.python(invocation, ok=False)
+
+                self.assertNotEqual(refused.returncode, 0)
+                self.assertIn("HTTPS download failed", refused.stderr)
+                self.assertIn("curl: (60)", refused.stderr)
+                self.assertNotIn('"version":', refused.stdout)
+            finally:
+                server.shutdown()
+                thread.join(timeout=5)
 
     def test_screen_lock_setup_and_native_diagnostic(self):
         machine = Machine(self.root, "screen-lock")
@@ -377,6 +463,71 @@ touch "$HOME/setup-applied"
         self.assertNotEqual(refused.returncode, 0)
         self.assertEqual(active.read_text(), custom)
         self.assertFalse((machine.home / "setup-applied").exists())
+
+    def test_enrollment_repairs_https_downloads_and_preserves_local_edits(self):
+        machine = Machine(self.root, "downloads")
+        machine.minimal()
+        machine.encryption()
+        previous = """import json
+import urllib.request
+
+from runtime import mise
+
+def check_version():
+        with urllib.request.urlopen(
+            "https://formulae.brew.sh/api/cask/macfuse.json", timeout=30
+        ) as response:
+            version = json.load(response)["version"]
+        return version
+
+# Keep my local package policy.
+BLOCKED_VERSION = "5.3.3"
+"""
+        active = machine.write("conf.d/setup/packages.py", previous)
+        active.chmod(0o640)
+        (machine.config / "conf.d/setup/downloads.py").unlink(missing_ok=True)
+        checkout = machine.home / "public"
+        (checkout / "bootstrap").mkdir(parents=True)
+        shutil.copy2(REPO / "bootstrap/enroll.py", checkout / "bootstrap/enroll.py")
+        shutil.copytree(
+            REPO / "conf.d/setup",
+            checkout / "conf.d/setup",
+            ignore=shutil.ignore_patterns("__pycache__"),
+        )
+        shutil.copytree(REPO / "tasks", checkout / "tasks")
+        machine.run("git", "init", "-q", checkout)
+        machine.run("git", "-C", checkout, "add", "conf.d", "tasks")
+        task = machine.write("tasks/config", "#!/bin/bash\n#MISE raw=true\nexit 0\n")
+        task.chmod(0o755)
+        invocation = (
+            "import runpy, sys; sys.platform = 'linux'; sys.argv = "
+            + repr([str(checkout / "bootstrap/enroll.py"), "--machine", "downloads"])
+            + "; runpy.run_path(sys.argv[0], run_name='__main__')"
+        )
+
+        machine.python(invocation)
+
+        self.assertNotIn("urllib.request", active.read_text())
+        self.assertIn("from downloads import download", active.read_text())
+        self.assertIn(
+            '# Keep my local package policy.\nBLOCKED_VERSION = "5.3.3"',
+            active.read_text(),
+        )
+        self.assertEqual(active.stat().st_mode & 0o777, 0o640)
+        self.assertTrue((machine.config / "conf.d/setup/downloads.py").is_file())
+        updated = active.stat().st_mtime_ns
+        machine.python(invocation)
+        self.assertEqual(active.stat().st_mtime_ns, updated)
+        foreign = machine.home / "foreign.py"
+        foreign.write_text(previous)
+        active.unlink()
+        active.symlink_to(foreign)
+
+        refused = machine.python(invocation, ok=False)
+
+        self.assertNotEqual(refused.returncode, 0)
+        self.assertTrue(active.is_symlink())
+        self.assertEqual(foreign.read_text(), previous)
 
     def test_seed_and_native_deployment_preserve_user_files(self):
         machine = Machine(self.root, "safe")
