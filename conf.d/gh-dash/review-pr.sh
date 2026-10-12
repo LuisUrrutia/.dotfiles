@@ -10,7 +10,7 @@ if [[ "$#" -ne 2 || ! -d "$repo_path" || ! "$pr_number" =~ ^[1-9][0-9]*$ ]]; the
   exit 2
 fi
 
-for prerequisite in wt jq tmux codex claude; do
+for prerequisite in wt jq t3code; do
   if ! command -v "$prerequisite" >/dev/null 2>&1; then
     printf 'gh-dash review: required command is unavailable: %s\n' "$prerequisite" >&2
     exit 1
@@ -23,12 +23,6 @@ review_path="$(printf '%s\n' "$worktree_json" | jq -er '.path | strings | select
   exit 1
 }
 
-codex_prompt="Use the code-review skill to review pull request #$pr_number. Do not modify the worktree. Report findings with file and line references."
-claude_prompt="Review pull request #$pr_number against its base. Do not modify the worktree. Report findings with file and line references."
-printf -v codex_command 'exec codex %q' "$codex_prompt"
-printf -v claude_command 'exec claude %q' "$claude_prompt"
-
-window_id="$(tmux new-window -P -F '#{window_id}' -c "$review_path" \
-  -n "PR-$pr_number-review" "$codex_command")"
-tmux split-window -h -t "$window_id" -c "$review_path" "$claude_command"
-tmux select-layout -t "$window_id" even-horizontal >/dev/null
+review_prompt="Review pull request #$pr_number against its base. Do not modify the worktree. Report findings with file and line references."
+exec t3code handover --cwd "$review_path" --checkout current --open desktop \
+  --mode plan --permission approval-required --prompt "$review_prompt" </dev/null

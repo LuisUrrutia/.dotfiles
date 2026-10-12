@@ -63,7 +63,7 @@ defaults:
 keybindings:
   prs:
     - key: C
-      name: Codex + Claude review
+      name: Review in T3 Code
       command: >
         ~/.config/mise/conf.d/gh-dash/review-pr.sh '{{.RepoPath}}' '{{.PrNumber}}'
     - key: W

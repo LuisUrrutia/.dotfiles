@@ -3,3 +3,4 @@
 
 [tools]
 "aqua:dlvhdr/gh-dash" = "latest"
+"npm:@bvdm/t3code-cli" = "latest"
