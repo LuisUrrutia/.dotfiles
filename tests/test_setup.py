@@ -19,6 +19,9 @@ MISE = os.environ.get("MISE_BIN") or shutil.which("mise")
 if MISE is None:
     raise RuntimeError("mise is required to run the integration tests")
 MISE = str(Path(MISE).resolve())
+GIT = shutil.which("git")
+if GIT is None:
+    raise RuntimeError("git is required to run the integration tests")
 FISH = shutil.which("fish")
 WT = shutil.which("wt")
 
@@ -30,6 +33,7 @@ class Machine:
         self.config.mkdir(parents=True)
         (self.home / ".local/bin").mkdir(parents=True)
         (self.home / ".local/bin/mise").symlink_to(MISE)
+        (self.home / ".local/bin/git").symlink_to(GIT)
         python = (
             self.home
             / "data/installs/python"
