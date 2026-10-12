@@ -190,6 +190,12 @@ class SetupTests(unittest.TestCase):
 
     def test_seed_and_native_deployment_preserve_user_files(self):
         machine = Machine(self.root, "safe")
+        machine.python("""import enroll
+from types import SimpleNamespace
+enroll.sys.platform = 'darwin'
+enroll.subprocess.run = lambda *args, **kwargs: SimpleNamespace(stdout='"IOPlatformUUID" = "00000000-1111-2222-3333-444444444444"')
+assert enroll.machine_id() == 'd16fe322fd5b'
+""")
         machine.payload()
         manager = machine.home / ".local/share/fisher/functions/fisher.fish"
         manager.parent.mkdir(parents=True)

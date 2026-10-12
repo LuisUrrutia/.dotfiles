@@ -41,7 +41,7 @@ def machine_id():
     match = re.search(r'"IOPlatformUUID" = "([^"]+)"', result.stdout)
     if not match:
         raise ValueError("Cannot determine the machine ID; supply --machine")
-    return hashlib.sha256((match[1] + "\n").encode()).hexdigest()[:12]
+    return hashlib.sha256(match[1].encode()).hexdigest()[:12]
 
 
 def seed(repository=REPOSITORY):
