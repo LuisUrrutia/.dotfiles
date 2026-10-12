@@ -271,6 +271,46 @@ def repair_setup_hash():
     )
 
 
+def repair_autofirma_installer():
+    path = ROOT / "conf.d/autofirma/setup.py"
+    regular_parents(path)
+    if path.is_symlink():
+        raise RuntimeError(f"Refusing symlink: {path}")
+    if not path.exists():
+        return
+    before = path.read_text()
+    previous = (
+        "    # The vendor's postinstall requires GUI interaction even with the CLI installer.\n"
+        "    raise RuntimeError(\n"
+        '        f"Complete AutoFirma\'s vendor installer: open {shlex.quote(str(installer))}\\n"\n'
+        '        "Then rerun mise -C ~ run config apply. Automatic setup remains pending."\n'
+        "    )\n"
+    )
+    if previous not in before:
+        return
+    if before.count(previous) != 1 or before.count("from runtime import ") != 1:
+        raise RuntimeError(f"Cannot safely repair the AutoFirma installer: {path}")
+    after = before.replace(
+        previous, "    complete_installation(installer, version)\n", 1
+    )
+    after = after.replace(
+        "from runtime import ",
+        "from installer import complete_installation\nfrom runtime import ",
+        1,
+    )
+    if "shlex." not in after:
+        after = after.replace("import shlex\n", "")
+    after = after.replace(
+        '"""Prepare the signed AutoFirma installer without waiting on its GUI prompts."""',
+        '"""Verify the current AutoFirma package and complete its vendor installation."""',
+        1,
+    )
+    atomic(path, after, path.stat().st_mode & 0o777)
+    print(
+        "Updated AutoFirma to open its installer during interactive setup.", flush=True
+    )
+
+
 def git_settings(record):
     identity = record.get("git", {})
     default = identity.get("default", {})
@@ -440,6 +480,7 @@ def enroll(args):
         repair_https_downloads()
         repair_public_skills_clone()
         repair_setup_hash()
+        repair_autofirma_installer()
     if sys.platform == "darwin":
         with lock():
             repair_screen_lock_check()

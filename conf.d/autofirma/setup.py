@@ -1,12 +1,10 @@
-"""Prepare the signed AutoFirma installer without waiting on its GUI prompts."""
+"""Verify the current AutoFirma package and complete its vendor installation."""
 
 import hashlib
 import io
 import json
 import platform
-import plistlib
 import re
-import shlex
 import subprocess
 import sys
 import zipfile
@@ -14,10 +12,10 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "setup"))
 from downloads import download
+from installer import complete_installation, installed
 from runtime import STATE, atomic, regular_parents
 
 CASK = "https://formulae.brew.sh/api/cask/autofirma.json"
-APP_INFO = Path("/Applications/AutoFirma.app/Contents/Info.plist")
 
 
 def current_release():
@@ -47,22 +45,8 @@ def current_release():
 def main():
     version, url, checksum, package = current_release()
     print(f"AutoFirma cask release: {version}")
-    if APP_INFO.is_file():
-        installed = plistlib.loads(APP_INFO.read_bytes())
-        if installed.get("CFBundleIdentifier") == "es.gob.afirma.simpleafirma.osx":
-            receipt = subprocess.run(
-                ["/usr/sbin/pkgutil", "--pkg-info-plist", "es.gob.afirma"],
-                stdin=subprocess.DEVNULL,
-                capture_output=True,
-                timeout=10,
-            )
-            if receipt.returncode == 0:
-                installed_version = plistlib.loads(receipt.stdout)["pkg-version"]
-                if tuple(map(int, installed_version.split("."))) >= tuple(
-                    map(int, version.split("."))
-                ):
-                    print(f"AutoFirma {installed_version} is installed")
-                    return
+    if installed(version):
+        return
     installer = STATE / "installers/autofirma" / version / package
     regular_parents(installer)
     archive = download(url, timeout=60)
@@ -84,11 +68,7 @@ def main():
         check=True,
         timeout=30,
     )
-    # The vendor's postinstall requires GUI interaction even with the CLI installer.
-    raise RuntimeError(
-        f"Complete AutoFirma's vendor installer: open {shlex.quote(str(installer))}\n"
-        "Then rerun mise -C ~ run config apply. Automatic setup remains pending."
-    )
+    complete_installation(installer, version)
 
 
 if __name__ == "__main__":

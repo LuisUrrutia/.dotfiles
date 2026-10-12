@@ -446,10 +446,12 @@ See https://mise.jdx.dev/dev-tools/github-tokens.html.
 **AutoFirma:** mise does not support the cask's `installer manual:` artifact.
 `setup:autofirma` reads the current version, URL, SHA-256, and package filename
 from https://formulae.brew.sh/api/cask/autofirma.json, downloads it, verifies the
-checksum and package signature, then prints the command to open the interactive
-vendor installer. Complete it and rerun `mise -C ~ run config apply`. Setup stays
-pending until the receipt and app exist at that version or newer. `update` checks
-daily and prepares new releases through the same task; no version or archive URL is pinned.
+checksum and package signature, then opens the vendor installer when run from a
+terminal. Complete its dialogs and close Installer; setup verifies the receipt
+and app before continuing. Cancellation leaves setup pending. Background runs
+prepare the package and report how to finish without opening a window. `update`
+checks daily and prepares new releases through the same task; no version or
+archive URL is pinned.
 
 **IINA:** native `url_replacements` redirect the DMG to the official GitHub release.
 The cask owns the version, checksum, app/CLI installation, and self-update behavior.

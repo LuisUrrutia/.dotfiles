@@ -501,6 +501,21 @@ BLOCKED_VERSION = "5.3.3"
         )
         sync.write_text(previous_sync + "\n# Keep my local sync changes.\n")
         sync.chmod(0o640)
+        previous_autofirma = """import shlex
+from runtime import STATE
+
+def finish(installer, version):
+    # The vendor's postinstall requires GUI interaction even with the CLI installer.
+    raise RuntimeError(
+        f"Complete AutoFirma's vendor installer: open {shlex.quote(str(installer))}\\n"
+        "Then rerun mise -C ~ run config apply. Automatic setup remains pending."
+    )
+
+# Keep my local installer policy.
+INSTALLER_POLICY = "local"
+"""
+        autofirma = machine.write("conf.d/autofirma/setup.py", previous_autofirma)
+        autofirma.chmod(0o640)
         (machine.config / "conf.d/setup/downloads.py").unlink(missing_ok=True)
         checkout = machine.home / "public"
         (checkout / "bootstrap").mkdir(parents=True)
@@ -512,6 +527,11 @@ BLOCKED_VERSION = "5.3.3"
         )
         shutil.copytree(REPO / "tasks", checkout / "tasks")
         shutil.copytree(REPO / "conf.d/skills", checkout / "conf.d/skills")
+        shutil.copytree(
+            REPO / "conf.d/autofirma",
+            checkout / "conf.d/autofirma",
+            ignore=shutil.ignore_patterns("__pycache__"),
+        )
         machine.run("git", "init", "-q", checkout)
         machine.run("git", "-C", checkout, "add", "conf.d", "tasks")
         task = machine.write("tasks/config", "#!/bin/bash\n#MISE raw=true\nexit 0\n")
@@ -544,6 +564,22 @@ BLOCKED_VERSION = "5.3.3"
             sync.read_text(), current_sync + "\n# Keep my local sync changes.\n"
         )
         self.assertEqual(sync.stat().st_mode & 0o777, 0o640)
+        self.assertIn(
+            "complete_installation(installer, version)", autofirma.read_text()
+        )
+        self.assertIn('INSTALLER_POLICY = "local"', autofirma.read_text())
+        self.assertEqual(autofirma.stat().st_mode & 0o777, 0o640)
+        self.assertTrue((autofirma.parent / "installer.py").is_file())
+        pending = machine.python(
+            "import os, runpy, sys; os.setsid(); sys.path.insert(0, "
+            + repr(str(autofirma.parent))
+            + "); module = runpy.run_path("
+            + repr(str(autofirma))
+            + "); module['finish']('fixture.pkg', '2.4.0')",
+            ok=False,
+        )
+        self.assertNotEqual(pending.returncode, 0)
+        self.assertIn("from a terminal", pending.stderr)
         plan = machine.mise(
             "bootstrap", "repos", "update", "~/Projects/LuisUrrutia/skills", "--dry-run"
         )
@@ -554,10 +590,12 @@ BLOCKED_VERSION = "5.3.3"
         updated = active.stat().st_mtime_ns
         skills_updated = skills.stat().st_mtime_ns
         sync_updated = sync.stat().st_mtime_ns
+        autofirma_updated = autofirma.stat().st_mtime_ns
         machine.python(invocation)
         self.assertEqual(active.stat().st_mtime_ns, updated)
         self.assertEqual(skills.stat().st_mtime_ns, skills_updated)
         self.assertEqual(sync.stat().st_mtime_ns, sync_updated)
+        self.assertEqual(autofirma.stat().st_mtime_ns, autofirma_updated)
         custom = previous_skills.replace(
             "git@github.com:LuisUrrutia/skills.git", "git@github.com:example/skills.git"
         )
@@ -611,6 +649,77 @@ BLOCKED_VERSION = "5.3.3"
 
         self.assertNotEqual(json.loads(state.read_text())["applied"], applied)
         self.assertEqual(buildx.read_text(), "Updated package fixture\n")
+
+    def test_autofirma_waits_for_interactive_installation(self):
+        machine = Machine(self.root, "autofirma")
+        invocation = (
+            "import runpy, sys\n"
+            + "sys.path.insert(0, "
+            + repr(str(REPO / "conf.d/autofirma"))
+            + ")\nmodule = runpy.run_path("
+            + repr(str(REPO / "conf.d/autofirma/setup.py"))
+            + ')["main"].__globals__\n'
+            + """import hashlib, io, json, plistlib, subprocess, zipfile
+from pathlib import Path
+home = Path.home()
+info = home / 'AutoFirma.app/Contents/Info.plist'
+module['installed'].__globals__['APP_INFO'] = info
+module['platform'].system = lambda: 'Darwin'
+module['platform'].machine = lambda: 'arm64'
+archive = io.BytesIO()
+with zipfile.ZipFile(archive, 'w') as bundle:
+    bundle.writestr('AutoFirma_fixture_signed.pkg', b'fixture vendor package')
+archive = archive.getvalue()
+metadata = {'version': '2.4.0', 'url': 'https://example.invalid/autofirma.zip',
+            'sha256': hashlib.sha256(archive).hexdigest(),
+            'artifacts': [{'installer': [{'manual': 'AutoFirma_fixture_signed.pkg'}]}]}
+module['download'] = lambda url, **kwargs: json.dumps(metadata).encode() if url == module['CASK'] else archive
+def vendor_command(args, **kwargs):
+    if args[:2] == ['/usr/sbin/pkgutil', '--check-signature']:
+        assert Path(args[2]).read_bytes() == b'fixture vendor package'
+    elif args[:2] == ['/usr/sbin/pkgutil', '--pkg-info-plist']:
+        receipt = home / 'receipt.plist'
+        return subprocess.CompletedProcess(args, 0 if receipt.exists() else 1, receipt.read_bytes() if receipt.exists() else b'')
+    elif args[:3] == ['/usr/bin/open', '-W', '-a']:
+        assert args[3] == '/System/Library/CoreServices/Installer.app'
+        assert Path(args[4]).read_bytes() == b'fixture vendor package'
+        with (home / 'opened').open('a') as stream:
+            stream.write('opened\\n')
+        if not (home / 'cancel').exists():
+            info.parent.mkdir(parents=True, exist_ok=True)
+            info.write_bytes(plistlib.dumps({'CFBundleIdentifier': 'es.gob.afirma.simpleafirma.osx'}))
+            (home / 'receipt.plist').write_bytes(plistlib.dumps({'pkg-version': '2.4.0'}))
+    else:
+        raise AssertionError(args)
+    return subprocess.CompletedProcess(args, 0, b'')
+module['subprocess'].run = vendor_command
+module['main']()
+"""
+        )
+
+        code, output = machine.password_command("-c", invocation)
+
+        self.assertEqual(code, 0, output)
+        self.assertIn("AutoFirma 2.4.0 is installed", output)
+        opened = machine.home / "opened"
+        self.assertEqual(opened.read_text(), "opened\n")
+        machine.python(invocation)
+        self.assertEqual(opened.read_text(), "opened\n")
+        (machine.home / "receipt.plist").unlink()
+        opened.unlink()
+
+        pending = machine.python("import os; os.setsid()\n" + invocation, ok=False)
+
+        self.assertNotEqual(pending.returncode, 0)
+        self.assertIn("from a terminal", pending.stderr)
+        self.assertFalse(opened.exists())
+        (machine.home / "cancel").touch()
+
+        code, output = machine.password_command("-c", invocation)
+
+        self.assertNotEqual(code, 0, output)
+        self.assertIn("AutoFirma installation is incomplete", output)
+        self.assertFalse((machine.home / "receipt.plist").exists())
 
     def test_seed_and_native_deployment_preserve_user_files(self):
         machine = Machine(self.root, "safe")
