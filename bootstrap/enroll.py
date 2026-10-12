@@ -250,6 +250,27 @@ def repair_public_skills_clone():
     print("Updated the public skills checkout to use HTTPS.", flush=True)
 
 
+def repair_setup_hash():
+    path = ROOT / "conf.d/setup/sync.py"
+    regular_parents(path)
+    if path.is_symlink():
+        raise RuntimeError(f"Refusing symlink: {path}")
+    before = path.read_text()
+    previous = '        value.update(str(path.relative_to(HOME)).encode() + b"\\0" + path.read_bytes())\n'
+    if previous not in before:
+        return
+    if before.count(previous) != 1:
+        raise RuntimeError(f"Cannot safely repair setup change detection: {path}")
+    replacement = (
+        "        name = path.relative_to(HOME) if path.is_relative_to(HOME) else path\n"
+        '        value.update(str(name).encode() + b"\\0" + path.read_bytes())\n'
+    )
+    atomic(path, before.replace(previous, replacement, 1), path.stat().st_mode & 0o777)
+    print(
+        "Updated setup change detection for package sources outside HOME.", flush=True
+    )
+
+
 def git_settings(record):
     identity = record.get("git", {})
     default = identity.get("default", {})
@@ -418,6 +439,7 @@ def enroll(args):
         repair_terminal_session()
         repair_https_downloads()
         repair_public_skills_clone()
+        repair_setup_hash()
     if sys.platform == "darwin":
         with lock():
             repair_screen_lock_check()

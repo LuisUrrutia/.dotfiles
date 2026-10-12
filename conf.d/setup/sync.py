@@ -149,7 +149,8 @@ def setup_hash():
             and path not in loaded
         ):
             continue
-        value.update(str(path.relative_to(HOME)).encode() + b"\0" + path.read_bytes())
+        name = path.relative_to(HOME) if path.is_relative_to(HOME) else path
+        value.update(str(name).encode() + b"\0" + path.read_bytes())
     return value.hexdigest()
 
 

@@ -492,6 +492,15 @@ BLOCKED_VERSION = "5.3.3"
         )
         skills = machine.write("conf.d/skills/mise.toml", previous_skills)
         skills.chmod(0o640)
+        sync = machine.config / "conf.d/setup/sync.py"
+        current_sync = sync.read_text()
+        previous_sync = current_sync.replace(
+            "        name = path.relative_to(HOME) if path.is_relative_to(HOME) else path\n"
+            '        value.update(str(name).encode() + b"\\0" + path.read_bytes())\n',
+            '        value.update(str(path.relative_to(HOME)).encode() + b"\\0" + path.read_bytes())\n',
+        )
+        sync.write_text(previous_sync + "\n# Keep my local sync changes.\n")
+        sync.chmod(0o640)
         (machine.config / "conf.d/setup/downloads.py").unlink(missing_ok=True)
         checkout = machine.home / "public"
         (checkout / "bootstrap").mkdir(parents=True)
@@ -531,6 +540,10 @@ BLOCKED_VERSION = "5.3.3"
             ),
         )
         self.assertEqual(skills.stat().st_mode & 0o777, 0o640)
+        self.assertEqual(
+            sync.read_text(), current_sync + "\n# Keep my local sync changes.\n"
+        )
+        self.assertEqual(sync.stat().st_mode & 0o777, 0o640)
         plan = machine.mise(
             "bootstrap", "repos", "update", "~/Projects/LuisUrrutia/skills", "--dry-run"
         )
@@ -540,9 +553,11 @@ BLOCKED_VERSION = "5.3.3"
         )
         updated = active.stat().st_mtime_ns
         skills_updated = skills.stat().st_mtime_ns
+        sync_updated = sync.stat().st_mtime_ns
         machine.python(invocation)
         self.assertEqual(active.stat().st_mtime_ns, updated)
         self.assertEqual(skills.stat().st_mtime_ns, skills_updated)
+        self.assertEqual(sync.stat().st_mtime_ns, sync_updated)
         custom = previous_skills.replace(
             "git@github.com:LuisUrrutia/skills.git", "git@github.com:example/skills.git"
         )
@@ -559,6 +574,43 @@ BLOCKED_VERSION = "5.3.3"
         self.assertNotEqual(refused.returncode, 0)
         self.assertTrue(active.is_symlink())
         self.assertEqual(foreign.read_text(), previous)
+
+    def test_native_apply_accepts_package_sources_outside_home(self):
+        machine = Machine(self.root, "package-sources")
+        machine.minimal()
+        machine.encryption()
+        sources = tomllib.loads((REPO / "conf.d/dev/mise.macos.toml").read_text())[
+            "dotfiles"
+        ]
+        declarations = []
+        for target, source in sources.items():
+            external = self.root.resolve() / source.lstrip("/")
+            external.parent.mkdir(parents=True, exist_ok=True)
+            external.write_text("Package fixture\n")
+            declarations.append(f"{json.dumps(target)} = {json.dumps(str(external))}")
+        machine.write("conf.d/dev/mise.toml", "[dotfiles]\n" + "\n".join(declarations))
+
+        machine.run(sys.executable, machine.config / "conf.d/setup/config.py", "apply")
+
+        for target, source in sources.items():
+            deployed = machine.home / target.removeprefix("~/")
+            self.assertTrue(deployed.is_symlink())
+            self.assertEqual(
+                deployed.resolve(), self.root.resolve() / source.lstrip("/")
+            )
+        state = machine.home / "state/dotfiles/apply.json"
+        applied = json.loads(state.read_text())["applied"]
+        machine.python("import sync; sync.apply_setup()")
+        self.assertEqual(json.loads(state.read_text())["applied"], applied)
+        buildx = self.root.resolve() / sources[
+            "~/.docker/cli-plugins/docker-buildx"
+        ].lstrip("/")
+        buildx.write_text("Updated package fixture\n")
+
+        machine.python("import sync; sync.apply_setup()")
+
+        self.assertNotEqual(json.loads(state.read_text())["applied"], applied)
+        self.assertEqual(buildx.read_text(), "Updated package fixture\n")
 
     def test_seed_and_native_deployment_preserve_user_files(self):
         machine = Machine(self.root, "safe")
@@ -588,7 +640,7 @@ end
         macos = tomllib.loads((REPO / "conf.d/dev/mise.macos.toml").read_text())
         package_sources = {}
         for target, source in macos["dotfiles"].items():
-            fixture = machine.home / source.lstrip("/")
+            fixture = self.root.resolve() / source.lstrip("/")
             fixture.parent.mkdir(parents=True, exist_ok=True)
             fixture.write_text("Package fixture\n")
             package_sources[target] = str(fixture)
