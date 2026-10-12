@@ -520,7 +520,14 @@ atomic(STATE/'dotnet-lts', '12.0.100\\n')
                         "name": 'Work "Team" Urrutía',
                         "email": "work@example.invalid",
                         "directories": [
-                            str(machine.home / 'work "space"'),
+                            str(
+                                machine.home
+                                / (
+                                    'work "space" [1]'
+                                    if kind == "work"
+                                    else r"work *?\[1]"
+                                )
+                            ),
                             "~/other work",
                         ],
                     }
@@ -653,6 +660,15 @@ enroll.atomic(enroll.ROOT / 'config.local.toml', enroll.document(values))
                         WT, "remove", "feature", "--no-hooks", "--yes", cwd=repository
                     )
                 if kind == "work":
+                    unrelated = machine.home / 'work "space" 1/repo'
+                    unrelated.mkdir(parents=True)
+                    machine.run("git", "init", "--initial-branch=main", unrelated)
+                    self.assertEqual(
+                        machine.run(
+                            "git", "config", "user.email", cwd=unrelated
+                        ).stdout.strip(),
+                        "fixture@example.invalid",
+                    )
                     repository = machine.home / "other work/repo"
                     repository.mkdir(parents=True)
                     machine.run("git", "init", "--initial-branch=main", repository)
