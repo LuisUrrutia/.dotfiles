@@ -8,7 +8,7 @@ import sys
 import urllib.request
 
 import config
-from runtime import ROOT, mise, run
+from runtime import mise
 
 
 def main():
@@ -30,7 +30,6 @@ def main():
         # Native package selectors cannot express a macOS version range.
         if int(platform.mac_ver()[0].split(".")[0]) < 27:
             mise("bootstrap", "packages", args.action, "brew-cask:thaw", "--yes")
-        run([sys.executable, ROOT / "conf.d/ghostty/package.py", args.action])
 
 
 if __name__ == "__main__":

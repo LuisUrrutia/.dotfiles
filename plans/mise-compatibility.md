@@ -75,8 +75,6 @@ https://github.com/jdx/mise/blob/v2026.10.7/src/system/driver.rs
 - Regression cases for source changes during bootstrap, cancellation of timed-out
   descendants, warning-based resource skips, preference resets, invalid app-file
   structure, pending restore, and fresh same-machine LinearMouse recovery.
-- A focused Ghostty download parser check for the exact cask checksum, cache
-  integrity, and rejection of directories, links, truncation and extra payloads.
 - A noninteractive Fish smoke path and `install.sh --dry-run`.
 - Staged and unstaged `git diff --check`.
 
@@ -503,6 +501,10 @@ Sources:
 - https://github.com/google/fonts/tree/main/ofl/lato
 
 ## Ghostty download recovery
+
+Retired on 2026-10-12: Ghostty now uses native `brew-cask:ghostty` installation
+and updates. The Nix recovery adapter and its parser test were removed. The
+results below describe the retired implementation.
 
 On 2026-10-10, Ghostty's official 1.3.1 DMG became reachable again. Further cache
 inspection found the original DMG in Nix's **binary cache**, in addition to the

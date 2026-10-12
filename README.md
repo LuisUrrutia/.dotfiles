@@ -413,18 +413,8 @@ daily and prepares new releases through the same task; no version or archive URL
 **IINA:** native `url_replacements` redirect the DMG to the official GitHub release.
 The cask owns the version, checksum, app/CLI installation, and self-update behavior.
 
-**Ghostty:** the official cask download is tried first. On failure, an adapter
-looks for the same DMG in Nix's content-addressed cache. It verifies the archive,
-cask SHA-256, and Apple Developer ID signature before filling mise's download cache
-and retrying. It installs neither Nix nor Homebrew and needs no GitHub API
-authentication. An unavailable mirror or failed verification fails setup; recovery
-never substitutes a version or overwrites a damaged existing download. The cask
-still selects releases and owns installation and self-updates.
-
-Ghostty recovery runs through initial bootstrap, `config apply`, and `update` for
-the default macOS `latest` declaration. Direct `mise bootstrap packages apply`
-bypasses it; pins and conditional overrides stay with native mise. The cache layout
-was verified against mise 2026.10.7. See [Ghostty acceptance](plans/mise-compatibility.md#ghostty-download-recovery).
+**Ghostty:** mise manages the native `brew-cask:ghostty` package. The cask owns
+downloads, checksum verification, app installation, and self-update handling.
 
 </details>
 
@@ -541,8 +531,7 @@ macOS also typechecks helpers that use Apple frameworks.
 
 Tests use real mise/Git, temporary homes, and local bare origins. Four areas cover
 preservation, Git identities/worktrees, encrypted preferences, and manual/automatic
-exchange. A focused Ghostty recovery check rejects altered DMGs and malformed
-cache archives. Native task validation checks this checkout and the isolated
+exchange. Native task validation checks this checkout and the isolated
 active setup, including all optional modules. Syntax, format/schema, workflow,
 secret, and shell smoke checks complete the suite. There is no app build target;
 compilation/parsing and native deployment serve that purpose.
