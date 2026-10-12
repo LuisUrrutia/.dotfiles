@@ -29,6 +29,14 @@ def expand(value):
     return home_path(value)
 
 
+def check_tree(target):
+    regular_parents(target, include_self=True)
+    if target.exists():
+        for path in target.iterdir():
+            if path.is_dir():
+                check_tree(path)
+
+
 def entries(status=None):
     status = status or native_json("dot", "status")
     for entry in status["files"]:
@@ -37,6 +45,8 @@ def entries(status=None):
         target = expand(entry["target"])
         source = expand(entry["source"]) if entry.get("source") else None
         if entry["mode"] == "symlink-each":
+            # Native cleanup also visits links whose sources were deleted or excluded.
+            check_tree(target)
             declaration = (
                 read_toml(entry["origin"]["config"])
                 .get("dotfiles", {})

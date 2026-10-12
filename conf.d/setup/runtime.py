@@ -129,11 +129,11 @@ def selected():
     return read_toml(ROOT / "miserc.local.toml").get("env", [])
 
 
-def regular_parents(path):
+def regular_parents(path, *, include_self=False):
     path = home_path(path)
     if not path.is_relative_to(HOME):
         raise RuntimeError(f"Destination is outside HOME: {path}")
-    for parent in path.parents:
+    for parent in (path, *path.parents) if include_self else path.parents:
         if parent == HOME:
             break
         if parent.is_symlink() or (parent.exists() and not parent.is_dir()):

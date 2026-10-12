@@ -464,6 +464,40 @@ atomic(STATE/'dotnet-lts', '12.0.100\\n')
             machine.python("import config; config.check()", ok=False).returncode, 0
         )
 
+        for mode in ("empty", "excluded"):
+            with self.subTest(stale_links=mode):
+                stale = Machine(self.root, mode)
+                stale.env["MISE_HISTORY_ENABLED"] = "false"
+                declaration = '[dotfiles]\n"~/app"={source="source",mode="symlink-each"'
+                stale.write("config.toml", declaration + "}\n")
+                source = stale.write("source/removed/one", "managed source\n")
+                apply = "import config; config.check(); config.apply_files(); config.remember()"
+                stale.python(apply)
+                target = stale.home / "app"
+                if mode == "empty":
+                    source.unlink()
+                else:
+                    target /= "removed"
+                    stale.write("config.toml", declaration + ',exclude=["removed"]}\n')
+                foreign = stale.home / "foreign"
+                target.rename(foreign)
+                target.symlink_to(foreign)
+                link = foreign / ("removed/one" if mode == "empty" else "one")
+
+                refused = stale.python(apply, ok=False)
+
+                self.assertNotEqual(refused.returncode, 0)
+                self.assertIn("Refusing redirected parent", refused.stderr)
+                self.assertTrue(link.is_symlink())
+                target.unlink()
+                foreign.rename(target)
+                stale.python(apply)
+                self.assertFalse(
+                    (
+                        target / ("removed/one" if mode == "empty" else "one")
+                    ).is_symlink()
+                )
+
     def test_git_identities_keep_other_keys_and_match_worktrees(self):
         for kind in ("personal", "work", "agent", "unknown"):
             with self.subTest(kind=kind):
