@@ -213,7 +213,17 @@ def schedule():
 
 
 def assert_resources():
-    status = native_json("bootstrap", "status", "--missing")
+    try:
+        status = native_json("bootstrap", "status", "--missing")
+    except subprocess.CalledProcessError as error:
+        if error.stderr:
+            print(error.stderr.decode(errors="replace").strip(), file=sys.stderr)
+        if error.stdout:
+            print("Bootstrap verification found pending resources:", flush=True)
+            mise("bootstrap", "status", check=False)
+        raise RuntimeError(
+            "Bootstrap verification failed; setup remains pending. See the diagnostic above."
+        ) from error
 
     def skipped(value):
         if isinstance(value, dict):

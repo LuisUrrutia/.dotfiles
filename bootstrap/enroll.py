@@ -278,6 +278,37 @@ def repair_setup_hash():
     )
 
 
+def repair_resource_diagnostics():
+    path = ROOT / "conf.d/setup/sync.py"
+    regular_parents(path)
+    if path.is_symlink():
+        raise RuntimeError(f"Refusing symlink: {path}")
+    before = path.read_text()
+    previous = 'def assert_resources():\n    status = native_json("bootstrap", "status", "--missing")\n'
+    if previous not in before:
+        return
+    if before.count(previous) != 1:
+        raise RuntimeError(f"Cannot safely repair bootstrap diagnostics: {path}")
+    replacement = (
+        "def assert_resources():\n"
+        "    try:\n"
+        '        status = native_json("bootstrap", "status", "--missing")\n'
+        "    except subprocess.CalledProcessError as error:\n"
+        "        if error.stderr:\n"
+        '            print(error.stderr.decode(errors="replace").strip(), file=sys.stderr)\n'
+        "        if error.stdout:\n"
+        '            print("Bootstrap verification found pending resources:", flush=True)\n'
+        '            mise("bootstrap", "status", check=False)\n'
+        "        raise RuntimeError(\n"
+        '            "Bootstrap verification failed; setup remains pending. See the diagnostic above."\n'
+        "        ) from error\n"
+    )
+    after = before.replace(previous, replacement, 1)
+    compile(after, str(path), "exec")
+    atomic(path, after, path.stat().st_mode & 0o777)
+    print("Updated bootstrap verification to show pending resources.", flush=True)
+
+
 def repair_autofirma_installer():
     path = ROOT / "conf.d/autofirma/setup.py"
     regular_parents(path)
@@ -526,6 +557,7 @@ def enroll(args):
         repair_https_downloads()
         repair_public_skills_clone()
         repair_setup_hash()
+        repair_resource_diagnostics()
         repair_autofirma_installer()
         repair_autofirma_order()
     if sys.platform == "darwin":

@@ -508,6 +508,12 @@ BLOCKED_VERSION = "5.3.3"
             '        value.update(str(name).encode() + b"\\0" + path.read_bytes())\n',
             '        value.update(str(path.relative_to(HOME)).encode() + b"\\0" + path.read_bytes())\n',
         )
+        status_start = current_sync.index("def assert_resources():\n")
+        status_end = current_sync.index("    def skipped(", status_start)
+        previous_sync = previous_sync.replace(
+            current_sync[status_start:status_end],
+            'def assert_resources():\n    status = native_json("bootstrap", "status", "--missing")\n\n',
+        )
         sync.write_text(previous_sync + "\n# Keep my local sync changes.\n")
         sync.chmod(0o640)
         previous_autofirma = """import shlex
@@ -697,6 +703,37 @@ INSTALLER_POLICY = "local"
 
         self.assertNotEqual(json.loads(state.read_text())["applied"], applied)
         self.assertEqual(buildx.read_text(), "Updated package fixture\n")
+
+    def test_bootstrap_reports_incomplete_resources(self):
+        machine = Machine(self.root, "incomplete")
+        machine.minimal()
+        machine.encryption()
+        task = machine.write("tasks/config", (REPO / "tasks/config").read_text())
+        task.chmod(0o755)
+        configuration = machine.config / "config.toml"
+        configuration.write_text(
+            configuration.read_text()
+            + '\n[tasks.bootstrap]\nrun = \'if [ ! -f "$HOME/finished" ]; then rm "$HOME/shared.txt"; touch "$HOME/finished"; fi\'\n'
+        )
+        incomplete = machine.mise("run", "config", "apply", ok=False)
+
+        self.assertNotEqual(incomplete.returncode, 0)
+        self.assertTrue((machine.home / "finished").exists())
+        self.assertTrue(
+            any(
+                "~/shared.txt" in line and "missing" in line
+                for line in incomplete.stdout.splitlines()
+            ),
+            incomplete.stdout + incomplete.stderr,
+        )
+        state = machine.home / "state/dotfiles/apply.json"
+        self.assertIn("failed", json.loads(state.read_text()))
+        self.assertNotIn("applied", json.loads(state.read_text()))
+
+        machine.mise("run", "config", "apply")
+
+        self.assertEqual((machine.home / "shared.txt").read_text(), "initial\n")
+        self.assertIn("applied", json.loads(state.read_text()))
 
     def test_bootstrap_parallelism_and_final_installer(self):
         machine = Machine(self.root, "autofirma-order")
