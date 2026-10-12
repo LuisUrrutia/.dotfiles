@@ -1,10 +1,6 @@
 [bootstrap.repos]
 "~/Projects/LuisUrrutia/skills" = { url = "git@github.com:LuisUrrutia/skills.git" }
 
-[dotfiles]
-"~/.agents/skills/visual-change-explainer" = { source = "visual-change-explainer", mode = "symlink-each" }
-"~/.claude/skills/visual-change-explainer" = { source = "visual-change-explainer", mode = "symlink-each" }
-
 [tools]
 "npm:skills" = "latest"
 

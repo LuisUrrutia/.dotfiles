@@ -338,11 +338,6 @@ atomic(STATE/'dotnet-lts', '12.0.100\\n')
             target = machine.home / agent / "skills/personal-example"
             self.assertTrue(target.is_symlink())
             self.assertEqual(target.resolve(), checkout / "personal-example")
-            visual = machine.home / agent / "skills/visual-change-explainer/SKILL.md"
-            self.assertEqual(
-                visual.resolve(),
-                machine.config / "conf.d/skills/visual-change-explainer/SKILL.md",
-            )
         backups = list((machine.home / ".agents/skills-backups").rglob("SKILL.md"))
         self.assertEqual(len(backups), 1)
         self.assertEqual(backups[0].read_text(), "Keep this edited installed copy\n")
