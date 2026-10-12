@@ -26,7 +26,7 @@ review_path="$(printf '%s\n' "$worktree_json" | jq -er '.path | strings | select
 codex_prompt="Use the code-review skill to review pull request #$pr_number. Do not modify the worktree. Report findings with file and line references."
 claude_prompt="Review pull request #$pr_number against its base. Do not modify the worktree. Report findings with file and line references."
 printf -v codex_command 'exec codex %q' "$codex_prompt"
-printf -v claude_command 'exec claude --agent code-reviewer %q' "$claude_prompt"
+printf -v claude_command 'exec claude %q' "$claude_prompt"
 
 window_id="$(tmux new-window -P -F '#{window_id}' -c "$review_path" \
   -n "PR-$pr_number-review" "$codex_command")"
