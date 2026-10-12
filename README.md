@@ -119,6 +119,10 @@ travel together. The public checkout remains separate.
 A full retry repairs the previously shipped terminal handling and, on macOS,
 the screen-lock check. It prints a short confirmation for each repair.
 Custom checks and other active settings are preserved.
+After an interruption, rerun the same installer command. It lets mise recover
+unfinished history operations before preparing or applying setup, including on
+previously enrolled machines. Recovery stops if a file was edited afterward;
+it preserves the edit and reports the affected path for review.
 
 Machine identity, Git inputs, sync mode, and the private origin live in
 `config.local.toml`; optional apps live in `miserc.local.toml`. These files and

@@ -155,14 +155,20 @@ def setup_hash():
 
 def history_ready():
     status = native_json("dot", "status")["history"]
-    if (
-        not status.get("enabled")
-        or status.get("unavailable")
-        or status.get("pending_operations")
-    ):
-        raise RuntimeError(
-            "History is unavailable or has an unfinished operation; inspect mise dot status/recover"
-        )
+    if not status.get("enabled") or status.get("unavailable"):
+        raise RuntimeError("History is unavailable; inspect mise dot status")
+    if status.get("pending_operations"):
+        print("Recovering interrupted setup history before retrying.", flush=True)
+        mise("dot", "recover", "--yes")
+        status = native_json("dot", "status")["history"]
+        if (
+            not status.get("enabled")
+            or status.get("unavailable")
+            or status.get("pending_operations")
+        ):
+            raise RuntimeError(
+                "History recovery did not finish; inspect mise dot status and mise dot recover"
+            )
     sync = status.get("sync", {})
     if sync.get("conflicts") or sync.get("validation_error"):
         raise RuntimeError(

@@ -6,6 +6,7 @@ import plistlib
 import pty
 import select
 import shutil
+import signal
 import subprocess
 import sys
 import tempfile
@@ -1384,6 +1385,128 @@ assert read_state('preferences')['resume']['snapshot'] == preferences.fingerprin
         corrupted = fresh.run(sys.executable, *args, ok=False)
         self.assertNotEqual(corrupted.returncode, 0)
         self.assertEqual(plistlib.loads(snapshot.read_bytes()), {"layout": ["pending"]})
+
+    def test_interrupted_setup_recovers_without_discarding_edits(self):
+        invocation = "from runtime import lock; import sync\nwith lock(): sync.apply_setup(force=True)"
+
+        def interrupt(machine):
+            machine.minimal()
+            machine.encryption()
+            config = machine.config / "config.toml"
+            config.write_text(
+                config.read_text().replace(
+                    '"~/shared.txt" = "~/.config/mise/shared.txt"',
+                    '"~/shared.txt" = { source="shared.txt", mode="copy" }',
+                )
+                + "\n[tasks.bootstrap]\n"
+                + 'run = \'if [ ! -f "$HOME/started" ]; then touch "$HOME/started"; sleep 60; fi\'\n'
+            )
+            log = machine.home / "interrupted.log"
+            with log.open("w") as stream:
+                process = subprocess.Popen(
+                    [sys.executable, "-c", invocation],
+                    cwd=machine.home,
+                    env=machine.env,
+                    stdin=subprocess.DEVNULL,
+                    stdout=stream,
+                    stderr=stream,
+                    start_new_session=True,
+                )
+                try:
+                    deadline = time.monotonic() + 20
+                    while not (machine.home / "started").exists():
+                        self.assertIsNone(process.poll(), log.read_text())
+                        self.assertLess(time.monotonic(), deadline, log.read_text())
+                        time.sleep(0.05)
+                    process.send_signal(signal.SIGINT)
+                    process.wait(timeout=10)
+                finally:
+                    if process.poll() is None:
+                        process.terminate()
+                        process.wait(timeout=10)
+            self.assertNotEqual(process.returncode, 0)
+            self.assertEqual(
+                json.loads(machine.mise("dot", "status", "--json").stdout)["history"][
+                    "pending_operations"
+                ],
+                1,
+            )
+            self.assertEqual((machine.home / "shared.txt").read_text(), "initial\n")
+            state = machine.home / "state/dotfiles/apply.json"
+            self.assertNotIn("applied", json.loads(state.read_text()))
+            return state
+
+        resumed = Machine(self.root, "resumed")
+        state = interrupt(resumed)
+
+        resumed.python(invocation)
+
+        self.assertEqual((resumed.home / "shared.txt").read_text(), "initial\n")
+        self.assertIn("applied", json.loads(state.read_text()))
+        self.assertEqual(
+            json.loads(resumed.mise("dot", "status", "--json").stdout)["history"][
+                "pending_operations"
+            ],
+            0,
+        )
+
+        enrolled = Machine(self.root, "enrolled")
+        state = interrupt(enrolled)
+        checkout = enrolled.home / "public"
+        (checkout / "bootstrap").mkdir(parents=True)
+        shutil.copy2(REPO / "bootstrap/enroll.py", checkout / "bootstrap/enroll.py")
+        shutil.copytree(
+            REPO / "conf.d/setup",
+            checkout / "conf.d/setup",
+            ignore=shutil.ignore_patterns("__pycache__"),
+        )
+        shutil.copytree(REPO / "tasks", checkout / "tasks")
+        enrolled.run("git", "init", "-q", checkout)
+        enrolled.run("git", "-C", checkout, "add", "conf.d", "tasks")
+        task = enrolled.write(
+            "tasks/config",
+            """#!/bin/bash
+#MISE raw=true
+set -euo pipefail
+mise exec python@3 -- python3 - <<'PY'
+from runtime import native_json
+assert native_json('dot', 'status')['history']['pending_operations'] == 0
+PY
+exec mise exec python@3 -- python3 "$HOME/.config/mise/conf.d/setup/config.py" "$@"
+""",
+        )
+        task.chmod(0o755)
+        active = enrolled.config / "conf.d/setup/sync.py"
+        before = active.read_bytes()
+
+        enrolled.python(
+            "import runpy, sys; sys.platform = 'linux'; sys.argv = "
+            + repr([str(checkout / "bootstrap/enroll.py"), "--machine", "enrolled"])
+            + "; runpy.run_path(sys.argv[0], run_name='__main__')"
+        )
+
+        self.assertIn("applied", json.loads(state.read_text()))
+        self.assertEqual(active.read_bytes(), before)
+
+        edited = Machine(self.root, "edited")
+        state = interrupt(edited)
+        before = state.read_bytes()
+        (edited.home / "shared.txt").write_text("my edit after cancelling\n")
+
+        refused = edited.python(invocation, ok=False)
+
+        self.assertNotEqual(refused.returncode, 0)
+        self.assertIn("changed after the operation", refused.stderr)
+        self.assertEqual(
+            (edited.home / "shared.txt").read_text(), "my edit after cancelling\n"
+        )
+        self.assertEqual(state.read_bytes(), before)
+        self.assertEqual(
+            json.loads(edited.mise("dot", "status", "--json").stdout)["history"][
+                "pending_operations"
+            ],
+            1,
+        )
 
     def test_native_sync_applies_declarations_and_preserves_local_choices(self):
         a, b = Machine(self.root, "a"), Machine(self.root, "b")

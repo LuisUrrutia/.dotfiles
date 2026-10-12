@@ -205,6 +205,11 @@ def enroll(args):
 
         with lock():
             recovery_recipient = unlock(REPOSITORY)
+    if not args.seed_only and (ROOT / "config.toml").exists():
+        from sync import history_ready
+
+        with lock():
+            history_ready()
     current = read_toml(ROOT / "config.local.toml")
     record = read_toml(REPOSITORY / "machines" / f"{args.machine}.toml")
     if args.record:
