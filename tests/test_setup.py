@@ -252,6 +252,77 @@ fi
         self.assertNotEqual(code, 0, output)
         self.assertFalse(authorized.exists())
 
+        (machine.home / "unreadable").unlink()
+        delay.write_text("immediate")
+        target.unlink()
+        machine.minimal()
+        machine.encryption()
+        machine.env["MISE_ENV"] = "macos"
+        previous = {
+            "run": "/usr/sbin/sysadminctl -screenLock status 2>&1 | /usr/bin/grep -q 'delay is 0 seconds'",
+            "hint": "Set Require password after screen saver or display is turned off to Immediately in System Settings.",
+        }
+        current = native["doctor"]["checks"]["screen-lock"]
+        declaration = "[doctor.checks.screen-lock]\n" + "".join(
+            f"{key} = {json.dumps(value)}\n"
+            for key, value in current.items()
+            if key != "os"
+        )
+        old = declaration
+        for key, value in previous.items():
+            old = old.replace(json.dumps(current[key]), json.dumps(value))
+        personal = "\n# Keep my keyboard settings.\n[bootstrap.macos.keyboard]\nkey_repeat = 7\n"
+        active = machine.write("conf.d/macos/mise.macos.toml", old + personal)
+        active.chmod(0o640)
+        checkout = machine.home / "public"
+        (checkout / "bootstrap").mkdir(parents=True)
+        shutil.copy2(REPO / "bootstrap/enroll.py", checkout / "bootstrap/enroll.py")
+        shutil.copytree(
+            REPO / "conf.d/setup",
+            checkout / "conf.d/setup",
+            ignore=shutil.ignore_patterns("__pycache__"),
+        )
+        (checkout / "conf.d/macos").mkdir()
+        (checkout / "conf.d/macos/mise.macos.toml").write_text(declaration)
+        shutil.copy2(script, checkout / "conf.d/macos/screen-lock.sh")
+        (checkout / "tasks").mkdir()
+        task = checkout / "tasks/config"
+        task.write_text(
+            '#!/bin/bash\nset -euo pipefail\nmise doctor project\ntouch "$HOME/setup-applied"\n'
+        )
+        task.chmod(0o755)
+        machine.run("git", "init", "-q", checkout)
+        machine.run("git", "-C", checkout, "add", "conf.d", "tasks")
+        invocation = (
+            "import runpy, sys; sys.platform = 'darwin'; sys.argv = "
+            + repr([str(checkout / "bootstrap/enroll.py"), "--machine", "screen-lock"])
+            + "; runpy.run_path(sys.argv[0], run_name='__main__')"
+        )
+        machine.python(
+            invocation.replace("; runpy.", "; sys.argv.append('--seed-only'); runpy.")
+        )
+        self.assertEqual(active.read_text(), old + personal)
+
+        applied = machine.python(invocation)
+
+        self.assertIn("PASS screen-lock", applied.stdout + applied.stderr)
+        self.assertTrue((machine.home / "setup-applied").exists())
+        self.assertEqual(active.read_text(), declaration + personal)
+        self.assertEqual(active.stat().st_mode & 0o777, 0o640)
+        self.assertFalse(authorized.exists())
+        updated = active.stat().st_mtime_ns
+        machine.python(invocation)
+        self.assertEqual(active.stat().st_mtime_ns, updated)
+        custom = (declaration + personal).replace(
+            json.dumps(current["run"]), '"exit 1"'
+        )
+        active.write_text(custom)
+        (machine.home / "setup-applied").unlink()
+        refused = machine.python(invocation, ok=False)
+        self.assertNotEqual(refused.returncode, 0)
+        self.assertEqual(active.read_text(), custom)
+        self.assertFalse((machine.home / "setup-applied").exists())
+
     def test_seed_and_native_deployment_preserve_user_files(self):
         machine = Machine(self.root, "safe")
         machine.python("""import enroll

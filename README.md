@@ -115,6 +115,9 @@ Edit this active tree: private mise history owns it, and application links point
 here. Shared sources, installation declarations, plugin manifests, and setup tasks
 travel together. The public checkout remains separate.
 
+A full macOS retry also repairs the previously shipped screen-lock check and
+prints that specific diff. Custom commands and other active settings are preserved.
+
 Machine identity, Git inputs, sync mode, and the private origin live in
 `config.local.toml`; optional apps live in `miserc.local.toml`. These files and
 `age.txt` stay local. Public `machines/*.toml` records are tracked; credentials are not.

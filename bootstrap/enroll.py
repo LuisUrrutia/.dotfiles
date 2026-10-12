@@ -1,11 +1,13 @@
 """Seed or adopt a regular, history-owned mise configuration."""
 
 import argparse
+import difflib
 import hashlib
 import os
 import re
 import subprocess
 import sys
+import tomllib
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "conf.d/setup"))
@@ -81,6 +83,56 @@ def seed(repository=REPOSITORY):
         if target.exists():
             continue
         atomic(target, source.read_bytes(), source.stat().st_mode & 0o777)
+
+
+def repair_screen_lock_check():
+    relative = "conf.d/macos/mise.macos.toml"
+    path = ROOT / relative
+    regular_parents(path)
+    if path.is_symlink():
+        raise RuntimeError(f"Refusing symlink: {path}")
+    settings = read_toml(path)
+    check = settings.get("doctor", {}).get("checks", {}).get("screen-lock", {})
+    previous = {
+        "run": "/usr/sbin/sysadminctl -screenLock status 2>&1 | /usr/bin/grep -q 'delay is 0 seconds'",
+        "hint": "Set Require password after screen saver or display is turned off to Immediately in System Settings.",
+    }
+    if check.get("run") != previous["run"]:
+        return
+    replacement = read_toml(REPOSITORY / relative)["doctor"]["checks"]["screen-lock"]
+    before = path.read_text()
+    section = re.search(
+        r"(?ms)^\[doctor\.checks\.screen-lock\][ \t]*\n.*?(?=^\[|\Z)", before
+    )
+    if section is None:
+        raise RuntimeError(f"Cannot safely repair the old screen-lock check: {path}")
+    updated = section[0]
+    for key, value in previous.items():
+        if check.get(key) == value:
+            updated = re.sub(
+                rf"(?m)^([ \t]*{key}[ \t]*=[ \t]*){re.escape(toml(value))}",
+                lambda match: match[1] + toml(replacement[key]),
+                updated,
+            )
+            check[key] = replacement[key]
+    after = before[: section.start()] + updated + before[section.end() :]
+    if tomllib.loads(after) != settings:
+        raise RuntimeError(f"Cannot safely repair the old screen-lock check: {path}")
+    atomic(path, after, path.stat().st_mode & 0o777)
+    print("Repaired the previously shipped screen-lock check:")
+    print(
+        "".join(
+            difflib.unified_diff(
+                before.splitlines(keepends=True),
+                after.splitlines(keepends=True),
+                fromfile=str(path),
+                tofile=str(path),
+                n=0,
+            )
+        ),
+        end="",
+        flush=True,
+    )
 
 
 def git_settings(record):
@@ -243,6 +295,8 @@ def enroll(args):
         print(f"Seeded missing setup sources in {ROOT}; existing files were preserved")
         return
     if sys.platform == "darwin":
+        with lock():
+            repair_screen_lock_check()
         subprocess.run(
             ["/bin/bash", str(REPOSITORY / "conf.d/macos/screen-lock.sh"), "apply"],
             check=True,
