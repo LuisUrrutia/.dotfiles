@@ -1,0 +1,325 @@
+"""Serialize native history exchange and application of the selected setup."""
+
+import argparse
+import hashlib
+import os
+import plistlib
+import subprocess
+import sys
+import time
+from pathlib import Path
+
+import config
+import edits
+import preferences
+from runtime import (
+    HOME,
+    ROOT,
+    STATE,
+    atomic,
+    document,
+    git_origin,
+    home_path,
+    local,
+    lock,
+    mise,
+    native_json,
+    read_state,
+    read_toml,
+    run,
+    write_state,
+)
+
+
+def dispatch():
+    if local().get("sync") != "automatic":
+        return
+    command = [
+        str(HOME / ".local/bin/mise"),
+        "-C",
+        str(HOME),
+        "run",
+        "sync",
+        "--automatic",
+    ]
+    environment = {
+        "HOME": str(HOME),
+        "MISE_CONFIG_DIR": str(ROOT),
+        "MISE_CEILING_PATHS": str(HOME),
+        "PATH": f"{HOME}/.local/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin",
+        **{
+            key: os.environ[key]
+            for key in (
+                "MISE_DATA_DIR",
+                "MISE_STATE_DIR",
+                "MISE_CACHE_DIR",
+                "MISE_OFFLINE",
+            )
+            if key in os.environ
+        },
+    }
+    # A separate job survives replacement of the native periodic scheduler.
+    if sys.platform == "darwin":
+        label = "dev.mise.dotfiles-sync-worker"
+        domain = f"gui/{os.getuid()}"
+        service = f"{domain}/{label}"
+        path = STATE / "sync-worker.plist"
+        declaration = plistlib.dumps(
+            {
+                "Label": label,
+                "ProgramArguments": command,
+                "WorkingDirectory": str(HOME),
+                "ProcessType": "Background",
+                "EnvironmentVariables": environment,
+                "StandardOutPath": str(STATE / "sync.log"),
+                "StandardErrorPath": str(STATE / "sync.err.log"),
+            }
+        )
+        with lock():
+            status = run(["launchctl", "print", service], capture=True, check=False)
+            loaded = status.returncode == 0
+            if loaded and any(
+                line.strip().startswith(b"pid = ")
+                for line in status.stdout.splitlines()
+            ):
+                return
+            if loaded and (not path.exists() or path.read_bytes() != declaration):
+                run(["launchctl", "bootout", service])
+                loaded = False
+            if not loaded:
+                atomic(path, declaration)
+                run(["launchctl", "bootstrap", domain, path])
+        run(["launchctl", "kickstart", service])
+    else:
+        service = "dotfiles-sync-worker.service"
+        if (
+            run(
+                ["systemctl", "--user", "is-active", "--quiet", service], check=False
+            ).returncode
+            == 0
+        ):
+            return
+        run(
+            [
+                "systemd-run",
+                "--user",
+                "--collect",
+                f"--unit={service}",
+                *[f"--setenv={key}={value}" for key, value in environment.items()],
+                "--",
+                *command,
+            ]
+        )
+
+
+def setup_hash():
+    loaded = {Path(entry["path"]) for entry in native_json("config")}
+    files = set(loaded)
+    for path in loaded:
+        if path.parent != ROOT and path.is_relative_to(ROOT):
+            files.update(path.parent.rglob("*"))
+    for directory in (ROOT / "tasks", ROOT / "conf.d/setup"):
+        files.update(directory.rglob("*"))
+    status = native_json("dot", "status")
+    for entry in [*status["files"], *status.get("edits", [])]:
+        source = entry.get("source") or entry.get("origin", {}).get("source")
+        if source and entry["state"] != "skipped":
+            source = home_path(source)
+            files.add(source)
+            if source.is_dir():
+                files.update(source.rglob("*"))
+    files.update(
+        [
+            ROOT / "miserc.toml",
+            ROOT / "miserc.local.toml",
+            HOME / ".config/fish/fish_plugins",
+        ]
+    )
+    value = hashlib.sha256()
+    for path in sorted(files):
+        if (
+            not path.is_file()
+            or "__pycache__" in path.parts
+            or ".DS_Store" in path.parts
+        ):
+            continue
+        if (
+            path.name.startswith("mise.")
+            and path.suffix == ".toml"
+            and path not in loaded
+        ):
+            continue
+        value.update(str(path.relative_to(HOME)).encode() + b"\0" + path.read_bytes())
+    return value.hexdigest()
+
+
+def history_ready():
+    status = native_json("dot", "status")["history"]
+    if (
+        not status.get("enabled")
+        or status.get("unavailable")
+        or status.get("pending_operations")
+    ):
+        raise RuntimeError(
+            "History is unavailable or has an unfinished operation; inspect mise dot status/recover"
+        )
+    sync = status.get("sync", {})
+    if sync.get("conflicts") or sync.get("validation_error"):
+        raise RuntimeError(
+            "History needs a decision; inspect mise dot status before applying setup"
+        )
+    if sync:
+        git_origin(sync["origin"])
+        if sync["mode"] != "manual":
+            raise RuntimeError(
+                "Native history sync must be manual; the serial task owns network exchange"
+            )
+    return sync
+
+
+def schedule():
+    platform = "macos" if sys.platform == "darwin" else "linux"
+    path = ROOT / "conf.d/history/mise.local.toml"
+    header = "# Generated by the local sync scheduler.\n"
+    if local().get("sync") != "automatic" and not path.exists():
+        return False
+    if path.exists() and not path.read_text().startswith(
+        (header, "# This machine exchanges")
+    ):
+        raise RuntimeError(f"Refusing unowned scheduler configuration: {path}")
+    template = ROOT / "conf.d/history" / f"sync.{platform}.toml"
+    content = header + template.read_text()
+    if local().get("sync") != "automatic":
+        if platform == "macos":
+            if (HOME / "Library/LaunchAgents/dev.mise.dotfiles-sync.plist").exists():
+                mise("bootstrap", "services", "remove", "dotfiles-sync", "--yes")
+            content = header
+        else:
+            settings = read_toml(template)
+            for unit in settings["bootstrap"]["linux"]["systemd"]["units"].values():
+                unit["state"] = "absent"
+            content = header + document(settings)
+    if not path.exists() or path.read_text() != content:
+        atomic(path, content)
+        return True
+    return False
+
+
+def assert_resources():
+    status = native_json("bootstrap", "status", "--missing")
+
+    def skipped(value):
+        if isinstance(value, dict):
+            return any(
+                k in ("status", "state") and v == "skipped" or skipped(v)
+                for k, v in value.items()
+            )
+        return isinstance(value, list) and any(skipped(item) for item in value)
+
+    if skipped(status.get("packages", {})):
+        raise RuntimeError("A declared package was skipped; it has not been installed")
+
+
+def apply_setup(force=False, automatic=False):
+    preferences.prepare_history()
+    history_ready()
+    edits.capture()
+    config.check()
+    fingerprint = setup_hash()
+    state = read_state("apply")
+    if force or state.get("applied") != fingerprint:
+        attempts = (
+            state.get("attempts", 0) if state.get("pending") == fingerprint else 0
+        )
+        if automatic and attempts >= 3:
+            raise RuntimeError(
+                "Setup failed three times for this revision; run mise run config apply after repair"
+            )
+        if automatic and attempts and time.time() < state.get("retry_after", 0):
+            print("Setup retry is pending; waiting for the backoff interval")
+            return
+        state.update(
+            pending=fingerprint, attempts=attempts + 1, started=int(time.time())
+        )
+        write_state("apply", state)
+        try:
+            mise("doctor", "project")
+            mise("bootstrap", "--yes", timeout=14400)
+            if schedule():
+                platform, resource = (
+                    ("macos", "launchd-agents")
+                    if sys.platform == "darwin"
+                    else ("linux", "systemd-units")
+                )
+                mise("bootstrap", platform, resource, "apply", "--yes")
+            assert_resources()
+            config.remember()
+            # Changes made during setup still need their own successful application.
+            state = {"applied": fingerprint, "completed": int(time.time())}
+            write_state("apply", state)
+            if setup_hash() != fingerprint:
+                print(
+                    "Setup inputs changed during application; a later cycle will apply them"
+                )
+        except Exception:
+            state["failed"] = int(time.time())
+            state["retry_after"] = int(time.time()) + 300 * 2**attempts
+            write_state("apply", state)
+            raise
+    preferences.restore()
+
+
+def synchronize(automatic=False):
+    if automatic and local().get("sync") != "automatic":
+        print("Automatic exchange is disabled on this machine")
+        return
+    preferences.prepare_history()
+    history_ready()
+    edits.capture()
+    config.check()
+    # Capture skips snapshots waiting for restoration, preserving incoming data.
+    mise("dot", "save")
+    mise(
+        "dot",
+        "capture",
+        "--label",
+        "application preferences",
+        "--",
+        sys.executable,
+        ROOT / "conf.d/setup/preferences.py",
+        "_capture",
+    )
+    mise("dot", "save")
+    connection = history_ready()
+    if not connection:
+        raise RuntimeError(
+            "No private origin enrolled; connect one with mise dot origin set --sync manual"
+        )
+    mise("dot", "sync", "--yes")
+    history_ready()
+    mise("dot", "pull", "--yes")
+    preferences.policy()
+    config.check()
+    apply_setup(automatic=automatic)
+    mise("dot", "save")
+    mise("dot", "sync", "--yes")
+    history_ready()
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--automatic", action="store_true")
+    parser.add_argument("--dispatch", action="store_true")
+    args = parser.parse_args()
+    if args.dispatch:
+        dispatch()
+        return
+    with lock():
+        synchronize(args.automatic)
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except (RuntimeError, ValueError, OSError, subprocess.CalledProcessError) as error:
+        sys.exit(str(error))

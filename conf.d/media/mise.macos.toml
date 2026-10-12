@@ -1,0 +1,10 @@
+
+[settings.url_replacements]
+# The official GitHub mirror serves the same DMG and keeps the cask's checksum.
+'regex:^https://dl\.iina\.io/IINA\.v([0-9]+(?:\.[0-9]+)*)\.dmg$' = "https://github.com/iina/iina/releases/download/v$1/IINA.v$1.dmg"
+
+[bootstrap.packages]
+"brew-cask:iina" = { os = "macos" }
+
+[tasks."setup:iina"]
+run = 'xcrun swift "{{ config_root }}/../macos/file-associations.swift" com.colliderli.iina mp4 m4v mov qt mkv avi webm mpeg mpg wmv flv ogv ogm m2ts vob 3gp 3g2 rmvb mxf'

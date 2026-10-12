@@ -1,0 +1,28 @@
+{
+  "application": "Loopback",
+  "domain": "com.rogueamoeba.Loopback",
+  "scope": "machine",
+  "keys": {},
+  "files": {
+    "~/Library/Application Support/Loopback/Devices.plist": {
+      "type": "dict",
+      "fields": {
+        "modelItems": "list",
+        "listVersion": "int",
+        "listMinimumSupportedVersion": "int",
+        "LBModelListVersion": "int"
+      },
+      "versions": {
+        "listVersion": 100,
+        "listMinimumSupportedVersion": 100,
+        "LBModelListVersion": 3
+      },
+      "array_items": {
+        "modelItems": "dict"
+      }
+    }
+  },
+  "optional": true,
+  "major_version": 2,
+  "writers": ["loopbackd"]
+}

@@ -1,0 +1,78 @@
+{
+  "$schema": "https:\/\/schema.linearmouse.app\/0.11.4",
+  "schemes": [
+    {
+      "if": {
+        "device": {
+          "category": "mouse",
+          "productID": "0xc547",
+          "productName": "USB Receiver",
+          "vendorID": "0x46d"
+        }
+      },
+      "logitech": {
+        "highResolutionWheel": false
+      },
+      "pointer": {
+        "disableAcceleration": false
+      },
+      "scrolling": {
+        "acceleration": {
+          "vertical": 0.4
+        },
+        "distance": {
+          "vertical": "auto"
+        },
+        "modifiers": {
+          "vertical": {
+            "shift": {
+              "type": "alterOrientation"
+            }
+          }
+        },
+        "reverse": {
+          "vertical": true
+        },
+        "smoothed": {
+          "vertical": {
+            "enabled": false
+          }
+        },
+        "speed": {
+          "vertical": 0
+        }
+      }
+    },
+    {
+      "if": {
+        "device": {
+          "category": "mouse",
+          "productID": "0xc548",
+          "productName": "USB Receiver",
+          "vendorID": "0x46d"
+        }
+      },
+      "scrolling": {
+        "reverse": {
+          "vertical": true
+        }
+      }
+    },
+    {
+      "if": {
+        "device": {
+          "category": "mouse",
+          "productID": "0xc095",
+          "productName": "G502 X PLUS",
+          "serialNumber": "662EA5F1",
+          "vendorID": "0x46d"
+        }
+      },
+      "scrolling": {
+        "reverse": {
+          "vertical": true
+        }
+      }
+    }
+  ]
+}

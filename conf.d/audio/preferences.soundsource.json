@@ -1,0 +1,35 @@
+{
+  "application": "SoundSource",
+  "domain": "com.rogueamoeba.soundsource",
+  "scope": "machine",
+  "keys": {
+    "PTDontShowAlerts": "list",
+    "SSAudioExclusions": "list",
+    "applicationTheme": "int",
+    "deviceGroups.v1": "dict",
+    "hotkeys.v1": "dict",
+    "keyboardVolume": "bool"
+  },
+  "files": {
+    "~/Library/Application Support/SoundSource/Models.v2.plist": {
+      "type": "dict",
+      "fields": {
+        "models": "list",
+        "type": "str",
+        "uuid": "str",
+        "version": "int"
+      },
+      "versions": {
+        "version": 2
+      },
+      "array_items": {
+        "models": "dict"
+      }
+    },
+    "~/Library/Application Support/SoundSource/Presets.v2.plist": {
+      "type": "list"
+    }
+  },
+  "optional": true,
+  "major_version": 6
+}

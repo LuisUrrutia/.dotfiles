@@ -1,0 +1,3 @@
+[dotfiles]
+"~/.local/bin/gha-pins" = "gha-pins"
+"~/.local/bin/git-wtf" = "git-wtf"

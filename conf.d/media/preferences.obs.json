@@ -1,0 +1,35 @@
+{
+  "application": "OBS",
+  "domain": "com.obsproject.obs-studio",
+  "scope": "machine",
+  "keys": {},
+  "files": {},
+  "collections": {
+    "obs-studio.plist": {
+      "root": "~/Library/Application Support/obs-studio",
+      "include": [
+        "global.ini",
+        "user.ini",
+        "basic/profiles/*.ini",
+        "basic/profiles/*.json",
+        "basic/scenes/*.json",
+        "plugin_config/*.ini",
+        "plugin_config/*.json",
+        "plugin_manager/modules.json"
+      ],
+      "exclude": [
+        "logs/*",
+        "crashes/*",
+        "profiler_data/*",
+        "updates/*",
+        "plugin_config/obs-browser/*",
+        "plugin_config/rtmp-services/*",
+        "plugin_config/text-freetype2/*"
+      ],
+      "credentials": true
+    }
+  },
+  "optional": true,
+  "major_version": 32,
+  "writers": ["obs"]
+}

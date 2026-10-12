@@ -1,0 +1,11 @@
+[bootstrap.repos]
+"~/.local/share/fisher" = { url = "https://github.com/jorgebucaran/fisher.git" }
+
+[dotfiles]
+"~/.config/fish/functions/fisher.fish" = "~/.local/share/fisher/functions/fisher.fish"
+
+[bootstrap.user]
+login_shell = "/home/linuxbrew/.linuxbrew/bin/fish"
+
+[bootstrap.hooks]
+pre-user = 'mise exec python@3 -- python3 "{{ config_root }}/login-shell.py"'

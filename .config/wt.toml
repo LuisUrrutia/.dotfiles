@@ -1,8 +1,5 @@
-[pre-start]
-copy-local-git-config = "wt step copy-ignored --require-include"
-
 [pre-merge]
-verify = "./dotfiles verify"
+verify = "mise run verify"
 
 [commit.generation]
 template-append = """

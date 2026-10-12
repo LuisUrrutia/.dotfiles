@@ -1,0 +1,9 @@
+
+[bootstrap.packages]
+"brew-cask:gcloud-cli" = { os = "macos" }
+"brew:awscli" = { os = "macos" }
+"brew:aws-sam-cli" = { os = "macos" }
+"brew:kubernetes-cli" = { os = "macos" }
+"brew:helm" = { os = "macos" }
+"brew:cosign" = { os = "macos" }
+"brew:hashicorp/tap/terraform" = { os = "macos" }

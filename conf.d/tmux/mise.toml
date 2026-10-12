@@ -1,0 +1,8 @@
+[dotfiles]
+"~/.tmux.conf" = "tmux.conf"
+
+[tools]
+"github:tmuxpack/tpack" = "latest"
+
+[tasks."setup:tmux"]
+run = 'bash "{{ config_root }}/setup.sh"'

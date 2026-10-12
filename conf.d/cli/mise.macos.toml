@@ -1,0 +1,53 @@
+
+[bootstrap.packages]
+"brew:coreutils" = { os = "macos" }
+"brew:moreutils" = { os = "macos" }
+"brew:findutils" = { os = "macos" }
+"brew:gnu-sed" = { os = "macos" }
+"brew:gnu-tar" = { os = "macos" }
+"brew:grep" = { os = "macos" }
+"brew:steipete/tap/remindctl" = { os = "macos" }
+"brew:zstd" = { os = "macos" }
+"brew:cmake" = { os = "macos" }
+"brew:pkgconf" = { os = "macos" }
+"brew:cocoapods" = { os = "macos" }
+"brew:eza" = { os = "macos" }
+"brew:less" = { os = "macos" }
+"brew:procs" = { os = "macos" }
+"brew:tailspin" = { os = "macos" }
+"brew:figlet" = { os = "macos" }
+"brew:hyperfine" = { os = "macos" }
+"brew:lolcrab" = { os = "macos" }
+"brew:ast-grep" = { os = "macos" }
+"brew:rename" = { os = "macos" }
+"brew:fswatch" = { os = "macos" }
+"brew:watch" = { os = "macos" }
+"brew:watchman" = { os = "macos" }
+"brew:dust" = { os = "macos" }
+"brew:duf" = { os = "macos" }
+"brew:rsync" = { os = "macos" }
+"brew:worktrunk" = { os = "macos" }
+"brew:actionlint" = { os = "macos" }
+"brew:shellcheck" = { os = "macos" }
+"brew:gnupg" = { os = "macos" }
+"brew:gitleaks" = { os = "macos" }
+"brew:ykman" = { os = "macos" }
+"brew:aria2" = { os = "macos" }
+"brew:ffmpeg" = { os = "macos" }
+"brew:exiftool" = { os = "macos" }
+"brew:pngquant" = { os = "macos" }
+"brew:mozjpeg" = { os = "macos" }
+"brew:resvg" = { os = "macos" }
+"brew:p7zip" = { os = "macos" }
+"brew:mas" = { os = "macos" }
+"brew:mole" = { os = "macos" }
+
+[env]
+_.path = [
+  "{{ env.HOME }}/.local/bin",
+  "/opt/homebrew/bin",
+  "/opt/homebrew/sbin",
+]
+
+[bootstrap.brew]
+adopt = true

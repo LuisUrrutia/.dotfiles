@@ -1,0 +1,3 @@
+[dotfiles]
+"~/.local/share/voiceink-codex/config.toml" = "config.toml"
+"~/.local/share/voiceink-codex/run.sh" = "run.sh"

@@ -1,41 +1,20 @@
 .DS_Store
+.tmp/
 __pycache__/
-/docs/
-.omo/
-.sisyphus/
+*.local.toml
+age.txt
+*.log
 *.bak
 /private/
+/backups/*
+!/backups/recovery.age
+!/backups/recovery.pub
+!/backups/preferences/
+/backups/preferences/*
+!/backups/preferences/*.plist.age
+/docs/
 
-# machine-local legacy git identity, kept on disk but untracked
-tools/git/config/.gitconfig
-
-# OpenCode generated state
-tools/opencode/config/.config/opencode/.gitignore
-tools/opencode/config/.config/opencode/node_modules/
-tools/opencode/config/.config/opencode/package.json
-tools/opencode/config/.config/opencode/package-lock.json
-tools/opencode/config/.config/opencode/bun.lock
-tools/opencode/config/.config/opencode/skills/*
-
-# cc-safety-net runtime state (guard: must never land in the stow package;
-# rulebooks under rules/ ARE tracked, only the lock file is generated)
-tools/cc-safety-net/config/.cc-safety-net/cache/
-tools/cc-safety-net/config/.cc-safety-net/logs/
-tools/cc-safety-net/config/.cc-safety-net/rules/rule.lock
-
-# Stray HOME/XDG/toolchain state accidentally captured into a stow package
-# (created when a process runs with HOME pointed at tools/*/config/).
-# Keep .local/bin (tracked) — ignore only generated XDG/toolchain dirs.
-tools/*/config/.cache/
-tools/*/config/.cargo/
-tools/*/config/.rustup/
-tools/*/config/.local/share/
-tools/*/config/.local/state/
-
-# Track only the VoiceInk launcher and settings beside its runtime directory.
-!tools/voiceink/config/.local/share/
-tools/voiceink/config/.local/share/*
-!tools/voiceink/config/.local/share/voiceink-codex/
-tools/voiceink/config/.local/share/voiceink-codex/*
-!tools/voiceink/config/.local/share/voiceink-codex/run.sh
-!tools/voiceink/config/.local/share/voiceink-codex/config.toml
+# Retired directories may still contain untracked private user data.
+/tools/
+.omo/
+.sisyphus/

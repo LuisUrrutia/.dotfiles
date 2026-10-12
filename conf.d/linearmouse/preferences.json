@@ -1,0 +1,25 @@
+{
+  "application": "LinearMouse",
+  "domain": "com.lujjjh.LinearMouse",
+  "scope": "machine",
+  "keys": {
+    "menuBarVisibilityMode": "str",
+    "showInMenuBar": "bool"
+  },
+  "files": {
+    "~/.config/linearmouse/linearmouse.json": {
+      "type": "dict",
+      "fields": {
+        "$schema": "str",
+        "schemes": "list"
+      },
+      "versions": {},
+      "optional": ["$schema"],
+      "array_items": {
+        "schemes": "dict"
+      }
+    }
+  },
+  "optional": false,
+  "major_version": 0
+}

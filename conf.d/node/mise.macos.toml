@@ -1,0 +1,3 @@
+[dotfiles]
+# pnpm uses this path when the caller has not set XDG_CONFIG_HOME.
+"~/Library/Preferences/pnpm/config.yaml" = "pnpm.yaml"

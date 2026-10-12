@@ -1,0 +1,3 @@
+
+[bootstrap.packages]
+"brew:wget" = { os = "macos" }

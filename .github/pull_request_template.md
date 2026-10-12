@@ -10,14 +10,16 @@
 
 ## Verification
 
-<!-- Include exact commands and outcomes. State why any applicable check was skipped. -->
+<!-- Include exact commands and outcomes, plus the OS/architecture for platform changes.
+Separate repository checks from package, service, GUI, and preference-restore acceptance.
+State why any applicable check was skipped. -->
 
-| Check | Command | Result |
-| --- | --- | --- |
-| Targeted behavior |  |  |
-| Syntax or static analysis |  |  |
-| Broader smoke path |  |  |
-| Final diff | `git diff --check` |  |
+| Check                   | Command            | Result |
+| ----------------------- | ------------------ | ------ |
+| Targeted behavior       |                    |        |
+| Repository verification | `mise run verify`  |        |
+| Broader smoke path      |                    |        |
+| Final diff              | `git diff --check` |        |
 
 ## Risk and recovery
 
@@ -29,7 +31,6 @@
 - [ ] I did not include secrets, credentials, private keys, licenses, sessions, logs, caches, or databases.
 - [ ] I preserved existing user state or made destructive intent explicit.
 - [ ] I updated user-facing documentation when behavior changed.
-- [ ] I ran the applicable repository-specific checks below, or explained why they do not apply:
-  - Bootstrap or Profile Install: relevant macOS Bash 3.2 `install.sh --dry-run` modes.
-  - Stowed Config: every package restowed into a temporary home with `--no-folding`.
-  - Machine or Git: secret scanning and the Git-specific validation commands from `AGENTS.md`.
+- [ ] I ran `mise run verify`, including isolated deployment/history and Git identity checks.
+- [ ] I checked affected macOS arm64 and Ubuntu arm64/x86_64 paths, or recorded the untested platforms.
+- [ ] I distinguished repository checks from any unexecuted fresh-machine or application restore acceptance.

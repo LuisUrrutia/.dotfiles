@@ -1,0 +1,17 @@
+[bootstrap.macos.launchd.agents.dotfiles-backup]
+program = "~/.local/bin/mise"
+args = [
+  "-C",
+  "{{ vars.dotfiles_repository }}",
+  "run",
+  "backup",
+  "capture",
+  "--daily",
+]
+working_directory = "~"
+run_at_load = true
+start_calendar_interval = [{ minute = 0 }]
+process_type = "Background"
+stdout_path = "~/.local/state/mise/dotfiles/backup.log"
+stderr_path = "~/.local/state/mise/dotfiles/backup.err.log"
+environment = { PATH = "{{ env.HOME }}/.local/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin" }

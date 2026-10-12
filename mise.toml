@@ -1,0 +1,57 @@
+min_version = "2026.10.7"
+
+[settings]
+task.run_auto_install = false
+minimum_release_age = "3d"
+
+[tools]
+python = "3"
+age = "latest"
+node = "lts"
+uv = "latest"
+actionlint = "latest"
+shellcheck = "latest"
+shfmt = "latest"
+ruff = "latest"
+gitleaks = "latest"
+taplo = "latest"
+editorconfig-checker = "latest"
+stylua = "latest"
+"npm:basedpyright" = "latest"
+"npm:esbuild" = "latest"
+"npm:prettier" = "latest"
+"npm:markdownlint-cli2" = "latest"
+"pipx:json5" = "latest"
+"pipx:check-jsonschema" = "latest"
+worktrunk = { version = "latest", os = ["linux"] }
+
+[bootstrap.packages]
+"brew:fish" = "latest"
+"brew:worktrunk" = { os = "macos" }
+"brew:lua" = { os = "macos" }
+"brew:luacheck" = { os = "macos" }
+"brew:git" = { os = "macos" }
+"apt:git" = { os = "linux" }
+"apt:lua5.4" = { os = "linux" }
+"apt:lua-check" = { os = "linux" }
+
+[tasks.verify]
+description = "Check lint, formatting, isolated behavior, and configuration"
+run = "python3 tests/run.py"
+
+[tasks.lint]
+description = "Check all repository sources without changing them"
+run = "python3 tests/lint.py"
+
+[tasks.format]
+description = "Format repository sources and apply safe lint fixes"
+run = "python3 tests/lint.py --fix"
+
+[tasks.enroll]
+description = "Seed or adopt the active configuration without overwriting edits"
+run = 'python3 "{{ config_root }}/bootstrap/enroll.py"'
+
+[tasks.backup]
+description = "Capture public encrypted backups or unlock password recovery"
+run = 'mise exec python@3 age@latest -- python3 "{{ config_root }}/bootstrap/backup.py"'
+raw = true

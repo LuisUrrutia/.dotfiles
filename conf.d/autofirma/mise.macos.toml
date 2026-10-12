@@ -1,0 +1,3 @@
+[tasks."setup:autofirma"]
+description = "Check AutoFirma or prepare its required interactive vendor installer"
+run = 'python3 "{{ config_root }}/setup.py"'

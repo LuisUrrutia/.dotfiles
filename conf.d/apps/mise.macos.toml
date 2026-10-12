@@ -1,0 +1,28 @@
+
+[bootstrap.packages]
+"brew:duti" = { os = "macos" }
+"brew-cask:1password" = { os = "macos" }
+"brew-cask:1password-cli" = { os = "macos" }
+"brew-cask:nordvpn" = { os = "macos" }
+"brew-cask:tailscale-app" = { os = "macos" }
+"brew-cask:veracrypt" = { os = "macos" }
+"brew-cask:macfuse" = { os = "macos" }
+"brew-cask:sshfs-mac" = { os = "macos" }
+"brew-cask:thebrowsercompany-dia" = { os = "macos" }
+"brew-cask:google-chrome" = { os = "macos" }
+"brew-cask:figma" = { os = "macos" }
+"brew-cask:obsidian" = { os = "macos" }
+"brew-cask:notion" = { os = "macos" }
+"brew-cask:cleanshot" = { os = "macos" }
+"brew-cask:the-unarchiver" = { os = "macos" }
+"brew-cask:qlmarkdown" = { os = "macos" }
+"brew-cask:spotify" = { os = "macos" }
+"brew-cask:discord" = { os = "macos" }
+"brew-cask:telegram" = { os = "macos" }
+"brew-cask:slack" = { os = "macos" }
+"brew-cask:whatsapp" = { os = "macos" }
+"brew-cask:zoom" = { os = "macos" }
+"brew-cask:chatgpt" = { os = "macos" }
+"brew-cask:claude" = { os = "macos" }
+"brew-cask:granola" = { os = "macos" }
+"brew-cask:t3-code@nightly" = { os = "macos" }

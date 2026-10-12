@@ -1,0 +1,9 @@
+[dotfiles]
+"~/.hammerspoon/bindings.lua" = "bindings.lua"
+"~/.hammerspoon/init.lua" = "init.lua"
+"~/.hammerspoon/modules" = { source = "modules", mode = "symlink-each" }
+"~/.hammerspoon/utils" = { source = "utils", mode = "symlink-each" }
+
+[bootstrap.packages]
+"brew:blueutil" = { os = "macos" }
+"brew-cask:hammerspoon" = { os = "macos" }

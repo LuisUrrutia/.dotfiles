@@ -1,0 +1,5 @@
+[dotfiles]
+"~/.codex/config.toml/shared" = { source = "settings.toml", merge = true }
+
+[tools]
+"aqua:openai/codex" = "latest"

@@ -1,0 +1,3 @@
+
+[tasks."setup:gh"]
+run = 'bash "{{ config_root }}/setup.sh"'

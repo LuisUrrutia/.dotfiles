@@ -1,0 +1,34 @@
+{
+  "cleanupPeriodDays": 90,
+  "env": {
+    "BASH_DEFAULT_TIMEOUT_MS": "300000",
+    "BASH_MAX_OUTPUT_LENGTH": "60000"
+  },
+  "attribution": {
+    "commit": "",
+    "pr": "",
+    "sessionUrl": false
+  },
+  "includeGitInstructions": false,
+  "permissions": {
+    "deny": ["Read(~/.ssh/**)", "Read(~/.aws/**)", "Read(//**/.env*)"],
+    "defaultMode": "bypassPermissions"
+  },
+  "model": "opus",
+  "fallbackModel": ["fable"],
+  "modelSettings": {
+    "claude-fable-5-1": {
+      "effortLevel": "xhigh"
+    },
+    "claude-opus-5-5": {
+      "effortLevel": "high"
+    }
+  },
+  "tui": "fullscreen",
+  "autoMemoryEnabled": false,
+  "skipDangerousModePermissionPrompt": true,
+  "theme": "dark",
+  "autoCompactEnabled": true,
+  "fileCheckpointingEnabled": true,
+  "agentPushNotifEnabled": true
+}

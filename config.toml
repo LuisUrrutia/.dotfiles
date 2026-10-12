@@ -1,0 +1,42 @@
+min_version = "2026.10.7"
+
+[settings]
+task.run_auto_install = false
+idiomatic_version_file_enable_tools = ["node", "python", "rust"]
+minimum_release_age = "3d"
+minimum_release_age_excludes = [
+  "aqua:anthropics/claude-code",
+  "aqua:openai/codex",
+]
+
+[settings.history]
+sync = "manual"
+allow_plaintext_history = false
+
+[history]
+git_email = "mise@{hostname}"
+
+[dotfiles]
+"~/.config/mise" = { mode = "track", exclude = [
+  "/private",
+  "*.local.toml",
+  "age.txt",
+  "*.log",
+  "__pycache__",
+  ".DS_Store",
+] }
+"~/.config/mise/private/preferences" = { mode = "track", encrypt = true }
+
+[bootstrap.services.mise-history]
+builtin = "history-watch"
+
+[bootstrap.hooks]
+pre-packages = [
+  'mise exec python@3 -- python3 "$HOME/.config/mise/conf.d/setup/config.py" check',
+  'mise exec python@3 -- python3 "$HOME/.config/mise/conf.d/setup/packages.py"',
+]
+pre-dotfiles = 'mise exec python@3 -- python3 "$HOME/.config/mise/conf.d/setup/config.py" check'
+
+[tasks.bootstrap]
+depends = ["setup:*"]
+run = 'python3 "$HOME/.config/mise/conf.d/setup/finish.py"'

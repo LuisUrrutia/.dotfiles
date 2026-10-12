@@ -1,0 +1,8 @@
+[tools]
+aws-cli = "latest"
+aws-sam = "latest"
+gcloud = "latest"
+kubectl = "latest"
+helm = "latest"
+cosign = "latest"
+terraform = "latest"

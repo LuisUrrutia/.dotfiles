@@ -1,0 +1,12 @@
+[dotfiles]
+"~/.config/skhd/skhdrc" = { source = "skhdrc", variants = [{ os = "macos" }] }
+
+[bootstrap.packages]
+"brew:asmvik/formulae/skhd" = { os = "macos" }
+
+[bootstrap.macos.launchd.agents.skhd]
+program = "/opt/homebrew/bin/skhd"
+args = ["-c", "{{ env.HOME }}/.config/skhd/skhdrc"]
+run_at_load = true
+keep_alive = true
+process_type = "Interactive"

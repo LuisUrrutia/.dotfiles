@@ -1,0 +1,7 @@
+
+[bootstrap.packages]
+"brew:go" = { os = "macos" }
+"brew:lua" = { os = "macos" }
+"brew:luarocks" = { os = "macos" }
+"brew:perl" = { os = "macos" }
+"brew:cpanminus" = { os = "macos" }

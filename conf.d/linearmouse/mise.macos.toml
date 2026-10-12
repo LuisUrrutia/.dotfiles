@@ -1,0 +1,3 @@
+
+[bootstrap.packages]
+"brew-cask:linearmouse" = { os = "macos" }

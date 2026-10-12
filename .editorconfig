@@ -6,11 +6,23 @@ insert_final_newline = true
 trim_trailing_whitespace = true
 charset = utf-8
 
+[*.{json,jsonc,yaml,yml,toml,md,html}]
+indent_style = space
+indent_size = 2
+
+[.swift-format]
+indent_style = space
+indent_size = 2
+
+[*.swift]
+indent_style = space
+indent_size = 4
+
 [*.lua]
 indent_style = space
 indent_size = 4
 
-[tools/vim/config/.config/nvim/**.lua]
+[conf.d/nvim/**.lua]
 indent_size = 2
 
 [*.py]
@@ -18,6 +30,10 @@ indent_style = space
 indent_size = 4
 
 [*.{sh,bash,zsh}]
+indent_style = space
+indent_size = 2
+
+[{tasks/*,.githooks/*,conf.d/bin/*,conf.d/git/git-*}]
 indent_style = space
 indent_size = 2
 

@@ -1,0 +1,5 @@
+[dotfiles]
+"~/.ssh/config" = "config"
+
+[bootstrap.directories."~/.ssh"]
+mode = "0700"

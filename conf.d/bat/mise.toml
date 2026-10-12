@@ -1,0 +1,6 @@
+[dotfiles]
+"~/.config/bat/config" = "config"
+"~/.config/bat/themes" = { source = "themes", mode = "symlink-each" }
+
+[tasks."setup:bat"]
+run = 'bash "{{ config_root }}/setup.sh"'

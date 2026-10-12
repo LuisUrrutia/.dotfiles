@@ -1,0 +1,18 @@
+
+[bootstrap.packages]
+"brew:fisher" = { os = "macos" }
+
+[dotfiles]
+"~/.config/fish/conf.d/00_packages.fish" = "macos-paths.fish"
+"~/.config/fish/conf.d/02_orbstack.fish" = "02_orbstack.fish"
+"~/.config/fish/conf.d/04_macos-abbrs.fish" = "macos-abbrs.fish"
+"~/.config/fish/functions/clean-rust.fish" = "macos-functions/clean-rust.fish"
+"~/.config/fish/functions/f.fish" = "macos-functions/f.fish"
+"~/.config/fish/functions/flushdns.fish" = "macos-functions/flushdns.fish"
+"~/.config/fish/functions/hammer-restart.fish" = "macos-functions/hammer-restart.fish"
+
+[bootstrap.user]
+login_shell = "/opt/homebrew/bin/fish"
+
+[bootstrap.hooks]
+pre-user = 'mise exec python@3 -- python3 "{{ config_root }}/login-shell.py"'

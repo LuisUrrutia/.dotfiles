@@ -1,0 +1,24 @@
+[dotfiles]
+"~/.config/aube/config.toml" = "aube.toml"
+"~/.config/pnpm/config.yaml" = "pnpm.yaml"
+"~/.yarnrc.yml" = "yarnrc.yml"
+
+[tools]
+deno = "latest"
+node = "lts"
+pnpm = "latest"
+
+[tools.bun]
+version = "latest"
+postinstall = { when = "always", run = '''
+set -eu
+directory="$MISE_TOOL_INSTALL_PATH/mise-completions"
+mkdir -p "$directory"
+temporary=$(mktemp "$directory/.bun.XXXXXX")
+trap 'rm -f "$temporary"' EXIT
+SHELL=fish bun completions >"$temporary"
+mv "$temporary" "$directory/bun.fish"
+''' }
+
+[tasks."setup:node"]
+run = "npm config set min-release-age 3 --location=user"

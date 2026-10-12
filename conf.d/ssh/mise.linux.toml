@@ -1,0 +1,2 @@
+[bootstrap.packages]
+"apt:openssh-client" = "latest"

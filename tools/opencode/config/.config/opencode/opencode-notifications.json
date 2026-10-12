@@ -1,8 +1,0 @@
-{
-  "notifications": {
-    "done": true,
-    "permission": true,
-    "question": true,
-    "error": true
-  }
-}

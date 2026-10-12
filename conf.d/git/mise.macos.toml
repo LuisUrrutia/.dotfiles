@@ -1,0 +1,9 @@
+
+[bootstrap.packages]
+"brew:git" = { os = "macos" }
+"brew:git-lfs" = { os = "macos" }
+"brew:git-delta" = { os = "macos" }
+
+[dotfiles]
+"~/.config/git/macos.gitconfig" = "macos.gitconfig"
+"~/.gitconfig/macos" = { line = '[include] path = ~/.config/git/macos.gitconfig', position = "append" }

@@ -1,0 +1,3 @@
+
+[bootstrap.packages]
+"brew-cask:camo-studio" = { os = "macos" }

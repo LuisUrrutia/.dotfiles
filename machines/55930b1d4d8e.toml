@@ -1,0 +1,8 @@
+name = "Luis MacBook"
+hostname = "noir"
+xcode = true
+
+[git.default]
+name = "Luis Urrutia"
+email = "luis@urrutia.me"
+signing_key = "~/.ssh/id_ed25519.pub"

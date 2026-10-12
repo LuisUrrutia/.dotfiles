@@ -1,563 +1,573 @@
-# LuisUrrutia's macOS dotfiles
+# Dotfiles with mise
 
-> [!CAUTION]
-> macOS setup. It changes system preferences, installs apps, and
-> rewires shell/editor defaults. Read this before running it on a machine you
-> care about.
+Software, Fish, application settings, and private configuration history for a
+fresh **macOS Apple Silicon** or **Ubuntu arm64/x86_64** installation. Mise manages
+the setup without Homebrew or Stow executables. Arch needs its own package declarations.
 
-Fish shell, Starship, Ghostty, Neovim, Hammerspoon, Catppuccin, and a
-pile of modern CLI tools. The repo uses GNU Stow so tool configs stay versioned
-here and symlink into `$HOME`.
+## Start on a fresh machine
 
-## Prerequisites
+Setup does not migrate an existing installation or uninstall Homebrew.
 
-- macOS with an admin user
-- Git
-- Homebrew, or permission for the installer to install it
-- Sudo access; the installer prompts for your password
-- Apple Silicon Homebrew layout (`/opt/homebrew`) is assumed in parts of the installer/config
+1. **Prepare the OS.** On macOS, grant the terminal Full Disk Access and install
+   Apple's Command Line Tools. Enable FileVault, save its recovery key outside
+   history, and require a password immediately when the screen saver starts or
+   the display turns off.
+   On Ubuntu, use a normal login account with sudo;
+   the installer adds missing curl, Git, and CA certificates. Run `sudo -v`
+   before full setup. System commands fail rather than wait for input; age's
+   recovery password is entered through its hidden terminal prompt.
 
-## Quick install
+   Run macOS system settings from the local console: the firewall policy disables
+   automatic permission for signed apps, so incoming services such as SSH may need
+   an explicit firewall decision before you reconnect. Ubuntu needs a working
+   systemd user session for history saves and automatic sync. Containers without
+   one can test packages and files, but cannot pass full setup acceptance.
 
-This is meant for bootstrapping a new Mac, including shared installs for people
-who only want parts of the setup. Preview the plan first:
+2. **Clone the public setup.** No GitHub account is required. On a minimal Ubuntu
+   image without Git or curl, first run
+   `sudo apt-get update && sudo apt-get install -y git curl ca-certificates`.
 
-```sh
-./dotfiles install --dry-run
-```
+   ```sh
+   git clone https://github.com/LuisUrrutia/.dotfiles.git ~/.dotfiles
+   cd ~/.dotfiles
+   ```
 
-Then run the installer when the prompts look right:
+3. **Install mise.** Run `./install.sh --mise-only`. It downloads the latest stable
+   official release through `mise.run`, selects the platform, and verifies SHA-256.
+   It stages the replacement and keeps an equal or newer installed binary.
+   The manifests' `min_version` is a compatibility floor for structured edits, not a pin.
 
-```sh
-cd "$HOME" \
-  && git clone https://github.com/LuisUrrutia/.dotfiles.git \
-  && cd .dotfiles \
-  && ./dotfiles install
-```
+4. **Prepare password recovery.** If this checkout already has
+   `backups/recovery.age`, enrollment with `--recover` asks for its password.
+   For the first machine, run `~/.local/bin/mise run backup init` from this checkout
+   to create it. Age asks for the password in the terminal. The public repo holds
+   the encrypted recovery key; the unlocked identity stays in
+   `~/.config/mise/age.txt` with mode `0600`. No USB or password manager is needed
+   to recover. Native mise uses the local identity for unattended history saves.
 
-Non-owners default to a smaller core install and can answer setup questions like
-"Are you working on Web3?", "Are you going to stream?", and "Do you have an
-audio interface?" so the installer selects the right optional tool groups.
+   Private Git authentication and age decryption are separate requirements.
+   HTTPS and SSH are supported; authorize a credential helper before using HTTPS.
+   Keep credentials out of URLs and tracked files. Existing SSH origins stay unchanged.
 
-## What the installer does
+5. **Enroll the machine.** Run `./install.sh --recover` with your history origin,
+   sync mode, and any optional settings below. Recovery stages the public backups
+   for this machine before bootstrap restores eligible app preferences.
 
-`dotfiles install` validates the public command and delegates to `install.sh`.
-The Bootstrapper is not just a symlink script. It:
+   | Option                                | Purpose                                                                    |
+   | ------------------------------------- | -------------------------------------------------------------------------- |
+   | `--origin`                            | Private history Git URL                                                    |
+   | `--recipient`                         | Repeat for each public machine key and the independent recovery key        |
+   | `--recover`                           | Unlock the public recovery key, configure its recipient, and stage backups |
+   | `--sync manual` or `--sync automatic` | Exchange on request or every five minutes                                  |
+   | `--record`                            | Local enrollment TOML, including Git identities                            |
+   | `--apps`                              | Comma-separated optional module names                                      |
+   | `--machine`                           | Retain a machine ID after reinstalling                                     |
+   | `--seed-only`                         | Prepare missing sources and local inputs for review without applying       |
 
-- refuses to run as root or outside macOS
-- supports `--dry-run` so you can inspect the plan before sudo, Homebrew,
-  cleanup, Stow, shell changes, directory creation, or install-marker writes
-- checks Full Disk Access first; when it is missing, it opens System Settings
-  and asks to exit by default so you can grant it, restart the terminal, and
-  rerun
-- checks Xcode Command Line Tools second; when missing, it starts Apple's
-  installer and exits before any package work
-- requests the sudo password only after those prerequisites and validates it,
-  allowing up to three attempts; a protected per-run broker keeps it only in
-  memory and serializes concurrent Homebrew `SUDO_ASKPASS` requests, while
-  package retries revalidate the broker and ask again if it stops
-- probes GitHub web, Git, and release-download routes in parallel before each
-  networked phase
-- asks plain-language questions, shows the packages/apps behind each yes, then
-  maps the answers to optional profile Brewfiles
-- saves the exact interactive tool selection before downloads and offers to
-  reuse it after an interrupted installation
-- installs Homebrew if missing, otherwise updates and upgrades it
-- installs the full Xcode app through `mas` on the first run only when the
-  active Machine Config opts in
-- installs `brewfiles/core` plus a temporary Brewfile assembled from
-  `brewfiles/profiles/<profile>` files based on your answers or `--profile`
-- runs Brew Bundle in parallel, gives Homebrew five chances to finish incomplete
-  entries with longer backoff and additional curl retries, and makes the final
-  attempt sequential for both installs and downloads to reduce network pressure
-- stops before cleanup, Tool Installers, Fish, and the install marker when any
-  Brewfile still fails after its retries
-- creates `$HOME/.config` and `$HOME/Projects`
-- runs tool setup scripts after package install; each script applies config only
-  when its app or dependency is available, with Fish saved for last because it
-  changes the default shell
-- keeps shared Git defaults in the stowed XDG config and writes identity/signing
-  values only to machine-local `~/.gitconfig`
-- optionally reads a `machines/<hardware-hash>.sh` file to choose an install
-  mode, hostname, and local Git identity without storing it in shared Git config
-- writes an install marker to `~/.local/state/dotfiles/installed` so first-run
-  work does not repeat (a legacy repo-local `.installed` file is still honored
-  and cleaned up)
-- after a successful interactive installation, offers to create a Machine
-  Config for unregistered hardware, then clears the saved recovery selection
+Existing machine records provide public identity and hostname defaults. Unknown
+machines keep their existing Git identity unless you supply a record. Mac hardware
+IDs survive reinstalls; Linux derives its ID from `/etc/machine-id`. Retain the old
+`--machine` value to recover the same Ubuntu enrollment.
 
-An unauthenticated GitHub API budget can already be exhausted on a fresh Mac.
-The Bootstrapper checks GitHub routes and `https://api.github.com/rate_limit`
-immediately before Homebrew, mise, TPack, and Neovim instead of treating the
-install as one network phase. Homebrew uses its own JSON API, GHCR, vendor
-downloads, and Git taps; TPack and Neovim use Git and direct downloads, so none
-reserves GitHub core API requests. mise releases use mise's shared version cache
-first and only fall back to GitHub's API when necessary. The Bootstrapper
-therefore does not require a GitHub login during a fresh install; mise
-automatically reuses an existing token or GitHub CLI session when one is already
-available. If the anonymous quota is exhausted before mise, the Bootstrapper
-waits in interruptible one-minute intervals until GitHub's reported reset. If
-mise consumes the final requests and fails, the Bootstrapper confirms the
-exhausted quota, waits, rechecks GitHub routes, then retries the incomplete
-toolchain without discarding tools that already installed successfully.
+To add another machine from the latest private history, run
+`~/.local/bin/mise run backup unlock`, prepare private Git access, then run
+`./install.sh --adopt <private-Git-origin>` with its local enrollment inputs.
+Adoption restores history before applying resources; a missing identity stops recovery.
 
-Several tool installers have real side effects: macOS defaults, shell
-registration, tmux plugin setup, service starts, generated completions,
-language toolchains, and app-specific config.
+For a preview, use `./install.sh --dry-run` before enrollment or
+`mise -C ~ bootstrap --dry-run` afterward. The first changes nothing; the second
+may need network metadata. Neither proves that packages will install successfully.
 
-### Appearance schedule
+## Daily commands
 
-The macOS Tool Installer installs a daily LaunchAgent for every install profile:
-light appearance from 10:00 to 20:00, and dark appearance from 20:00 to 10:00,
-in the Mac's local timezone. It replaces macOS automatic appearance switching.
-The agent applies the current period at graphical login and catches missed
-calendar events when the Mac wakes from sleep.
+Keep `-C ~` to avoid loading another project's mise config, or run from HOME.
 
-Re-run `dotfiles tool apply macos` to reload the schedule along with the other
-macOS preferences. When there is no graphical session, the installer leaves
-activation for the next graphical login. macOS may request permission for
-`osascript` to control System Events; the schedule needs that permission.
-Check `launchctl print gui/$(id -u)/com.luisurrutia.appearance-schedule` for the
-loaded schedule and its last exit status.
+| Command                                  | Effect                                                                      |
+| ---------------------------------------- | --------------------------------------------------------------------------- |
+| `mise -C ~ doctor project`               | Check macOS FileVault and immediate screen-lock requirements                |
+| `mise -C ~ run config status`            | Inspect file and history state                                              |
+| `mise -C ~ run config diff`              | Compare declared and live configuration                                     |
+| `mise -C ~ run config apply`             | Check preservation and prerequisites, then apply setup                      |
+| `mise -C ~ run sync`                     | Capture, save, exchange, pull, apply changed setup, and restore preferences |
+| `mise -C ~ run preferences capture`      | Save allowlisted app settings in encrypted history                          |
+| `mise -C ~ run preferences restore`      | Retry pending restores after closing apps                                   |
+| `mise -C ~ run update`                   | Update software and plugins on the daily/weekly schedule                    |
+| `mise -C ~ run update --ignore-schedule` | Run all maintenance gates now                                               |
 
-The plist is managed by Stow under `~/Library/LaunchAgents`. An existing regular
-file, including a manually installed schedule, is preserved as a conflict.
-Inspect it with `dotfiles config diff macos` and explicitly resolve the drift
-before re-running the installer.
+Fish also provides `upd` and `backup`. To install software, add its declaration to
+the owning module in `~/.config/mise/conf.d` **before** running `config apply`.
+Downloaded binaries and application state do not sync.
 
-## Install modes
+Personal skills stay in the editable checkout at `~/Projects/LuisUrrutia/skills`.
+Mise clones `git@github.com:LuisUrrutia/skills.git` using your GitHub SSH access;
+`skills:link` calls the Fish `skill-link` function for every skill in that checkout,
+linking it into both `~/.agents/skills` (Codex) and `~/.claude/skills`.
+`update` refreshes the repository and links newly added skills. Local edits stay
+in the checkout, and mise refuses to update a dirty repository.
+Third-party skills use the skills CLI with both agents selected.
 
-Preview the default interactive plan:
+## Configuration and sync
 
-```sh
-./dotfiles install --dry-run
-```
+Enrollment copies only missing public files into `~/.config/mise` as regular files.
+Edit this active tree: private mise history owns it, and application links point
+here. Shared sources, installation declarations, plugin manifests, and setup tasks
+travel together. The public checkout remains separate.
 
-Core-only install:
+Machine identity, Git inputs, sync mode, and the private origin live in
+`config.local.toml`; optional apps live in `miserc.local.toml`. These files and
+`age.txt` stay local. Public `machines/*.toml` records are tracked; credentials are not.
 
-```sh
-./dotfiles install --core-only
-```
+Both sync modes use native `history.sync = "manual"`; the watcher saves locally.
+History commits identify the saving machine as `mise@<hostname>`.
+Manual machines exchange on request. A native macOS LaunchAgent or Ubuntu systemd
+timer dispatches automatic sync every five minutes. The worker runs in a separate
+OS job so replacing the scheduler cannot interrupt application.
+Automatic sync executes received setup code and installs eligible software as
+the local user. A lock prevents overlapping apply, update, and sync operations.
 
-Install all optional tool groups via flag:
+Failed application stays pending, retries with backoff, and stops automatic retries
+after three attempts with the same inputs. Fix the prerequisite and run
+`config apply` to retry. Logs and `apply.json` (pending/applied inputs) live under
+`~/.local/state/mise/dotfiles/`. Ubuntu worker output is also available through
+`journalctl --user -u dotfiles-sync-worker.service`.
 
-```sh
-./dotfiles install --all-profiles
-```
+Configuration-only changes do not need sudo again for unchanged privileged macOS
+policy. New privileged software, App Store login, GUI permissions, or changed
+system policy may still need a manual run.
 
-Install selected optional tool groups directly:
+<details>
+<summary>Resolve local changes, history conflicts, and public updates</summary>
 
-```sh
-./dotfiles install --profile web3,streaming,audio
-./dotfiles install --dry-run --profile blockchain,obs,focusrite
-```
+If an app replaces a managed link with a regular file, setup stops rather than
+overwrite it. Inspect the diff, then use `config capture <managed-file>` to keep
+the live edit in its source, or `config discard <managed-file>` to deploy the source.
+Both back up the previous target under local state. Directories, foreign parents,
+and template outputs need individual review.
 
-Available profile flags: `audio`, `dev`, `formatters`, `languages`, `web3`,
-`cloud`, `image`, `productivity`, `streaming`, and `window`. These are the
-scriptable names for the same question-driven tool groups.
+For Codex and Claude, native structured edits own only keys declared in their
+shared sources. `sync`, `config apply`, and `update` capture changes to those keys
+before applying; unrelated keys stay local. Concurrent source/target edits require
+an explicit capture/discard decision. Add shared settings to the source rather
+than copying a whole app config. Removing a source key relinquishes ownership;
+native merge does not delete it on other machines, so review removals.
 
-`brewfiles/profiles/` is the installer's optional-package source of truth, one
-Brewfile per profile. Each file starts with `# label:`, `# question:`,
-`# summary:`, and optional `# aliases:` header comments that drive the
-interactive questions, `--help` text, and `--profile` flag aliases — adding a
-profile means adding one file. The installer joins the files selected by
-answers or `--profile` into a temporary Brewfile.
+Native history conflicts stop application. Inspect with `mise dot status` and
+`mise dot conflicts <path>`, then choose `mise dot pull --keep-local <path>` or
+`--take-remote <path>`. `mise dot recover` handles interrupted operations;
+`mise dot undo` reverses the last file operation, without promising package
+downgrades. Use `mise run sync` for ordinary exchange so setup is applied after a pull.
 
-The interactive language question behaves like a lightweight checkbox list:
-Go, Lua, Rust, and Perl are all enabled by default, and you can answer `n` for
-any language toolchain you do not want.
+To import a public update, fetch this checkout, compare the intended relative file
+with its active source using `git diff --no-index`, merge the selected changes,
+then run `config apply`. Enrollment fills missing files; it never merges public
+updates over active edits.
 
-Other optional questions work the same way: say yes to the need, then the
-installer immediately asks about each package/app with every item enabled by
-default.
+To promote an active edit, compare and copy that specific public source file back
+to this checkout, review `git diff`, and run `mise run verify`. Never copy the whole
+active tree: it contains private snapshots and local enrollment data. The
+pre-commit hook scans staged content for secrets.
 
-Before downloads start, an interactive installation saves its chosen groups,
-individual packages, and languages under
-`${XDG_STATE_HOME:-$HOME/.local/state}/dotfiles/install-selection/<hardware-hash>`.
-If the installation fails or is interrupted, rerun `./dotfiles install`.
-The installer shows the saved selection and asks whether to reuse it, with yes
-as the default. Recovery takes priority over Machine Config defaults. Answer
-no to use the normal machine defaults or choose tools again on unregistered
-hardware. The new selection replaces the saved one before installation starts.
+</details>
 
-Explicit `--core-only`, `--all-profiles`, and `--profile` choices take priority
-over recovery. Dry runs and non-interactive installs do not read, write, or
-clear recovery state. Invalid saved choices, including removed tools, are
-reported and the normal selection flow continues. Cleanup is confirmed again
-on each interactive run. Saved recovery state is removed after successful
-completion, whether or not a Machine Config is created.
+<details>
+<summary>Encrypted application preferences</summary>
 
-## Machines
-
-`machines/` holds one file per known laptop or desktop, named after the
-machine's hardware hash. They are tracked config, not ignored private files, so
-fork users can add their own machines and keep those choices versioned.
-
-After a successful interactive installation on unregistered hardware, the
-installer asks whether to create `machines/<hardware-hash>.sh`, with no as the
-default. Accepting saves the exact installed selection, including individual
-packages and languages. Review the generated labels and commit the file to
-keep it versioned. It does not capture Git identity or change the hostname.
-Existing files and symlinks are preserved. If hardware detection fails, profile
-creation is skipped and recovery uses an `unknown` filename in the state
-directory instead.
-
-Get this Mac's hardware hash (the script is also on `PATH` as `machash` after
-install):
+Before formatting an existing Mac, run these commands **from this checkout**:
 
 ```sh
-./tools/bin/config/.local/bin/machash
+./install.sh --mise-only
+~/.local/bin/mise run backup init
+~/.local/bin/mise run backup capture
+~/.local/bin/mise run backup verify
 ```
 
-Then create `machines/<hardware-hash>.sh` with plain variables:
+Run `init` only once. On another machine, use `backup unlock` instead. `capture`
+reads every supported installed app, including optional audio apps, without
+enrolling the machine, replacing old links, changing preferences, or running
+package installers. It can read an existing companion-file symlink within HOME.
+`verify` asks for the recovery password and checks every archive without using
+the local identity. It does not import preferences.
 
-```bash
-# shellcheck shell=bash disable=SC2034
-MACHINE_ID="work-laptop"
-MACHINE_NAME="Work Laptop"
-MACHINE_HOSTNAME="work-laptop"
-MACHINE_INSTALL_MODE="selected"
-MACHINE_PROFILES="dev,languages"
-MACHINE_LANGUAGES="go,lua"
-MACHINE_PROFILE_PACKAGES="dev:dive,dev:yaak"
-MACHINE_XCODE_SETUP=false
-MACHINE_GIT_USER_NAME="Your Name"
-MACHINE_GIT_USER_EMAIL="you@example.com"
-```
-
-Supported variables:
-
-- `MACHINE_ID` and `MACHINE_NAME`: labels shown in install output
-- `MACHINE_HOSTNAME`: optional macOS `HostName`, `LocalHostName`, and
-  `ComputerName`
-- `MACHINE_INSTALL_MODE`: `all`, `core`, or `selected`
-- `MACHINE_PROFILES`: comma-separated profile flags when
-  `MACHINE_INSTALL_MODE="selected"`
-- `MACHINE_LANGUAGES`: optional comma-separated choices from `go`, `lua`,
-  `rust`, and `perl`, limiting the selected `languages` profile; empty or
-  omitted installs that whole profile
-- `MACHINE_PROFILE_PACKAGES`: optional comma-separated `profile:package`
-  choices, limiting each listed profile to those packages; selected profiles
-  with no entries here install in full. Do not combine entries for `languages`
-  with a non-empty `MACHINE_LANGUAGES` value
-- `MACHINE_XCODE_SETUP`: `true` to install and initialize the full Xcode app
-  through `mas` on this machine's first run; defaults to `false`
-- `MACHINE_GIT_USER_NAME` and `MACHINE_GIT_USER_EMAIL`: written to
-  machine-local `~/.gitconfig`
-- `MACHINE_GIT_SIGNING_KEY`: optional SSH signing key path or public key
-- `MACHINE_GIT_SIGNING_PROGRAM`: optional SSH signing program override
-
-Set `MACHINE_GIT_SIGNING_KEY="~/.ssh/id_ed25519"` when you use a local SSH key
-for commit signing. Leave `MACHINE_GIT_SIGNING_PROGRAM` unset unless you need a
-non-default signing program.
-
-Do not put passwords, private keys, tokens, or other secrets in `machines/`
-files. Public SSH signing keys and app paths are fine.
-
-### Machine-specific agent instructions
-
-Global Claude and Codex instructions share the tracked source at
-`tools/ai/AGENTS.md`. The AI Tool Installer links it as
-`~/.agents/AGENTS.md`. Because Codex does not discover that location itself,
-`~/.codex/AGENTS.md` links to `~/.agents/AGENTS.md`. Claude reads the Stowed
-`~/.claude/CLAUDE.md`, whose entire content is `@~/.agents/AGENTS.md`.
-Repository-specific agent references live in `tools/ai/references`; the same
-installer links that directory as `~/.agents/references`.
-
-Stable Codex defaults that share `~/.codex/config.toml` with app-managed state
-are declared in `tools/codex/settings.toml`. The Codex Tool Installer merges
-only those declared keys into the regular live file and creates a timestamped
-backup before changing it; it does not track volatile project trust, hook,
-plugin, or runtime-path state.
-
-For a registered machine, add `machines/<hardware-hash>.agents.md` beside its
-Machine Config. The installer links it to `~/.agents/AGENTS_LOCAL.md`, and the
-common instructions tell agents to read that file when present. This keeps
-different machine workflows tracked without duplicating the common guidance.
-An unregistered machine simply has no local instruction link. The installer
-never concatenates or generates an effective file, preserves unknown
-destinations, and warns when a non-empty `~/.codex/AGENTS.override.md` shadows
-the managed Codex instructions.
-
-## Local Git identity
-
-Shared Git defaults are stowed from
-`tools/git/config/.config/git/local.gitconfig` into
-`~/.config/git/local.gitconfig`. Personal identity and signing settings are
-written only to `~/.gitconfig` by `tools/git/install.sh`.
-
-The legacy `tools/git/config/.gitconfig` path is intentionally local-only and
-ignored by Git. Keep it on disk if you want a machine-specific file there, but do
-not track it as shared repo config.
-
-The Git installer validates machine config before migration, preserves the order
-of conditional includes, and checks Stow conflicts before changing live files.
-If Stow fails, it restores files moved by the migration. Regular managed files
-in an existing split configuration are treated as drift and require resolution
-before reinstalling.
-
-`git recent-branches [comparison-ref] [count]` lists 20 branches by default,
-comparing against remote HEAD, upstream, or HEAD, in that order. Counts are
-computed together; use `0` to list all branches and `--color=always` or
-`--color=never` before the positional arguments to override terminal detection.
-`git dm [comparison-ref]` deletes merged branches while preserving branches in
-use and `main`, `master`, `develop`, and `dev`. Both commands validate their
-arguments and return nonzero on failure.
-
-Install or re-run one tool config:
-
-```sh
-dotfiles tool list
-dotfiles tool apply git
-dotfiles tool apply fish
-dotfiles tool apply vim
-```
-
-The direct `tools/<tool>/install.sh` entry points remain available for advanced
-use.
-
-Private config, for the repo owner only:
-
-```sh
-./private-install.sh
-```
-
-That script checks GitHub SSH auth, clones or updates the private repo under
-`${XDG_DATA_HOME:-$HOME/.local/share}/dotfiles/private`, then runs its
-installer. It refuses the legacy `private/` path inside the public checkout.
-
-## Stow notes
-
-Most tool installers call `stow_config <tool>`, which runs Stow from
-`tools/<tool>` into `$HOME`.
-
-Useful manual commands:
-
-```sh
-# Preview links for one tool
-stow -n -v -d "$HOME/.dotfiles/tools/git" -t "$HOME" config
-
-# Restow one tool
-stow --restow -d "$HOME/.dotfiles/tools/git" -t "$HOME" config
-
-# Remove one tool's symlinks
-stow -D -d "$HOME/.dotfiles/tools/git" -t "$HOME" config
-```
-
-If Stow reports conflicts, move or back up the existing files first. Do not
-blindly overwrite home-directory config unless you know which version you want.
-
-Applications sometimes replace a Stow symlink with a regular file. Inspect and
-resolve that drift through the Config Lifecycle instead of using `stow --adopt`:
-
-```sh
-dotfiles config status
-dotfiles config status fish
-dotfiles config diff <tool> <home-relative-path>
-dotfiles config repair <tool> <home-relative-path> --dry-run
-dotfiles config repair <tool> <home-relative-path>
-```
-
-`repair` handles only missing or byte-identical entries. For a divergent
-regular file, explicitly choose `capture` to make the live file authoritative
-or `discard` to restore the tracked source; both accept `--dry-run`. Use
-`resolve <tool> <path> [--agent claude|codex]` when the right choice needs an
-interactive agent discussion. Mutating operations create timestamped safety
-backups under `${XDG_DATA_HOME:-$HOME/.local/share}/dotfiles/config-backups`.
-List them with `dotfiles config backups list`. Pruning is a dry run unless
-`--force` is explicit, for example
-`dotfiles config backups prune --keep 20 --force`.
-
-## Repository layout
+Review, commit, and push `backups/` before erasing the old installation:
 
 ```text
-.dotfiles/
-├── dotfiles              # Canonical user-facing command
-├── brewfiles/
-│   ├── core              # Base packages and apps
-│   ├── verification      # Verification toolchain
-│   └── profiles/         # Selectable profile Brewfiles
-├── cli/                  # Focused adapters behind the root dispatcher
-├── bootstrap/            # Bootstrap prerequisites and shared install routing
-├── config/               # Config Lifecycle owner
-├── maintenance/          # Update and aggregate Backup owners
-├── machines/             # Per-machine config, named <machash>.sh
-├── tools/
-│   ├── lib.sh            # Shared installer helpers
-│   └── <tool>/
-│       ├── install.sh    # Tool-specific setup
-│       └── config/       # Files stowed into $HOME
-├── .config/wt.toml       # Shared WorkTrunk hooks
-├── .githooks/            # Repo-local hooks (gitleaks pre-commit)
-├── POST_INSTALL.md       # Manual post-install checklist
-├── private-install.sh    # Owner-only private setup
-├── verification/         # Shared local/CI Verification Suite
-└── install.sh            # Main bootstrapper
+backups/
+  recovery.age                  password-encrypted recovery identity
+  recovery.pub                  public age recipient
+  preferences/
+    shared.plist.age            portable app settings
+    <machine-id>.plist.age      settings for that machine
 ```
 
-## What's included
+Only ciphertext and the public recipient enter this directory. Use a strong,
+unique recovery password: these encrypted files will be publicly downloadable.
+The same unlocked identity permits unattended saves on enrolled machines.
+Public exports use the official age CLI; private operational history still uses
+native mise encryption and sync. New macOS installations also run
+`backup capture --daily` through a native mise LaunchAgent, in both sync modes.
+It checks at login and hourly, captures once per local calendar day, and retries
+failed or busy runs at the next check. Manual `backup capture` always runs.
+The unlocked local identity permits these captures without a password prompt.
+Captures list apps and files; preference keys and values stay hidden.
 
-- Shell and terminal: Fish, Starship, Ghostty, tmux, fzf, zoxide
-- CLI and search: bat, eza, ripgrep, fd, btop, dust, duf, procs, tailspin,
-  tlrc, hyperfine, jq, watch, fswatch, rename
-- Development: Neovim, Zed, Git with delta, Git LFS, GitHub CLI, tree-sitter,
-  actionlint, ShellCheck, gitleaks, and shared cspell dictionaries
-- Languages: Node, Python, uv, Bun, Deno, OpenJDK, and .NET via mise, plus
-  optional Rust, Go, LuaRocks, and Perl profiles
-- macOS/system: GNU core tools, dockutil, mas, mole, Linearmouse, Thaw,
-  DisplayLink, The Unarchiver
-- Automation and hotkeys: Hammerspoon, skhd
-- Apps: Dia, SuperCMD, 1Password, Ghostty, CleanShot, IINA, Spotify,
-  Discord, WhatsApp, Telegram, Slack, Figma, Zoom
-- Security/networking: 1Password CLI, OpenSSH, GnuPG, YubiKey Manager,
-  NordVPN, Tailscale, VeraCrypt
-- AI tools: Claude, Claude Code, Codex, Ollama, OpenCode config, Claude agent
-  profiles
-- Optional tool groups: OrbStack, Yaak, Android platform tools, AWS,
-  Google Cloud, web3 tools, audio/streaming apps
+Enrollment stores the checkout path in local `vars.dotfiles_repository`. Keep
+that checkout available; if you move it, update the variable and run
+`mise -C ~ run config apply`. Logs are `backup.log` and `backup.err.log` under
+`~/.local/state/mise/dotfiles/`; `public-backup.json` records the last successful
+capture. The current preference catalog is macOS-only, so Ubuntu has no public
+preference capture schedule. Review, commit, and push the changed ciphertext to
+publish it; neither the daily capture nor ordinary history sync publishes this
+checkout.
 
-This list is intentionally grouped. The exact package lists live in
-`brewfiles/core`, `brewfiles/profiles/`, and
-`tools/mise/config/.config/mise/config.toml`; Neovim-only language servers live
-in `tools/vim/config/.config/nvim/lua/config/lsp.lua`.
+After reinstalling, clone the repo and run `./install.sh --recover` with the
+wanted optional apps. On Ubuntu, retain the old `--machine` ID if needed.
+Recovery preserves an existing differing snapshot; resolve that conflict before
+retrying. It never applies another machine's hardware-bound settings.
 
-### Package ownership
+Thaw, LinearMouse, SuperCmd, SoundSource, Loopback, and Audio Hijack have explicit
+allowlists. OBS also captures general settings, profiles, scene collections, and
+INI/JSON plugin settings from `~/Library/Application Support/obs-studio`, including
+streaming credentials and WebSocket passwords. The encrypted `obs-studio.plist`
+snapshot preserves their relative paths and original contents. Capture lists the
+included filenames without showing their values.
 
-Homebrew owns macOS apps, system utilities, native dependencies, and packages
-selected through install profiles. The global mise config owns Core Install
-runtimes and portable global CLIs, including Claude Code, Codex, and TPack.
-Mason owns language servers used only through Neovim. Project dependencies
-remain project-local, and no command has two package managers.
+OBS snapshots restore only to the same machine ID, with OBS closed. Referenced
+images, videos, fonts, and scripts are not bundled; preserve those files separately.
+Browser cookies, logs, caches, recordings, and plugin binaries are excluded.
 
-Versions follow moving channels such as `latest`, `lts`, or a major release;
-the repo does not record exact installed versions. During an ownership change,
-the Bootstrapper installs and verifies the replacement before removing a known
-legacy package.
+All plist snapshots and companion private configuration files are encrypted
+before entering history. Enrollment creates an encrypted policy marker before
+the first checkpoint, even when no app settings exist. Older public commits still
+contain the former plaintext Thaw plist; encryption does not rewrite that history.
 
-## Notable workflows
+Preferences use `defaults export/import`; live CFPreferences plists are never
+symlinked. SuperCmd's allowlisted settings are shared. Display/device layouts and
+audio routing use `private/preferences/machines/<stable-id>/`: they travel for
+recovery but restore only on that machine. Outside the explicit OBS credential
+exception, licenses, tokens, AI credentials,
+recordings, clipboard databases, caches, and recent-item history are excluded.
 
-The installed `dotfiles` command is linked into `~/.local/bin`. Every command
-supports contextual help, for example `dotfiles help config repair`.
+Capture and restore validate owned key types, companion-file structure, and
+reviewed format versions. Empty resets are recorded explicitly; new app major
+versions need a schema review. Close the app and its writers before restoring.
+Active-app restores stay pending; the task never kills processes. Incoming
+snapshots are preserved until restore completes. If live settings differ, review
+them and use `preferences accept <app>` to save an encrypted conflict backup
+before accepting the incoming snapshot.
+
+Only allowlisted settings are protected. Real app reopen tests remain part of
+fresh-Mac acceptance; passing a plist parser does not establish that they work.
+
+</details>
+
+## Select individual optional apps
+
+Edit `~/.config/mise/miserc.local.toml`, for example:
+
+```toml
+env = ["busycal", "audio-hijack"]
+```
+
+Choices: `audio-hijack`, `busycal`, `camo`, `displaylink`, `ethereum`, `focusrite`,
+`loopback`, `obs`, `openclaw`, `skhd`, `soundsource`, and `stellar-cli`.
+Audio apps share `conf.d/audio` but remain individually selectable. `ethereum`
+groups Geth, Foundry, and Solidity in `conf.d/blockchain`, alongside the independent
+`stellar-cli` selection. OBS includes its scene-switcher plugin.
+
+`openclaw` enables the native macOS `openclaw-sshfs` LaunchAgent. It needs a working
+Tailscale connection, SSH host alias, macFUSE, and SSHFS; `openclaw-mount status`
+checks the mount. To stop automatic mounting, remove the selection and run
+`mise -C ~ bootstrap services remove openclaw-sshfs --yes`. The mount and its data
+remain unchanged.
+
+There are no role profiles. The common macOS setup includes the former cloud,
+dev, formatters, image, and languages categories; a work Mac can leave the optional
+list empty. Removing a selection stops management without uninstalling packages
+or deleting app data. Review `mise bootstrap unapply <module> --dry-run` before
+explicit removal. No task runs global package pruning.
+
+## Configure Git identities
+
+Public records and local `--record` inputs use this shape:
+
+```toml
+[git.default]
+name = "Example User"
+email = "personal@example.invalid"
+
+[git.accounts.work]
+name = "Example User"
+email = "work@example.invalid"
+directories = ["~/Work"]
+# signing_key = "~/.ssh/work_ed25519.pub"
+```
+
+Use a default for one identity, two scoped accounts without a default for a work
+machine, or a default plus scoped accounts for an agent machine. Directory rules
+also cover worktrees. Signing requires a signing key; unsigned scoped accounts
+disable inherited signing. The managed block and first shared include preserve
+unrelated Git keys. Authorship does not select an SSH account or authenticated `gh` actor.
+
+<details>
+<summary>Edit enrolled identities and native templates</summary>
+
+Enrollment stores identity data in `config.local.toml` variables and registers
+each account as a native template for mise to render.
+`conf.d/git/identity.gitconfig.tera` renders the default and `includeIf` blocks.
+`conf.d/git/account.gitconfig.tera` renders every scoped account and its signing
+policy, using the native `bootstrap.files` `target` variable to select the account:
+
+```toml
+[bootstrap.files."~/.config/git/account-work.gitconfig"]
+source = "conf.d/git/account.gitconfig.tera"
+template = true
+mode = "0600"
+```
+
+Edit `vars.git_name`, `vars.git_email`, and `vars.git_signing_key` for the default.
+For the example account, edit `vars.git_account_work_name`,
+`vars.git_account_work_email`, `vars.git_account_work_signing_key`, and
+`vars.git_account_work_directories` (one absolute path per line).
+`vars.git_accounts` lists account names separated by spaces. To add an account
+after enrollment, add its name, variables, and a file declaration like the one above.
+`config apply` checks account files for unowned content or drift before writing them.
+
+</details>
+
+## Platform and package reference
+
+<details>
+<summary>Linux packages, Fish, and Rust</summary>
+
+`.NET` installs the 10.x SDK and the current supported LTS SDK. Bootstrap and
+`update` refresh the LTS alias from Microsoft's release metadata, excluding
+previews and releases younger than three days. The alias is stored locally;
+ordinary mise commands need no network lookup. Both requests currently select
+.NET 10. A later LTS is added alongside 10 on the next successful setup or update.
+
+Shared configuration and runtimes load on both platforms; macOS apps and
+preferences load only on macOS. Ubuntu uses native `apt:` system packages and
+mise development CLIs. Native `brew:` binaries expect `/opt/homebrew` on macOS
+and `/home/linuxbrew/.linuxbrew` on Linux; mise uses these paths without installing
+Homebrew. MozJPEG uses this backend on both platforms, including a Linux bottle,
+and its commands take precedence over distro libjpeg tools.
+
+`conf.d/cli` includes Linux jq, eza, fzf, and zoxide. CocoaPods is macOS-only by
+choice. remindctl (Apple Reminders), mas (Mac App Store), and Mole (macOS maintenance)
+also remain macOS-only. `conf.d/dev` supplies Yaak, dive, adb, and fastboot on both
+platforms; Apparency requires macOS. On Ubuntu, the GitHub backend installs the
+official Yaak AppImage for the machine's architecture with the three-day cooldown.
+Native apt declarations supply FUSE, EGL, and GLES; a dotfile template adds its
+desktop launcher. See [Linux graphical testing limits](plans/mise-compatibility.md#dev-and-ethereum-on-linux).
+
+Geth, Foundry, and Solidity support both platforms. On Linux, the Go backend builds
+the Geth command suite using the shared Go toolchain and build prerequisites;
+Foundry and Solidity use native brew recipes.
+
+Fish uses native brew recipes on both platforms to support current `fzf.fish`
+bindings. It is the login shell, with one mise activation owner in `conf.d/fish`
+and no Bash or Zsh activation. The login-shell hook reads mise's
+declaration and uses existing sudo authorization to register and change the shell
+without another password prompt. Mise checks the final status.
+
+Image helpers support ImageMagick 7 on macOS and Ubuntu's ImageMagick 6.
+They resize and compress without macOS-only utilities.
+
+Mise installs and updates Neovim's Rust, Lua, Tailwind, Astro, Docker, and TypeScript
+language servers. Neovim enables them through `nvim-lspconfig` and resolves tools
+through mise shims. Astro uses a workspace SDK when available, with mise's
+TypeScript 6 as fallback; Astro does not support the TypeScript 7 SDK yet.
+
+Native mise installs and updates Rust on both platforms, including Rustfmt and
+Clippy in the default profile. Project `rust-toolchain.toml` files override the
+global toolchain.
+
+</details>
+
+<details>
+<summary>macOS desktop and system settings</summary>
+
+Mise pins the full Dock order: Messages, optional BusyCal, Notes, Ghostty, Zed,
+T3 Code (Nightly), Dia, App Store, and System Settings. Native defaults replace
+dockutil; macOS keeps Finder and Trash. Edit `apps` in
+`conf.d/macos/mise.macos.toml` and its BusyCal variant if selected. Each apply
+restores the declared order.
+
+User defaults and the screenshots directory are native declarations. Enrollment
+stores the absolute screenshot path locally because mise defaults cannot render
+templates. `system-settings.sh` handles privileged update preferences, firewall,
+power commands, Library visibility, and remote-management settings. Native
+`mise doctor project` checks FileVault and immediate screen locking before setup.
+Native defaults cannot write privileged system domains.
+
+Thaw installs and updates only below macOS 27. A package hook checks the OS and
+delegates to native casks because declarations cannot express that version range.
+Upgrading macOS neither uninstalls Thaw nor erases its encrypted snapshots.
+
+Zed and IINA associations apply without confirmation dialogs. Setup merges only
+requested LaunchServices handlers, reloads the user's association service, and
+verifies effective defaults in a fresh process. Unrelated associations remain;
+unchanged reruns do not write or reload. The storage format is undocumented and
+tested on macOS 27.0. Failed verification leaves setup pending and asks for sign-out
+and sign-in before retrying; it never falls back to confirmation dialogs.
+See [VM evidence](plans/mise-compatibility.md#silent-file-associations).
+
+</details>
+
+<details>
+<summary>Downloads: GitHub, AutoFirma, IINA, and Ghostty</summary>
+
+Public recipes, font repositories, plugins, third-party skills, and the initial checkout use
+HTTPS without private-history authentication. Third-party taps use mise's default
+GitHub metadata resolution. Shared Git config preserves each URL's protocol.
+Private history requires authentication for its chosen transport.
+
+If GitHub returns `403` after exhausting its anonymous API quota, authenticate or
+retry after the reported reset. Mise accepts an existing `gh` login or a token
+in the process environment. Keep tokens out of tracked files.
+See https://mise.jdx.dev/dev-tools/github-tokens.html.
+
+**AutoFirma:** mise does not support the cask's `installer manual:` artifact.
+`setup:autofirma` reads the current version, URL, SHA-256, and package filename
+from https://formulae.brew.sh/api/cask/autofirma.json, downloads it, verifies the
+checksum and package signature, then prints the command to open the interactive
+vendor installer. Complete it and rerun `mise -C ~ run config apply`. Setup stays
+pending until the receipt and app exist at that version or newer. `update` checks
+daily and prepares new releases through the same task; no version or archive URL is pinned.
+
+**IINA:** native `url_replacements` redirect the DMG to the official GitHub release.
+The cask owns the version, checksum, app/CLI installation, and self-update behavior.
+
+**Ghostty:** mise manages the native `brew-cask:ghostty` package. The cask owns
+downloads, checksum verification, app installation, and self-update handling.
+
+</details>
+
+<details>
+<summary>Release policy and exceptions</summary>
+
+The initial mise executable uses latest stable without a cooldown to support
+current native features. Flexible tool requests and routine updates select the
+newest matching release at least three days old within their channel, such as Node LTS.
+
+Aube, the embedded npm installer, applies three days to releases and new package
+names. If no dependency version qualifies, installation fails. Its configuration
+is deployed before tools install. npm, pnpm, and Yarn also use three days.
+
+- `npm:@luisurrutia/bird` uses `latest` without a cooldown. Its own package is exempt
+  from reputation and trust-policy gates and approved for build scripts and
+  non-registry sources. Dependencies get no such exemptions; native integrity and
+  malicious-package checks still apply.
+- Existing Claude Code and Codex cooldown exemptions remain.
+- `2password` keeps the three-day cooldown but has a named `allow_low_downloads`
+  exception. Aube groups download counts, new names, and similar-name checks under
+  this option. Dependencies remain subject to them.
+
+Exact pins and lockfiles bypass mise release filtering, backends need release-date
+metadata, and casks/vendor installers have their own version rules. The cooldown
+is therefore not a guarantee for every source.
+See https://mise.jdx.dev/configuration/settings.html#minimum_release_age and
+https://mise.jdx.dev/dev-tools/backends/npm.html.
+
+</details>
+
+## Repository layout and verification
+
+```text
+install.sh       prerequisites and official mise installation
+bootstrap/       verified download and machine enrollment
+mise.toml        repository verification tools and tasks
+config.toml      active setup policy
+miserc.toml      automatic platform environments
+conf.d/          modules: native declarations, source files, required setup tasks
+tasks/           config, preferences, sync, update
+machines/        public enrollment records and optional agent guidance
+tests/           four behavioral integration areas and real parsers
+plans/           decisions, source inventory, compatibility evidence
+```
+
+In this checkout, install tools with `mise install --yes` and
+`mise bootstrap packages apply --yes`, then run:
 
 ```sh
-# Deterministic, offline repository checks
-dotfiles verify
-
-# Update installed package managers, tools, plugins, and reference data
-dotfiles update
-dotfiles update --ignore-schedule
-
-# Back up application configuration
-dotfiles backup thaw
-dotfiles backup all
+mise run verify
 ```
 
-Update keeps Homebrew work daily-gated and Mole cleanup weekly-gated unless
-`--ignore-schedule` is used. It updates toward current versions without
-reconciling Brewfile membership, removing manually installed software, or
-changing this Git repository. It is also the only owner of periodic Neovim,
-TPack, Fish, Skills, tlrc, and GitHub CLI extension updates; their installers
-only establish declared state. All installed GitHub CLI extensions are updated
-with `gh extension upgrade --all` on each run. Fish keeps `upd` and
-`backup-configs` as interactive abbreviations for the canonical commands.
+These commands provision only the verification toolchain; `config.toml` is the
+separate active setup payload. `mise run format` formats sources and applies safe
+Ruff fixes; `mise run lint` checks without edits. Verification includes lint and
+format checks before integration tests, so CI rejects unformatted changes.
 
-- Fish has abbreviations for Git, Docker, Brew, common cleanup,
-  iCloud/Obsidian paths, and WorkTrunk shell integration. `halp` and `cheat`
-  show local command notes inspired by ChristianLempa's cheat-sheets.
-- WorkTrunk copies only the ignored, machine-local legacy Git config into a new
-  worktree and runs the complete Verification Suite before merge.
-- OpenSSH uses local default identities for GitHub and GitLab. Every other host
-  uses the 1Password SSH agent.
-- `skill-link [directory ...]` points `~/.agents/skills` and
-  `~/.claude/skills` at skills you are developing, so edits take effect without
-  reinstalling. It accepts shell globs and directory lists, defaults to the
-  current directory, skips files and directories without a direct `SKILL.md`,
-  and moves an installed copy that differs to
-  `~/.agents/skills-backups` before linking. `skill-unlink [directory ...]`
-  removes only links to those directories and preserves installed copies,
-  unrelated links, and backups.
-- Ghostty uses Catppuccin, Monaspice Nerd Font, shell integration, and a
-  global quick-terminal toggle on `super+backquote`.
-- Starship shows Git, runtimes, Docker, AWS, Google Cloud, duration, status,
-  jobs, and time with a Catppuccin palette.
-- Neovim is modular, with Lazy, Treesitter, Telescope/frecency, LSP,
-  completion, formatting, Fugitive, and diff helpers.
-- tmux uses the mise-owned TPack for plugins and validates the config in an
-  isolated server before installing plugins.
-- Hammerspoon disconnects Bluetooth devices on lid close and reconnects them on
-  lid open. It also handles caffeinate-at-home logic and hotkeys.
-- Thaw preferences back up with `dotfiles backup thaw`; `dotfiles backup all`
-  runs all supported backups, currently Thaw. Review app backups before
-  committing them because they can contain private app state.
-- OrbStack owns the Docker engine and CLI in the `dev` profile. Its Tool
-  Installer removes only broken Docker Desktop plugin links, preserving working
-  links, custom plugins, and container data.
-- Catppuccin is used across Fish/FZF, Starship, Ghostty, bat, btop, and editor tooling.
+<details>
+<summary>Module responsibilities and native mise boundaries</summary>
 
-### VoiceInk with Codex
+| Module        | Contents                                            |
+| ------------- | --------------------------------------------------- |
+| `fish/`       | Declarations, `config.fish`, functions, completions |
+| `git/`        | Defaults and identity templates                     |
+| `audio/`      | Independently selected apps and preference schemas  |
+| `blockchain/` | Ethereum tools and optional Stellar CLI             |
+| `dev/`        | Development apps, including Yaak and OrbStack       |
+| `languages/`  | Runtimes, native mise Rust, and Lua packages        |
+| `macos/`      | Defaults, LaunchAgents, system settings             |
+| `media/`      | yt-dlp, IINA, optional OBS/Camo                     |
+| `setup/`      | Preservation, preferences, sync, maintenance        |
 
-The VoiceInk Tool Installer sets up a reusable Codex directory at
-`~/.local/share/voiceink-codex` when the mise-managed Codex CLI is installed.
-It prepares the command even if VoiceInk will be installed later.
-Stow links `run.sh` and `config.toml` from `tools/voiceink/config`;
-authentication links to `~/.codex/auth.json`, and the two writing skills link to
-`~/.agents/skills`. Runtime files stay in the home directory.
+Mise owns packages, links, file edits, defaults, services, history and its encryption,
+and Git exchange. Adapters preserve foreign links and edited copies, capture
+shared keys from app-written files, export selected macOS preferences, and apply
+received package declarations. The public backup adapter delegates standalone
+file encryption and password prompts to age. No adapter implements Git merging.
+Maintenance also covers external plugin managers. For limits checked in
+mise's source, see the [native capability audit](plans/mise-compatibility.md#native-capability-audit).
 
-The Skills Tool Installer installs `comment-style` and `communicate-clearly`
-from `git@github.com:LuisUrrutia/skills.git`. Sign into Codex with `codex login`
-before using the integration. To configure it after installing VoiceInk:
+</details>
 
-```sh
-dotfiles tool apply skills
-dotfiles tool apply voiceink
-```
+<details>
+<summary>Checks, CI, and acceptance limits</summary>
 
-Set VoiceInk's command to:
+| Sources                                                 | Lint / validation                                                | Formatter               |
+| ------------------------------------------------------- | ---------------------------------------------------------------- | ----------------------- |
+| Python                                                  | Ruff, compiler                                                   | Ruff                    |
+| Bash, including extensionless scripts and task wrappers | ShellCheck, shfmt parser                                         | shfmt                   |
+| Fish                                                    | Fish parser                                                      | fish_indent             |
+| Lua, including Neovim and Hammerspoon                   | Luacheck, StyLua parser                                          | StyLua                  |
+| TOML                                                    | Taplo, Python TOML parser                                        | Taplo                   |
+| JSON / JSONC                                            | JSON / JSON5 parsers, applicable schemas                         | Prettier                |
+| YAML and GitHub configuration                           | Prettier parser, actionlint, Dependabot schema, action SHA audit | Prettier                |
+| Markdown                                                | markdownlint-cli2                                                | Prettier                |
+| HTML, including embedded CSS and JavaScript             | Prettier parser                                                  | Prettier                |
+| Swift (macOS job)                                       | swift-format lint, Swift typechecker                             | swift-format            |
+| XML theme plists                                        | Python plist parser                                              | Python plist serializer |
+| Git configuration                                       | Git config parser                                                | EditorConfig whitespace |
+| Other text, app configuration, dictionaries, templates  | EditorConfig; deployment tests also exercise managed templates   | EditorConfig whitespace |
 
-```sh
-/bin/bash "$HOME/.local/share/voiceink-codex/run.sh"
-```
+Checks cover tracked and new non-ignored files, including hidden files. Ignored
+caches, local state, and binary icons are outside text formatting. App config
+without a dedicated parser gets whitespace checks, not app validation. Lua keeps
+four spaces for Hammerspoon and two for Neovim. Markdown preserves paragraph
+wrapping, visible URLs, and heading-free prompts/templates.
 
-VoiceInk supplies `VOICEINK_FULL_PROMPT`. The command reads the current skill
-instructions through the symlinks, adds them to the prompt in memory, and
-returns Codex's final response on stdout. Each dictation starts a new session
-with `--ephemeral`, reusing the directory and caches. The isolated config uses
-`gpt-6-luna` with medium reasoning and the fast service tier; it disables global
-agent instructions, the skill catalog, plugins, apps, hooks, memories, and web
-search. It does not copy credentials, skill files, or dictation results into
-the repository.
+Tools follow the latest-compatible policy and three-day cooldown. macOS supplies
+`swift-format` through Apple's toolchain; Ubuntu leaves that helper to macOS CI.
+CI runs the same verification on macOS 26 arm64 and Ubuntu 24.04 arm64/x86_64,
+using the latest official mise with checksum verification and mise-installed tools.
+macOS also typechecks helpers that use Apple frameworks.
 
-## Post-install checklist
+Tests use real mise/Git, temporary homes, and local bare origins. Four areas cover
+preservation, Git identities/worktrees, encrypted preferences, and manual/automatic
+exchange. Native task validation checks this checkout and the isolated
+active setup, including all optional modules. Syntax, format/schema, workflow,
+secret, and shell smoke checks complete the suite. There is no app build target;
+compilation/parsing and native deployment serve that purpose.
 
-The manual steps live in [POST_INSTALL.md](POST_INSTALL.md), which the
-installer also prints at the end of every run. Keep that file as the single
-source; do not duplicate the list here.
+Dependabot updates SHA-pinned GitHub Actions weekly with a three-day cooldown,
+grouping minor/patch releases and keeping majors separate. Mise maintenance owns
+tool/package updates; Dependabot does not support those manifests.
 
-## Customizing
+</details>
 
-Edit the files under `tools/<tool>/config`, then run
-`dotfiles config repair <tool>` or re-run that Tool Installer. When an app has
-replaced a symlink, inspect it with `dotfiles config diff` and choose Capture or
-Discard explicitly. Declare persistent packages according to
-[Package ownership](#package-ownership) instead of installing them only by hand.
-
-Secrets and private credentials belong outside the public repo. Use
-`private-install.sh` for owner-only setup instead of committing tokens,
-passwords, private keys, or license data here. As a safety net,
-`tools/git/install.sh` points this repo's `core.hooksPath` at `.githooks/`,
-where a pre-commit hook runs gitleaks over staged changes before every commit.
-
-## Troubleshooting
-
-- Stow conflict: inspect it with `dotfiles config status <tool>` and
-  `dotfiles config diff <tool> <path>` before choosing Capture or Discard.
-- Missing optional dependency: most `require_*` checks warn and skip that tool.
-- Fish did not become the shell: re-run `./tools/fish/install.sh` after
-  Homebrew Fish is installed.
-- skhd issues: check that Accessibility permissions are granted.
-- Homebrew package drift: compare against `brewfiles/core` and
-  `brewfiles/profiles/`, then re-run the installer with the matching profiles.
-
-## License
-
-Public dotfiles configuration. Fork and adapt as needed.
+See [compatibility evidence](plans/mise-compatibility.md) and
+[POST_INSTALL.md](POST_INSTALL.md) for outstanding acceptance steps. The repository
+rewrite has not converted a live machine. Cask replacement can still reset macOS privacy
+grants; self-update handling does not make TCC permissions portable.

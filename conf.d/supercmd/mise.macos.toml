@@ -1,0 +1,3 @@
+
+[bootstrap.packages]
+"brew-cask:shobhit99/tap/supercmd" = { os = "macos" }

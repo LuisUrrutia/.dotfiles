@@ -1,0 +1,19 @@
+[dotfiles]
+"~/.config/uv/uv.toml" = "uv.toml"
+
+[tools]
+python = "3"
+
+[tools.uv]
+version = "latest"
+postinstall = { when = "always", run = '''
+set -eu
+directory="$MISE_TOOL_INSTALL_PATH/mise-completions"
+mkdir -p "$directory"
+temporary=$(mktemp -d "$directory/.uv.XXXXXX")
+trap 'rm -rf "$temporary"' EXIT
+uv generate-shell-completion fish >"$temporary/uv.fish"
+uvx --generate-shell-completion fish >"$temporary/uvx.fish"
+mv "$temporary/uv.fish" "$directory/uv.fish"
+mv "$temporary/uvx.fish" "$directory/uvx.fish"
+''' }

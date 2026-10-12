@@ -1,0 +1,3 @@
+
+[bootstrap.packages]
+"brew-cask:loopback" = { os = "macos" }

@@ -1,0 +1,77 @@
+{
+  "application": "Audio Hijack",
+  "domain": "com.rogueamoeba.audiohijack",
+  "scope": "machine",
+  "keys": {
+    "PTDontShowAlerts": "list",
+    "applicationTheme": "int",
+    "homeWindowColumns": "dict",
+    "homeWindowShown": "bool",
+    "homeWindowState": "dict"
+  },
+  "files": {
+    "~/Library/Application Support/Audio Hijack 4/Sessions.plist": {
+      "type": "dict",
+      "fields": {
+        "modelItems": "list",
+        "listVersion": "int",
+        "listMinimumSupportedVersion": "int"
+      },
+      "versions": {
+        "listVersion": 100,
+        "listMinimumSupportedVersion": 100
+      },
+      "array_items": {
+        "modelItems": "dict"
+      }
+    },
+    "~/Library/Application Support/Audio Hijack 4/Presets.plist": {
+      "type": "dict",
+      "fields": {
+        "modelItems": "list",
+        "listVersion": "int",
+        "listMinimumSupportedVersion": "int"
+      },
+      "versions": {
+        "listVersion": 100,
+        "listMinimumSupportedVersion": 100
+      },
+      "array_items": {
+        "modelItems": "dict"
+      }
+    },
+    "~/Library/Application Support/Audio Hijack 4/Schedule.plist": {
+      "type": "dict",
+      "fields": {
+        "modelItems": "list",
+        "listVersion": "int",
+        "listMinimumSupportedVersion": "int"
+      },
+      "versions": {
+        "listVersion": 100,
+        "listMinimumSupportedVersion": 100
+      },
+      "array_items": {
+        "modelItems": "dict"
+      }
+    },
+    "~/Library/Application Support/Audio Hijack 4/Scripts.plist": {
+      "type": "dict",
+      "fields": {
+        "modelItems": "list",
+        "listVersion": "int",
+        "listMinimumSupportedVersion": "int"
+      },
+      "versions": {
+        "listVersion": 100,
+        "listMinimumSupportedVersion": 100
+      },
+      "array_items": {
+        "modelItems": "dict"
+      }
+    }
+  },
+  "optional": true,
+  "major_version": 4,
+  "writers": ["Audio Hijack Agent", "RemoteAUHost"]
+}

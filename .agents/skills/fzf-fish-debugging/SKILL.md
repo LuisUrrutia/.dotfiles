@@ -12,7 +12,7 @@ Separate fzf core from PatrickF1/fzf.fish before editing. fzf core provides `fzf
 Run the first probe set:
 
 ```sh
-fish -n tools/fish/config/.config/fish/config.fish
+fish -n conf.d/fish/config.fish
 fish -c 'command -q fzf; and fzf --version'
 fish -c 'command -q fisher; and fisher list'
 fish -c 'functions -q _fzf_search_history; and echo loaded'
@@ -22,11 +22,11 @@ fish -c 'set --show FZF_DEFAULT_OPTS fzf_preview_file_cmd fzf_preview_dir_cmd fz
 
 ## Repo Map
 
-- `fzf` and `fisher` are Homebrew-managed tools in this dotfiles setup.
-- Main fzf settings live in `tools/fish/config/.config/fish/config.fish`.
+- `fzf` is a shared mise tool; Fisher comes from a native package on macOS and a native repository on Linux.
+- Main fzf settings live in `conf.d/fish/config.fish`.
 - Current settings include `FZF_DEFAULT_OPTS`, `fzf_diff_highlighter`, `fzf_history_time_format`, `fzf_preview_file_cmd`, and `fzf_preview_dir_cmd`.
-- `tools/fish/install.sh` runs Fisher update only if `~/.config/fish/fish_plugins` exists.
-- fzf.fish generated files are intentionally ignored by Stow, including `functions/fzf_configure_bindings.fish`, `conf.d/fzf.fish`, and `completions/fzf_configure_bindings.fish`.
+- `conf.d/fish/setup.fish` seeds the plugin manifest when absent and runs Fisher update.
+- fzf.fish generated files are outside the managed source tree, including `functions/fzf_configure_bindings.fish`, `conf.d/fzf.fish`, and `completions/fzf_configure_bindings.fish`.
 - Repo functions using fzf include `glogf.fish`, `wtpr.fish`, and `killport.fish`.
 
 ## Diagnosis Workflow
@@ -80,7 +80,7 @@ printf 'one\ntwo\n' | fzf --filter one
 
 ## Change Rules
 
-- Do not add `fzf.fish`, Brewfile entries, generated plugin files, or dependencies unless explicitly requested.
+- Do not add `fzf.fish`, package declarations, generated plugin files, or dependencies unless explicitly requested.
 - Keep plugin-generated files ignored; edit tracked config or tracked wrapper functions instead.
 - Preserve existing Catppuccin fzf styling unless the user asks for visual changes.
 - Always validate both core fzf behavior and Fish plugin loading before claiming the integration is fixed.
