@@ -126,10 +126,10 @@ def git_settings(record):
 def enroll(args):
     recovery_recipient = None
     if args.recover:
-        import backup
+        from backup import unlock
 
         with lock():
-            recovery_recipient = backup.unlock(REPOSITORY)
+            recovery_recipient = unlock(REPOSITORY)
     current = read_toml(ROOT / "config.local.toml")
     record = read_toml(REPOSITORY / "machines" / f"{args.machine}.toml")
     if args.record:
@@ -235,8 +235,10 @@ def enroll(args):
 
         preferences.prepare_history()
     if args.recover:
+        from backup import recover
+
         with lock():
-            backup.recover(REPOSITORY, machine["id"])
+            recover(REPOSITORY, machine["id"])
     if args.seed_only:
         print(f"Seeded missing setup sources in {ROOT}; existing files were preserved")
         return

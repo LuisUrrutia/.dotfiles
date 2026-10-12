@@ -13,6 +13,7 @@ import tempfile
 import time
 from fnmatch import fnmatchcase
 from pathlib import Path, PurePosixPath
+from typing import Never
 
 from runtime import (
     ROOT,
@@ -200,7 +201,7 @@ def validate_collection(spec, files):
                     raise ValueError("Expected a JSON object or array")
             elif name.endswith(".ini"):
                 parser = configparser.ConfigParser(interpolation=None, strict=False)
-                parser.optionxform = str
+                parser.optionxform = lambda optionstr: optionstr
                 parser.read_string(content.decode("utf-8-sig"))
                 value = {section: dict(parser[section]) for section in parser}
             else:
@@ -232,7 +233,7 @@ def validate(definition, filename, value):
             else type(item).__name__ == expected
         )
 
-    def refuse():
+    def refuse() -> Never:
         raise RuntimeError(
             f"{definition['name']}/{filename}: incompatible preference structure; review its schema"
         )

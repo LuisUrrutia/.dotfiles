@@ -119,6 +119,7 @@ def check_public_backup(path):
 def lint_sources(paths, groups, *, fix=False):
     run("ruff", "check", *(["--fix"] if fix else []), *groups["python"])
     run("ruff", "format", *([] if fix else ["--check"]), *groups["python"])
+    run("basedpyright", "--project", "pyrightconfig.json", *groups["python"])
     run("shellcheck", *groups["shell"])
     run("shfmt", "-w" if fix else "-d", *groups["shell"])
     for path in groups["shell"]:

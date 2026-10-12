@@ -15,7 +15,10 @@ import unittest
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[1]
-MISE = str(Path(os.environ.get("MISE_BIN") or shutil.which("mise")).resolve())
+MISE = os.environ.get("MISE_BIN") or shutil.which("mise")
+if MISE is None:
+    raise RuntimeError("mise is required to run the integration tests")
+MISE = str(Path(MISE).resolve())
 FISH = shutil.which("fish")
 WT = shutil.which("wt")
 
@@ -397,37 +400,33 @@ end
                 shutil.copytree(REPO / "conf.d/git", module)
                 (module / "mise.macos.toml").unlink()
                 machine.env["MISE_HISTORY_ENABLED"] = "false"
-                record = {
-                    "git": {
-                        "default": {
-                            "name": "Personal User",
-                            "email": "personal@example.invalid",
-                        }
-                    }
+                default = {
+                    "name": "Personal User",
+                    "email": "personal@example.invalid",
                 }
+                accounts = {}
                 if kind == "unknown":
-                    record["git"]["default"] = {}
+                    default = {}
                 if kind == "agent":
-                    record["git"]["default"]["signing_key"] = "~/.ssh/id_ed25519.pub"
+                    default["signing_key"] = "~/.ssh/id_ed25519.pub"
                 if kind in ("work", "agent"):
-                    record["git"]["accounts"] = {
-                        "team": {
-                            "name": 'Work "Team" Urrutía',
-                            "email": "work@example.invalid",
-                            "directories": [
-                                str(machine.home / 'work "space"'),
-                                "~/other work",
-                            ],
-                        }
+                    accounts["team"] = {
+                        "name": 'Work "Team" Urrutía',
+                        "email": "work@example.invalid",
+                        "directories": [
+                            str(machine.home / 'work "space"'),
+                            "~/other work",
+                        ],
                     }
                 if kind == "work":
-                    record["git"]["default"] = {}
-                    record["git"]["accounts"]["second-team"] = {
+                    default = {}
+                    accounts["second-team"] = {
                         "name": "Other User",
                         "email": "other@example.invalid",
                         "directories": [str(machine.home / "second team")],
                         "signing_key": "~/.ssh/work key.pub",
                     }
+                record = {"git": {"default": default, "accounts": accounts}}
                 code = """import enroll
 record = RECORD
 variables, files = enroll.git_settings(record)
@@ -483,7 +482,7 @@ enroll.atomic(enroll.ROOT / 'config.local.toml', enroll.document(values))
                         machine.run("git", "config", "commit.gpgsign").stdout.strip(),
                         "true",
                     )
-                for name, account in record["git"].get("accounts", {}).items():
+                for name, account in accounts.items():
                     target = machine.home / f".config/git/account-{name}.gitconfig"
                     self.assertEqual(target.stat().st_mode & 0o777, 0o600)
                     repository = Path(account["directories"][0]) / "repo"
@@ -746,8 +745,11 @@ assert preferences.snapshot_root(entries[0]) == ROOT/'private/preferences/machin
             folder.mkdir()
             (folder / "preferences.json").write_text(json.dumps(entry))
         for tool in ("age", "age-keygen"):
-            (old.home / ".local/bin" / tool).symlink_to(shutil.which(tool))
-        age_install = Path(shutil.which("age")).resolve().parent
+            executable = shutil.which(tool)
+            if executable is None:
+                self.fail(f"{tool} is required to test encrypted recovery")
+            (old.home / ".local/bin" / tool).symlink_to(executable)
+        age_install = (old.home / ".local/bin/age").resolve().parent
         age_target = old.home / "data/installs/age" / age_install.name
         age_target.parent.mkdir(parents=True)
         age_target.symlink_to(age_install)

@@ -95,6 +95,7 @@ def check():
         regular_parents(target)
         if (
             mode == "symlink"
+            and source is not None
             and target.is_symlink()
             and target.resolve() == source.resolve()
         ):
@@ -192,6 +193,7 @@ def resolve(action, value):
     regular_parents(backup)
     backup.parent.mkdir(parents=True, mode=0o700)
     if action == "capture":
+        assert source is not None
         shutil.copy2(source, backup.with_name(backup.name + ".source"))
         atomic(source, target.read_bytes(), source.stat().st_mode & 0o777)
     shutil.move(str(target), str(backup))

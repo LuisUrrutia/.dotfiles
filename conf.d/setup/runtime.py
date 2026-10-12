@@ -32,7 +32,7 @@ MISE = (
 )
 
 
-def run(args, *, capture=False, check=True, timeout=900, input=None, **kwargs):
+def run(args, *, capture=False, check=True, timeout=900, input: bytes | None = None):
     env = os.environ.copy()
     env.update(
         GIT_TERMINAL_PROMPT="0",
@@ -51,7 +51,6 @@ def run(args, *, capture=False, check=True, timeout=900, input=None, **kwargs):
         stdin=subprocess.PIPE if input is not None else subprocess.DEVNULL,
         stdout=subprocess.PIPE if capture else None,
         stderr=subprocess.PIPE if capture else None,
-        **kwargs,
     ) as process:
         try:
             stdout, stderr = process.communicate(input=input, timeout=timeout)

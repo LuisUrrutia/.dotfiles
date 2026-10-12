@@ -1,3 +1,10 @@
 {
-  "extraPaths": ["conf.d/setup"]
+  "typeCheckingMode": "standard",
+  "pythonVersion": "3.11",
+  "extraPaths": ["conf.d/setup"],
+  "executionEnvironments": [
+    { "root": "bootstrap" },
+    { "root": "tests" },
+    { "root": "." }
+  ]
 }
