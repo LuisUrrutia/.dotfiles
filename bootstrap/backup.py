@@ -207,7 +207,7 @@ def capture(repository, identifier, definitions=None):
         if local().get("id") == identifier:
             incoming = preferences.snapshots(definition)
             previous = read_state("preferences").get(definition["name"], {})
-            if (
+            if previous.get("restore") or (
                 incoming
                 and preferences.fingerprint(incoming) != previous.get("snapshot")
                 and incoming != current

@@ -354,6 +354,26 @@ def fingerprint(records):
     return digest.hexdigest()
 
 
+def restore_fingerprints(definition, records):
+    result = {}
+    for filename, content in records.items():
+        if not filename.endswith(".plist"):
+            canonical = json.dumps(json.loads(content), sort_keys=True).encode()
+            result[filename] = hashlib.sha256(canonical).hexdigest()
+            continue
+        value = plistlib.loads(content)
+        parts = (
+            value
+            if filename == "preferences.plist"
+            or filename in definition.get("collections", {})
+            else {"": value}
+        )
+        for part, item in parts.items():
+            canonical = plistlib.dumps(item, fmt=plistlib.FMT_BINARY, sort_keys=True)
+            result[f"{filename}/{part}"] = hashlib.sha256(canonical).hexdigest()
+    return result
+
+
 def merge_snapshots(definition, incoming, current):
     merged = incoming | current
     for name in definition.get("collections", {}):
@@ -388,7 +408,9 @@ def capture(defs=None):
         incoming = snapshots(definition)
         current = live(definition)
         previous = state.get(name, {})
-        if incoming and fingerprint(incoming) != previous.get("snapshot"):
+        if previous.get("restore") or (
+            incoming and fingerprint(incoming) != previous.get("snapshot")
+        ):
             print(
                 f"{name}: incoming restore pending; kept the live settings and snapshot"
             )
@@ -417,14 +439,27 @@ def restore(defs=None):
     for definition in definitions() if defs is None else defs:
         name = definition["name"]
         incoming = snapshots(definition)
-        if not incoming:
+        previous = state.get(name, {})
+        progress = previous.get("restore")
+        if not incoming and not progress:
             continue
         incoming_hash = fingerprint(incoming)
-        previous = state.get(name, {})
-        if incoming_hash == previous.get("snapshot"):
+        if incoming_hash == previous.get("snapshot") and not progress:
             continue
         current = live(definition)
-        if previous.get("live") and fingerprint(current) != previous["live"]:
+        if progress:
+            parts = restore_fingerprints(definition, current)
+            if incoming_hash != progress["snapshot"] or any(
+                parts.get(part)
+                not in (progress["before"].get(part), progress["after"].get(part))
+                for part in parts.keys()
+                | progress["before"].keys()
+                | progress["after"].keys()
+            ):
+                raise RuntimeError(
+                    f"{name}: settings changed during interrupted restore; both versions preserved"
+                )
+        elif previous.get("live") and fingerprint(current) != previous["live"]:
             raise RuntimeError(
                 f"{name}: live settings changed since capture; both versions preserved"
             )
@@ -465,6 +500,18 @@ def restore(defs=None):
             regular_parents(target)
             if target.is_symlink() or (target.exists() and not target.is_file()):
                 raise RuntimeError(f"Refusing non-regular preference target: {target}")
+        if not progress:
+            # Journal before writing, so a crash after any import can be retried.
+            state[name] = previous | {
+                "restore": {
+                    "snapshot": incoming_hash,
+                    "before": restore_fingerprints(definition, current),
+                    "after": restore_fingerprints(
+                        definition, merge_snapshots(definition, current, incoming)
+                    ),
+                }
+            }
+            write_state("preferences", state)
         if "preferences.plist" in parsed:
             value = parsed["preferences.plist"]
             if not isinstance(value, dict) or set(value) - set(definition["keys"]):

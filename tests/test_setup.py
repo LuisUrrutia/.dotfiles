@@ -806,7 +806,7 @@ assert plistlib.loads((preferences.snapshot_root(entry)/'preferences.plist').rea
         )
         machine.write(
             "private/preferences/machines/encrypted/linearmouse/linearmouse.json",
-            '{"schemes":[]}\n',
+            '{"schemes":[{"name":null}]}\n',
         )
         machine.python("""import finish, preferences, json
 from runtime import ROOT, HOME
@@ -817,7 +817,7 @@ entry['name'] = 'linearmouse'
 preferences.export_domain = lambda _: {}
 preferences.is_running = lambda _: False
 preferences.restore([entry])
-assert json.loads((HOME/'.config/linearmouse/linearmouse.json').read_text()) == {'schemes':[]}
+assert json.loads((HOME/'.config/linearmouse/linearmouse.json').read_text()) == {'schemes':[{'name':None}]}
 """)
         shutil.copytree(REPO / "conf.d/audio", machine.config / "conf.d/audio")
         machine.write("miserc.local.toml", 'env=["loopback"]\n')
@@ -832,6 +832,77 @@ preferences.sys.platform = 'darwin'
 entries = preferences.definitions(applications)
 assert [entry['name'] for entry in entries] == ['loopback']
 assert preferences.snapshot_root(entries[0]) == ROOT/'private/preferences/machines/encrypted/loopback'
+""")
+        machine.python("""import json, plistlib, preferences, unittest
+from runtime import HOME, read_state
+case = unittest.TestCase()
+entry = {
+    'name':'resume', 'domain':'example.resume', 'application':'Example', 'scope':'machine',
+    'keys':{'enabled':'bool'},
+    'files':{f'~/{name}.plist':{'type':'dict','fields':{'value':'int'}} for name in ('a','b')},
+    'collections':{'profiles.plist':{'root':'~/profiles','include':['*.json']}},
+}
+domain = {'enabled':True, 'unowned':'retained'}
+preferences.export_domain = lambda _: dict(domain)
+preferences.is_running = lambda _: False
+def import_domain(command, **kwargs):
+    assert command[:3] == ['/usr/bin/defaults','import','example.resume']
+    domain.clear()
+    with open(command[3], 'rb') as stream:
+        domain.update(plistlib.load(stream))
+preferences.run = import_domain
+profiles = HOME/'profiles'
+profiles.mkdir()
+for name in ('a','b'):
+    (HOME/f'{name}.plist').write_bytes(plistlib.dumps({'value':1}))
+    (profiles/f'{name}.json').write_text('{"value":1}')
+(profiles/'local.json').write_text('{"local":true}')
+preferences.capture([entry])
+before = read_state('preferences')['resume']['snapshot']
+root = preferences.snapshot_root(entry)
+(root/'preferences.plist').write_bytes(plistlib.dumps({'enabled':False}))
+for name in ('a','b'):
+    (root/f'{name}.plist').write_bytes(plistlib.dumps({'value':2}))
+(root/'profiles.plist').write_bytes(plistlib.dumps({'a.json':b'{"value":2}', 'b.json':b'{"value":2}'}))
+incoming = preferences.snapshots(entry)
+real_atomic = preferences.atomic
+failure = HOME/'b.plist'
+def interrupted_atomic(path, *args, **kwargs):
+    if path == failure:
+        raise OSError('simulated write failure')
+    return real_atomic(path, *args, **kwargs)
+preferences.atomic = interrupted_atomic
+with case.assertRaisesRegex(OSError, 'simulated write failure'):
+    preferences.restore([entry])
+assert domain == {'enabled':False, 'unowned':'retained'}
+assert plistlib.loads((HOME/'a.plist').read_bytes()) == {'value':2}
+assert plistlib.loads((HOME/'b.plist').read_bytes()) == {'value':1}
+assert read_state('preferences')['resume']['snapshot'] == before
+preferences.atomic = real_atomic
+(HOME/'a.plist').write_bytes(plistlib.dumps({'value':3}))
+with case.assertRaisesRegex(RuntimeError, 'both versions preserved'):
+    preferences.restore([entry])
+assert plistlib.loads((HOME/'a.plist').read_bytes()) == {'value':3}
+(HOME/'a.plist').write_bytes(incoming['a.plist'])
+(root/'a.plist').write_bytes(plistlib.dumps({'value':3}))
+with case.assertRaisesRegex(RuntimeError, 'both versions preserved'):
+    preferences.restore([entry])
+(root/'a.plist').write_bytes(incoming['a.plist'])
+preferences.capture([entry])
+assert preferences.snapshots(entry) == incoming
+failure = profiles/'b.json'
+preferences.atomic = interrupted_atomic
+with case.assertRaisesRegex(OSError, 'simulated write failure'):
+    preferences.restore([entry])
+assert json.loads((profiles/'a.json').read_bytes()) == {'value':2}
+assert json.loads((profiles/'b.json').read_bytes()) == {'value':1}
+preferences.atomic = real_atomic
+preferences.restore([entry])
+for name in ('a','b'):
+    assert plistlib.loads((HOME/f'{name}.plist').read_bytes()) == {'value':2}
+    assert json.loads((profiles/f'{name}.json').read_bytes()) == {'value':2}
+assert (profiles/'local.json').read_text() == '{"local":true}'
+assert read_state('preferences')['resume']['snapshot'] == preferences.fingerprint(incoming)
 """)
 
     def test_public_preferences_recover_with_only_a_password(self):
