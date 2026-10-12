@@ -87,15 +87,11 @@ def main():
                 ],
             ],
         )
+        step("repositories", [[MISE, "bootstrap", "repos", "update", "--yes"]])
         step("skills", [["skills", "update", "--global", "--yes"]])
+        step("personal-skills", [[MISE, "run", "skills:link"]])
         step("tmux", [["tpack", "update", "all"]])
-        step(
-            "fish",
-            [
-                [MISE, "bootstrap", "repos", "update", "--yes"],
-                [MISE, "run", "setup:fish"],
-            ],
-        )
+        step("fish", [[MISE, "run", "setup:fish"]])
         step(
             "reference-data",
             [

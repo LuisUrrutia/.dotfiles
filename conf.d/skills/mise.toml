@@ -1,8 +1,17 @@
+[bootstrap.repos]
+"~/Projects/LuisUrrutia/skills" = { url = "git@github.com:LuisUrrutia/skills.git" }
+
 [dotfiles]
 "~/.agents/skills/visual-change-explainer" = { source = "visual-change-explainer", mode = "symlink-each" }
+"~/.claude/skills/visual-change-explainer" = { source = "visual-change-explainer", mode = "symlink-each" }
 
 [tools]
 "npm:skills" = "latest"
 
 [tasks."setup:skills"]
+depends = ["skills:link"]
 run = 'bash "{{ config_root }}/setup.sh"'
+
+[tasks."skills:link"]
+description = "Link personal skills from their development checkout"
+run = 'fish --no-config "{{ config_root }}/link.fish"'

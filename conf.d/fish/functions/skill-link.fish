@@ -77,6 +77,7 @@ end
 function __skill_link_into -a name source agent_dir -d "Point one agent directory at a skill"
     set -l target "$agent_dir/$name"
 
+    __skill_link_check_parents "$agent_dir"; or return 1
     mkdir -p "$agent_dir"; or return 1
 
     if test -L "$target"
@@ -106,6 +107,23 @@ function __skill_link_into -a name source agent_dir -d "Point one agent director
     echo "Linked $target -> $source"
 end
 
+function __skill_link_check_parents -a directory -d "Preserve redirected skill directories"
+    while test "$directory" != "$HOME"
+        if test -L "$directory"; or begin
+                test -e "$directory"; and not test -d "$directory"
+            end
+            echo "Refusing redirected skill directory: $directory" >&2
+            return 1
+        end
+        set -l parent (path dirname "$directory")
+        if test "$parent" = "$directory"
+            echo "Skill directory must be inside HOME: $directory" >&2
+            return 1
+        end
+        set directory "$parent"
+    end
+end
+
 # The skills CLI chains one agent directory to another, so such a link holds
 # nothing the source does not. Any other symlink is someone else's and is kept.
 function __skill_link_is_replaceable -a target source -d "Check whether a symlink can be dropped"
@@ -126,6 +144,7 @@ function __skill_link_backup -a target agent_dir -d "Move an installed skill asi
     set -l destination "$HOME/.agents/skills-backups/"(string replace -r '^\.' '' $agent)"/$name-"(date +%Y%m%d-%H%M%S)
     set -l parent (path dirname "$destination")
 
+    __skill_link_check_parents "$parent"; or return 1
     mkdir -p "$parent"; or return 1
     mv "$target" "$destination"; or return 1
     echo "Backed up $target to $destination"

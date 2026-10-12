@@ -98,6 +98,14 @@ Fish also provides `upd` and `backup`. To install software, add its declaration 
 the owning module in `~/.config/mise/conf.d` **before** running `config apply`.
 Downloaded binaries and application state do not sync.
 
+Personal skills stay in the editable checkout at `~/Projects/LuisUrrutia/skills`.
+Mise clones `git@github.com:LuisUrrutia/skills.git` using your GitHub SSH access;
+`skills:link` calls the Fish `skill-link` function for every skill in that checkout,
+linking it into both `~/.agents/skills` (Codex) and `~/.claude/skills`.
+`update` refreshes the repository and links newly added skills. Local edits stay
+in the checkout, and mise refuses to update a dirty repository.
+Third-party skills use the skills CLI with both agents selected.
+
 ## Configuration and sync
 
 Enrollment copies only missing public files into `~/.config/mise` as regular files.
@@ -409,7 +417,7 @@ See [VM evidence](plans/mise-compatibility.md#silent-file-associations).
 <details>
 <summary>Downloads: GitHub, AutoFirma, IINA, and Ghostty</summary>
 
-Public recipes, font repositories, plugins, skills, and the initial checkout use
+Public recipes, font repositories, plugins, third-party skills, and the initial checkout use
 HTTPS without private-history authentication. Third-party taps use mise's default
 GitHub metadata resolution. Shared Git config preserves each URL's protocol.
 Private history requires authentication for its chosen transport.

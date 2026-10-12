@@ -313,6 +313,66 @@ atomic(STATE/'dotnet-lts', '12.0.100\\n')
         )
         self.assertEqual(smoke.stdout, "")
 
+        origin = self.root / "skills origin"
+        skill = origin / "personal-example"
+        skill.mkdir(parents=True)
+        (skill / "SKILL.md").write_text("Personal skill\n")
+        machine.run("git", "init", "--initial-branch=main", origin)
+        machine.run("git", "add", ".", cwd=origin)
+        machine.run("git", "commit", "-m", "fixture", cwd=origin)
+        checkout = machine.home / "Projects/LuisUrrutia/skills"
+        with (machine.config / "config.local.toml").open("a") as stream:
+            stream.write(
+                '\n[bootstrap.repos]\n"~/Projects/LuisUrrutia/skills" = {url='
+                + json.dumps(str(origin))
+                + "}\n"
+            )
+        machine.mise("bootstrap", "repos", "update", str(checkout), "--yes")
+        (machine.home / ".local/bin/fish").symlink_to(FISH)
+        installed = machine.home / ".agents/skills/personal-example"
+        installed.mkdir(parents=True)
+        (installed / "SKILL.md").write_text("Keep this edited installed copy\n")
+        for _ in range(2):
+            machine.mise("run", "skills:link")
+        for agent in (".agents", ".claude"):
+            target = machine.home / agent / "skills/personal-example"
+            self.assertTrue(target.is_symlink())
+            self.assertEqual(target.resolve(), checkout / "personal-example")
+            visual = machine.home / agent / "skills/visual-change-explainer/SKILL.md"
+            self.assertEqual(
+                visual.resolve(),
+                machine.config / "conf.d/skills/visual-change-explainer/SKILL.md",
+            )
+        backups = list((machine.home / ".agents/skills-backups").rglob("SKILL.md"))
+        self.assertEqual(len(backups), 1)
+        self.assertEqual(backups[0].read_text(), "Keep this edited installed copy\n")
+        added = origin / "new-personal-skill"
+        added.mkdir()
+        (added / "SKILL.md").write_text("Added upstream\n")
+        machine.run("git", "add", ".", cwd=origin)
+        machine.run("git", "commit", "-m", "add skill", cwd=origin)
+        machine.mise("bootstrap", "repos", "update", str(checkout), "--yes")
+        machine.mise("run", "skills:link")
+        for agent in (".agents", ".claude"):
+            target = machine.home / agent / "skills/new-personal-skill"
+            self.assertEqual(target.resolve(), checkout / "new-personal-skill")
+        owned = checkout / "personal-example/SKILL.md"
+        owned.write_text("Uncommitted personal edit\n")
+        refused = machine.mise(
+            "bootstrap", "repos", "update", str(checkout), "--yes", ok=False
+        )
+        self.assertNotEqual(refused.returncode, 0)
+        self.assertEqual(installed.joinpath("SKILL.md").read_text(), owned.read_text())
+        agent_directory = installed.parent
+        redirected = machine.home / "redirected-skills"
+        agent_directory.rename(redirected)
+        agent_directory.symlink_to(redirected)
+        refused = machine.mise("run", "skills:link", ok=False)
+        self.assertNotEqual(refused.returncode, 0)
+        self.assertIn("Refusing redirected skill directory", refused.stderr)
+        agent_directory.unlink()
+        redirected.rename(agent_directory)
+
         manager = machine.home / ".local/share/fisher/functions/fisher.fish"
         manager.parent.mkdir(parents=True)
         manager.write_text(
