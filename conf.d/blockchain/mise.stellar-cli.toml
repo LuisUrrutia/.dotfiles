@@ -1,3 +1,3 @@
 
 [bootstrap.packages]
-"brew:stellar-cli" = { os = "macos" }
+"brew:stellar-cli" = { os = ["macos", "linux"] }
