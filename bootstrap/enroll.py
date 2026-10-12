@@ -178,6 +178,9 @@ def enroll(args):
         raise ValueError(
             "Edit _.machine.sync in config.local.toml explicitly to change the existing mode"
         )
+    if "dotfiles_repository" not in current.get("vars", {}):
+        current.setdefault("vars", {})["dotfiles_repository"] = str(REPOSITORY)
+        atomic(ROOT / "config.local.toml", document(current))
     choices = ROOT / "miserc.local.toml"
     apps = args.apps.split(",") if args.apps else []
     valid = {

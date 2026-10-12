@@ -195,9 +195,21 @@ Only ciphertext and the public recipient enter this directory. Use a strong,
 unique recovery password: these encrypted files will be publicly downloadable.
 The same unlocked identity permits unattended saves on enrolled machines.
 Public exports use the official age CLI; private operational history still uses
-native mise encryption and sync. Public backups change only when you run
-`backup capture` and publish the resulting Git changes. Ordinary history sync
-does not commit or push this checkout.
+native mise encryption and sync. New macOS installations also run
+`backup capture --daily` through a native mise LaunchAgent, in both sync modes.
+It checks at login and hourly, captures once per local calendar day, and retries
+failed or busy runs at the next check. Manual `backup capture` always runs.
+The unlocked local identity permits these captures without a password prompt.
+Captures list apps and files; preference keys and values stay hidden.
+
+Enrollment stores the checkout path in local `vars.dotfiles_repository`. Keep
+that checkout available; if you move it, update the variable and run
+`mise -C ~ run config apply`. Logs are `backup.log` and `backup.err.log` under
+`~/.local/state/mise/dotfiles/`; `public-backup.json` records the last successful
+capture. The current preference catalog is macOS-only, so Ubuntu has no public
+preference capture schedule. Review, commit, and push the changed ciphertext to
+publish it; neither the daily capture nor ordinary history sync publishes this
+checkout.
 
 After reinstalling, clone the repo and run `./install.sh --recover` with the
 wanted optional apps. On Ubuntu, retain the old `--machine` ID if needed.

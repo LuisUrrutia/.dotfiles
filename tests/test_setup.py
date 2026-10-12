@@ -682,6 +682,12 @@ assert preferences.snapshot_root(entries[0]) == ROOT/'private/preferences/machin
         shutil.copytree(old.config / "conf.d", public / "conf.d")
         shutil.copy2(old.config / "config.toml", public / "config.toml")
         shutil.copy2(REPO / "mise.toml", public / "mise.toml")
+        shutil.copy2(REPO / "miserc.toml", public / "miserc.toml")
+        (public / "conf.d/history").mkdir()
+        shutil.copy2(
+            REPO / "conf.d/history/mise.macos.toml",
+            public / "conf.d/history/mise.macos.toml",
+        )
         old.env["MISE_TRUSTED_CONFIG_PATHS"] += os.pathsep + str(public)
         definition = {
             "name": "example",
@@ -745,6 +751,22 @@ assert preferences.snapshot_root(entries[0]) == ROOT/'private/preferences/machin
         self.assertEqual((old.config / "age.txt").stat().st_mode & 0o777, 0o600)
         old.run(sys.executable, "-c", capture, "capture")
         self.assertEqual(archive.read_bytes(), ciphertext)
+        daily = old.run(sys.executable, "-c", capture, "capture", "--daily")
+        self.assertIn("already captured today", daily.stdout)
+        stamp = Path(old.env["MISE_STATE_DIR"]) / "dotfiles/public-backup.json"
+        successful = json.loads(stamp.read_text())
+        yesterday = {**successful, "date": "2000-01-01"}
+        stamp.write_text(json.dumps(yesterday))
+        key = old.config / "age.txt"
+        key.rename(old.config / "age.saved")
+        failed = old.run(sys.executable, "-c", capture, "capture", "--daily", ok=False)
+        self.assertNotEqual(failed.returncode, 0)
+        self.assertEqual(json.loads(stamp.read_text()), yesterday)
+        self.assertEqual(archive.read_bytes(), ciphertext)
+        (old.config / "age.saved").rename(key)
+        retried = old.run(sys.executable, "-c", capture, "capture", "--daily")
+        self.assertIn("unchanged", retried.stdout)
+        self.assertEqual(json.loads(stamp.read_text()), successful)
         (old.config / "age.txt").unlink()
         code, output = old.password_command(command, "verify")
         self.assertEqual(code, 0, output)
@@ -772,7 +794,7 @@ assert preferences.snapshot_root(entries[0]) == ROOT/'private/preferences/machin
             check_public_backup(invalid)
 
         fresh = Machine(self.root, "fresh")
-        checkout = fresh.home / "public"
+        checkout = fresh.home / "public checkout"
         shutil.copytree(public, checkout)
         for tool in ("age", "age-keygen"):
             (fresh.home / ".local/bin" / tool).symlink_to(shutil.which(tool))
@@ -787,6 +809,34 @@ assert preferences.snapshot_root(entries[0]) == ROOT/'private/preferences/machin
         self.assertFalse((fresh.config / "private").exists())
         code, output = fresh.password_command(*args)
         self.assertEqual(code, 0, output)
+        enrollment = tomllib.loads((fresh.config / "config.local.toml").read_text())
+        self.assertEqual(enrollment["vars"]["dotfiles_repository"], str(checkout))
+        if sys.platform == "darwin":
+            launchctl = fresh.home / ".local/bin/launchctl"
+            launchctl.write_text(
+                '#!/bin/sh\nif [ "$1" = print ]; then exit 113; fi\nexit 0\n'
+            )
+            launchctl.chmod(0o755)
+            fresh.mise("bootstrap", "macos", "launchd-agents", "apply", "--yes")
+            agent = plistlib.loads(
+                (
+                    fresh.home / "Library/LaunchAgents/dev.mise.dotfiles-backup.plist"
+                ).read_bytes()
+            )
+            self.assertTrue(agent["RunAtLoad"])
+            self.assertEqual(agent["StartCalendarInterval"], [{"Minute": 0}])
+            self.assertEqual(
+                agent["ProgramArguments"],
+                [
+                    str(fresh.home / ".local/bin/mise"),
+                    "-C",
+                    str(checkout),
+                    "run",
+                    "backup",
+                    "capture",
+                    "--daily",
+                ],
+            )
         snapshot = (
             fresh.config / "private/preferences/machines/before/example/app.plist"
         )

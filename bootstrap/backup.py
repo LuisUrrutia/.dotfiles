@@ -7,11 +7,21 @@ import re
 import shutil
 import subprocess
 import sys
+from datetime import date
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "conf.d/setup"))
 import preferences
-from runtime import MISE, ROOT, atomic, local, lock, read_state, regular_parents
+from runtime import (
+    MISE,
+    ROOT,
+    atomic,
+    local,
+    lock,
+    read_state,
+    regular_parents,
+    write_state,
+)
 
 REPOSITORY = Path(__file__).resolve().parents[1]
 
@@ -282,7 +292,12 @@ def main():
     parser.add_argument(
         "--machine", help="Retain the existing machine ID when capturing"
     )
+    parser.add_argument(
+        "--daily", action="store_true", help="Capture only if not yet saved today"
+    )
     args = parser.parse_args()
+    if args.daily and args.action != "capture":
+        parser.error("--daily requires capture")
     with lock():
         if args.action == "init":
             initialize()
@@ -299,7 +314,16 @@ def main():
             identifier = args.machine or local().get("id") or machine_id()
             if identifier == "shared":
                 parser.error("shared is reserved for portable preferences")
+            stamp = {
+                "date": date.today().isoformat(),
+                "repository": str(REPOSITORY),
+                "machine": identifier,
+            }
+            if args.daily and read_state("public-backup") == stamp:
+                print("Public preferences already captured today")
+                return
             capture(REPOSITORY, identifier)
+            write_state("public-backup", stamp)
 
 
 if __name__ == "__main__":

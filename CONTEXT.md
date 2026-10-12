@@ -15,7 +15,8 @@
   a Linux enrollment ID across reinstalls.
 - **Setup history**: mise's private Git-backed checkpoints of declarations,
   active sources, plugin manifests, and encrypted preference snapshots.
-- **Public recovery backup**: explicitly captured, allowlisted preferences under
+- **Public recovery backup**: allowlisted preferences captured manually or daily
+  on enrolled Macs under
   `backups/preferences/*.plist.age`, plus `backups/recovery.age`, a password-sealed
   age identity. Only ciphertext and its public recipient enter the checkout.
   The age CLI owns this export format; native mise still owns operational history.

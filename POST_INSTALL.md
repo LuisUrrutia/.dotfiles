@@ -47,6 +47,11 @@ checks need a Mac outside this VM. See the measured results and limitations in
    `mise run backup verify`. Test `--recover` in a fresh disposable home with only
    the public ciphertext and its password. Check incorrect-password failure,
    machine isolation, and that an existing pending snapshot is preserved.
+   In both sync modes, check `dev.mise.dotfiles-backup` with
+   `mise -C ~ bootstrap macos launchd-agents status`. Confirm its login/hourly
+   checks capture once per day without a password prompt and retry failures.
+   Inspect `backup.log`, `backup.err.log`, and `public-backup.json` under
+   `~/.local/state/mise/dotfiles/`; confirm no public commit or push occurs.
 8. Use a second disposable machine with the same private history. Check shared
    Fish/Starship edits, a real common package addition, a selected optional app,
    and a new setup task/source. Verify manual mode waits and automatic mode
