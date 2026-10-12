@@ -102,7 +102,7 @@ the owning module in `~/.config/mise/conf.d` **before** running `config apply`.
 Downloaded binaries and application state do not sync.
 
 Personal skills stay in the editable checkout at `~/Projects/LuisUrrutia/skills`.
-Mise clones `git@github.com:LuisUrrutia/skills.git` using your GitHub SSH access;
+Mise clones `https://github.com/LuisUrrutia/skills.git` without GitHub authentication;
 `skills:link` calls the Fish `skill-link` function for every skill in that checkout,
 linking it into both `~/.agents/skills` (Codex) and `~/.claude/skills`.
 `update` refreshes the repository and links newly added skills. Local edits stay
@@ -116,8 +116,9 @@ Edit this active tree: private mise history owns it, and application links point
 here. Shared sources, installation declarations, plugin manifests, and setup tasks
 travel together. The public checkout remains separate.
 
-A full retry repairs the previously shipped terminal handling and, on macOS,
-the screen-lock check. It prints a short confirmation for each repair.
+A full retry repairs the previously shipped terminal handling, HTTPS downloads,
+public skills clone URL, and, on macOS, the screen-lock check.
+It prints a short confirmation for each repair.
 Custom checks and other active settings are preserved.
 After an interruption, rerun the same installer command. It lets mise recover
 unfinished history operations before preparing or applying setup, including on
@@ -432,7 +433,7 @@ See [VM evidence](plans/mise-compatibility.md#silent-file-associations).
 <details>
 <summary>Downloads: GitHub, AutoFirma, IINA, and Ghostty</summary>
 
-Public recipes, font repositories, plugins, third-party skills, and the initial checkout use
+Public recipes, font repositories, plugins, skills, and the initial checkout use
 HTTPS without private-history authentication. Third-party taps use mise's default
 GitHub metadata resolution. Shared Git config preserves each URL's protocol.
 Private history requires authentication for its chosen transport.

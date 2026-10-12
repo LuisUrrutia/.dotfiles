@@ -224,6 +224,32 @@ def repair_https_downloads():
         print("Updated setup downloads to use system certificate trust.", flush=True)
 
 
+def repair_public_skills_clone():
+    path = ROOT / "conf.d/skills/mise.toml"
+    regular_parents(path)
+    if path.is_symlink():
+        raise RuntimeError(f"Refusing symlink: {path}")
+    settings = read_toml(path)
+    repo = (
+        settings.get("bootstrap", {})
+        .get("repos", {})
+        .get("~/Projects/LuisUrrutia/skills", {})
+    )
+    previous = "git@github.com:LuisUrrutia/skills.git"
+    if repo.get("url") != previous:
+        return
+    replacement = "https://github.com/LuisUrrutia/skills.git"
+    before = path.read_text()
+    if before.count(toml(previous)) != 1:
+        raise RuntimeError(f"Cannot safely repair the public skills URL: {path}")
+    after = before.replace(toml(previous), toml(replacement), 1)
+    repo["url"] = replacement
+    if tomllib.loads(after) != settings:
+        raise RuntimeError(f"Cannot safely repair the public skills URL: {path}")
+    atomic(path, after, path.stat().st_mode & 0o777)
+    print("Updated the public skills checkout to use HTTPS.", flush=True)
+
+
 def git_settings(record):
     identity = record.get("git", {})
     default = identity.get("default", {})
@@ -391,6 +417,7 @@ def enroll(args):
     with lock():
         repair_terminal_session()
         repair_https_downloads()
+        repair_public_skills_clone()
     if sys.platform == "darwin":
         with lock():
             repair_screen_lock_check()

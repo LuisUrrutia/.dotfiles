@@ -1,5 +1,5 @@
 [bootstrap.repos]
-"~/Projects/LuisUrrutia/skills" = { url = "git@github.com:LuisUrrutia/skills.git" }
+"~/Projects/LuisUrrutia/skills" = { url = "https://github.com/LuisUrrutia/skills.git" }
 
 [tools]
 "npm:skills" = "latest"

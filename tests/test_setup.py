@@ -464,7 +464,7 @@ touch "$HOME/setup-applied"
         self.assertEqual(active.read_text(), custom)
         self.assertFalse((machine.home / "setup-applied").exists())
 
-    def test_enrollment_repairs_https_downloads_and_preserves_local_edits(self):
+    def test_enrollment_repairs_public_downloads_and_preserves_local_edits(self):
         machine = Machine(self.root, "downloads")
         machine.minimal()
         machine.encryption()
@@ -485,6 +485,13 @@ BLOCKED_VERSION = "5.3.3"
 """
         active = machine.write("conf.d/setup/packages.py", previous)
         active.chmod(0o640)
+        previous_skills = (
+            '[bootstrap.repos]\n"~/Projects/LuisUrrutia/skills" = '
+            '{url="git@github.com:LuisUrrutia/skills.git", ref="main"}\n'
+            '\n# Keep my local skill task.\n[tasks.personal]\nrun="echo personal"\n'
+        )
+        skills = machine.write("conf.d/skills/mise.toml", previous_skills)
+        skills.chmod(0o640)
         (machine.config / "conf.d/setup/downloads.py").unlink(missing_ok=True)
         checkout = machine.home / "public"
         (checkout / "bootstrap").mkdir(parents=True)
@@ -495,6 +502,7 @@ BLOCKED_VERSION = "5.3.3"
             ignore=shutil.ignore_patterns("__pycache__"),
         )
         shutil.copytree(REPO / "tasks", checkout / "tasks")
+        shutil.copytree(REPO / "conf.d/skills", checkout / "conf.d/skills")
         machine.run("git", "init", "-q", checkout)
         machine.run("git", "-C", checkout, "add", "conf.d", "tasks")
         task = machine.write("tasks/config", "#!/bin/bash\n#MISE raw=true\nexit 0\n")
@@ -515,9 +523,32 @@ BLOCKED_VERSION = "5.3.3"
         )
         self.assertEqual(active.stat().st_mode & 0o777, 0o640)
         self.assertTrue((machine.config / "conf.d/setup/downloads.py").is_file())
+        self.assertEqual(
+            skills.read_text(),
+            previous_skills.replace(
+                "git@github.com:LuisUrrutia/skills.git",
+                "https://github.com/LuisUrrutia/skills.git",
+            ),
+        )
+        self.assertEqual(skills.stat().st_mode & 0o777, 0o640)
+        plan = machine.mise(
+            "bootstrap", "repos", "update", "~/Projects/LuisUrrutia/skills", "--dry-run"
+        )
+        self.assertIn(
+            "git clone --branch main https://github.com/LuisUrrutia/skills.git",
+            plan.stdout,
+        )
         updated = active.stat().st_mtime_ns
+        skills_updated = skills.stat().st_mtime_ns
         machine.python(invocation)
         self.assertEqual(active.stat().st_mtime_ns, updated)
+        self.assertEqual(skills.stat().st_mtime_ns, skills_updated)
+        custom = previous_skills.replace(
+            "git@github.com:LuisUrrutia/skills.git", "git@github.com:example/skills.git"
+        )
+        skills.write_text(custom)
+        machine.python(invocation)
+        self.assertEqual(skills.read_text(), custom)
         foreign = machine.home / "foreign.py"
         foreign.write_text(previous)
         active.unlink()
@@ -710,6 +741,10 @@ atomic(STATE/'dotnet-lts', '12.0.100\\n')
         machine.run("git", "add", ".", cwd=origin)
         machine.run("git", "commit", "-m", "fixture", cwd=origin)
         checkout = machine.home / "Projects/LuisUrrutia/skills"
+        plan = machine.mise("bootstrap", "repos", "update", str(checkout), "--dry-run")
+        self.assertIn(
+            "git clone https://github.com/LuisUrrutia/skills.git", plan.stdout
+        )
         with (machine.config / "config.local.toml").open("a") as stream:
             stream.write(
                 '\n[bootstrap.repos]\n"~/Projects/LuisUrrutia/skills" = {url='
