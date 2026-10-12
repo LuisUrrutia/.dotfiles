@@ -242,6 +242,12 @@ def enroll(args):
     if args.seed_only:
         print(f"Seeded missing setup sources in {ROOT}; existing files were preserved")
         return
+    if sys.platform == "darwin":
+        subprocess.run(
+            ["/bin/bash", str(REPOSITORY / "conf.d/macos/screen-lock.sh"), "apply"],
+            check=True,
+            timeout=300,
+        )
     subprocess.run(
         ["git", "-C", str(REPOSITORY), "config", "core.hooksPath", ".githooks"],
         check=True,

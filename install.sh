@@ -7,7 +7,8 @@ Usage: ./install.sh [--dry-run | --mise-only] [enrollment options]
 
 Fresh macOS arm64 or Ubuntu (arm64/x86_64) setup. Checks platform prerequisites,
 installs the latest stable official mise with SHA-256 verification, then enrolls
-this machine. Managed tools keep their configured release cooldown.
+this machine and enables immediate screen locking on macOS. Managed tools keep
+their configured release cooldown.
 
 Enrollment options: --machine ID --apps app,app --sync manual|automatic
                     --origin GIT_URL --recipient PUBLIC_KEY --adopt GIT_URL
@@ -19,7 +20,7 @@ EOF
 fi
 if [[ "${1:-}" == --dry-run ]]; then
   echo 'Plan: check non-root user and sudo; macOS: Full Disk Access and CLT; Ubuntu: curl, Git and CA certificates.'
-  echo 'Then install the latest stable official mise with SHA-256 verification, enroll missing sources and bootstrap.'
+  echo 'Then install the latest stable official mise with SHA-256 verification, enroll missing sources, configure macOS screen locking and bootstrap.'
   echo 'No files, packages, preferences, services or credentials were changed.'
   exit 0
 fi

@@ -7,8 +7,8 @@ os = "macos"
 
 [doctor.checks.screen-lock]
 description = "The screen locks immediately"
-run = "/usr/sbin/sysadminctl -screenLock status 2>&1 | /usr/bin/grep -q 'delay is 0 seconds'"
-hint = "Set Require password after screen saver or display is turned off to Immediately in System Settings."
+run = 'bash "${MISE_CONFIG_DIR:-$HOME/.config/mise}/conf.d/macos/screen-lock.sh" check'
+hint = "Run ./install.sh from the public checkout to configure immediate screen locking."
 timeout = "5s"
 os = "macos"
 

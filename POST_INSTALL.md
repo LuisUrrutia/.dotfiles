@@ -13,8 +13,10 @@ checks need a Mac outside this VM. See the measured results and limitations in
 [the Gatekeeper acceptance record](plans/mise-compatibility.md#gatekeeper-resolution-and-vm-limits).
 
 1. Complete Full Disk Access, Command Line Tools, and sudo prerequisites, in that
-   order. Enable FileVault, save its recovery key outside history, and set immediate
-   screen lock. Enroll private Git access, age identity plus recovery recipient, Git
+   order. Enable FileVault and save its recovery key outside history. Confirm the
+   installer configures immediate screen locking, asks for the Mac login password
+   only when needed, and succeeds without prompting on a second run.
+   Enroll private Git access, age identity plus recovery recipient, Git
    identity, optional apps, and manual/automatic mode. Keep private inputs out of
    the public repository. Run `mise -C ~ doctor project` to inspect both macOS
    requirements; `config apply` runs these checks before bootstrap.

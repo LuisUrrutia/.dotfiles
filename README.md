@@ -9,13 +9,15 @@ the setup without Homebrew or Stow executables. Arch needs its own package decla
 Setup does not migrate an existing installation or uninstall Homebrew.
 
 1. **Prepare the OS.** On macOS, grant the terminal Full Disk Access and install
-   Apple's Command Line Tools. Enable FileVault, save its recovery key outside
-   history, and require a password immediately when the screen saver starts or
-   the display turns off.
+   Apple's Command Line Tools. Enable FileVault and save its recovery key outside
+   history. The installer enables immediate screen locking when needed, using
+   macOS's own password prompt in the terminal. It does not ask again when the
+   setting is already correct.
    On Ubuntu, use a normal login account with sudo;
    the installer adds missing curl, Git, and CA certificates. Run `sudo -v`
-   before full setup. System commands fail rather than wait for input; age's
-   recovery password is entered through its hidden terminal prompt.
+   before full setup. Initial enrollment can ask for the Mac login password and
+   age's recovery password through their hidden terminal prompts. Background
+   maintenance and diagnostics never prompt.
 
    Run macOS system settings from the local console: the firewall policy disables
    automatic permission for signed apps, so incoming services such as SSH may need
@@ -396,8 +398,9 @@ restores the declared order.
 User defaults and the screenshots directory are native declarations. Enrollment
 stores the absolute screenshot path locally because mise defaults cannot render
 templates. `system-settings.sh` handles privileged update preferences, firewall,
-power commands, Library visibility, and remote-management settings. Native
-`mise doctor project` checks FileVault and immediate screen locking before setup.
+power commands, Library visibility, and remote-management settings.
+Enrollment configures immediate screen locking before `mise doctor project`
+checks it and FileVault. `--seed-only` does not change the lock setting.
 Native defaults cannot write privileged system domains.
 
 Thaw installs and updates only below macOS 27. A package hook checks the OS and

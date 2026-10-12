@@ -188,6 +188,70 @@ class SetupTests(unittest.TestCase):
     def tearDown(self):
         self.scratch.cleanup()
 
+    def test_screen_lock_setup_and_native_diagnostic(self):
+        machine = Machine(self.root, "screen-lock")
+        script = REPO / "conf.d/macos/screen-lock.sh"
+        target = machine.config / "conf.d/macos/screen-lock.sh"
+        target.parent.mkdir(parents=True)
+        shutil.copy2(script, target)
+        native = tomllib.loads((REPO / "conf.d/macos/mise.macos.toml").read_text())
+        machine.write(
+            "config.toml",
+            "[doctor.checks.screen-lock]\nrun = "
+            + json.dumps(native["doctor"]["checks"]["screen-lock"]["run"])
+            + "\n",
+        )
+        command = machine.home / ".local/bin/sysadminctl"
+        command.write_text(
+            """#!/bin/bash
+set -euo pipefail
+[[ "$1" == -screenLock ]]
+if [[ "$2" == status ]]; then
+  [[ ! -f "$HOME/unreadable" ]] || exit 2
+  printf 'sysadminctl[123:456] screenLock delay is %s\\n' "$(cat "$HOME/delay")" >&2
+else
+  [[ "$*" == '-screenLock immediate -password -' ]]
+  touch "$HOME/authorized"
+  [[ -f "$HOME/rejected" ]] || echo immediate > "$HOME/delay"
+fi
+"""
+        )
+        command.chmod(0o755)
+        delay = machine.home / "delay"
+        authorized = machine.home / "authorized"
+        for value in ("immediate", "0 seconds"):
+            delay.write_text(value)
+            machine.mise("doctor", "project")
+            machine.run("/bin/bash", script, "apply")
+            self.assertFalse(authorized.exists())
+
+        delay.write_text("300 seconds")
+        self.assertNotEqual(machine.mise("doctor", "project", ok=False).returncode, 0)
+        self.assertNotEqual(
+            machine.run("/bin/bash", script, "apply", ok=False).returncode, 0
+        )
+        self.assertFalse(authorized.exists())
+        invocation = (
+            "import subprocess; raise SystemExit(subprocess.call("
+            + repr(["/bin/bash", str(script), "apply"])
+            + "))"
+        )
+        code, output = machine.password_command("-c", invocation)
+        self.assertEqual(code, 0, output)
+        self.assertTrue(authorized.exists())
+        machine.mise("doctor", "project")
+
+        delay.write_text("off")
+        (machine.home / "rejected").touch()
+        code, output = machine.password_command("-c", invocation)
+        self.assertNotEqual(code, 0, output)
+        self.assertIn("macOS did not enable", output)
+        authorized.unlink()
+        (machine.home / "unreadable").touch()
+        code, output = machine.password_command("-c", invocation)
+        self.assertNotEqual(code, 0, output)
+        self.assertFalse(authorized.exists())
+
     def test_seed_and_native_deployment_preserve_user_files(self):
         machine = Machine(self.root, "safe")
         machine.python("""import enroll
