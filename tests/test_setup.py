@@ -187,6 +187,38 @@ class SetupTests(unittest.TestCase):
     def test_seed_and_native_deployment_preserve_user_files(self):
         machine = Machine(self.root, "safe")
         machine.payload()
+        manager = machine.home / ".local/share/fisher/functions/fisher.fish"
+        manager.parent.mkdir(parents=True)
+        manager.write_text(
+            """function fisher
+    switch $argv[1]
+        case install update
+            printf 'one/plugin\\n' > "$HOME/.config/fish/fish_plugins"
+            test "$argv[2]" != two/plugin; or test ! -e "$HOME/plugin-download-fails"
+        case list
+            echo one/plugin
+            test ! -e "$HOME/plugins-ready"; or echo two/plugin
+    end
+end
+"""
+        )
+        linux = tomllib.loads((REPO / "conf.d/fish/mise.linux.toml").read_text())
+        macos = tomllib.loads((REPO / "conf.d/dev/mise.macos.toml").read_text())
+        package_sources = {}
+        for target, source in macos["dotfiles"].items():
+            fixture = machine.home / source.lstrip("/")
+            fixture.parent.mkdir(parents=True, exist_ok=True)
+            fixture.write_text("Package fixture\n")
+            package_sources[target] = str(fixture)
+        with (machine.config / "config.local.toml").open("a") as stream:
+            stream.write(
+                "\n[dotfiles]\n"
+                + "\n".join(
+                    f"{json.dumps(target)} = {json.dumps(source)}"
+                    for target, source in (linux["dotfiles"] | package_sources).items()
+                )
+                + "\n"
+            )
         machine.mise("tasks", "validate")
         self.assertEqual(
             machine.mise("tool-alias", "ls", "dotnet").stdout.split(),
@@ -260,6 +292,10 @@ atomic(STATE/'dotnet-lts', '12.0.100\\n')
         )
         machine.mise("run", "config", "check")
         machine.mise("bootstrap", "--only", "files,dotfiles", "--yes")
+        for target, source in package_sources.items():
+            deployed = machine.home / target.removeprefix("~/")
+            self.assertTrue(deployed.is_symlink())
+            self.assertEqual(deployed.resolve(), Path(source))
         self.assertEqual((machine.home / ".ssh").stat().st_mode & 0o777, 0o700)
         machine.python("import finish; finish.instructions()")
         machine.python("import config; config.check(); config.remember()")
@@ -307,6 +343,8 @@ atomic(STATE/'dotnet-lts', '12.0.100\\n')
         self.assertFalse(fish.is_symlink())
         self.assertFalse((fish / "mise.toml").exists())
         self.assertTrue((fish / "config.fish").is_symlink())
+        self.assertTrue((fish / "functions/fisher.fish").is_symlink())
+        self.assertEqual((fish / "functions/fisher.fish").resolve(), manager)
         machine.env["PAGER"] = "fixture-pager"
         smoke = machine.run(
             FISH, "-c", 'test "$PAGER" = fixture-pager; and not set -q FZF_DEFAULT_OPTS'
@@ -368,31 +406,6 @@ atomic(STATE/'dotnet-lts', '12.0.100\\n')
         agent_directory.unlink()
         redirected.rename(agent_directory)
 
-        manager = machine.home / ".local/share/fisher/functions/fisher.fish"
-        manager.parent.mkdir(parents=True)
-        manager.write_text(
-            """function fisher
-    switch $argv[1]
-        case install update
-            printf 'one/plugin\\n' > "$HOME/.config/fish/fish_plugins"
-            test "$argv[2]" != two/plugin; or test ! -e "$HOME/plugin-download-fails"
-        case list
-            echo one/plugin
-            test ! -e "$HOME/plugins-ready"; or echo two/plugin
-    end
-end
-"""
-        )
-        linux = tomllib.loads((REPO / "conf.d/fish/mise.linux.toml").read_text())
-        machine.write(
-            "conf.d/fisher-test/mise.toml",
-            "[dotfiles]\n"
-            + "\n".join(
-                f"{json.dumps(target)} = {json.dumps(source)}"
-                for target, source in linux["dotfiles"].items()
-            ),
-        )
-        machine.mise("dot", "apply", "--yes")
         self.assertEqual(machine.run(FISH, "-c", "fisher list").stdout, "one/plugin\n")
         manifest = fish / "fish_plugins"
         requested = "One/Plugin\nTwo/Plugin\n"
