@@ -1,6 +1,7 @@
 # Operating principles
 
-Read `~/.agents/AGENTS_LOCAL.md` (machine-local rules) when it exists.
+Read `~/.agents/AGENTS_LOCAL.md` (machine-local rules) and
+`~/.agents/AGENTS_PRIVATE.md` (untracked personal rules), each when it exists.
 
 - Global rule requests: edit `~/.config/mise/conf.d/ai/AGENTS.md`, the tracked
   source of this file. `~/.claude/CLAUDE.md` and `~/.codex/AGENTS.md` only
