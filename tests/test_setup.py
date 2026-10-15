@@ -1000,6 +1000,9 @@ atomic(STATE/'dotnet-lts', '12.0.100\\n')
         (machine.home / ".claude/settings.json").write_text(
             '{"customUserSetting": true}'
         )
+        (machine.home / ".claude.json").write_text(
+            '{"numStartups": 3, "mcpServers": {"local": {"command": "local-mcp"}}}'
+        )
         machine.mise("run", "config", "check")
         machine.mise("bootstrap", "--only", "files,dotfiles", "--yes")
         for target, source in package_sources.items():
@@ -1009,16 +1012,17 @@ atomic(STATE/'dotnet-lts', '12.0.100\\n')
         self.assertEqual((machine.home / ".ssh").stat().st_mode & 0o777, 0o700)
         machine.python("import finish; finish.instructions()")
         machine.python("import config; config.check(); config.remember()")
-        self.assertTrue(
-            tomllib.loads((machine.home / ".codex/config.toml").read_text())["plugins"][
-                "example"
-            ]["enabled"]
-        )
+        codex_config = tomllib.loads((machine.home / ".codex/config.toml").read_text())
+        self.assertTrue(codex_config["plugins"]["example"]["enabled"])
+        self.assertIn("chrome-devtools", codex_config["mcp_servers"])
         self.assertTrue(
             json.loads((machine.home / ".claude/settings.json").read_text())[
                 "customUserSetting"
             ]
         )
+        claude_state = json.loads((machine.home / ".claude.json").read_text())
+        self.assertEqual(claude_state["numStartups"], 3)
+        self.assertEqual(set(claude_state["mcpServers"]), {"local", "chrome-devtools"})
         codex = machine.home / ".codex/config.toml"
         codex.write_text(codex.read_text().replace('"pragmatic"', '"friendly"'))
         claude = machine.home / ".claude/settings.json"

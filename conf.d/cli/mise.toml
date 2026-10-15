@@ -12,6 +12,7 @@ zoxide = "latest"
   "playwright@1.63.0-alpha-2026-08-31",
   "playwright-core@1.63.0-alpha-2026-08-31",
 ] }
+"npm:chrome-devtools-mcp" = "latest"
 "npm:@code-yeongyu/comment-checker" = "latest"
 "npm:clawpatch" = "latest"
 "pipx:httpie" = "latest"

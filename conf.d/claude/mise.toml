@@ -1,6 +1,7 @@
 [dotfiles]
 "~/.claude/CLAUDE.md" = "CLAUDE.md"
 "~/.claude/settings.json/shared" = { source = "settings.json", merge = true }
+"~/.claude.json/shared" = { source = "mcp.json", merge = true }
 
 [tools]
 "aqua:anthropics/claude-code" = "latest"
