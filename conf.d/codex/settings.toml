@@ -8,3 +8,8 @@ max_context_tokens = 10000
 
 [features]
 memories = false
+
+[mcp_servers.chrome-devtools]
+command = "chrome-devtools-mcp"
+args = ["--isolated", "--no-usage-statistics"]
+default_tools_approval_mode = "approve"
