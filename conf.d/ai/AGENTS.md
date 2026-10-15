@@ -57,6 +57,29 @@ WorkTrunk (`wt`) owns every worktree lifecycle operation; invoke the
 suggest creating it. Use raw `git worktree` only when the user explicitly asks
 for it.
 
+## Browser tools
+
+- Use the `playwright-cli` skill to drive a browser: navigation, user flows,
+  forms, data extraction, request mocking, desktop and emulated-mobile
+  screenshots or videos, and the console and requests of the flow it drives.
+- Use the `chrome-devtools` MCP server to diagnose a page: performance traces
+  and Core Web Vitals, Lighthouse accessibility, SEO, and best-practice
+  audits, console errors with source-mapped stacks, layout and visual defects
+  through matched CSS rules, and memory.
+- Each tool runs its own browser, so logins, console output, and requests do
+  not carry across. Keep a task in the tool that its main purpose selects, and
+  use that tool for the supporting steps it can do, screenshots included.
+  Switch only when a required capability is missing.
+- Give each `playwright-cli` task its own session with `-s=<name>` and close it
+  at the end; other agents on this machine can share the default session. To
+  reuse a login later, open the session with `--persistent` under a stable
+  name. The `chrome-devtools` browser uses a temporary profile that is deleted
+  when it closes, so log in there when a diagnosis needs an account.
+- A login without available credentials, or a CAPTCHA, is a blocker: open the
+  page in a headed browser (`playwright-cli open --headed`; the
+  `chrome-devtools` window is visible), report it, and resume that work after
+  the user completes the step. Never try to solve or bypass a CAPTCHA.
+
 ## Evidence
 
 - Ground factual and completion claims in direct evidence: command output,
