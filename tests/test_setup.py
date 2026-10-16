@@ -555,8 +555,35 @@ INSTALLER_POLICY = "local"
         )
         old_step = final_step.replace('"autofirma"]', '"setup:autofirma"]')
         github_step = '        step("github-extensions", [["gh", "extension", "upgrade", "--all"]])\n'
+        previous_update = (
+            current_update.replace(
+                current_update[
+                    current_update.index(
+                        "                    result = run(command,"
+                    ) : current_update.index("                stamps[name] =")
+                ],
+                "                    run(command)\n",
+            )
+            .replace(
+                current_update[
+                    current_update.index("            except (") : current_update.index(
+                        "\n        step("
+                    )
+                ],
+                "            except (subprocess.CalledProcessError, subprocess.TimeoutExpired, OSError):\n"
+                "                failures.append(name)\n"
+                "                print(\n"
+                '                    f"{name}: failed; continuing independent maintenance",\n'
+                "                    file=sys.stderr,\n"
+                "                )\n",
+            )
+            .replace(
+                '        raise RuntimeError("Maintenance failed:\\n" + "\\n\\n".join(failures))\n',
+                '        raise RuntimeError("Maintenance failed: " + ", ".join(failures))\n',
+            )
+        )
         update.write_text(
-            current_update.replace(final_step, "").replace(
+            previous_update.replace(final_step, "").replace(
                 github_step, old_step + github_step
             )
             + "\n# Keep my local maintenance changes.\n"
@@ -674,6 +701,12 @@ INSTALLER_POLICY = "local"
         self.assertEqual(autofirma.stat().st_mtime_ns, autofirma_updated)
         self.assertEqual(autofirma_task.stat().st_mtime_ns, task_updated)
         self.assertEqual(update.stat().st_mtime_ns, maintenance_updated)
+        custom_update = previous_update.replace(
+            "failed; continuing independent maintenance", "failed; local handling"
+        )
+        update.write_text(custom_update)
+        machine.python(invocation)
+        self.assertEqual(update.read_text(), custom_update)
         custom = previous_skills.replace(
             "git@github.com:LuisUrrutia/skills.git", "git@github.com:example/skills.git"
         )
@@ -2041,6 +2074,69 @@ exec mise exec python@3 -- python3 "$HOME/.config/mise/conf.d/setup/config.py" "
             ],
             1,
         )
+
+    def test_maintenance_reports_failed_extensions_and_keeps_successes(self):
+        machine = Machine(self.root, "maintenance")
+        machine.minimal()
+        machine.encryption()
+        machine.env["PATH"] = str(machine.home / ".local/bin")
+        machine.write("conf.d/setup/packages.py", "pass\n")
+        for name in ("nvim", "skills", "tpack", "tldr", "uv", "mo"):
+            (machine.home / ".local/bin" / name).symlink_to("/usr/bin/true")
+        gh = machine.home / ".local/bin/gh"
+        gh.write_text("#!/bin/sh\necho 'GitHub login required' >&2\nexit 4\n")
+        gh.chmod(0o755)
+        invocation = "import update; update.MISE = '/usr/bin/true'; update.main()"
+
+        failed = machine.python(invocation, ok=False)
+
+        self.assertNotEqual(failed.returncode, 0)
+        summary = failed.stderr.split("Maintenance failed:")[-1]
+        self.assertIn("github-extensions", summary)
+        self.assertIn("gh extension upgrade --all", summary)
+        self.assertIn("exit status 4", summary)
+        self.assertIn("GitHub login required", summary)
+        self.assertIn("gh auth login", summary)
+        self.assertIn("reference-data: completed", failed.stdout)
+        stamps_path = machine.home / "state/dotfiles/maintenance.json"
+        stamps = json.loads(stamps_path.read_text())
+        self.assertNotIn("github-extensions", stamps)
+        self.assertIn("reference-data", stamps)
+
+        gh.write_text(
+            "#!/bin/sh\necho '[stack]: failed to download release'\n"
+            "echo 'some extensions failed to upgrade' >&2\nexit 1\n"
+        )
+
+        failed = machine.python(invocation, ok=False)
+
+        summary = failed.stderr.split("Maintenance failed:")[-1]
+        self.assertNotEqual(failed.returncode, 0)
+        self.assertIn("[stack]: failed to download release", summary)
+        self.assertIn("some extensions failed to upgrade", summary)
+        self.assertNotIn("gh auth login", summary)
+        self.assertNotIn("github-extensions", json.loads(stamps_path.read_text()))
+
+        gh.unlink()
+
+        missing = machine.python(invocation, ok=False)
+
+        summary = missing.stderr.split("Maintenance failed:")[-1]
+        self.assertNotEqual(missing.returncode, 0)
+        self.assertIn("gh extension upgrade --all", summary)
+        self.assertIn("No such file or directory", summary)
+        self.assertIn("reference-data: completed", missing.stdout)
+        self.assertNotIn("github-extensions", json.loads(stamps_path.read_text()))
+
+        gh.write_text("#!/bin/sh\necho '[stack]: already up to date'\n")
+        gh.chmod(0o755)
+
+        succeeded = machine.python(invocation)
+
+        self.assertIn("[stack]: already up to date", succeeded.stdout)
+        self.assertIn("github-extensions: completed", succeeded.stdout)
+        self.assertIn("github-extensions", json.loads(stamps_path.read_text()))
+        self.assertNotIn("Maintenance failed", succeeded.stderr)
 
     def test_native_sync_applies_declarations_and_preserves_local_choices(self):
         a, b = Machine(self.root, "a"), Machine(self.root, "b")

@@ -32,14 +32,40 @@ def main():
                 return
             try:
                 for command in commands:
-                    run(command)
+                    result = run(command, capture=name == "github-extensions")
+                    if result.stdout:
+                        print(result.stdout.decode(errors="replace"), end="")
+                    if result.stderr:
+                        print(
+                            result.stderr.decode(errors="replace"),
+                            end="",
+                            file=sys.stderr,
+                        )
                 stamps[name] = int(time.time())
                 write_state("maintenance", stamps)
                 print(f"{name}: completed")
-            except (subprocess.CalledProcessError, subprocess.TimeoutExpired, OSError):
-                failures.append(name)
+            except (
+                subprocess.CalledProcessError,
+                subprocess.TimeoutExpired,
+                OSError,
+            ) as error:
+                detail = f"{name}: {error}"
+                for output in (
+                    getattr(error, "stdout", None),
+                    getattr(error, "stderr", None),
+                ):
+                    if output:
+                        detail += "\n" + output.decode(errors="replace").strip()
+                if name == "github-extensions":
+                    if (
+                        isinstance(error, subprocess.CalledProcessError)
+                        and error.returncode == 4
+                    ):
+                        detail += "\nGitHub CLI authentication is required. Run gh auth login."
+                    detail += "\nRetry only this step: gh extension upgrade --all"
+                failures.append(detail)
                 print(
-                    f"{name}: failed; continuing independent maintenance",
+                    f"{detail}\nContinuing independent maintenance.",
                     file=sys.stderr,
                 )
 
@@ -104,7 +130,7 @@ def main():
         if sys.platform == "darwin":
             step("autofirma", [[MISE, "run", "autofirma"]], 86400)
     if failures:
-        raise RuntimeError("Maintenance failed: " + ", ".join(failures))
+        raise RuntimeError("Maintenance failed:\n" + "\n\n".join(failures))
 
 
 if __name__ == "__main__":

@@ -417,6 +417,49 @@ def repair_autofirma_order():
         print(f"Moved AutoFirma to the final step in {relative}.", flush=True)
 
 
+def repair_maintenance_diagnostics():
+    relative = "conf.d/setup/update.py"
+    path = ROOT / relative
+    regular_parents(path)
+    if path.is_symlink():
+        raise RuntimeError(f"Refusing symlink: {path}")
+    before = path.read_text()
+    current = (REPOSITORY / relative).read_text()
+    replacements = {
+        "                    run(command)\n": current[
+            current.index("                    result = run(command,") : current.index(
+                "                stamps[name] ="
+            )
+        ],
+        (
+            "            except (subprocess.CalledProcessError, subprocess.TimeoutExpired, OSError):\n"
+            "                failures.append(name)\n"
+            "                print(\n"
+            '                    f"{name}: failed; continuing independent maintenance",\n'
+            "                    file=sys.stderr,\n"
+            "                )\n"
+        ): current[
+            current.index("            except (") : current.index("\n        step(")
+        ],
+        '        raise RuntimeError("Maintenance failed: " + ", ".join(failures))\n': (
+            '        raise RuntimeError("Maintenance failed:\\n" + "\\n\\n".join(failures))\n'
+        ),
+    }
+    if not all(previous in before for previous in replacements):
+        return
+    after = before
+    for previous, replacement in replacements.items():
+        if after.count(previous) != 1:
+            raise RuntimeError(f"Cannot safely repair maintenance diagnostics: {path}")
+        after = after.replace(previous, replacement, 1)
+    compile(after, str(path), "exec")
+    atomic(path, after, path.stat().st_mode & 0o777)
+    print(
+        "Updated maintenance failures to include their cause and retry command.",
+        flush=True,
+    )
+
+
 def git_settings(record):
     identity = record.get("git", {})
     default = identity.get("default", {})
@@ -589,6 +632,7 @@ def enroll(args):
         repair_resource_diagnostics()
         repair_autofirma_installer()
         repair_autofirma_order()
+        repair_maintenance_diagnostics()
         repair_dock_reload()
     if sys.platform == "darwin":
         with lock():
