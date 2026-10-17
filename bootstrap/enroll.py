@@ -446,6 +446,14 @@ def repair_maintenance_diagnostics():
         ),
     }
     if not all(previous in before for previous in replacements):
+        replacements = {
+            '                        detail += "\\nGitHub CLI authentication is required. Run gh auth login."\n': current[
+                current.index("                        detail = (") : current.index(
+                    '                    detail += "\\nRetry only this step:'
+                )
+            ],
+        }
+    if not all(previous in before for previous in replacements):
         return
     after = before
     for previous, replacement in replacements.items():

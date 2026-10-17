@@ -61,7 +61,10 @@ def main():
                         isinstance(error, subprocess.CalledProcessError)
                         and error.returncode == 4
                     ):
-                        detail += "\nGitHub CLI authentication is required. Run gh auth login."
+                        detail = (
+                            "GitHub extensions were not updated because you are not logged in.\n"
+                            "Sign in: gh auth login"
+                        )
                     detail += "\nRetry only this step: gh extension upgrade --all"
                 failures.append(detail)
                 print(

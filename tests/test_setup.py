@@ -707,6 +707,31 @@ INSTALLER_POLICY = "local"
         update.write_text(custom_update)
         machine.python(invocation)
         self.assertEqual(update.read_text(), custom_update)
+        previous_login = current_update.replace(
+            current_update[
+                current_update.index(
+                    "                        detail = ("
+                ) : current_update.index(
+                    '                    detail += "\\nRetry only this step:'
+                )
+            ],
+            '                        detail += "\\nGitHub CLI authentication is required. Run gh auth login."\n',
+        )
+        update.write_text(previous_login + "\n# Keep my local maintenance changes.\n")
+        machine.python(invocation)
+        self.assertEqual(
+            update.read_text(),
+            current_update + "\n# Keep my local maintenance changes.\n",
+        )
+        maintenance_updated = update.stat().st_mtime_ns
+        machine.python(invocation)
+        self.assertEqual(update.stat().st_mtime_ns, maintenance_updated)
+        custom_login = previous_login.replace(
+            "GitHub CLI authentication is required", "Use my local login helper"
+        )
+        update.write_text(custom_login)
+        machine.python(invocation)
+        self.assertEqual(update.read_text(), custom_login)
         custom = previous_skills.replace(
             "git@github.com:LuisUrrutia/skills.git", "git@github.com:example/skills.git"
         )
@@ -2092,11 +2117,14 @@ exec mise exec python@3 -- python3 "$HOME/.config/mise/conf.d/setup/config.py" "
 
         self.assertNotEqual(failed.returncode, 0)
         summary = failed.stderr.split("Maintenance failed:")[-1]
-        self.assertIn("github-extensions", summary)
+        self.assertIn(
+            "GitHub extensions were not updated because you are not logged in.", summary
+        )
         self.assertIn("gh extension upgrade --all", summary)
-        self.assertIn("exit status 4", summary)
-        self.assertIn("GitHub login required", summary)
-        self.assertIn("gh auth login", summary)
+        self.assertIn("Sign in: gh auth login", summary)
+        self.assertNotIn("exit status 4", summary)
+        self.assertNotIn("Command [", summary)
+        self.assertNotIn("GitHub login required", summary)
         self.assertIn("reference-data: completed", failed.stdout)
         stamps_path = machine.home / "state/dotfiles/maintenance.json"
         stamps = json.loads(stamps_path.read_text())
@@ -2114,7 +2142,9 @@ exec mise exec python@3 -- python3 "$HOME/.config/mise/conf.d/setup/config.py" "
         self.assertNotEqual(failed.returncode, 0)
         self.assertIn("[stack]: failed to download release", summary)
         self.assertIn("some extensions failed to upgrade", summary)
+        self.assertIn("exit status 1", summary)
         self.assertNotIn("gh auth login", summary)
+        self.assertNotIn("not logged in", summary)
         self.assertNotIn("github-extensions", json.loads(stamps_path.read_text()))
 
         gh.unlink()
