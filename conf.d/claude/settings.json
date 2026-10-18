@@ -11,7 +11,20 @@
   },
   "includeGitInstructions": false,
   "permissions": {
-    "deny": ["Read(~/.ssh/**)", "Read(~/.aws/**)", "Read(//**/.env*)"],
+    "deny": [
+      "Read(~/.ssh/**)",
+      "Read(~/.aws/**)",
+      "Read(//**/.env)",
+      "Read(//**/.env.local)",
+      "Read(//**/.env.*.local)",
+      "Read(//**/.env.dev*)",
+      "Read(//**/.env.prod*)",
+      "Read(//**/.env.stag*)",
+      "Read(//**/.env.test*)",
+      "Read(//**/.env.keys)",
+      "Read(//**/.env.vault)",
+      "Read(//**/.env.secret*)"
+    ],
     "defaultMode": "bypassPermissions"
   },
   "model": "opus",
