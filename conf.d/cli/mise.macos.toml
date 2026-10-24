@@ -41,6 +41,7 @@
 "brew:p7zip" = { os = "macos" }
 "brew:mas" = { os = "macos" }
 "brew:mole" = { os = "macos" }
+"brew:tldx" = { os = "macos" }
 
 [env]
 _.path = [

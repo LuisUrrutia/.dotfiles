@@ -162,6 +162,7 @@ package	brew:steipete/tap/remindctl	conf.d/cli/mise.macos.toml	macos-arm64	vm-in
 package	brew:stellar-cli	conf.d/blockchain/mise.stellar-cli.toml	macos-arm64;linux-arm64;linux-x86_64;optional=stellar-cli	not-selected-in-vm;linux-not-tested	pending-clean-machine	retry-native-owner
 package	brew:stylua	conf.d/formatters/mise.macos.toml	macos-arm64	vm-installed-2.5.2	pending-clean-machine	retry-native-owner
 package	brew:tailspin	conf.d/cli/mise.macos.toml	macos-arm64	vm-installed-7.0.0	pending-clean-machine	retry-native-owner
+package	brew:tldx	conf.d/cli/mise.macos.toml	macos-arm64	pending-clean-machine	pending-clean-machine	retry-native-owner
 package	brew:tlrc	conf.d/tlrc/mise.macos.toml	macos-arm64	vm-installed-1.13.1	pending-clean-machine	retry-native-owner
 package	brew:tmux	conf.d/tmux/mise.macos.toml	macos-arm64	vm-installed-3.8	pending-clean-machine	retry-native-owner
 package	brew:vips	conf.d/image/mise.macos.toml	macos-arm64	vm-installed-8.18.7	pending-clean-machine	retry-native-owner
