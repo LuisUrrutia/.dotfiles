@@ -78,7 +78,7 @@ package	brew-cask:tailscale-app	conf.d/apps/mise.macos.toml	macos-arm64	vm-insta
 package	brew-cask:telegram	conf.d/apps/mise.macos.toml	macos-arm64	vm-installed-13.0,283305	pending-clean-machine	retry-native-owner
 package	brew-cask:thaw	conf.d/setup/packages.py	macos-arm64;macos<27	vm-installed-2.0.1	pending-clean-machine	retry-native-owner
 package	brew-cask:the-unarchiver	conf.d/apps/mise.macos.toml	macos-arm64	vm-installed-4.3.9,147,1742287964	pending-clean-machine	retry-native-owner
-package	brew-cask:thebrowsercompany-dia	conf.d/apps/mise.macos.toml	macos-arm64	vm-installed-1.52.0,88431	pending-clean-machine	retry-native-owner
+package	macos-app:ardia	conf.d/apps/mise.macos.toml	macos-arm64	isolated-appdir-installed-0.2.39-nightly.5;pending-clean-machine	sparkle-nightly;isolated-newer-bundle-preserved	retry-native-owner
 package	brew-cask:veracrypt	conf.d/apps/mise.macos.toml	macos-arm64	vm-installed-1.26.29	pending-clean-machine	retry-native-owner
 package	brew-cask:whatsapp	conf.d/apps/mise.macos.toml	macos-arm64	vm-installed-26.40.20	pending-clean-machine	retry-native-owner
 package	brew-cask:yaak	conf.d/dev/mise.macos.toml	macos-arm64	vm-installed-2026.8.1	pending-clean-machine	retry-native-owner
@@ -162,6 +162,7 @@ package	brew:steipete/tap/remindctl	conf.d/cli/mise.macos.toml	macos-arm64	vm-in
 package	brew:stellar-cli	conf.d/blockchain/mise.stellar-cli.toml	macos-arm64;linux-arm64;linux-x86_64;optional=stellar-cli	not-selected-in-vm;linux-not-tested	pending-clean-machine	retry-native-owner
 package	brew:stylua	conf.d/formatters/mise.macos.toml	macos-arm64	vm-installed-2.5.2	pending-clean-machine	retry-native-owner
 package	brew:tailspin	conf.d/cli/mise.macos.toml	macos-arm64	vm-installed-7.0.0	pending-clean-machine	retry-native-owner
+package	brew:tldx	conf.d/cli/mise.macos.toml	macos-arm64	pending-clean-machine	pending-clean-machine	retry-native-owner
 package	brew:tlrc	conf.d/tlrc/mise.macos.toml	macos-arm64	vm-installed-1.13.1	pending-clean-machine	retry-native-owner
 package	brew:tmux	conf.d/tmux/mise.macos.toml	macos-arm64	vm-installed-3.8	pending-clean-machine	retry-native-owner
 package	brew:vips	conf.d/image/mise.macos.toml	macos-arm64	vm-installed-8.18.7	pending-clean-machine	retry-native-owner
@@ -195,6 +196,7 @@ appstore	mas:497799835	bootstrap/enroll.py	macos-arm64;machine-xcode	not-selecte
 bootstrap	mise	bootstrap/install-mise.sh	macos-arm64	vm-installed-2026.10.7-and-rerun	pending-clean-machine	verified-release-download
 retired	cursor,catppuccin.catppuccin-vsc,vscodevim.vim	plans/mise-migration-inventory.md	all	approved-removal	approved-removal	not-applicable
 retired	stow,opencode,cc-safety-net	plans/mise-migration-decisions.md	all	approved-removal	approved-removal	not-applicable
+retired	thebrowsercompany-dia	plans/mise-migration-inventory.md	all	approved-removal	approved-removal	not-applicable
 tool	github:mountain-loop/yaak	conf.d/dev/mise.linux.toml	ubuntu-arm64;ubuntu-x86_64	installed-2026.8.1;gui-x86_64-passed;gui-arm64-pending	latest-with-3d-cooldown	retry-native-owner
 tool	go:github.com/ethereum/go-ethereum/cmd/...	conf.d/blockchain/mise.ethereum.toml	ubuntu-arm64;ubuntu-x86_64;optional=ethereum	installed-1.17.7-command-suite-checked	latest-with-3d-cooldown	retry-native-owner
 package	brew:foundry	conf.d/blockchain/mise.ethereum.toml	ubuntu-arm64;ubuntu-x86_64;optional=ethereum	installed-1.8.5-contract-test-passed	pending-clean-machine	retry-native-owner

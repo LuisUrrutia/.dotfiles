@@ -8,7 +8,6 @@
 "brew-cask:veracrypt" = { os = "macos" }
 "brew-cask:macfuse" = { os = "macos" }
 "brew-cask:sshfs-mac" = { os = "macos" }
-"brew-cask:thebrowsercompany-dia" = { os = "macos" }
 "brew-cask:google-chrome" = { os = "macos" }
 "brew-cask:figma" = { os = "macos" }
 "brew-cask:obsidian" = { os = "macos" }
@@ -26,3 +25,12 @@
 "brew-cask:claude" = { os = "macos" }
 "brew-cask:granola" = { os = "macos" }
 "brew-cask:t3-code@nightly" = { os = "macos" }
+
+# Ardia has no cask. This nightly seeds new installs; its build selects Sparkle's
+# nightly channel, and mise leaves the self-updated bundle alone.
+[bootstrap.packages."macos-app:ardia"]
+version = "0.2.39-nightly.5"
+url = "https://github.com/mantrakp04/ardia/releases/download/v{{version}}/Ardia-{{version}}.dmg"
+sha256 = "a7b30413736e8a69f16a233c2d29dc9ec48e1b9db6cead7c4a10dfa6bc2622a2"
+artifact = "Ardia.app"
+os = "macos/arm64"

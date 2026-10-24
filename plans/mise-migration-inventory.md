@@ -43,7 +43,7 @@ model. D11 retires grouped profiles and their selection UI.
 | Optional per app/tool; excluded on work | `solidity`, `ethereum`, `stellar-cli`, `foundry`; `obs` with `obs-advanced-scene-switcher`; `camo-studio`; `focusrite-control-2`; `loopback`; `soundsource`; `displaylink`; `asmvik/formulae/skhd` |
 | Other optional capability               | `busycal`; keep its current optional status                                                                                                                                                        |
 | New optional app/config owner           | `audio-hijack`; installed locally, absent from old manifests                                                                                                                                       |
-| Retired everywhere                      | OpenCode and its exclusive integrations; Cursor and its extension installer; old profile menus, aliases, presets, and saved selection format                                                       |
+| Retired everywhere                      | OpenCode and its exclusive integrations; Cursor and its extension installer; Dia, replaced by Ardia; old profile menus, aliases, presets, and saved selection format                               |
 
 Each optional capability uses a local native module selection. Do not bundle
 them back into work/personal/audio/streaming profiles. Unknown supported Macs
