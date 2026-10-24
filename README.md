@@ -408,7 +408,7 @@ global toolchain.
 <summary>macOS desktop and system settings</summary>
 
 Mise pins the full Dock order: Messages, optional BusyCal, Notes, Ghostty, Zed,
-T3 Code (Nightly), Dia, App Store, and System Settings. Native defaults replace
+T3 Code (Nightly), Ardia, App Store, and System Settings. Native defaults replace
 dockutil; macOS keeps Finder and Trash. Edit `apps` in
 `conf.d/macos/mise.macos.toml` and its BusyCal variant if selected. Each apply
 restores the declared order.
@@ -436,7 +436,7 @@ See [VM evidence](plans/mise-compatibility.md#silent-file-associations).
 </details>
 
 <details>
-<summary>Downloads: GitHub, AutoFirma, IINA, and Ghostty</summary>
+<summary>Downloads: GitHub, AutoFirma, IINA, Ghostty, and Ardia</summary>
 
 Public recipes, font repositories, plugins, skills, and the initial checkout use
 HTTPS without private-history authentication. Third-party taps use mise's default
@@ -464,6 +464,15 @@ The cask owns the version, checksum, app/CLI installation, and self-update behav
 
 **Ghostty:** mise manages the native `brew-cask:ghostty` package. The cask owns
 downloads, checksum verification, app installation, and self-update handling.
+
+**Ardia:** no cask exists, so native `macos-app:ardia` installs a pinned nightly DMG
+from https://github.com/mantrakp04/ardia/releases and verifies its SHA-256. Nightly
+builds select Sparkle's nightly channel, so the app updates itself; mise checks only
+its recorded version and keeps the updated bundle. The pin only seeds new Macs.
+Changing `version` replaces the installed bundle on every Mac at its next apply,
+so bump it only when the pinned release disappears, to the newest nightly past the
+release cooldown. Mise refuses an `Ardia.app` it did not install: remove that app
+before the next apply, or set `adopt = true` while the pin matches its bundle.
 
 </details>
 

@@ -4,7 +4,7 @@
 
 # Application launchers
 f13 : open -a "T3 Code (Nightly)"
-f14 : open -a Dia
+f14 : open -a Ardia
 f15 : open -a ChatGPT
 f16 : open -a Slack
 f17 : open -a WhatsApp
