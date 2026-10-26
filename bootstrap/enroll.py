@@ -194,6 +194,56 @@ def repair_terminal_session():
         )
 
 
+def repair_terminal_prompts():
+    relative = "conf.d/setup/runtime.py"
+    path = ROOT / relative
+    regular_parents(path)
+    if path.is_symlink():
+        raise RuntimeError(f"Refusing symlink: {path}")
+    before = path.read_text()
+    previous = (
+        "        try:\n"
+        "            stdout, stderr = process.communicate(input=input, timeout=timeout)\n"
+        "        except BaseException:\n"
+        "            # Keep the operation lock until its descendants have been stopped too.\n"
+        "            for sig in (signal.SIGTERM, signal.SIGKILL):\n"
+        "                try:\n"
+        "                    os.killpg(process.pid, sig)\n"
+        "                except ProcessLookupError:\n"
+        "                    pass\n"
+        "                if sig == signal.SIGTERM:\n"
+        "                    try:\n"
+        "                        process.wait(timeout=5)\n"
+        "                    except subprocess.TimeoutExpired:\n"
+        "                        pass\n"
+        "            process.communicate()\n"
+        "            raise\n"
+    )
+    # Only a command group in setup's own session can receive the terminal.
+    if previous not in before or "process_group=0," not in before:
+        return
+    if before.count(previous) != 1 or before.count("\ndef run(") != 1:
+        raise RuntimeError(f"Cannot safely repair terminal prompts: {path}")
+    current = (REPOSITORY / relative).read_text()
+    helper = current[
+        current.index("@contextmanager\ndef terminal_foreground(") : current.index(
+            "def run("
+        )
+    ]
+    handoff = current[
+        current.index("        with terminal_foreground(") : current.index(
+            "        result = subprocess.CompletedProcess("
+        )
+    ]
+    after = before.replace(previous, handoff, 1)
+    after = after.replace("\ndef run(", "\n" + helper + "def run(", 1)
+    compile(after, str(path), "exec")
+    atomic(path, after, path.stat().st_mode & 0o777)
+    print(
+        "Updated setup commands to read password prompts from the terminal.", flush=True
+    )
+
+
 def repair_https_downloads():
     repairs = {
         "conf.d/setup/packages.py": [
@@ -634,6 +684,7 @@ def enroll(args):
         return
     with lock():
         repair_terminal_session()
+        repair_terminal_prompts()
         repair_https_downloads()
         repair_public_skills_clone()
         repair_setup_hash()

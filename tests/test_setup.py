@@ -347,9 +347,28 @@ fi
         machine.env["MISE_ENV"] = "macos"
         runtime = machine.config / "conf.d/setup/runtime.py"
         current_runtime = runtime.read_text()
-        old_runtime = current_runtime.replace(
-            "process_group=0,", "start_new_session=True,"
-        ).replace('        MISE_TASK_PGID_MANAGED="1",\n', "")
+        helper = current_runtime[
+            current_runtime.index(
+                "@contextmanager\ndef terminal_foreground("
+            ) : current_runtime.index("def run(")
+        ]
+        handoff = current_runtime[
+            current_runtime.index(
+                "        with terminal_foreground("
+            ) : current_runtime.index("        result = subprocess.CompletedProcess(")
+        ]
+        shipped = "".join(
+            line.removeprefix("    ")
+            for line in handoff[: handoff.index("        # Ctrl+C")].splitlines(
+                keepends=True
+            )[1:]
+        )
+        old_runtime = (
+            current_runtime.replace(helper, "")
+            .replace(handoff, shipped)
+            .replace("process_group=0,", "start_new_session=True,")
+            .replace('        MISE_TASK_PGID_MANAGED="1",\n', "")
+        )
         runtime.write_text(old_runtime + "\n# Keep my local setup changes.\n")
         runtime.chmod(0o640)
         ruby = machine.home / "data/installs/ruby/4.0.0/bin/ruby"
