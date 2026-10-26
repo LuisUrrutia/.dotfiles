@@ -42,23 +42,24 @@ def terminal_foreground(group):
         return
     try:
         owner = os.tcgetpgrp(terminal)
-        foreground = owner == os.getpgrp()
-        if foreground:
+        if owner != os.getpgrp():
+            yield False
+            return
+        # Reclaim the terminal even when an interrupt arrives right after the handoff.
+        try:
             try:
                 os.tcsetpgrp(terminal, group)
             except OSError:
-                # The command can leave its group first; run() must still reach cleanup.
+                # The command can leave its group first; it then runs without the terminal.
                 foreground = False
-        if not foreground:
-            yield False
-            return
-        # Resume a command stopped by touching the terminal before the handoff.
-        try:
-            os.killpg(group, signal.SIGCONT)
-        except OSError:
-            pass
-        try:
-            yield True
+            else:
+                foreground = True
+                # Resume a command stopped by touching the terminal before the handoff.
+                try:
+                    os.killpg(group, signal.SIGCONT)
+                except OSError:
+                    pass
+            yield foreground
         finally:
             # A background group reclaiming the terminal would get SIGTTOU.
             mask = signal.pthread_sigmask(signal.SIG_BLOCK, {signal.SIGTTOU})
@@ -92,23 +93,23 @@ def run(args, *, capture=False, check=True, timeout=900, input: bytes | None = N
         stdout=subprocess.PIPE if capture else None,
         stderr=subprocess.PIPE if capture else None,
     ) as process:
-        with terminal_foreground(process.pid) as foreground:
-            try:
+        try:
+            with terminal_foreground(process.pid) as foreground:
                 stdout, stderr = process.communicate(input=input, timeout=timeout)
-            except BaseException:
-                # Keep the operation lock until its descendants have been stopped too.
-                for sig in (signal.SIGTERM, signal.SIGKILL):
+        except BaseException:
+            # Keep the operation lock until its descendants have been stopped too.
+            for sig in (signal.SIGTERM, signal.SIGKILL):
+                try:
+                    os.killpg(process.pid, sig)
+                except ProcessLookupError:
+                    pass
+                if sig == signal.SIGTERM:
                     try:
-                        os.killpg(process.pid, sig)
-                    except ProcessLookupError:
+                        process.wait(timeout=5)
+                    except subprocess.TimeoutExpired:
                         pass
-                    if sig == signal.SIGTERM:
-                        try:
-                            process.wait(timeout=5)
-                        except subprocess.TimeoutExpired:
-                            pass
-                process.communicate()
-                raise
+            process.communicate()
+            raise
         # Ctrl+C reached only the command's group; stop setup with it.
         if foreground and process.returncode in (-signal.SIGINT, 128 + signal.SIGINT):
             raise KeyboardInterrupt

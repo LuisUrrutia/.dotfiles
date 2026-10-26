@@ -236,9 +236,9 @@ def repair_terminal_prompts():
         )
     ]
     handoff = current[
-        current.index("        with terminal_foreground(") : current.index(
-            "        result = subprocess.CompletedProcess("
-        )
+        current.index(
+            "        try:\n            with terminal_foreground("
+        ) : current.index("        result = subprocess.CompletedProcess(")
     ]
     after = before.replace(previous, handoff, 1)
     after = after.replace("\ndef run(", "\n" + helper + "def run(", 1)

@@ -354,14 +354,15 @@ fi
         ]
         handoff = current_runtime[
             current_runtime.index(
-                "        with terminal_foreground("
+                "        try:\n            with terminal_foreground("
             ) : current_runtime.index("        result = subprocess.CompletedProcess(")
         ]
-        shipped = "".join(
-            line.removeprefix("    ")
-            for line in handoff[: handoff.index("        # Ctrl+C")].splitlines(
-                keepends=True
-            )[1:]
+        shipped = (
+            handoff[: handoff.index("        # Ctrl+C")]
+            .replace(
+                "            with terminal_foreground(process.pid) as foreground:\n", ""
+            )
+            .replace("                stdout, stderr", "            stdout, stderr")
         )
         old_runtime = (
             current_runtime.replace(helper, "")
