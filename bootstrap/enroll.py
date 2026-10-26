@@ -219,8 +219,13 @@ def repair_terminal_prompts():
         "            process.communicate()\n"
         "            raise\n"
     )
-    # Only a command group in setup's own session can receive the terminal.
-    if previous not in before or "process_group=0," not in before:
+    # Only a command group in setup's own session can receive the terminal. compile()
+    # cannot catch a missing name, so the inserted helper needs the shipped import.
+    if (
+        previous not in before
+        or "process_group=0," not in before
+        or "from contextlib import contextmanager\n" not in before
+    ):
         return
     if before.count(previous) != 1 or before.count("\ndef run(") != 1:
         raise RuntimeError(f"Cannot safely repair terminal prompts: {path}")
