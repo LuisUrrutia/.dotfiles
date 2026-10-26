@@ -32,6 +32,45 @@ MISE = (
 )
 
 
+@contextmanager
+def terminal_foreground(group):
+    """Give a command's process group the terminal, as a shell does for a job."""
+    try:
+        terminal = os.open("/dev/tty", os.O_RDWR)
+    except OSError:
+        yield False
+        return
+    try:
+        owner = os.tcgetpgrp(terminal)
+        if owner != os.getpgrp():
+            yield False
+            return
+        # Reclaim the terminal even when an interrupt arrives right after the handoff.
+        try:
+            try:
+                os.tcsetpgrp(terminal, group)
+            except OSError:
+                # The command can leave its group first; it then runs without the terminal.
+                foreground = False
+            else:
+                foreground = True
+                # Resume a command stopped by touching the terminal before the handoff.
+                try:
+                    os.killpg(group, signal.SIGCONT)
+                except OSError:
+                    pass
+            yield foreground
+        finally:
+            # A background group reclaiming the terminal would get SIGTTOU.
+            mask = signal.pthread_sigmask(signal.SIG_BLOCK, {signal.SIGTTOU})
+            try:
+                os.tcsetpgrp(terminal, owner)
+            finally:
+                signal.pthread_sigmask(signal.SIG_SETMASK, mask)
+    finally:
+        os.close(terminal)
+
+
 def run(args, *, capture=False, check=True, timeout=900, input: bytes | None = None):
     env = os.environ.copy()
     env.update(
@@ -55,7 +94,8 @@ def run(args, *, capture=False, check=True, timeout=900, input: bytes | None = N
         stderr=subprocess.PIPE if capture else None,
     ) as process:
         try:
-            stdout, stderr = process.communicate(input=input, timeout=timeout)
+            with terminal_foreground(process.pid) as foreground:
+                stdout, stderr = process.communicate(input=input, timeout=timeout)
         except BaseException:
             # Keep the operation lock until its descendants have been stopped too.
             for sig in (signal.SIGTERM, signal.SIGKILL):
@@ -70,6 +110,9 @@ def run(args, *, capture=False, check=True, timeout=900, input: bytes | None = N
                         pass
             process.communicate()
             raise
+        # Ctrl+C reached only the command's group; stop setup with it.
+        if foreground and process.returncode in (-signal.SIGINT, 128 + signal.SIGINT):
+            raise KeyboardInterrupt
         result = subprocess.CompletedProcess(
             command, process.returncode, stdout, stderr
         )

@@ -347,9 +347,29 @@ fi
         machine.env["MISE_ENV"] = "macos"
         runtime = machine.config / "conf.d/setup/runtime.py"
         current_runtime = runtime.read_text()
-        old_runtime = current_runtime.replace(
-            "process_group=0,", "start_new_session=True,"
-        ).replace('        MISE_TASK_PGID_MANAGED="1",\n', "")
+        helper = current_runtime[
+            current_runtime.index(
+                "@contextmanager\ndef terminal_foreground("
+            ) : current_runtime.index("def run(")
+        ]
+        handoff = current_runtime[
+            current_runtime.index(
+                "        try:\n            with terminal_foreground("
+            ) : current_runtime.index("        result = subprocess.CompletedProcess(")
+        ]
+        shipped = (
+            handoff[: handoff.index("        # Ctrl+C")]
+            .replace(
+                "            with terminal_foreground(process.pid) as foreground:\n", ""
+            )
+            .replace("                stdout, stderr", "            stdout, stderr")
+        )
+        old_runtime = (
+            current_runtime.replace(helper, "")
+            .replace(handoff, shipped)
+            .replace("process_group=0,", "start_new_session=True,")
+            .replace('        MISE_TASK_PGID_MANAGED="1",\n', "")
+        )
         runtime.write_text(old_runtime + "\n# Keep my local setup changes.\n")
         runtime.chmod(0o640)
         ruby = machine.home / "data/installs/ruby/4.0.0/bin/ruby"
@@ -398,7 +418,7 @@ import os, sys
 sys.path.insert(0, os.environ['MISE_CONFIG_DIR'] + '/conf.d/setup')
 from runtime import run
 if 'EXPECTED_SESSION' in os.environ:
-    run([sys.executable, '-c', 'import os; assert os.getsid(0) == int(os.environ["EXPECTED_SESSION"]); open("/dev/tty").close()'])
+    run([sys.executable, '-c', 'import getpass, os; assert os.getsid(0) == int(os.environ["EXPECTED_SESSION"]); assert getpass.getpass("Enter passphrase:") == "synthetic recovery test passphrase"'])
 PY
 touch "$HOME/setup-applied"
 """
