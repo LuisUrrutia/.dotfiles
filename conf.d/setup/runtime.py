@@ -42,10 +42,16 @@ def terminal_foreground(group):
         return
     try:
         owner = os.tcgetpgrp(terminal)
-        if owner != os.getpgrp():
+        foreground = owner == os.getpgrp()
+        if foreground:
+            try:
+                os.tcsetpgrp(terminal, group)
+            except OSError:
+                # The command can leave its group first; run() must still reach cleanup.
+                foreground = False
+        if not foreground:
             yield False
             return
-        os.tcsetpgrp(terminal, group)
         # Resume a command stopped by touching the terminal before the handoff.
         try:
             os.killpg(group, signal.SIGCONT)
