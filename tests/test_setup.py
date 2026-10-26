@@ -398,7 +398,7 @@ import os, sys
 sys.path.insert(0, os.environ['MISE_CONFIG_DIR'] + '/conf.d/setup')
 from runtime import run
 if 'EXPECTED_SESSION' in os.environ:
-    run([sys.executable, '-c', 'import os; assert os.getsid(0) == int(os.environ["EXPECTED_SESSION"]); open("/dev/tty").close()'])
+    run([sys.executable, '-c', 'import getpass, os; assert os.getsid(0) == int(os.environ["EXPECTED_SESSION"]); assert getpass.getpass("Enter passphrase:") == "synthetic recovery test passphrase"'])
 PY
 touch "$HOME/setup-applied"
 """
