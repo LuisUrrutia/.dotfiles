@@ -129,20 +129,25 @@ for it.
   conversation so the user can publish it.
 - Never send, publish, or schedule a Slack message on the user's behalf.
 
-## GitHub writes
+## GitHub account
+
+`gh` keeps one active account per host for every process on the machine, so
+never change it: do not run `gh auth switch`, `gh auth login`, or
+`gh auth logout`.
 
 Before an authenticated GitHub write through `gh`:
 
-1. Determine the intended actor: explicit user direction, or else the
-   path-effective `git config --get user.email` matched to an authenticated
-   GitHub account. `git config --get user.name` is only supporting evidence
-   because accounts can share a name. If the match is ambiguous, ask the user
-   for the account.
-2. Verify the active actor with `gh api user --jq .login`. SSH checks, fetches,
-   and pushes prove only Git/SSH authentication, which is independent of `gh`.
-3. Require an exact match. On a mismatch, run
-   `gh auth switch --hostname github.com --user <intended-actor>` when that
-   account is already authenticated, then verify again.
+1. Determine the intended actor: explicit user direction, or else the target
+   repository's path-effective `git config --get user.email` matched to an
+   authenticated GitHub account. `git config --get user.name` is only
+   supporting evidence because accounts can share a name. If no target
+   checkout or match settles it, ask the user for the account.
+2. Prefix every such command with the binding:
+   `GH_TOKEN="$(gh auth token --hostname github.com --user <actor> || echo none)" gh …`.
+   The fallback makes a failed lookup fail authentication instead of using
+   other credentials. Run `gh auth token` only inside that substitution.
+3. Before the first write, require `gh api user --jq .login` under that
+   binding to print the actor. Otherwise, stop and report the blocker.
 
 Keep tokens and other secrets out of commands and output.
 
