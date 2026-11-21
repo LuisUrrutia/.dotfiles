@@ -2,6 +2,7 @@
 
 import argparse
 import hashlib
+import json
 import os
 import re
 import subprocess
@@ -523,6 +524,28 @@ def repair_maintenance_diagnostics():
     )
 
 
+def repair_supercmd_schema():
+    relative = "conf.d/supercmd/preferences.json"
+    path = ROOT / relative
+    regular_parents(path)
+    if path.is_symlink():
+        raise RuntimeError(f"Refusing symlink: {path}")
+    if not path.exists():
+        return
+    before = path.read_text()
+    current = json.loads((REPOSITORY / relative).read_text())
+    if json.loads(before) != {**current, "major_version": 1}:
+        return
+    previous = '"major_version": 1\n'
+    if before.count(previous) != 1:
+        raise RuntimeError(f"Cannot safely repair the SuperCmd schema: {path}")
+    after = before.replace(previous, '"major_version": 2\n', 1)
+    if json.loads(after) != current:
+        raise RuntimeError(f"Cannot safely repair the SuperCmd schema: {path}")
+    atomic(path, after, path.stat().st_mode & 0o777)
+    print("Accepted the reviewed SuperCmd 2.x preference schema.", flush=True)
+
+
 def git_settings(record):
     identity = record.get("git", {})
     default = identity.get("default", {})
@@ -698,6 +721,7 @@ def enroll(args):
         repair_autofirma_order()
         repair_maintenance_diagnostics()
         repair_dock_reload()
+        repair_supercmd_schema()
     if sys.platform == "darwin":
         with lock():
             repair_screen_lock_check()
