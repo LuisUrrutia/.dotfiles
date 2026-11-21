@@ -1531,6 +1531,39 @@ assert calls == [("/usr/bin/osascript", "Example"), ("/usr/bin/open", "Example")
 
         self.assertEqual(plistlib.loads(live.read_bytes())["volume"], 12)
 
+    def test_restore_keeps_unowned_values_with_control_characters(self):
+        machine = Machine(self.root, "control")
+        machine.minimal()
+        machine.encryption()
+        definition = {
+            "name": "example",
+            "application": "Example",
+            "domain": "example.test",
+            "scope": "machine",
+            "keys": {"enabled": "bool"},
+            "files": {},
+        }
+        snapshot = (
+            machine.config
+            / "private/preferences/machines/control/example/preferences.plist"
+        )
+
+        machine.python(f"""import plistlib, preferences
+domain = {{"enabled": False, "unowned": "a\\x01b"}}
+def fake_run(args, **options):
+    assert args[:2] == ["/usr/bin/defaults", "import"], args
+    domain.clear()
+    domain.update(plistlib.loads(open(args[3], "rb").read()))
+preferences.export_domain = lambda _: dict(domain)
+preferences.is_running = lambda _: False
+preferences.policy()
+preferences.capture([{definition!r}])
+open({str(snapshot)!r}, "wb").write(plistlib.dumps({{"enabled": True}}))
+preferences.run = fake_run
+preferences.restore([{definition!r}])
+assert domain == {{"enabled": True, "unowned": "a\\x01b"}}, domain
+""")
+
     def test_preferences_are_encrypted_and_pending_restore_survives_capture(self):
         machine = Machine(self.root, "encrypted")
         machine.minimal()

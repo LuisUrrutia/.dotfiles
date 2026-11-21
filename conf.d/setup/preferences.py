@@ -567,7 +567,8 @@ def apply_snapshots(defs, closed):
             merged.update(value)
             STATE.mkdir(parents=True, exist_ok=True, mode=0o700)
             with tempfile.NamedTemporaryFile(dir=STATE, suffix=".plist") as temporary:
-                temporary.write(plistlib.dumps(merged))
+                # Unowned app values may hold control characters that XML rejects.
+                temporary.write(plistlib.dumps(merged, fmt=plistlib.FMT_BINARY))
                 temporary.flush()
                 run(
                     [

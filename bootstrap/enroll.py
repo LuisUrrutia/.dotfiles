@@ -603,6 +603,28 @@ def repair_restore_quit():
         )
 
 
+def repair_restore_binary_import():
+    path = ROOT / "conf.d/setup/preferences.py"
+    regular_parents(path)
+    if path.is_symlink():
+        raise RuntimeError(f"Refusing symlink: {path}")
+    before = path.read_text()
+    previous = "                temporary.write(plistlib.dumps(merged))\n"
+    if previous not in before:
+        return
+    if before.count(previous) != 1:
+        raise RuntimeError(f"Cannot safely repair preference import: {path}")
+    after = before.replace(
+        previous,
+        "                # Unowned app values may hold control characters that XML rejects.\n"
+        "                temporary.write(plistlib.dumps(merged, fmt=plistlib.FMT_BINARY))\n",
+        1,
+    )
+    compile(after, str(path), "exec")
+    atomic(path, after, path.stat().st_mode & 0o777)
+    print("Updated preference restore to import binary plists.", flush=True)
+
+
 def git_settings(record):
     identity = record.get("git", {})
     default = identity.get("default", {})
@@ -780,6 +802,7 @@ def enroll(args):
         repair_dock_reload()
         repair_supercmd_schema()
         repair_restore_quit()
+        repair_restore_binary_import()
     if sys.platform == "darwin":
         with lock():
             repair_screen_lock_check()
