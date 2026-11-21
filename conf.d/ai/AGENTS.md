@@ -52,10 +52,12 @@ Read `~/.agents/AGENTS_LOCAL.md` (machine-local rules) and
 
 ## Worktrees
 
-WorkTrunk (`wt`) owns every worktree lifecycle operation; invoke the
-`worktrunk` skill for its commands. If the project has no `.config/wt.toml`,
-suggest creating it. Use raw `git worktree` only when the user explicitly asks
-for it.
+T3 Code owns every worktree lifecycle operation: its threads create and remove
+worktrees. A repository's checked-in `t3.json` holds the setup action that runs
+in each new worktree (`runOnWorktreeCreate`); if the project has none, suggest
+creating it. Load env through a committed schema, such as Varlock's
+`.env.schema`, rather than copying env files between worktrees. Use raw
+`git worktree` only when the user explicitly asks for it.
 
 ## Browser tools
 
