@@ -52,7 +52,9 @@ Keep `machines/*.toml` tracked. Local enrollment files, identities, credentials,
 licenses, logs, caches, and runtime databases stay outside the public payload.
 Every plist backup and private companion config must be encrypted from its first
 history save. Capture only reviewed keys/files. Do not link live CFPreferences
-plists, overwrite a pending incoming snapshot, or stop active apps to restore.
+plists or overwrite a pending incoming snapshot. User-started restores may ask
+running apps to quit and reopen them; never kill processes, and background sync
+never closes apps.
 
 Git shared defaults and native identity blocks have separate owners. Preserve
 unrelated keys and the unknown-machine fallback. Keep scoped account and signing

@@ -266,8 +266,10 @@ recordings, clipboard databases, caches, and recent-item history are excluded.
 
 Capture and restore validate owned key types, companion-file structure, and
 reviewed format versions. Empty resets are recorded explicitly; new app major
-versions need a schema review. Close the app and its writers before restoring.
-Active-app restores stay pending; the task never kills processes. Incoming
+versions need a schema review. `config apply`, `sync` and `preferences restore`
+ask a running app to quit, restore it, and reopen it. Automatic sync and apps
+that refuse to quit or keep helper writers running leave the restore pending;
+the task never kills processes. Incoming
 snapshots are preserved until restore completes. If live settings differ, review
 them and use `preferences accept <app>` to save an encrypted conflict backup
 before accepting the incoming snapshot.

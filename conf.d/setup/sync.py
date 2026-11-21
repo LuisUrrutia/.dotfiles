@@ -283,7 +283,7 @@ def apply_setup(force=False, automatic=False):
             state["retry_after"] = int(time.time()) + 300 * 2**attempts
             write_state("apply", state)
             raise
-    preferences.restore()
+    preferences.restore(quit_running=not automatic)
 
 
 def synchronize(automatic=False):

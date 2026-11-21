@@ -433,7 +433,50 @@ def is_running(application):
     return result.returncode == 0
 
 
-def restore(defs=None):
+def quit_application(application):
+    if not is_running(application):
+        return False
+    try:
+        run(
+            [
+                "/usr/bin/osascript",
+                "-e",
+                "on run argv",
+                "-e",
+                "tell application (item 1 of argv) to quit",
+                "-e",
+                "end run",
+                application,
+            ],
+            check=False,
+            timeout=60,
+        )
+    except subprocess.TimeoutExpired:
+        return False
+    deadline = time.monotonic() + 30
+    while is_running(application):
+        if time.monotonic() > deadline:
+            return False
+        time.sleep(0.5)
+    print(f"{application}: closed to restore its settings", flush=True)
+    return True
+
+
+def open_application(application):
+    run(["/usr/bin/open", "-g", "-a", application], check=False, timeout=60)
+
+
+def restore(defs=None, *, quit_running=False):
+    # Only user-started runs may close apps; background sync leaves them pending.
+    closed = []
+    try:
+        apply_snapshots(defs, closed if quit_running else None)
+    finally:
+        for application in closed:
+            open_application(application)
+
+
+def apply_snapshots(defs, closed):
     state = read_state("preferences")
     pending = []
     for definition in definitions() if defs is None else defs:
@@ -446,6 +489,8 @@ def restore(defs=None):
         incoming_hash = fingerprint(incoming)
         if incoming_hash == previous.get("snapshot") and not progress:
             continue
+        if closed is not None and quit_application(definition["application"]):
+            closed.append(definition["application"])
         current = live(definition)
         if progress:
             parts = restore_fingerprints(definition, current)
@@ -585,9 +630,9 @@ def main():
             mise("dot", "save")
             state[definition["name"]] = {"live": fingerprint(current)}
             write_state("preferences", state)
-            restore(matches)
+            restore(matches, quit_running=True)
         else:
-            restore()
+            restore(quit_running=True)
 
 
 if __name__ == "__main__":

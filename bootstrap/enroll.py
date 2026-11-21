@@ -546,6 +546,63 @@ def repair_supercmd_schema():
     print("Accepted the reviewed SuperCmd 2.x preference schema.", flush=True)
 
 
+def repair_restore_quit():
+    source = (REPOSITORY / "conf.d/setup/preferences.py").read_text()
+    helpers = source[
+        source.index("def quit_application(") : source.index(
+            "def apply_snapshots(defs, closed):\n"
+        )
+    ]
+    repairs = {
+        "conf.d/setup/preferences.py": [
+            (
+                "def restore(defs=None):\n",
+                helpers + "def apply_snapshots(defs, closed):\n",
+            ),
+            (
+                "            continue\n        current = live(definition)\n",
+                "            continue\n"
+                '        if closed is not None and quit_application(definition["application"]):\n'
+                '            closed.append(definition["application"])\n'
+                "        current = live(definition)\n",
+            ),
+            (
+                "            restore(matches)\n        else:\n            restore()\n",
+                "            restore(matches, quit_running=True)\n"
+                "        else:\n"
+                "            restore(quit_running=True)\n",
+            ),
+        ],
+        "conf.d/setup/sync.py": [
+            (
+                "    preferences.restore()\n",
+                "    preferences.restore(quit_running=not automatic)\n",
+            ),
+        ],
+    }
+    changed = False
+    for relative, replacements in repairs.items():
+        path = ROOT / relative
+        regular_parents(path)
+        if path.is_symlink():
+            raise RuntimeError(f"Refusing symlink: {path}")
+        before = path.read_text()
+        if not all(previous in before for previous, _ in replacements):
+            continue
+        after = before
+        for previous, replacement in replacements:
+            if after.count(previous) != 1:
+                raise RuntimeError(f"Cannot safely repair preference restore: {path}")
+            after = after.replace(previous, replacement, 1)
+        compile(after, str(path), "exec")
+        atomic(path, after, path.stat().st_mode & 0o777)
+        changed = True
+    if changed:
+        print(
+            "Updated preference restore to close and reopen running apps.", flush=True
+        )
+
+
 def git_settings(record):
     identity = record.get("git", {})
     default = identity.get("default", {})
@@ -722,6 +779,7 @@ def enroll(args):
         repair_maintenance_diagnostics()
         repair_dock_reload()
         repair_supercmd_schema()
+        repair_restore_quit()
     if sys.platform == "darwin":
         with lock():
             repair_screen_lock_check()

@@ -1490,6 +1490,47 @@ atomic(ROOT / 'config.local.toml', document(settings))
                         "updated@example.invalid",
                     )
 
+    def test_user_started_restore_closes_and_reopens_a_running_app(self):
+        machine = Machine(self.root, "closing")
+        machine.minimal()
+        machine.encryption()
+        live = machine.home / "app.plist"
+        definition = {
+            "name": "example",
+            "application": "Example",
+            "domain": "example.test",
+            "scope": "machine",
+            "keys": {},
+            "files": {str(live): {"type": "dict", "fields": {"volume": "int"}}},
+        }
+        live.write_bytes(plistlib.dumps({"volume": 11}))
+        machine.python(
+            "import preferences; preferences.policy(); preferences.capture(["
+            + repr(definition)
+            + "])"
+        )
+        snapshot = (
+            machine.config / "private/preferences/machines/closing/example/app.plist"
+        )
+        snapshot.write_bytes(plistlib.dumps({"volume": 12}))
+
+        machine.python(f"""import preferences
+from runtime import run
+running = {{"Example": True}}
+calls = []
+def fake_run(args, **options):
+    if args[0] not in ("/usr/bin/osascript", "/usr/bin/open"):
+        return run(args, **options)
+    calls.append((args[0], args[-1]))
+    running["Example"] = args[0] == "/usr/bin/open"
+preferences.run = fake_run
+preferences.is_running = lambda name: running.get(name, False)
+preferences.restore([{definition!r}], quit_running=True)
+assert calls == [("/usr/bin/osascript", "Example"), ("/usr/bin/open", "Example")], calls
+""")
+
+        self.assertEqual(plistlib.loads(live.read_bytes())["volume"], 12)
+
     def test_preferences_are_encrypted_and_pending_restore_survives_capture(self):
         machine = Machine(self.root, "encrypted")
         machine.minimal()
