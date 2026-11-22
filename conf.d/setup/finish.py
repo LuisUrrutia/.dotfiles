@@ -21,7 +21,6 @@ def link(source, target):
 
 
 def instructions():
-    link(HOME / ".agents/AGENTS.md", HOME / ".codex/AGENTS.md")
     source = ROOT / "machines" / (local()["id"] + ".agents.md")
     target = HOME / ".agents/AGENTS_LOCAL.md"
     if source.is_file():

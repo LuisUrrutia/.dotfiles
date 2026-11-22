@@ -121,10 +121,14 @@ def setup_hash():
     for directory in (ROOT / "tasks", ROOT / "conf.d/setup"):
         files.update(directory.rglob("*"))
     status = native_json("dot", "status")
+    # A source deployed by another entry appears only after setup; its own source counts.
+    deployed = {home_path(entry["target"]) for entry in status["files"]}
     for entry in [*status["files"], *status.get("edits", [])]:
         source = entry.get("source") or entry.get("origin", {}).get("source")
         if source and entry["state"] != "skipped":
             source = home_path(source)
+            if source in deployed:
+                continue
             files.add(source)
             if source.is_dir():
                 files.update(source.rglob("*"))

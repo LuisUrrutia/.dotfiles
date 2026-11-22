@@ -133,14 +133,6 @@ def check():
     override = HOME / ".codex/AGENTS.override.md"
     if override.is_file() and override.stat().st_size:
         print(f"Warning: {override} shadows the managed instructions", file=sys.stderr)
-    target = HOME / ".codex/AGENTS.md"
-    regular_parents(target)
-    if target.exists() or target.is_symlink():
-        if (
-            not target.is_symlink()
-            or target.resolve() != (HOME / ".agents/AGENTS.md").resolve()
-        ):
-            raise RuntimeError(f"Refusing unowned instruction destination: {target}")
     return status
 
 

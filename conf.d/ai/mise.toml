@@ -1,2 +1,6 @@
 [dotfiles]
 "~/.agents/AGENTS.md" = "AGENTS.md"
+
+[dotfiles."~/.codex/AGENTS.md"]
+source = "~/.agents/AGENTS.md"
+depends = ["~/.agents/AGENTS.md"]

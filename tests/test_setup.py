@@ -1082,14 +1082,33 @@ atomic(STATE/'dotnet-lts', '12.0.100\\n')
             '{"numStartups": 3, "mcpServers": {"local": {"command": "local-mcp"}}}'
         )
         machine.mise("run", "config", "check")
+        fingerprint = "import sync; print(sync.setup_hash())"
+        undeployed = machine.python(fingerprint).stdout
         machine.mise("bootstrap", "--only", "files,dotfiles", "--yes")
+        self.assertEqual(machine.python(fingerprint).stdout, undeployed)
         for target, source in package_sources.items():
             deployed = machine.home / target.removeprefix("~/")
             self.assertTrue(deployed.is_symlink())
             self.assertEqual(deployed.resolve(), Path(source))
         self.assertEqual((machine.home / ".ssh").stat().st_mode & 0o777, 0o700)
+        instructions = machine.home / ".codex/AGENTS.md"
+        chained = Path(os.readlink(instructions))
+        self.assertEqual(
+            chained.parent.resolve() / chained.name,
+            (machine.home / ".agents").resolve() / "AGENTS.md",
+        )
+        self.assertEqual(
+            instructions.read_text(),
+            (machine.config / "conf.d/ai/AGENTS.md").read_text(),
+        )
         machine.python("import finish; finish.instructions()")
         machine.python("import config; config.check(); config.remember()")
+        instructions.unlink()
+        instructions.write_text("Local instructions\n")
+        refused = machine.python("import config; config.check()", ok=False)
+        self.assertIn("Unmanaged or edited target", refused.stderr)
+        instructions.unlink()
+        instructions.symlink_to(machine.home / ".agents/AGENTS.md")
         codex_config = tomllib.loads((machine.home / ".codex/config.toml").read_text())
         self.assertTrue(codex_config["plugins"]["example"]["enabled"])
         self.assertIn("chrome-devtools", codex_config["mcp_servers"])
