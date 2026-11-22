@@ -82,7 +82,7 @@ def prepare_history():
     policy()
     marker = ROOT / "private/preferences/.encryption-policy"
     content = b"Encrypted application preferences, format 1.\n"
-    # Mise 2026.10.7 drops recipients from checkpoints without an encrypted file.
+    # Mise 2026.10.7-2026.11.12 drops recipients from checkpoints without an encrypted file.
     # Seed one before the first checkpoint, even before any app has preferences.
     if marker.exists() and marker.read_bytes() != content:
         raise RuntimeError(f"Unrecognized encrypted history marker: {marker}")

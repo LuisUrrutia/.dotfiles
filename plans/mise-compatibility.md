@@ -5,9 +5,11 @@ The operator's mise 2026.10.1 and existing installation were left unchanged.
 
 The initial 2026.10.3 probe passed basic composition and history checks but
 silently treated a `merge = true` declaration as a whole-file target. Version
-2026.10.7 correctly applies structured edits and is the minimum supported
-version. This is a necessary exception to the usual three-day release cooldown;
-ordinary tool and self-update policy retains that cooldown.
+2026.10.7 correctly applies structured edits and was the original minimum. It was
+a necessary exception to the usual three-day release cooldown; ordinary tool and
+self-update policy retains that cooldown. The current minimum is 2026.11.0, for
+native dotfile dependencies; see
+[Mise 2026.11 adoption review](#mise-202611-adoption-review).
 
 Release: https://github.com/jdx/mise/releases/tag/v2026.10.7
 
@@ -1220,3 +1222,64 @@ Native contracts:
 - https://mise.jdx.dev/bootstrap/launchd.html
 - https://mise.jdx.dev/bootstrap/systemd.html
 - https://mise.jdx.dev/cli/tasks/validate.html
+
+## Mise 2026.11 adoption review
+
+Reviewed on 2026-11-21: the release notes from v2026.10.9 through v2026.11.12,
+compared with each remaining adapter. Probes used the official 2026.11.12 binary,
+isolated homes, synthetic keys, and disabled or local history. No setup was applied
+to the operator's Mac.
+
+Adopted:
+
+- **Codex instruction link.** Since 2026.11.0, a dotfile entry can `depends` on
+  another entry. Without it, `dot apply` fails with `sources do not exist` for
+  `~/.codex/AGENTS.md`; with it, one apply creates both links. Before the first
+  apply, status reports `source_missing` without failing. Links that the previous
+  final adapter created are adopted as `applied`. The generic file guard now
+  rejects a foreign destination. https://github.com/jdx/mise/pull/15277
+- **Login shell.** `{{ system_brew_prefix }}/bin/fish` (2026.10.13) replaces the
+  two platform declarations. Status resolves `/opt/homebrew/bin/fish`, and
+  `/home/linuxbrew/.linuxbrew/bin/fish` with the Linux prefix. The bare name
+  `fish` (2026.10.17) is not used: status then reports `fish`, not an absolute
+  path, which the login-shell hook rejects.
+- **macFUSE.** The current cask is 5.5.0, so the package-time block for 5.3.3 is
+  removed. `openclaw-mount` still refuses an installed 5.3.3.
+
+`min_version` is 2026.11.0 because native dotfile dependencies require it.
+
+Still required, with evidence:
+
+- **.NET LTS alias.** Native `dotnet@lts` (2026.10.15) honors the release
+  cooldown. With 3-day, 30-day and 90-day cutoffs, it selected 10.0.404, 10.0.402
+  and 10.0.400; the local resolver also selected 10.0.404. It does not satisfy two
+  documented contracts. First, the native backend chooses the newest supported LTS
+  channel before it applies the cutoff. With the cached index modified to make the
+  active 11.0 channel LTS and a cutoff before 11.0.100, a tools-only bootstrap
+  dry run exited 1; the local resolver selected 10.0.403 from the previous
+  channel. Second, native resolution needs mise's channel cache or the network.
+  With an installed SDK and empty caches offline, `mise where dotnet@lts` exited 1;
+  the state-file alias resolves locally.
+  https://github.com/jdx/mise/blob/v2026.11.12/src/plugins/core/dotnet.rs#L145-L187
+- **Encrypted history marker.** On 2026.11.12, a checkpoint saved before any
+  encrypted file exists still loses the recipients. The next save exits 1 with
+  `encrypted tracked files require [history.encryption].recipients`. With the
+  seeded marker, both saves succeed.
+- **File guard.** With `--yes`, native apply silently replaces a foreign symlink
+  and overwrites edited copy and template targets after a warning. Without
+  `--yes`, it refuses edited copies (2026.11.7), regular files at link targets,
+  and redirected `symlink-each` subdirectories (2026.11.2). That is not enough to
+  replace the guard.
+- **Dangling credential links.** A native link whose source does not exist yet,
+  such as VoiceInk's Codex `auth.json`, still fails with `sources do not exist`.
+- **Shared merge keys.** The JSONC, INI, and `permissions` additions to `merge`
+  add no way to capture owned keys back into the shared source.
+- The notes contain no replacement for the serialized exchange, the worker
+  dispatch, the skipped-package gate (2026.11.6 still reports `skipped`), the
+  macOS-version Thaw selection, preference snapshots, or the installer wrapper.
+  `mise bootstrap --self-update --upgrade` (2026.11.11) would merge maintenance
+  steps but lose their separate schedules and failure isolation.
+
+Existing enrollments keep their active copies of the removed sources because the
+seed only writes missing files. The previous sources stay consistent with each
+other until they are replaced explicitly.
