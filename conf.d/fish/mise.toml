@@ -1,6 +1,12 @@
 [bootstrap.packages]
 "brew:fish" = "latest"
 
+[bootstrap.user]
+login_shell = "{{ system_brew_prefix }}/bin/fish"
+
+[bootstrap.hooks]
+pre-user = 'mise exec python@3 -- python3 "{{ config_root }}/login-shell.py"'
+
 [dotfiles]
 "~/.config/fish/completions" = { source = "completions", mode = "symlink-each" }
 "~/.config/fish/conf.d" = { source = "conf.d", mode = "symlink-each" }

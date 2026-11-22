@@ -10,9 +10,3 @@
 "~/.config/fish/functions/f.fish" = "macos-functions/f.fish"
 "~/.config/fish/functions/flushdns.fish" = "macos-functions/flushdns.fish"
 "~/.config/fish/functions/hammer-restart.fish" = "macos-functions/hammer-restart.fish"
-
-[bootstrap.user]
-login_shell = "/opt/homebrew/bin/fish"
-
-[bootstrap.hooks]
-pre-user = 'mise exec python@3 -- python3 "{{ config_root }}/login-shell.py"'
